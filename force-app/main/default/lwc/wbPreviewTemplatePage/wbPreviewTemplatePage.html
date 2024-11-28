@@ -1,0 +1,65 @@
+<template>
+    <template if:true={ispreviewTemplate}>
+        <div class="main-container">
+            <template if:true={isLoading}>
+                <div class="spinner-overlay">
+                    <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+                </div>
+            </template>
+
+            <div class="divcontainer">
+                <p class="preview-heading">Template Preview</p>
+                <div class="divcontainer2">
+                    <div class="createtempdiv2">
+                        <div class="slds-box slds-theme_default templateContent3">
+                            <div class="left">
+                                <template if:true={variables.length}>
+                                    <p class="variable-heading">Add Variables</p>
+                                    <template for:each={variables} for:item="variable">
+                                        <div key={variable} class="var">
+                                            <label for="variable-{variable}" class="var-label">{variable}</label>
+                                            <input type="text" data-name={variable} class="var-input" oninput={handleInputChange}>
+                                        </div>
+                                    </template>
+                                </template>
+                                <div class="phone">
+                                    <label for="phone" class="phone-label">Phone No.</label>
+                                    <div class="inputs">
+                                        <input type="text" name="phone-num" class="phone-input" oninput={handleInputChange}>
+                                        <button class="send-btn">Send Preview</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="creattempdiv3">
+                                <div class="PreviewmainWP">
+                                    <div class="heading">
+                                        <lightning-icon 
+                                          icon-name="utility:back" 
+                                          size="x-small" 
+                                          class="back-icon"
+                                        ></lightning-icon>
+                                        <div class="mvcloud">
+                                            <img src="/resource/mvcloudsIcon" alt="mvclouds">
+                                        </div>
+                                        <p class="sender-name">MV Clouds Pvt. Ltd.</p>
+                                    </div>
+                                    <div class="PreviewtemplateWP">
+                                        <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
+                                            <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>                    
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                   
+                </div>
+            </div>
+            <!-- <div class="footer">
+                <button class="close-btn" onclick={closePreview}>Close</button>
+            </div> -->
+        </div>
+    </template>
+</template>

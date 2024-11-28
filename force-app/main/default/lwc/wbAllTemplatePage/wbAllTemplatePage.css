@@ -1,0 +1,243 @@
+*{
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+
+.filter{
+    margin-right: 2%;
+    width: 11rem;
+}
+
+.icon{
+    border: none;
+    color: black;
+}
+
+.filterparent{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filterbtns{
+    display: flex;
+}
+
+.filterdiv{
+    display: flex;
+}
+
+.datatable{
+    margin-top: 1.5%;
+    border: 1px solid #c4bebe;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.text{
+    font-size: large;
+}
+
+.main{
+    padding: 1%;
+}
+
+.heading{
+    display: flex;
+    margin-bottom: 1%;
+}
+
+.txt{
+    font-size: x-large;
+    font-weight: bold;
+}
+
+/* custom table CSS */
+.tableHead{
+    background-color: white;
+    font-size: 18px;
+    padding: 10px;
+    font-weight: bolder;
+}
+
+.tableData{
+    background-color: white;
+    height: 10%;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.tablerow{
+    background-color: white;
+}
+
+.tablebtns{
+    display: flex;
+    align-items: center;
+}
+
+.Actionbtn{
+    margin-right: 3%;
+}
+
+/* pagination css */
+
+.pagination-container {
+    display: flex;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+.pagination-button {
+    background-color: #ffffff;
+    border: 1px solid #d8d8d8;
+    color: #333;
+    padding: 6px 12px;
+    margin: 0 2px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 0.3rem;
+    font-size: 12px;
+}
+
+.pagination-button svg {
+    fill: black;
+    width: 0.7rem;
+    height: 0.7rem;
+}
+
+.pagination-button:hover {
+    background-color: #f0f0f0;
+}
+
+.pagination-button.active {
+    background-color: #0070d2;
+    color: white;
+    border-color: #0070d2;
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.results-info {
+    margin-left: 15px;
+    color: #666;
+}
+
+.results-per-page {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.results-per-page label {
+    margin-right: 8px;
+    color: #666;
+}
+
+.results-per-page select {
+    padding: 4px 8px;
+    border: 1px solid #d8d8d8;
+    border-radius: 3px;
+}
+
+/* Style for the ellipsis */
+span {
+    margin: 0 5px;
+}
+
+/* Specific styles for Back and Next buttons */
+.pagination-button:first-child,
+.pagination-button:last-child {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+.paginationDiv{
+    height:15%;
+    background-position: bottom;
+}
+
+.paginationDiv .btnCover{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.paginationDiv .pageNumberDiv{
+    display: flex;
+    justify-content: center;
+    align-items: center;  
+}
+
+
+/* status font color and backgroud color CSS */
+.In-Review,
+.Paused,
+.Appeal.Requested{
+    background-color: #fef2b8;
+    color: #efa206;
+    width: fit-content;
+    border-radius: 7px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.Rejected{
+    background-color: #f5c9c9;
+    color: #e43333;
+    width: fit-content;
+    border-radius: 7px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.Active-Quality.Pending,
+.Active-High.Quality,
+.Active-Medium.Quality,
+.Active-Low.Quality{
+    background-color: #ECF7FF;
+    color: #3C96DE;
+    width: fit-content;
+    border-radius: 7px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.Disabled{
+    background-color: #dedfdf;
+    color: #000000;
+    width: fit-content;
+    border-radius: 7px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}

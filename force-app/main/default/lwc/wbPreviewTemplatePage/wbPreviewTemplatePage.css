@@ -1,0 +1,217 @@
+* {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.main-container {
+    position: relative;
+    /* background: white; */
+    /* background-image: url('/resource/wbiTemplateBg'); */
+    background-size: cover;
+    /* height: 100%; */
+    padding: 2rem;
+}
+
+.spinner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+.divcontainer2 {
+    width: 100%;
+    display: flex;
+}
+.createtempdiv2 {
+    width: 100%;
+}
+.templateContent3 {
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.19);
+    /* width: 95%; */
+    padding: 1rem;
+    padding-bottom: 2.5rem;
+    margin-top: 1rem;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 5rem;
+}
+
+.creattempdiv3 {
+    /* margin-top: 1.6rem;
+    width: 30%; */
+    width: 375px;
+    height: 500px;
+    background-color: #000;
+    border-radius: 30px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    position: relative;
+    padding: 0.2rem;
+    overflow: hidden;
+}
+.PreviewmainWP {
+    /* height: fit-content;
+    border-radius: 5px;
+    position: sticky;
+    top: 13%; */
+    width: 98%;
+    height: 98%;
+    /* background-color: #f8f8f8; */
+    background-image: url('/resource/wbiBg');
+    border-radius: 20px;
+    overflow-y: auto;
+    /* padding: 1rem; */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.templatetextWP {
+    font-size: large;
+}
+
+.PreviewtemplateWP {
+    height: fit-content;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.chatWP-bubble {
+    border: 1px solid white;
+    border-radius: 5px;
+    padding-top: 6px;
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-bottom: 7px;
+    max-width: 300px;
+    min-width: 150px;
+    background-color: white;
+    position: relative;
+}
+.chatWP-bubble::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: -13px;
+    width: 0;
+    height: 0;
+    border-top: 0px solid white;
+    border-right: 18px solid white;
+    border-bottom: 17px solid transparent;
+    transform: translateY(-50%);
+}
+
+.preview-heading{
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    font-weight: 500;
+}
+.body{
+    font-size: 13px;
+    font-weight: 500;
+}
+.formattedBody{
+    margin-top: 0.5rem;
+    border: 1px solid #cfcfcf;
+    border-radius: 3px;
+    padding: 0.5rem;
+}
+.variable-heading{
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+.var{
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.7rem;
+}
+.var-label{
+    font-size: larger;
+}
+
+input{
+    width: -webkit-fill-available;
+    border: 1px solid #cfcfcf;
+    border-radius: 3px;
+    padding: 0.3rem;
+}
+.left{
+    width: 100%;
+}
+
+.inputs{
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.3rem;
+}
+.send-btn{
+    border-radius: 4px;
+    width: 9rem;
+    border: none;
+    color: white;
+    font-size: 14px;
+    background-color: #0176D3;
+}
+.phone{
+    margin-top: 1rem;
+}
+
+.phone-label{
+    font-weight: 500;
+}
+
+/* .footer{
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.close-btn{
+    border: 1px solid #c7c7c7;
+    border-radius: 3px;
+    color: black;
+    padding: 0.3rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    font-size: 14px;
+    background: white;
+    font-weight: 500;
+} */
+
+.heading{
+    display: flex;
+    background: #075E54;
+    padding: 0.7rem;
+    gap: 0.5rem;
+}
+
+.mvcloud{
+    background: white;
+    border-radius: 50%;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+}
+
+.sender-name{
+    color: white;
+    font-weight: 500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.back-icon{
+    --sds-c-icon-color-foreground-default: white;
+    font-weight: 500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
