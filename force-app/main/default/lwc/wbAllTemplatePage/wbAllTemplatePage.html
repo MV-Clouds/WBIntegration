@@ -13,17 +13,17 @@
 
                 <div class="filterparent">
                     <div class="filterdiv">
-                        <lightning-input variant="label-hidden" class="filter" type="search" placeholder="Search Name"
-                            onchange={handleSearchInputChange}></lightning-input>
-                        <lightning-combobox variant="label-hidden" class="filter" value={categoryValue}
+                        <lightning-input variant="label-hidden" class="filter" name="searchInput" type="search" placeholder="Search Name"
+                            onchange={handleChange}></lightning-input>
+                        <lightning-combobox variant="label-hidden" class="filter" name="category" value={categoryValue}
                             placeholder="Category" options={categoryOptions}
-                            onchange={handleCategoryChange}></lightning-combobox>
-                        <lightning-combobox variant="label-hidden" class="filter" value={statusValues}
+                            onchange={handleChange}></lightning-combobox>
+                        <lightning-combobox variant="label-hidden" class="filter" name="status" value={statusValues}
                             placeholder="Status" options={statusOptions}
-                            onchange={handleStatusChange}></lightning-combobox>
-                        <lightning-combobox variant="label-hidden" class="filter" value={timePeriodValue}
+                            onchange={handleChange}></lightning-combobox>
+                        <lightning-combobox variant="label-hidden" class="filter" name="timePeriod" value={timePeriodValue}
                             placeholder="Time" options={timePeriodOptions}
-                            onchange={handleTimePeriodChange}></lightning-combobox>
+                            onchange={handleChange}></lightning-combobox>
                     </div>
 
                     <div class="filterbtns">

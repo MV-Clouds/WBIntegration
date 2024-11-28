@@ -143,6 +143,11 @@ export default class WbCreateTemplatePage extends LightningElement {
             { label: 'Static', value: 'Static' }
         ];
     }
+
+    get selectedLanguageLabel() {
+        const selectedOption = this.languageOptions.find(option => option.value === this.selectedLanguage);
+        return selectedOption ? selectedOption.label : '';
+    }
  
     connectedCallback() {
         console.log('default option selected==> ' + this.selectedOption);       
@@ -263,6 +268,41 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.uploadFile();
     }
 
+    handleFileChange(event) {
+        try {
+            const fileInput = event.target.files[0];
+            if (!fileInput) {
+                throw new Error('No file selected. Please choose a file.');
+            }
+    
+            this.file = fileInput;
+            this.fileName = fileInput.name;
+            this.fileSize = fileInput.size;
+            this.fileType = fileInput.type;
+    
+            console.log('Selected File:', fileInput);
+    
+            if (this.selectedContentType === 'Image') {
+                const allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (!allowedImageTypes.includes(fileInput.type)) {
+                    this.showToastError(`Unsupported file type. Please upload a valid file for ${this.selectedContentType}: ${this.getAllowedFileTypes(this.selectedContentType)}.`);
+                    this.handleRemoveFile();
+                }
+                this.generatePreview(fileInput);
+            }
+    
+            this.isfilename = true;
+            this.NoFileSelected = false;
+    
+            this.uploadFile();
+        } catch (error) {
+            console.error('Error handling file change:', error);
+            this.showToastError(error.message || 'An error occurred while processing the file.');
+            this.handleRemoveFile(); 
+        }
+    }
+    
+
     getAllowedFileTypes(contentType) {
         switch (contentType) {
             case 'Image':
@@ -296,7 +336,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         } 
     }
     
-
     uploadFile() {
         if (!this.file) {
             alert('Please select a file to upload.');
@@ -452,11 +491,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.iseditTemplatevisible = false;
     }
 
-    get selectedLanguageLabel() {
-        const selectedOption = this.languageOptions.find(option => option.value === this.selectedLanguage);
-        return selectedOption ? selectedOption.label : '';
-    }
-
     handleCustom(event) {
         this.selectedCustomType = event.target.value;
     }
@@ -535,19 +569,23 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     checkTemplateExistence() {
-        doesTemplateExist({ templateName: this.templateName })
-            .then(result => {
-                this.templateExists = result;
-                if (this.templateExists) {
-                    console.log('Template already exists.');
-                   
-                } else {
-                    console.log('Template does not exist. Proceed with creation.');
-                }
-            })
-            .catch(error => {
-                console.error('Error checking template existence:', error);
-            });
+        try {
+            doesTemplateExist({ templateName: this.templateName })
+                .then(result => {
+                    this.templateExists = result;
+                    if (this.templateExists) {
+                        console.log('Template already exists.');
+                    } else {
+                        console.log('Template does not exist. Proceed with creation.');
+                    }
+                })
+                .catch(error => {
+                    throw new Error(`Error checking template existence: ${error.message || 'Unknown error'}`);
+                });
+        } catch (error) {
+            console.error(error.message);
+            this.showToastError(error.message || 'An error occurred while checking template existence.');
+        }
     }
 
     handleStoredname() {
@@ -556,7 +594,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         } else {
             this.storedTemplateName = this.templateName;
         }
-
     }
 
     handleRemove(event) {
@@ -580,96 +617,98 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     handleMenuSelect(event) {
-        const selectedValue = event.detail.value;
-        this.menuButtonSelected = selectedValue;
-        console.log('selectedValue ', selectedValue);
-    
-        let newButton = {
-            id: this.buttonList.length + 1,
-            selectedActionType: selectedValue,
-            iconName: this.getButtonIcon(selectedValue),
-            btntext: '',
-            webURL: '',
-            phonenum: '',
-            offercode: '',
-            selectedUrlType: 'Static',
-            selectedCountryType: '',
-            isCallPhone: false,
-            isVisitSite: false,
-            isOfferCode: false,
-            hasError: false,  
-            errorMessage: ''   
-        };
-    
-        switch (selectedValue) {
-            case 'QUICK_REPLY':
-                this.isCustom = true;
-                this.createCustomButton('QUICK_REPLY', 'Quick reply');
-                this.isStopMarketing = false;
-                break;
-            case 'Marketing opt-out':
-                if (this.marketingOpt < 1) {
-                    this.isCustom = true;
-                    this.isStopMarketing = true;
-                    this.createCustomButton('Marketing opt-out', 'Stop promotions');
-                    this.marketingOpt++;
-                }
-                break;
-            case 'PHONE_NUMBER':
-                if (this.callPhoneNumber < 1) {
-                    this.createButton = true;
-                    newButton.isCallPhone = true;
-                    newButton.btntext = 'Call Phone Number';
-                    this.btntext = 'Call Phone Number';
-                    this.callPhoneNumber++;
-                }
-                break;
-            case 'URL':
-                if (this.visitWebsiteCount < 2) {
-                    this.createButton = true;
-                    newButton.isVisitSite = true;
-                    this.isVisitSite = true;
-                    newButton.btntext = 'Visit Website';
-                    this.btntext = 'Visit Website';
-                    this.visitWebsiteCount++;
-                }
-                break;
-            case 'COPY_CODE':
-                if (this.copyOfferCode < 1) {
-                    this.createButton = true;
-                    newButton.isOfferCode = true;
-                    newButton.btntext = 'Copy Offer Code';
-                    this.btntext = 'Copy Offer Code';
-                    this.copyOfferCode++;
-                }
-                break;
-            default:
-                newButton.btntext = 'Add Button';
-        }
-    
-        const isDuplicate = this.buttonList.some(button => button.btntext === newButton.btntext);
-        if (isDuplicate) {
-            newButton.hasError = true;
-            newButton.errorMessage = 'You have entered same text for multiple buttons.';
-        } else {
-            newButton.hasError = false;
-            newButton.errorMessage = '';
-        }
-    
-        if (newButton.selectedActionType != 'QUICK_REPLY' && newButton.selectedActionType != 'Marketing opt-out') {
+        try {
+            const selectedValue = event.detail.value;
+            this.menuButtonSelected = selectedValue;
+            console.log('selectedValue ', selectedValue);
         
-            this.buttonList.push(newButton);
-            this.totalButtonsCount++;
-            console.log('Button added. Total buttons count:', this.totalButtonsCount);
+            let newButton = {
+                id: this.buttonList.length + 1,
+                selectedActionType: selectedValue,
+                iconName: this.getButtonIcon(selectedValue),
+                btntext: '',
+                webURL: '',
+                phonenum: '',
+                offercode: '',
+                selectedUrlType: 'Static',
+                selectedCountryType: '',
+                isCallPhone: false,
+                isVisitSite: false,
+                isOfferCode: false,
+                hasError: false,  
+                errorMessage: ''   
+            };
+        
+            switch (selectedValue) {
+                case 'QUICK_REPLY':
+                    this.isCustom = true;
+                    this.createCustomButton('QUICK_REPLY', 'Quick reply');
+                    this.isStopMarketing = false;
+                    break;
+                case 'Marketing opt-out':
+                    if (this.marketingOpt < 1) {
+                        this.isCustom = true;
+                        this.isStopMarketing = true;
+                        this.createCustomButton('Marketing opt-out', 'Stop promotions');
+                        this.marketingOpt++;
+                    }
+                    break;
+                case 'PHONE_NUMBER':
+                    if (this.callPhoneNumber < 1) {
+                        this.createButton = true;
+                        newButton.isCallPhone = true;
+                        newButton.btntext = 'Call Phone Number';
+                        this.btntext = 'Call Phone Number';
+                        this.callPhoneNumber++;
+                    }
+                    break;
+                case 'URL':
+                    if (this.visitWebsiteCount < 2) {
+                        this.createButton = true;
+                        newButton.isVisitSite = true;
+                        this.isVisitSite = true;
+                        newButton.btntext = 'Visit Website';
+                        this.btntext = 'Visit Website';
+                        this.visitWebsiteCount++;
+                    }
+                    break;
+                case 'COPY_CODE':
+                    if (this.copyOfferCode < 1) {
+                        this.createButton = true;
+                        newButton.isOfferCode = true;
+                        newButton.btntext = 'Copy Offer Code';
+                        this.btntext = 'Copy Offer Code';
+                        this.copyOfferCode++;
+                    }
+                    break;
+                default:
+                    newButton.btntext = 'Add Button';
+            }
+        
+            const isDuplicate = this.buttonList.some(button => button.btntext === newButton.btntext);
+            if (isDuplicate) {
+                newButton.hasError = true;
+                newButton.errorMessage = 'You have entered same text for multiple buttons.';
+            } else {
+                newButton.hasError = false;
+                newButton.errorMessage = '';
+            }
+        
+            if (newButton.selectedActionType != 'QUICK_REPLY' && newButton.selectedActionType != 'Marketing opt-out') {
+                this.buttonList.push(newButton);
+                this.totalButtonsCount++;
+                console.log('Button added. Total buttons count:', this.totalButtonsCount);
+            }
+        
+            this.updateButtonErrors();
+            this.updateButtonDisabledState();
+            console.log('newbutton ', newButton.id, newButton.selectedActionType);
+            console.log('added ', this.buttonList.length);
+        } catch (error) {
+            console.error('Error handling menu selection:', error);
         }
-    
-        this.updateButtonErrors();
-        this.updateButtonDisabledState();
-        console.log('newbutton ', newButton.id, newButton.selectedActionType);
-        console.log('added ', this.buttonList.length);
     }
-    
-   
+       
     updateButtonErrors(isCustom = false) {
         const buttonListToCheck = isCustom ? this.customButtonList : this.buttonList;
         const buttonTexts = buttonListToCheck.map(button => isCustom ? button.Cbtntext : button.btntext);
@@ -697,7 +736,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         });
     }
     
-
     createCustomButton(btnType, btnText) {
         try {
             const btnTextExists = this.customButtonList.some(button => button.Cbtntext === btnText);
@@ -715,7 +753,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             if (btnTextExists) {
                 newCustomButton.hasError = true;
                 newCustomButton.errorMessage = 'You have entered same text for multiple buttons.';
-            }else {
+            } else {
                 newCustomButton.hasError = false;
                 newCustomButton.errorMessage = '';
             }
@@ -727,9 +765,10 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.log('Custom button added. Total buttons count:', this.totalButtonsCount);
             this.updateButtonDisabledState();
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error creating custom button:', error);
         }
     }
+    
     get buttonListWithDisabledState() {
         return this.customButtonList.map(button => ({
             ...button,
@@ -812,33 +851,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         });
         console.log('Button disabled state:', this.isButtonDisabled);
     }
-
-    // addvariable() {
-    //     this.addVar = true;
-    //     const newVariable = {
-    //         id: this.nextIndex,
-    //         index: `{{${this.nextIndex}}}`,
-    //         content: '',
-    //         placeholder: `Enter content for {{${this.nextIndex}}}`
-    //     };
-    //     this.variables = [...this.variables, newVariable];
-    //     this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
-    //     this.formatedTempBody=this.tempBody;
-    //     console.log('this.tempBody after adding variable:', this.tempBody);
-    //     this.updateTextarea();
-    //     this.nextIndex++;
-    // }
-
-    // handleVarInput(event) {
-    //     const id = event.target.dataset.id;
-    //     const newContent = event.target.value;
-    //     this.variables = this.variables.map(varItem =>
-    //         varItem.id === parseInt(id)
-    //             ? { ...varItem, content: newContent }
-    //             : varItem
-    //     );
-    //     console.log('Updated variables:', this.variables);
-    // }
 
     addvariable() {
         this.addVar = true;
@@ -1090,8 +1102,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         return text.slice(0, cursorPos) + marker + text.slice(cursorPos);
     }
 
-  
-
     formatText(inputText) {
         // inputText = inputText.replace(/(\n\s*){3,}/g, '\n\n');
 
@@ -1115,16 +1125,16 @@ export default class WbCreateTemplatePage extends LightningElement {
         console.log('Generating header example...');
         return this.header_variables.map(varItem => {
             return varItem.alternateText && varItem.alternateText.trim() !== ''
-                ? varItem.alternateText // Use alternate text if provided
-                : `{{${varItem.object}.${varItem.field}}}`; // Default to the variable format
+                ? varItem.alternateText 
+                : `{{${varItem.object}.${varItem.field}}}`; 
         });
     }    
 
     get templateBodyText() {
         return this.variables.map(varItem => {
             return varItem.alternateText && varItem.alternateText.trim() !== ''
-                ? varItem.alternateText // Use alternate text if provided
-                : `{{${varItem.object}.${varItem.field}}}`; // Default to the variable format
+                ? varItem.alternateText 
+                : `{{${varItem.object}.${varItem.field}}}`; 
         });
     }
 
@@ -1232,84 +1242,81 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
      
     handleSubmit() {
-        this.isLoading=true;
-        this.showReviewTemplate = false;
-        if (!this.validateTemplate()) {
-            this.isLoading=false;
-
-            return;
-        }
-
-        const templateBody = this.tempBody;
-        console.log('templateBody ',templateBody);
-        const phone = this.selectedCountryType+''+this.phonenum;
-        console.log('phone ',phone);
-        console.log('button list: ',JSON.stringify(this.buttonList));
-        console.log('custom buttonlist: ',JSON.stringify(this.customButtonList));
-        console.log(this.selectedLanguage);
-
-        const buttonData = [];
-
-        if (this.buttonList && this.buttonList.length > 0) {
-            buttonData.push(...this.buttonList);
-        }
-
-        if (this.customButtonList && this.customButtonList.length > 0) {
-            buttonData.push(...this.customButtonList);
-        }
-        console.log('button data ',JSON.stringify(buttonData));
-        const template = {
-            templateName: this.templateName ? this.templateName : null,
-            templateCategory: this.activeTab ? this.activeTab : null,
-            templateType: this.selectedOption ? this.selectedOption : null,
-            tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
-            tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
-            tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
-            tempHeaderText: this.header ? this.header : '',
-            tempHeaderExample: (this.tempHeaderExample && this.tempHeaderExample.length > 0) ? this.tempHeaderExample : null,
-            templateBody: this.tempBody ? this.tempBody : '',
-            templateBodyText: (this.templateBodyText && this.templateBodyText.length > 0) ? this.templateBodyText : null,
-            tempFooterText: this.footer ? this.footer : null,
-            typeOfButton: buttonData.length > 0 ? JSON.stringify(buttonData) : null 
-        };
-       
-        console.log('Template Wrapper:', JSON.stringify(template));
-        const serializedWrapper = JSON.stringify(template);
-       
-        createWhatsappTemplate({ serializedWrapper: serializedWrapper })
-        .then(result => {
-            if (result && result.success) { 
-                console.log('Template created successfully', result);
-                this.showToastSuccess('Template successfully created');
-                this.isPreviewTemplate=true;
+        try {
+            this.isLoading=true;
+            this.showReviewTemplate = false;
+            if (!this.validateTemplate()) {
                 this.isLoading=false;
-                // this.clearWrapper();
-            } else {
-                const errorResponse = JSON.parse(result.errorMessage); 
-                const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
-    
-                this.showToastError('Template creation failed, reason - '+errorMsg);
-                this.isLoading = false; 
+
+                return;
+            }     
+            const buttonData = [];
+
+            if (this.buttonList && this.buttonList.length > 0) {
+                buttonData.push(...this.buttonList);
             }
 
-        })
-        .catch(error => {
-            console.error('Error creating template', error);
-            const errorTitle = 'Template creation failed: ';
-            let errorMsg;        
-            if (error.body && error.body.message) {
-                if (error.body.message.includes('Read timed out')) {
-                    errorMsg = 'The request timed out. Please try again.';
-                } else {
-                    errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
-                }
-            } else {
-                errorMsg = 'An unknown error occurred';
+            if (this.customButtonList && this.customButtonList.length > 0) {
+                buttonData.push(...this.customButtonList);
             }
+            console.log('button data ',JSON.stringify(buttonData));
+            const template = {
+                templateName: this.templateName ? this.templateName : null,
+                templateCategory: this.activeTab ? this.activeTab : null,
+                templateType: this.selectedOption ? this.selectedOption : null,
+                tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
+                tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
+                tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
+                tempHeaderText: this.header ? this.header : '',
+                tempHeaderExample: (this.tempHeaderExample && this.tempHeaderExample.length > 0) ? this.tempHeaderExample : null,
+                templateBody: this.tempBody ? this.tempBody : '',
+                templateBodyText: (this.templateBodyText && this.templateBodyText.length > 0) ? this.templateBodyText : null,
+                tempFooterText: this.footer ? this.footer : null,
+                typeOfButton: buttonData.length > 0 ? JSON.stringify(buttonData) : null 
+            };
+
+            console.log('Template Wrapper:', JSON.stringify(template));
+            const serializedWrapper = JSON.stringify(template);
         
-            this.showToastError(errorTitle, errorMsg);
+            createWhatsappTemplate({ serializedWrapper: serializedWrapper })
+            .then(result => {
+                if (result && result.success) { 
+                    console.log('Template created successfully', result);
+                    this.showToastSuccess('Template successfully created');
+                    this.isPreviewTemplate=true;
+                    this.isLoading=false;
+                    // this.clearWrapper();
+                } else {
+                    const errorResponse = JSON.parse(result.errorMessage); 
+                    const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
+        
+                    this.showToastError('Template creation failed, reason - '+errorMsg);
+                    this.isLoading = false; 
+                }
+            })
+            .catch(error => {
+                console.error('Error creating template', error);
+                const errorTitle = 'Template creation failed: ';
+                let errorMsg;        
+                if (error.body && error.body.message) {
+                    if (error.body.message.includes('Read timed out')) {
+                        errorMsg = 'The request timed out. Please try again.';
+                    } else {
+                        errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+                    }
+                } else {
+                    errorMsg = 'An unknown error occurred';
+                }
+            
+                this.showToastError(errorTitle, errorMsg);
+                this.isLoading = false;
+            });
+
+        } catch (error) {
+            console.error('Unexpected error occurred', error);
+            this.showToastError('An unexpected error occurred while submitting the template.');
             this.isLoading = false;
-        });
+        }
              
     }
 

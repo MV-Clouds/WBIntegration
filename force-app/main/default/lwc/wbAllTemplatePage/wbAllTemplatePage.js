@@ -42,27 +42,35 @@ export default class WbAllTemplatePage extends LightningElement {
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {
-        if (data) {
-            this.categoryOptions = [{ label: 'All', value: '' }, ...data.categories.map(cat => ({ label: cat, value: cat }))];
-            this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(stat => ({ label: stat, value: stat }))];
-        } else if (error) {
-            console.error(error);
+        try {
+            if (data) {
+                this.categoryOptions = [{ label: 'All', value: '' }, ...data.categories.map(cat => ({ label: cat, value: cat }))];
+                this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(stat => ({ label: stat, value: stat }))];
+            } else if (error) {
+                console.error('Error fetching category and status picklist values: ', error);
+            }
+        } catch (err) {
+            console.error('Unexpected error in wiredCategoryAndStatus: ', err);
         }
     }
 
     @wire(getWhatsAppTemplates)
     wiredTemplates({ error, data }) {
-        if (data) {
-            this.allRecords = data.map(record => {
-                return {
-                    ...record,
-                    id: record.Id,
-                    LastModifiedDate: this.formatDate(record.LastModifiedDate)
-                };
-            });
-            this.filterRecords();
-        } else if (error) {
-            console.error(error);
+        try {
+            if (data) {
+                this.allRecords = data.map(record => {
+                    return {
+                        ...record,
+                        id: record.Id,
+                        LastModifiedDate: this.formatDate(record.LastModifiedDate)
+                    };
+                });
+                this.filterRecords();
+            } else if (error) {
+                console.error('Error fetching WhatsApp templates: ', error);
+            }
+        } catch (err) {
+            console.error('Unexpected error in wiredTemplates: ', err);
         }
     }
 
@@ -159,6 +167,22 @@ export default class WbAllTemplatePage extends LightningElement {
         return Math.min(this.currentPage * this.pageSize, this.totalItems);
     }
 
+     // pagination logic end
+     get timePeriodOptions() {
+        return [
+            { label: 'All', value: '' },
+            { label: 'Last 7 Days', value: 'last7days' },
+            { label: 'Last 30 Days', value: 'last30days' },
+            { label: 'Last 90 Days', value: 'last90days' }
+        ];
+    }
+
+    get languageOptions(){
+        return[
+            { label: 'English (US)', value: 'English (US)' }
+        ];      
+    }
+
     updateShownData() {
         try{
             const startIndex = (this.currentPage - 1) * this.pageSize;
@@ -195,89 +219,78 @@ export default class WbAllTemplatePage extends LightningElement {
         this.isTemplateVisible = false;
     }
 
-    // pagination logic end
-    get timePeriodOptions() {
-        return [
-            { label: 'All', value: '' },
-            { label: 'Last 7 Days', value: 'last7days' },
-            { label: 'Last 30 Days', value: 'last30days' },
-            { label: 'Last 90 Days', value: 'last90days' }
-        ];
-    }
-
-    get languageOptions(){
-        return[
-            { label: 'English (US)', value: 'English (US)' }
-        ];      
-    }
-
-    handleCategoryChange(event) {
-        this.categoryValue = event.detail.value;
-        console.log(this.categoryValue);
+    handleChange(event) {
+        const fieldName = event.target.name; 
+        const value = event.detail?.value || event.target.value; 
+    
+        switch (fieldName) {
+            case 'category':
+                this.categoryValue = value;
+                break;
+            case 'timePeriod':
+                this.timePeriodValue = value;
+                break;
+            case 'status':
+                this.statusValues = value;
+                break;
+            case 'searchInput':
+                this.searchInput = value.toLowerCase();
+                break;
+            default:
+                console.warn(`Unhandled field: ${fieldName}`);
+                break;
+        }
+    
+        console.log(`${fieldName}: ${value}`);
         this.filterRecords();
     }
-
-    handleTimePeriodChange(event) {
-        this.timePeriodValue = event.detail.value;
-        console.log(this.timePeriodValue);
-        this.filterRecords();
-    }
-
-    handleStatusChange(event) {
-        this.statusValues = event.detail.value;
-        console.log(this.statusValues);
-        this.filterRecords();
-    }
-
-    handleSearchInputChange(event) {
-        this.searchInput = event.target.value.toLowerCase();
-        this.filterRecords();
-    }
-
-    handleLanguage(event){
-        this.selectedLanguage = event.target.value;
-        console.log(this.selectedLanguage);
-        
-    }
+    
 
     filterRecords() {
-        let filtered = [...this.allRecords];
+        try {
+            let filtered = [...this.allRecords];
 
-        if (this.categoryValue) {
-            filtered = filtered.filter(record => record.Template_Category__c === this.categoryValue);
-            console.log('category filter=> ',filtered);
-        }
-
-        if (this.timePeriodValue) {
-            const today = new Date();
-            let fromDate;
-            if (this.timePeriodValue === 'last7days') {
-                fromDate = new Date(today.setDate(today.getDate() - 8));
-                console.log('from date 7 days==>',fromDate);
-            } else if (this.timePeriodValue === 'last30days') {
-                fromDate = new Date(today.setDate(today.getDate() - 30));
-                console.log('from date 30 days==>',fromDate);
-            } else if (this.timePeriodValue === 'last90days') {
-                fromDate = new Date(today.setDate(today.getDate() - 90));
-                console.log('from date 90 days==>',fromDate);
+            if (this.categoryValue) {
+                filtered = filtered.filter(record => record.Template_Category__c === this.categoryValue);
+                console.log('category filter=> ',filtered);
             }
-            filtered = filtered.filter(record => new Date(record.CreatedDate) >= fromDate);
-            console.log('date filter==>',filtered);
-        }
+    
+            if (this.timePeriodValue) {
+                const today = new Date();
+                let fromDate;
+                if (this.timePeriodValue === 'last7days') {
+                    fromDate = new Date(today.setDate(today.getDate() - 8));
+                    console.log('from date 7 days==>',fromDate);
+                } else if (this.timePeriodValue === 'last30days') {
+                    fromDate = new Date(today.setDate(today.getDate() - 30));
+                    console.log('from date 30 days==>',fromDate);
+                } else if (this.timePeriodValue === 'last90days') {
+                    fromDate = new Date(today.setDate(today.getDate() - 90));
+                    console.log('from date 90 days==>',fromDate);
+                }
+                filtered = filtered.filter(record => new Date(record.CreatedDate) >= fromDate);
+                console.log('date filter==>',filtered);
+            }
+    
+            if (this.statusValues.length > 0) {
+                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
+                console.log('status filter==>',filtered);
+            }
+    
+            if (this.searchInput) {
+                filtered = filtered.filter(record => record.Name.toLowerCase().includes(this.searchInput));
+            }
+    
+            this.filteredRecords = filtered;
+            this.currentPage = 1;
+            this.totalPages = Math.ceil(this.filteredRecords.length / this.pageSize);
+            this.updateShownData();
 
-        if (this.statusValues.length > 0) {
-            filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
-            console.log('status filter==>',filtered);
+        } catch (error) {
+            console.error('Error in filterRecords:', error);
+            this.showToastError('An error occurred while filtering the records.');
         }
-
-        if (this.searchInput) {
-            filtered = filtered.filter(record => record.Name.toLowerCase().includes(this.searchInput));
-        }
-
-        this.filteredRecords = filtered;
-        this.currentPage = 1;
-        this.totalPages = Math.ceil(this.filteredRecords.length / this.pageSize);
-        this.updateShownData();
+       
     }
 
     formatDate(dateString) {
@@ -290,36 +303,43 @@ export default class WbAllTemplatePage extends LightningElement {
         this.isLoading=true;
         const recordId = event.currentTarget.dataset.id;
 
-        // Now you can use the recordId to perform delete operation
         console.log('Record ID to delete:', recordId);
 
-        if(recordId != undefined){
-            deleteTemplete({templateId: recordId})
-            .then(data => {
-                if(data == 'Template deleted successfully'){
-                    console.log('Template deleted successfully');
-                    this.showToastSuccess('Template deleted successfully');
-                    this.allRecords = this.allRecords.filter(record => record.Id !== recordId);
-                    
-                    this.filteredRecords = this.allRecords; 
-                    this.updateShownData();
-                    this.isLoading=false;
-                }else{
-                    console.log(data);
+        try {
+            if(recordId != undefined){
+                deleteTemplete({templateId: recordId})
+                .then(data => {
+                    if(data == 'Template deleted successfully'){
+                        console.log('Template deleted successfully');
+                        this.showToastSuccess('Template deleted successfully');
+                        this.allRecords = this.allRecords.filter(record => record.Id !== recordId);
+                        
+                        this.filteredRecords = this.allRecords; 
+                        this.updateShownData();
+                        this.isLoading=false;
+                    }else{
+                        console.log(data);
+                        this.showToastError('Error in deleting template');
+                        this.isLoading=false;
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
                     this.showToastError('Error in deleting template');
                     this.isLoading=false;
-                }
-            })
-            .catch(error => {
-                console.log(error);
-                this.showToastError('Error in deleting template');
+                });
+            } else{
+                console.log('recordId undifined');
+                this.showToastError('Template not found');
                 this.isLoading=false;
-            });
-        } else{
-            console.log('recordId undifined');
-            this.showToastError('Template not found');
-            this.isLoading=false;
+            }
+
+        } catch (error) {
+            console.error('Error in deleteTemplate:', error);
+            this.showToastError('An unexpected error occurred while deleting the template');
+            this.isLoading = false;
         }
+        
     }
 
     showToastError(message) {

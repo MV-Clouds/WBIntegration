@@ -36,6 +36,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track records = [];
     @track contactDetails=[];
 
+    get contactFields() {
+        return Object.entries(this.contactDetails)
+            .filter(([key, value]) => value !== null && value !== undefined)
+            .map(([key, value]) => ({ label: key, value }));
+    }
+
     formatText(inputText) {
         let formattedText = inputText.replaceAll('\n', '<br/>');
         formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
@@ -69,50 +75,52 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     handleRecordSelection(event) {
-        this.selectedContactId = event.target.value;
-        console.log('Selected Record ID:', this.selectedContactId);    
-        this.fetchContactDetails();
+        try {
+            this.selectedContactId = event.target.value;
+            console.log('Selected Record ID:', this.selectedContactId);    
+            this.fetchContactDetails();
     
-        getTemplateWithReplacedValues({
-            recordId: this.selectedContactId,
-        })
-        .then(result => {
-            if (result) {
-                const { header, body } = result;    
-                this.tempheader = this.formatText(header);
-                this.formatedTempBody = this.formatText(body);
+            getTemplateWithReplacedValues({
+                recordId: this.selectedContactId,
+            })
+            .then(result => {
+                if (result) {
+                    const { header, body } = result;    
+                    this.tempheader = this.formatText(header);
+                    this.formatedTempBody = this.formatText(body);
     
-                console.log('Formatted Header:', this.tempheader);
-                console.log('Formatted Body:', this.formatedTempBody);
-            } else {
-                console.warn('No template data returned.');
-            }
-        })
-        .catch(error => {
-            console.error('Error replacing template:', error);
-        });
-    }
-    
-
-    fetchContactDetails() {
-        if (this.selectedContactId) {
-            getContactDetails({ contactId: this.selectedContactId })
-                .then(result => {
-                    this.contactDetails = result;  
-                })
-                .catch(error => {
-                    this.contactDetails = {};  
-                    console.error('Error fetching contact details:', error);
-                });
+                    console.log('Formatted Header:', this.tempheader);
+                    console.log('Formatted Body:', this.formatedTempBody);
+                } else {
+                    console.warn('No template data returned.');
+                }
+            })
+            .catch(error => {
+                console.error('Error replacing template:', error);
+            });
+        } catch (err) {
+            console.error('Unexpected error in handleRecordSelection:', err);
         }
     }
-
-
-    get contactFields() {
-        return Object.entries(this.contactDetails)
-            .filter(([key, value]) => value !== null && value !== undefined)
-            .map(([key, value]) => ({ label: key, value }));
+    
+    fetchContactDetails() {
+        try {
+            if (this.selectedContactId) {
+                getContactDetails({ contactId: this.selectedContactId })
+                    .then(result => {
+                        this.contactDetails = result;
+                        console.log('Fetched Contact Details:', result);
+                    })
+                    .catch(error => {
+                        this.contactDetails = {};  
+                        console.error('Error fetching contact details:', error);
+                    });
+            } else {
+                console.warn('No Contact ID selected.');
+            }
+        } catch (err) {
+            console.error('Unexpected error in fetchContactDetails:', err);
+        }
     }
-
-
+    
 }
