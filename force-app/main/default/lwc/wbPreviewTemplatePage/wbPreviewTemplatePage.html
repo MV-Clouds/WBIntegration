@@ -31,18 +31,18 @@
                                             </template>
                                         </select>
                                     </div>
+                                    <template if:true={contactDetails}>
                                     <div class="con-details">
-                                        <template if:true={contactDetails}>
-                                            <template for:each={contactFields} for:item="field">
-                                                <p key={field.label} class="field-label">
-                                                    <strong>{field.label}:</strong> {field.value}
-                                                </p>
-                                            </template>
+                                        <template for:each={contactFields} for:item="field">
+                                            <p key={field.label} class="field-label">
+                                                <strong>{field.label}:</strong> {field.value}
+                                            </p>
                                         </template>
                                         <template if:true={error}>
                                             <p>Error fetching contact details: {error}</p>
                                         </template>
                                     </div>
+                                </template>
                                 <!-- </template> -->
                                 <div class="phone">
                                     <label for="phone" class="phone-label">Phone No.</label>
@@ -70,7 +70,7 @@
                                            
                                             <template if:true={IsHeaderText}>
                                                 <div class="TextHeadingWP">
-                                                    <p>{tempheader}</p>
+                                                    <lightning-formatted-rich-text value={tempheader}></lightning-formatted-rich-text>
                                                 </div>
                                             </template>
                                             <template if:true={isImgSelected}>
@@ -102,7 +102,6 @@
                                     
                                                 <div key={customButton.id} class="button-label-preview">
                                                     <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-                                    
                                                     <p>{customButton.Cbtntext}</p>
                                                 </div>
                                             </template>

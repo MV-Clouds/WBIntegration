@@ -311,8 +311,8 @@ public with sharing class CreateTemplateWrapper {
         Map<String, Object> result = new Map<String, Object>(); 
         try {
             String bodyText = (String) component.get('text');
-            String bodyMergeText = '';  // Initialize bodyMergeText
-            List<Map<String, String>> parsedFields = new List<Map<String, String>>(); // To store parsed object and field
+            String bodyMergeText = '';  
+            List<Map<String, String>> parsedFields = new List<Map<String, String>>(); 
     
             if (example != null && example.containsKey('body_text')) {
                 Object bodyTextObj = example.get('body_text');
@@ -329,12 +329,11 @@ public with sharing class CreateTemplateWrapper {
                                 String fieldRef = (String) obj;
                                 stringList.add(fieldRef);
     
-                                // Extract object and field from fieldRef
                                 if (fieldRef.contains('.')) {
                                     fieldRef = fieldRef.replace('{{', '').replace('}}', '');
                                     List<String> parts = fieldRef.split('\\.');
                                     Map<String, String> fieldMap = new Map<String, String>();
-                                    fieldMap.put('fieldName', parts[1]); // Field name
+                                    fieldMap.put('fieldName', parts[1]); 
                                     parsedFields.add(fieldMap);
                                 }
                             }
@@ -349,7 +348,7 @@ public with sharing class CreateTemplateWrapper {
     
             result.put('bodyText', bodyText);
             result.put('bodyMergeText', bodyMergeText);
-            result.put('parsedFields', parsedFields); // Add parsed object-field pairs
+            result.put('parsedFields', parsedFields); 
     
         } catch (Exception e) {
             ExceptionLog.exception(e.getMessage(), 'CreateTemplateWrapper', 'handleBodyComponent', e.getLineNumber());
@@ -357,7 +356,7 @@ public with sharing class CreateTemplateWrapper {
     
             result.put('bodyText', '');  
             result.put('bodyMergeText', '');
-            result.put('parsedFields', new List<Map<String, String>>()); // Return an empty list on error
+            result.put('parsedFields', new List<Map<String, String>>()); 
         }
     
         return result; 

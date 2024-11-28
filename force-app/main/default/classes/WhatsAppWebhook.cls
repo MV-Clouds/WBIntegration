@@ -24,7 +24,7 @@ global without sharing class WhatsAppWebhook {
         System.debug('Response ==>' + response);
         RestRequest request = RestContext.request;
         System.debug('request ==>' + request);
-        if(request.params.get('hub.verify_token') == 'WHATSAPPTOKEN'){
+        if(request.params.get('hub.verify_token') == 'WHATSAPPSCRATCHTOKEN'){
             response.responseBody = Blob.valueOf( request.params.get('hub.challenge') );
         }
     }

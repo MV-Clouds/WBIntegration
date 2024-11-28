@@ -42,11 +42,15 @@ export default class WbPreviewTemplatePage extends LightningElement {
         formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
         formattedText = formattedText.replace(/~(.*?)~/g, '<s>$1</s>');
         formattedText = formattedText.replace(/```(.*?)```/g, '<code>$1</code>');
-
         return formattedText;
     }
 
     connectedCallback() {
+        console.log('filepreview ',this.filepreview);
+        if(this.filepreview){
+            this.isImgSelected = true;
+            this.IsHeaderText = false;
+        }
         this.tempbody = this.tempbody.replaceAll('\n', '<br/>');
         this.formatedTempBody = this.formatText(this.tempbody);
         this.fetchRecords();
@@ -66,20 +70,29 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     handleRecordSelection(event) {
         this.selectedContactId = event.target.value;
-        console.log('Selected Record ID:', this.selectedContactId);
+        console.log('Selected Record ID:', this.selectedContactId);    
         this.fetchContactDetails();
+    
         getTemplateWithReplacedValues({
             recordId: this.selectedContactId,
         })
         .then(result => {
-            this.formatedTempBody = this.formatText(result);
-            console.log('this.tempbody.... ',this.tempbody);
-            
+            if (result) {
+                const { header, body } = result;    
+                this.tempheader = this.formatText(header);
+                this.formatedTempBody = this.formatText(body);
+    
+                console.log('Formatted Header:', this.tempheader);
+                console.log('Formatted Body:', this.formatedTempBody);
+            } else {
+                console.warn('No template data returned.');
+            }
         })
         .catch(error => {
             console.error('Error replacing template:', error);
         });
     }
+    
 
     fetchContactDetails() {
         if (this.selectedContactId) {

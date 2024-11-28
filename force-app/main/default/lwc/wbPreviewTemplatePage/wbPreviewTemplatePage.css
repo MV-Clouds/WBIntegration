@@ -4,8 +4,6 @@
 
 .main-container {
     position: relative;
-    /* background: white; */
-    /* background-image: url('/resource/wbiTemplateBg'); */
     background-size: cover;
     /* height: 100%; */
     padding: 2rem;
@@ -58,13 +56,8 @@
     overflow: hidden;
 }
 .PreviewmainWP {
-    /* height: fit-content;
-    border-radius: 5px;
-    position: sticky;
-    top: 13%; */
     width: 98%;
     height: 98%;
-    /* background-color: #f8f8f8; */
     background-image: url('/resource/wbiBg');
     border-radius: 20px;
     overflow-y: auto;
@@ -172,23 +165,6 @@ input{
     font-weight: 500;
 }
 
-/* .footer{
-    text-align: center;
-    margin-top: 2rem;
-}
-
-.close-btn{
-    border: 1px solid #c7c7c7;
-    border-radius: 3px;
-    color: black;
-    padding: 0.3rem;
-    padding-left: 0.7rem;
-    padding-right: 0.7rem;
-    font-size: 14px;
-    background: white;
-    font-weight: 500;
-} */
-
 .heading{
     display: flex;
     background: #075E54;
@@ -247,6 +223,12 @@ input{
 .textfooterWP {
     display: flex;
     justify-content: space-between;
+}
+
+.pfooterWP {
+    font-size: smaller;
+    color: #b2b2b2;
+    max-width: 90%;
 }
 
 .timefooterWP {

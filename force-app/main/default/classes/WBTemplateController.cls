@@ -84,47 +84,65 @@ public with sharing class WBTemplateController {
     }
 
     @AuraEnabled(cacheable=true)
-    public static String getTemplateWithReplacedValues(String recordId) {
+    public static Map<String, String> getTemplateWithReplacedValues(String recordId) {
         try {
-            Template__c template = [SELECT Id, Name, Template_Body__c FROM Template__c WITH SECURITY_ENFORCED ORDER BY CreatedDate DESC LIMIT 1];
-    
+            Template__c template = [SELECT Id, Name, Template_Body__c, Header_Body__c FROM Template__c WITH SECURITY_ENFORCED ORDER BY CreatedDate DESC LIMIT 1];
+
             List<Template_Variable__c> variables = [
-                SELECT Id, Object_Name__c, Field_Name__c
+                SELECT Id, Object_Name__c, Field_Name__c, Type__c
                 FROM Template_Variable__c
                 WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
             ];
-        
+
+            Map<Integer, String> headerFieldMapping = new Map<Integer, String>();
+            Map<Integer, String> bodyFieldMapping = new Map<Integer, String>();
+
             String objectName = 'Contact';
             List<String> fields = new List<String>();
-            Map<Integer, String> fieldMapping = new Map<Integer, String>();
-            
-            Integer index = 1;
+
+            Integer headerIndex = 1;
+            Integer bodyIndex = 1;
             for (Template_Variable__c var : variables) {
                 objectName = var.Object_Name__c; 
                 fields.add(var.Field_Name__c);
-                fieldMapping.put(index, var.Field_Name__c); 
-                index++;
+                if (var.Type__c == 'Header') {
+                    headerFieldMapping.put(headerIndex, var.Field_Name__c);
+                    headerIndex++;
+                } else if (var.Type__c == 'Body') {
+                    bodyFieldMapping.put(bodyIndex, var.Field_Name__c);
+                    bodyIndex++;
+                }
             }
-        
+
             String query = 'SELECT ' + String.join(fields, ',') + ' FROM ' + objectName + ' WHERE Id = :recordId WITH SECURITY_ENFORCED';
             SObject record = Database.query(query);
-        
+
+            String templateHeader = template.Header_Body__c	 != null ? template.Header_Body__c	 : '';
+            for (Integer i : headerFieldMapping.keySet()) {
+                String fieldName = headerFieldMapping.get(i);
+                Object value = record.get(fieldName);
+                templateHeader = templateHeader.replace('{{' + i + '}}', value != null ? value.toString() : '');
+            }
+
             String templateBody = template.Template_Body__c;
-            for (Integer i : fieldMapping.keySet()) {
-                String fieldName = fieldMapping.get(i);
+            for (Integer i : bodyFieldMapping.keySet()) {
+                String fieldName = bodyFieldMapping.get(i);
                 Object value = record.get(fieldName);
                 templateBody = templateBody.replace('{{' + i + '}}', value != null ? value.toString() : '');
             }
-            System.debug(templateBody);
-            return templateBody;
+
+            Map<String, String> result = new Map<String, String>();
+            result.put('header', templateHeader);
+            result.put('body', templateBody);
+            System.debug('result '+result);
+            return result;
 
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getTemplateWithReplacedValues',e.getLineNumber());
+            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getTemplateWithReplacedValues', e.getLineNumber());
             return null;
         }
-       
     }
-    
+
     
     @AuraEnabled(cacheable=true)
     public static Boolean doesTemplateExist(String templateName) {
@@ -292,9 +310,9 @@ public with sharing class WBTemplateController {
         }
         return null;
     }        
-    
+
     @AuraEnabled
-    public static String uploadFileChunk(String uploadSessionId, String fileContent, Integer chunkStart, Integer chunkSize) {
+    public static String uploadFileChunk(String uploadSessionId, String fileContent, Integer chunkStart, Integer chunkSize, String fileName) {
         try {
             Blob fileBlob = EncodingUtil.base64Decode(fileContent);
 
@@ -305,10 +323,9 @@ public with sharing class WBTemplateController {
             req.setEndpoint(endpoint);
             req.setMethod('POST');            
             req.setHeader('Authorization', 'OAuth ' + accessToken);
-            req.setHeader('file_offset' ,'0');            
+            req.setHeader('file_offset', String.valueOf(chunkStart)); 
             req.setHeader('Content-Range', 'bytes ' + chunkStart + '-' + (chunkStart + chunkSize - 1) + '/' + fileBlob.size());            
             
-            // Set the body as Blob
             req.setBodyAsBlob(fileBlob);
 
             HttpResponse res = http.send(req);
@@ -316,10 +333,8 @@ public with sharing class WBTemplateController {
 
             if (res.getStatusCode() == 200) {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-                String headerHandle = (String) responseMap.get('h');
-                // if (headerHandle != null && headerHandle.startsWith('upload:')) {
-                //     headerHandle = headerHandle.replace('upload:', ''); 
-                // }
+                String headerHandle = (String) responseMap.get('h');                
+                createContentVersionAndDocument(headerHandle, fileName, fileBlob);
 
                 return headerHandle; 
             } else {
@@ -327,9 +342,28 @@ public with sharing class WBTemplateController {
             }
         } catch (Exception e) {
             System.debug('Error in uploadFileChunk: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'uploadFileChunk',e.getLineNumber());
+            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'uploadFileChunk', e.getLineNumber());
         }
         return '';
+    }
+
+    private static void createContentVersionAndDocument(String headerHandle, String fileName, Blob fileBlob) {
+        try {
+            ContentVersion contentVersion = new ContentVersion();
+            contentVersion.Title = fileName;
+            contentVersion.PathOnClient = fileName;
+            contentVersion.VersionData = fileBlob;
+            contentVersion.Origin = 'H'; 
+
+            if (Schema.sObjectType.ContentVersion.isCreateable()) {
+                insert contentVersion;
+            }            
+            
+            System.debug('Created ContentVersion and ContentDocument: ' + contentVersion.Id + ', ' + contentDocument.Id);
+        } catch (Exception e) {
+            System.debug('Error creating ContentVersion and ContentDocument: ' + e.getMessage());
+            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'createContentVersionAndDocument', e.getLineNumber());
+        }
     }
 
     private static Blob getBlobChunk(Blob blobdata, Integer start, Integer size) {
@@ -354,7 +388,10 @@ public with sharing class WBTemplateController {
                     wbTemplate.Status__c = 'Rejected';
                 }
                 
-                update wbTemplate;
+                if(Template__c.SobjectType.getDescribe().isUpdateable()){
+                    update wbTemplate;
+                }
+               
             } else {
                 System.debug('No WhatsApp Template found for Template Id: ' + templateId);
             }
@@ -400,6 +437,7 @@ public with sharing class WBTemplateController {
                 return 'Template is not deleted';
             }
         } catch (Exception e) {
+            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'deleteTemplete',e.getLineNumber());
             return e.getMessage();
         }
     }

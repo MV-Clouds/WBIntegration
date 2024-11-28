@@ -345,7 +345,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                         uploadSessionId: this.uploadSessionId,
                         fileContent: base64Data,  
                         chunkStart: chunkStart,
-                        chunkSize: base64Data.length
+                        chunkSize: base64Data.length,
+                        fileName: this.fileName
                     })
                     .then(result=>{
                         console.log('result ',result);

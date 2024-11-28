@@ -5,13 +5,10 @@
 .main {
     padding: 1%;
 }
+.preview-container{
+    display: grid;
+}
 
-/* .slds-modal__content{
-    padding: 0;
-    border-radius: 5px;
-    width: 60rem;
-    background-image: url('/resource/wbiTemplateBg');
-} */
 .template-preview{
     padding: 0;
     border-radius: 5px;
