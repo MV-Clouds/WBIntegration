@@ -13,15 +13,37 @@
                     <div class="createtempdiv2">
                         <div class="slds-box slds-theme_default templateContent3">
                             <div class="left">
-                                <template if:true={variables.length}>
-                                    <p class="variable-heading">Add Variables</p>
-                                    <template for:each={variables} for:item="variable">
-                                        <div key={variable} class="var">
-                                            <label for="variable-{variable}" class="var-label">{variable}</label>
-                                            <input type="text" data-name={variable} class="var-input" oninput={handleInputChange}>
-                                        </div>
-                                    </template>
-                                </template>
+                                <!-- <template if:true={variables.length}> -->
+                                    <p class="variable-heading">Select Record to Show Preview</p>
+                                    <div class="true-div">
+                                        <select class="object-dropdown dropdown" disabled>
+                                            <template for:each={options} for:item="option">
+                                                <option key={option.value} value={option.value} selected={option.isSelected}>
+                                                    {option.label}
+                                                </option>
+                                            </template>
+                                        </select>
+                                        <select class="record-dropdown dropdown" onchange={handleRecordSelection}>
+                                            <template for:each={records} for:item="record">
+                                                <option key={record.Id} value={record.Id}>
+                                                    {record.Name}
+                                                </option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div class="con-details">
+                                        <template if:true={contactDetails}>
+                                            <template for:each={contactFields} for:item="field">
+                                                <p key={field.label} class="field-label">
+                                                    <strong>{field.label}:</strong> {field.value}
+                                                </p>
+                                            </template>
+                                        </template>
+                                        <template if:true={error}>
+                                            <p>Error fetching contact details: {error}</p>
+                                        </template>
+                                    </div>
+                                <!-- </template> -->
                                 <div class="phone">
                                     <label for="phone" class="phone-label">Phone No.</label>
                                     <div class="inputs">
@@ -45,7 +67,45 @@
                                     </div>
                                     <div class="PreviewtemplateWP">
                                         <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
-                                            <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>                    
+                                           
+                                            <template if:true={IsHeaderText}>
+                                                <div class="TextHeadingWP">
+                                                    <p>{tempheader}</p>
+                                                </div>
+                                            </template>
+                                            <template if:true={isImgSelected}>
+                                                <div>
+                                                    <img src={filepreview} alt="File Preview" style="max-width: 100%; height: auto;" />
+                                                </div>
+                                            </template>
+                                            <div class="TextBodyWP">
+                                                <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
+                                            </div>
+                                
+                                            <div class="textfooterWP">
+                                                <p class="pfooterWP">{tempfooter}</p>
+                                            </div>
+                                            <div class="TextTimeWP">
+                                                <p class="timefooterWP">11:59</p>
+                                            </div>
+                                    
+                                            <template for:each={buttonlist} for:item="button" for:index="index">
+                                                <hr key={button.id} class="separator-line"/>
+                                    
+                                                <div key={button.id} class="button-label-preview">
+                                                    <lightning-icon  icon-name={button.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+                                                    <p>{button.btntext}</p>
+                                                </div>
+                                            </template>
+                                            <template for:each={custombtnlist} for:item="customButton" for:index="index">
+                                                <hr key={customButton.id} class="separator-line"/>
+                                    
+                                                <div key={customButton.id} class="button-label-preview">
+                                                    <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+                                    
+                                                    <p>{customButton.Cbtntext}</p>
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
                                     
@@ -57,9 +117,8 @@
                    
                 </div>
             </div>
-            <!-- <div class="footer">
-                <button class="close-btn" onclick={closePreview}>Close</button>
-            </div> -->
         </div>
     </template>
 </template>
+
+   

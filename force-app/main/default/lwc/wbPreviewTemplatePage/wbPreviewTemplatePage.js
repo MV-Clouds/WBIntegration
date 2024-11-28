@@ -13,19 +13,29 @@ MODIFICATION LOG*
  ********************************************************************** */
 
 import { LightningElement,track,api } from 'lwc';
+import getRecordsBySObject from '@salesforce/apex/WBTemplateController.getRecordsBySObject'; 
+import getContactDetails from '@salesforce/apex/WBTemplateController.getContactDetails';
+import getTemplateWithReplacedValues from '@salesforce/apex/WBTemplateController.getTemplateWithReplacedValues'; 
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;
     @track variables = [];
     @track variableValues = {};
-    @api tempbody= `Hello *User*🤝, 
-
-Welcome this is a test template for message {{1}} testing purpose and will have different buttons {{2}} and options for testing {{3}} purpose.
-
-Regards,
-MV Clouds Pvt Ltd`;
+    @api tempbody;
+    @api tempheader;
+    @api tempfooter;
+    @api filepreview;
+    @api buttonlist=[];
+    @api custombtnlist=[];
     @track formatedTempBody;
-    
+    @track isImgSelected = false;
+    @track IsHeaderText = true;
+    @track options = [
+        { label: 'Contact', value: 'Contact', isSelected: true }
+    ];
+    @track records = [];
+    @track contactDetails=[];
+
     formatText(inputText) {
         let formattedText = inputText.replaceAll('\n', '<br/>');
         formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
@@ -37,41 +47,59 @@ MV Clouds Pvt Ltd`;
     }
 
     connectedCallback() {
-        console.log('Received tempbody:', this.tempbody);
         this.tempbody = this.tempbody.replaceAll('\n', '<br/>');
         this.formatedTempBody = this.formatText(this.tempbody);
-        this.addVariablesInput(); 
+        this.fetchRecords();
     }
 
-    addVariablesInput(){
-        const variableRegex = /{{(.*?)}}/g;
-        let match;
-        const variables = [];
-        while ((match = variableRegex.exec(this.tempbody)) !== null) {
-            variables.push(match[0]);
-        }
-        this.variables = variables; 
-        console.log('Extracted variables:', this.variables);
+    fetchRecords() {
+        getRecordsBySObject()
+            .then(data => {
+                this.records = data;
+                console.log(this.records);
+                
+            })
+            .catch(error => {
+                console.error('Error fetching records: ', error);
+            });
     }
 
-    handleInputChange(event) {
-        const variableIndex = event.target.getAttribute('data-name').replace(/[{}]/g, ''); 
-        const value = event.target.value; 
-        
-        this.variableValues[variableIndex] = value;
-        let updatedTempBody = this.tempbody;
-        this.variables.forEach(variable => {
-            const variableIndex = variable.replace(/[{}]/g, ''); 
+    handleRecordSelection(event) {
+        this.selectedContactId = event.target.value;
+        console.log('Selected Record ID:', this.selectedContactId);
+        this.fetchContactDetails();
+        getTemplateWithReplacedValues({
+            recordId: this.selectedContactId,
+        })
+        .then(result => {
+            this.formatedTempBody = this.formatText(result);
+            console.log('this.tempbody.... ',this.tempbody);
             
-            if (this.variableValues[variableIndex]) {
-                updatedTempBody = updatedTempBody.replace(variable, this.variableValues[variableIndex]);
-            }
+        })
+        .catch(error => {
+            console.error('Error replacing template:', error);
         });
-    
-        this.formatedTempBody = this.formatText(updatedTempBody);
     }
 
-    closePreview(){
-        this.ispreviewTemplate=false;
+    fetchContactDetails() {
+        if (this.selectedContactId) {
+            getContactDetails({ contactId: this.selectedContactId })
+                .then(result => {
+                    this.contactDetails = result;  
+                })
+                .catch(error => {
+                    this.contactDetails = {};  
+                    console.error('Error fetching contact details:', error);
+                });
+        }
     }
+
+
+    get contactFields() {
+        return Object.entries(this.contactDetails)
+            .filter(([key, value]) => value !== null && value !== undefined)
+            .map(([key, value]) => ({ label: key, value }));
+    }
+
+
 }

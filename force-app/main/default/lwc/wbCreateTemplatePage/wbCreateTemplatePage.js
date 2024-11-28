@@ -43,7 +43,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track marketingOpt = 0;
     @track isAllTemplate = false;
     @track iseditTemplatevisible = true;
-    @track isPreviewTemplate = true;
+    @track isPreviewTemplate = false;
     @track showReviewTemplate=false;
     @track IsHeaderText = false;
     @track addHeaderVar = false;
@@ -1280,8 +1280,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             if (result && result.success) { 
                 console.log('Template created successfully', result);
                 this.showToastSuccess('Template successfully created');
-                this.iseditTemplatevisible=false;
-                // this.isAllTemplate=true;
                 this.isPreviewTemplate=true;
                 this.isLoading=false;
                 // this.clearWrapper();

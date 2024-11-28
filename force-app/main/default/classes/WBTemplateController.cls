@@ -8,10 +8,10 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 27/11/2024
+ * Last Update Date : 28/11/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : deleteTemplete 
- * Change Description : Added method to delete template from meta as well as record page.
+ * Name of methods changed (Comma separated if more then one) : deleteTemplete,getRecordsBySObject,getContactDetails,getTemplateWithReplacedValues
+ * Change Description : Added methods to get contact details and template variable to replace placeholder in preview page.
  ***********************************************************************/
 
 public with sharing class WBTemplateController {
@@ -54,6 +54,78 @@ public with sharing class WBTemplateController {
         return fieldNames;
     }
 
+    @AuraEnabled(cacheable=true)
+    public static List<sObject> getRecordsBySObject() {
+        String sObjectName='Contact';
+        List<sObject> records = new List<sObject>();
+        
+        try {
+            String query = 'SELECT Id, Name FROM ' + sObjectName + ' LIMIT 100';             
+            records = Database.query(query);
+            System.debug('records '+records);
+        } catch (Exception e) {
+            System.debug('Error fetching records: ' + e.getMessage());
+            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getObjectFields',e.getLineNumber());
+        }
+        
+        return records;
+    }
+
+    @AuraEnabled(cacheable=true)
+    public static Contact getContactDetails(String contactId) {
+        try {
+            Contact contact = [SELECT Id, FirstName, LastName, Email, Phone, MailingAddress, AccountId FROM Contact WHERE Id = :contactId  WITH SECURITY_ENFORCED LIMIT 1];
+            return contact;
+        } catch (Exception e) {
+            System.debug('Error fetching contact details: ' + e.getMessage());
+            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getContactDetails',e.getLineNumber());
+            return null;
+        }
+    }
+
+    @AuraEnabled(cacheable=true)
+    public static String getTemplateWithReplacedValues(String recordId) {
+        try {
+            Template__c template = [SELECT Id, Name, Template_Body__c FROM Template__c WITH SECURITY_ENFORCED ORDER BY CreatedDate DESC LIMIT 1];
+    
+            List<Template_Variable__c> variables = [
+                SELECT Id, Object_Name__c, Field_Name__c
+                FROM Template_Variable__c
+                WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
+            ];
+        
+            String objectName = 'Contact';
+            List<String> fields = new List<String>();
+            Map<Integer, String> fieldMapping = new Map<Integer, String>();
+            
+            Integer index = 1;
+            for (Template_Variable__c var : variables) {
+                objectName = var.Object_Name__c; 
+                fields.add(var.Field_Name__c);
+                fieldMapping.put(index, var.Field_Name__c); 
+                index++;
+            }
+        
+            String query = 'SELECT ' + String.join(fields, ',') + ' FROM ' + objectName + ' WHERE Id = :recordId WITH SECURITY_ENFORCED';
+            SObject record = Database.query(query);
+        
+            String templateBody = template.Template_Body__c;
+            for (Integer i : fieldMapping.keySet()) {
+                String fieldName = fieldMapping.get(i);
+                Object value = record.get(fieldName);
+                templateBody = templateBody.replace('{{' + i + '}}', value != null ? value.toString() : '');
+            }
+            System.debug(templateBody);
+            return templateBody;
+
+        } catch (Exception e) {
+            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getTemplateWithReplacedValues',e.getLineNumber());
+            return null;
+        }
+       
+    }
+    
+    
     @AuraEnabled(cacheable=true)
     public static Boolean doesTemplateExist(String templateName) {
         Integer count = [SELECT COUNT() FROM Template__c WHERE Name = :templateName WITH SECURITY_ENFORCED];

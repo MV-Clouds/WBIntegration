@@ -124,7 +124,7 @@
     padding: 0.5rem;
 }
 .variable-heading{
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     margin-top: 0.5rem;
 }
@@ -145,6 +145,7 @@ input{
 }
 .left{
     width: 100%;
+    position: relative;
 }
 
 .inputs{
@@ -162,6 +163,9 @@ input{
 }
 .phone{
     margin-top: 1rem;
+    position: absolute;
+    width: -webkit-fill-available;
+    bottom: 0;
 }
 
 .phone-label{
@@ -214,4 +218,86 @@ input{
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.TextHeadingWP {
+    color: black;
+    font-size: larger;
+    font-weight: 700;
+    word-wrap: break-word;  
+    overflow-wrap: break-word; 
+    white-space: pre-wrap; 
+}
+
+.TextTimeWP {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: smaller;
+    /* margin-top: 1%; */
+    margin-bottom: 1%;
+    position: relative;
+    /* top: 10px; */
+}
+
+.TextBodyWP{
+    font-size: 12px;
+}
+
+.textfooterWP {
+    display: flex;
+    justify-content: space-between;
+}
+
+.timefooterWP {
+    font-size: x-small;
+    margin-bottom: 0.2rem;
+}
+
+.separator-line {
+    border: 0;
+    height: 1px;
+    background-color: #ccc;
+    margin: 10px 0;
+}
+
+.button-label-preview {
+    display: flex;
+    justify-content: center;
+    color: #03b1eb;
+    padding-left: 2rem;
+    padding-right: 2rem;
+
+}
+
+.custom-icon {
+    --sds-c-icon-color-foreground-default: #03b1eb;
+    margin-right: 0.5rem;
+}
+
+.dropdown{
+    border: 1px solid #d3d1d1;
+    border-radius: 4px;
+    padding: 0.4rem;
+    width: -webkit-fill-available;
+}
+
+.true-div{
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.object-dropdown{
+    width: 40%;
+}
+
+.con-details{
+    border: 1px solid #cfcfcf;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-top: 1rem;
+}
+.field-label{
+    margin-bottom: 0.5rem;
 }

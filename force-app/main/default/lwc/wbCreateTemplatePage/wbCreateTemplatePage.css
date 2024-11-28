@@ -6,7 +6,13 @@
     padding: 1%;
 }
 
-.slds-modal__content{
+/* .slds-modal__content{
+    padding: 0;
+    border-radius: 5px;
+    width: 60rem;
+    background-image: url('/resource/wbiTemplateBg');
+} */
+.template-preview{
     padding: 0;
     border-radius: 5px;
     width: 60rem;
@@ -30,7 +36,6 @@
 }
 
 .templatePreview {
-    /* background: url(/resource/whatsApp_Background); */
     background-color: #EBE8E2;
     height: 28rem;
     width: 19rem;
@@ -160,10 +165,7 @@
     padding: 0.5rem;
     padding-right: 4rem;
     border: 1px solid #c7c4c4;
-    /* border-color: #80808087; */
     border-radius: 5px;
-    /* border-top-color: #dddbdb87;
-    border-left-color: #dddbdb87; */
 }
 
 label {
@@ -171,7 +173,6 @@ label {
     font-weight: 500;
     color: #1a1a1aed;
     margin-bottom: 0.2rem;
-    /* margin-bottom: 0.3rem; */
 }
 
 .templateContent4 {
@@ -210,10 +211,7 @@ label {
     padding-right: 4rem;
     width: 100%;
     border: 1px solid #bfbfbf;
-    /* border-color: #80808087; */
     border-radius: 5px;
-    /* border-top-color: #c5c2c278;
-    border-left-color: #c5c2c278; */
 }
 
 .slds-button {
@@ -353,11 +351,8 @@ textarea {
 .footerInput {
     padding: 0.5rem;
     padding-right: 4rem;
-    /* border-color: #80808087; */
     border: 1px solid #c7c4c4;
     border-radius: 5px;
-    /* border-top-color: #dddbdb87;
-    border-left-color: #dddbdb87; */
     width: 100%;
 }
 
@@ -689,7 +684,6 @@ textarea {
 }
 
 .Previewtemplate {
-    /* background: url(/resource/whatsApp_Background); */
     background-color: #EBE8E2;
     height: 24rem;
     border-radius: 10px;
@@ -736,7 +730,6 @@ textarea {
 }
 
 .PreviewtemplateWP {
-    /* background: url(/resource/whatsApp_Background); */
     background-color: #EBE8E2;
     height: fit-content;
     padding-top: 4%;
@@ -797,7 +790,6 @@ textarea {
 .PreviewtemplateimageWP,
 .PreviewtemplatevideoWP,
 .PreviewtemplatedocWP {
-    /* background: url(/resource/whatsApp_Background); */
     background-color: #EBE8E2;
     height: 16rem;
     width: 20rem;
@@ -907,9 +899,7 @@ textarea {
     border: 0;
     height: 1px;
     background-color: #ccc;
-    /* Change color as needed */
     margin: 10px 0;
-    /* Adjust spacing as needed */
 }
 
 .button-label-preview {
@@ -939,7 +929,6 @@ textarea {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* background-color: rgba(255, 255, 255, 0.7);  */
     z-index: 10;
 }
 
