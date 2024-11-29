@@ -376,17 +376,20 @@ export default class WbCreateTemplatePage extends LightningElement {
             const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
             const chunk = this.file.slice(chunkStart, chunkEnd);
             const reader = new FileReader();
+ 
             reader.onloadend = async () => {
                 const base64Data = reader.result.split(',')[1]; 
-
+                const fileChunkWrapper = {
+                    uploadSessionId: this.uploadSessionId,
+                    fileContent: base64Data,
+                    chunkStart: chunkStart,
+                    chunkSize: base64Data.length,
+                    fileName: this.fileName,
+                };
+                const serializedWrapper = JSON.stringify(fileChunkWrapper);
+                
                 try {
-                    uploadFileChunk({
-                        uploadSessionId: this.uploadSessionId,
-                        fileContent: base64Data,  
-                        chunkStart: chunkStart,
-                        chunkSize: base64Data.length,
-                        fileName: this.fileName
-                    })
+                    uploadFileChunk({serializedWrapper:serializedWrapper})
                     .then(result=>{
                         console.log('result ',result);
                         if (result) {
@@ -1103,7 +1106,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     formatText(inputText) {
-        // inputText = inputText.replace(/(\n\s*){3,}/g, '\n\n');
+        inputText = inputText.replace(/(\n\s*){3,}/g, '\n\n');
 
         let formattedText = inputText.replaceAll('\n', '<br/>');
         formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');

@@ -16,13 +16,15 @@
                                 <!-- <template if:true={variables.length}> -->
                                     <p class="variable-heading">Select Record to Show Preview</p>
                                     <div class="true-div">
-                                        <select class="object-dropdown dropdown" disabled>
-                                            <template for:each={options} for:item="option">
-                                                <option key={option.value} value={option.value} selected={option.isSelected}>
-                                                    {option.label}
-                                                </option>
-                                            </template>
-                                        </select>
+                                        <div class="object-div">
+                                            <select class="object-dropdown dropdown" disabled>
+                                                <template for:each={options} for:item="option">
+                                                    <option key={option.value} value={option.value} selected={option.isSelected}>
+                                                        {option.label}
+                                                    </option>
+                                                </template>
+                                            </select>
+                                        </div>
                                         <select class="record-dropdown dropdown" onchange={handleRecordSelection}>
                                             <template for:each={records} for:item="record">
                                                 <option key={record.Id} value={record.Id}>
@@ -31,18 +33,20 @@
                                             </template>
                                         </select>
                                     </div>
+                                    
+                                    
                                     <template if:true={contactDetails}>
-                                    <div class="con-details">
-                                        <template for:each={contactFields} for:item="field">
-                                            <p key={field.label} class="field-label">
-                                                <strong>{field.label}:</strong> {field.value}
-                                            </p>
-                                        </template>
-                                        <template if:true={error}>
-                                            <p>Error fetching contact details: {error}</p>
-                                        </template>
-                                    </div>
-                                </template>
+                                        <div class="con-details">
+                                            <template for:each={contactFields} for:item="field">
+                                                <p key={field.label} class="field-label">
+                                                    <strong>{field.label}:</strong> {field.value}
+                                                </p>
+                                            </template>
+                                            <template if:true={error}>
+                                                <p>Error fetching contact details: {error}</p>
+                                            </template>
+                                        </div>
+                                    </template>
                                 <!-- </template> -->
                                 <div class="phone">
                                     <label for="phone" class="phone-label">Phone No.</label>

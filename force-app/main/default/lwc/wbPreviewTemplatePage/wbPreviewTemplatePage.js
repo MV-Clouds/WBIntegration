@@ -13,14 +13,13 @@ MODIFICATION LOG*
  ********************************************************************** */
 
 import { LightningElement,track,api } from 'lwc';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getRecordsBySObject from '@salesforce/apex/WBTemplateController.getRecordsBySObject'; 
 import getContactDetails from '@salesforce/apex/WBTemplateController.getContactDetails';
 import getTemplateWithReplacedValues from '@salesforce/apex/WBTemplateController.getTemplateWithReplacedValues'; 
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;
-    @track variables = [];
-    @track variableValues = {};
     @api tempbody;
     @api tempheader;
     @api tempfooter;
@@ -74,12 +73,21 @@ export default class WbPreviewTemplatePage extends LightningElement {
             });
     }
 
+
     handleRecordSelection(event) {
         try {
             this.selectedContactId = event.target.value;
             console.log('Selected Record ID:', this.selectedContactId);    
             this.fetchContactDetails();
     
+            const hasVariables = this.tempbody.includes('{{') || this.tempheader.includes('{{');
+
+            if (!hasVariables) {
+                console.warn('No variables found in the template. Please check the template structure.');
+                this.showToast('Warning!', 'No variables found in the template to replace.', 'warning');
+                return; 
+            }
+        
             getTemplateWithReplacedValues({
                 recordId: this.selectedContactId,
             })
@@ -122,5 +130,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
             console.error('Unexpected error in fetchContactDetails:', err);
         }
     }
-    
+
+    showToast(title,message,variant) {
+        const toastEvent = new ShowToastEvent({
+            title,
+            message,
+            variant
+        });
+        this.dispatchEvent(toastEvent);
+    }
 }

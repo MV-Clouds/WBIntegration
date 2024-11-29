@@ -1,17 +1,17 @@
  /**
  * Class Name: WBTemplateController
  * Test Class: 
- * @description: Used in WbAllTemplatePage LWC components, it used to get the template record, 
+ * @description: Used in LWC components, it used to get the template record, 
                 picklist value from static resource and callout for creation of template.
  * Date: 25/11/2024
  * Created By: Kajal Tiwari
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 28/11/2024
+ * Last Update Date : 29/11/2024
  * Updated By : Kajal Tiwari
  * Name of methods changed (Comma separated if more then one) : deleteTemplete,getRecordsBySObject,getContactDetails,getTemplateWithReplacedValues
- * Change Description : Added methods to get contact details and template variable to replace placeholder in preview page.
+ * Change Description : Update getTemplateWithReplacedValues methods to get contact details and template variable to replace placeholder in preview page. Reduce parameter in method by using Wrapper.
  ***********************************************************************/
 
 public with sharing class WBTemplateController {
@@ -20,6 +20,7 @@ public with sharing class WBTemplateController {
     public static String endpoint = System.Label.WHATSAPP_TEMPLATE_ENPOINT;
     public static String uploadEndpoint = System.Label.WB_TEMPLATE_UPLOAD_FILE;
 
+    // Used in WbAllTemplatePage to get all template record.
     @AuraEnabled(cacheable=true)
     public static List<Template__c> getWhatsAppTemplates() {
         try {
@@ -36,6 +37,7 @@ public with sharing class WBTemplateController {
        
     }
 
+    // Used to fetch all the field related to object name
     @AuraEnabled(cacheable=true)
     public static List<String> getObjectFields() {
         String objectName = 'Contact';
@@ -54,6 +56,7 @@ public with sharing class WBTemplateController {
         return fieldNames;
     }
 
+    // Fetch records based on the object name
     @AuraEnabled(cacheable=true)
     public static List<sObject> getRecordsBySObject() {
         String sObjectName='Contact';
@@ -67,10 +70,10 @@ public with sharing class WBTemplateController {
             System.debug('Error fetching records: ' + e.getMessage());
             ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getObjectFields',e.getLineNumber());
         }
-        
         return records;
     }
 
+    // Used to fetch contact detail based on the contactId
     @AuraEnabled(cacheable=true)
     public static Contact getContactDetails(String contactId) {
         try {
@@ -83,19 +86,22 @@ public with sharing class WBTemplateController {
         }
     }
 
+    // It used to replace value of field with the variable placeholder in preview page.
     @AuraEnabled(cacheable=true)
     public static Map<String, String> getTemplateWithReplacedValues(String recordId) {
         try {
             Template__c template = [SELECT Id, Name, Template_Body__c, Header_Body__c FROM Template__c WITH SECURITY_ENFORCED ORDER BY CreatedDate DESC LIMIT 1];
 
             List<Template_Variable__c> variables = [
-                SELECT Id, Object_Name__c, Field_Name__c, Type__c
+                SELECT Id, Object_Name__c, Field_Name__c, Type__c, Alternate_Text__c
                 FROM Template_Variable__c
                 WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
             ];
 
             Map<Integer, String> headerFieldMapping = new Map<Integer, String>();
             Map<Integer, String> bodyFieldMapping = new Map<Integer, String>();
+            String templateHeader = template.Header_Body__c	 != null ? template.Header_Body__c	 : '';
+            String templateBody = template.Template_Body__c	 != null ? template.Template_Body__c	 : '';
 
             String objectName = 'Contact';
             List<String> fields = new List<String>();
@@ -113,18 +119,17 @@ public with sharing class WBTemplateController {
                     bodyIndex++;
                 }
             }
+            fields = new List<String>(new Set<String>(fields));
 
             String query = 'SELECT ' + String.join(fields, ',') + ' FROM ' + objectName + ' WHERE Id = :recordId WITH SECURITY_ENFORCED';
             SObject record = Database.query(query);
 
-            String templateHeader = template.Header_Body__c	 != null ? template.Header_Body__c	 : '';
             for (Integer i : headerFieldMapping.keySet()) {
                 String fieldName = headerFieldMapping.get(i);
                 Object value = record.get(fieldName);
                 templateHeader = templateHeader.replace('{{' + i + '}}', value != null ? value.toString() : '');
             }
 
-            String templateBody = template.Template_Body__c;
             for (Integer i : bodyFieldMapping.keySet()) {
                 String fieldName = bodyFieldMapping.get(i);
                 Object value = record.get(fieldName);
@@ -143,13 +148,14 @@ public with sharing class WBTemplateController {
         }
     }
 
-    
+    // Check if same template already exist.
     @AuraEnabled(cacheable=true)
     public static Boolean doesTemplateExist(String templateName) {
         Integer count = [SELECT COUNT() FROM Template__c WHERE Name = :templateName WITH SECURITY_ENFORCED];
         return count > 0;
     }
     
+    // Get picklist value for catagory and status used in WbAllTemplatePage to filter.
     @AuraEnabled(cacheable=true)
     public static Map<String, List<String>> getCategoryAndStatusPicklistValues() {
         Map<String, List<String>> picklistValues = new Map<String, List<String>>();
@@ -182,6 +188,7 @@ public with sharing class WBTemplateController {
         
     }
 
+    // Fetch country and code which used as picklist in the Create Template Page.
     @AuraEnabled(cacheable=true)
     public static List<Map<String, String>> getCountryCodes() {
         List<Map<String, String>> result = new List<Map<String, String>>();
@@ -210,6 +217,7 @@ public with sharing class WBTemplateController {
        
     }
 
+    // Fetch language and code which used as picklist in the Create Template Page.
     @AuraEnabled(cacheable=true)
     public static List<Map<String, String>> getLanguages() {
         List<Map<String, String>> result = new List<Map<String, String>>();
@@ -237,6 +245,7 @@ public with sharing class WBTemplateController {
         }
     }
 
+    // Callout to create template in the Meta and the Body creation and response handle in CreateTemplateWrapper Class.
     @AuraEnabled
     public static Map<String, Object> createWhatsappTemplate(String serializedWrapper) {
         Map<String, Object> response = new Map<String, Object>();
@@ -274,6 +283,7 @@ public with sharing class WBTemplateController {
         return response;
     }
 
+    // Method to get session Id for uploading file to meta.
     @AuraEnabled
     public static String startUploadSession(String fileName, Integer fileLength, String fileType) {
         try {
@@ -311,20 +321,23 @@ public with sharing class WBTemplateController {
         return null;
     }        
 
+    // Method to upload file to meta and get file handle which use to create body for image header.
     @AuraEnabled
-    public static String uploadFileChunk(String uploadSessionId, String fileContent, Integer chunkStart, Integer chunkSize, String fileName) {
+    public static String uploadFileChunk(String serializedWrapper) {
         try {
-            Blob fileBlob = EncodingUtil.base64Decode(fileContent);
+            FileChunkWrapper fileWrapper = (FileChunkWrapper) JSON.deserialize(serializedWrapper, FileChunkWrapper.class);
+
+            Blob fileBlob = EncodingUtil.base64Decode(fileWrapper.fileContent);
 
             HttpRequest req = new HttpRequest();
             Http http = new Http();
 
-            String endpoint = 'https://graph.facebook.com/v21.0/upload:' + uploadSessionId;
+            String endpoint = 'https://graph.facebook.com/v21.0/upload:' + fileWrapper.uploadSessionId;
             req.setEndpoint(endpoint);
             req.setMethod('POST');            
             req.setHeader('Authorization', 'OAuth ' + accessToken);
-            req.setHeader('file_offset', String.valueOf(chunkStart)); 
-            req.setHeader('Content-Range', 'bytes ' + chunkStart + '-' + (chunkStart + chunkSize - 1) + '/' + fileBlob.size());            
+            req.setHeader('file_offset', String.valueOf(fileWrapper.chunkStart)); 
+            req.setHeader('Content-Range', 'bytes ' + fileWrapper.chunkStart + '-' + (fileWrapper.chunkStart + fileWrapper.chunkSize - 1) + '/' + fileBlob.size());            
             
             req.setBodyAsBlob(fileBlob);
 
@@ -334,7 +347,7 @@ public with sharing class WBTemplateController {
             if (res.getStatusCode() == 200) {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                 String headerHandle = (String) responseMap.get('h');                
-                createContentVersionAndDocument(headerHandle, fileName, fileBlob);
+                createContentVersionAndDocument(headerHandle, fileWrapper.fileName, fileBlob);
 
                 return headerHandle; 
             } else {
@@ -347,6 +360,7 @@ public with sharing class WBTemplateController {
         return '';
     }
 
+    // Store the file in content version that can be used while sending template.
     private static void createContentVersionAndDocument(String headerHandle, String fileName, Blob fileBlob) {
         try {
             ContentVersion contentVersion = new ContentVersion();
@@ -366,12 +380,7 @@ public with sharing class WBTemplateController {
         }
     }
 
-    private static Blob getBlobChunk(Blob blobdata, Integer start, Integer size) {
-        String blobAsString = blobdata.toString();
-        String chunkString = blobAsString.substring(start, start + size);
-        return Blob.valueOf(chunkString);
-    }
-   
+    // Used in WhatsappWebhook class to update status field as per webhook response
     @future (callout=true)
     public static void updateWhatsAppTemplateStatus(String templateId, String event) {
         try {
@@ -401,6 +410,7 @@ public with sharing class WBTemplateController {
         }
     }
 
+    // Method used to delete template from meta as well as from record page.
     @AuraEnabled
     public static string deleteTemplete(String templateId){
         try {
@@ -425,7 +435,6 @@ public with sharing class WBTemplateController {
                     if(Template__c.sObjectType.getDescribe().isDeletable()){
                         DELETE wbTempRec;
                     }
-
                     System.debug('The operation was successful.');
                     return 'Template deleted successfully';
                 } else {
@@ -441,4 +450,13 @@ public with sharing class WBTemplateController {
             return e.getMessage();
         }
     }
+
+    public class FileChunkWrapper {
+        @AuraEnabled public String uploadSessionId;
+        @AuraEnabled public String fileContent;
+        @AuraEnabled public Integer chunkStart;
+        @AuraEnabled public Integer chunkSize;
+        @AuraEnabled public String fileName;
+    }
+    
 }

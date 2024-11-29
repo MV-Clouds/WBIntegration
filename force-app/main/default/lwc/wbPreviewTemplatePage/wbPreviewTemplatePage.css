@@ -270,16 +270,31 @@ input{
     margin-top: 0.5rem;
 }
 
-.object-dropdown{
+.object-div{
     width: 40%;
 }
 
+.object-dropdown{
+    width: -webkit-fill-available;
+}
+
 .con-details{
-    border: 1px solid #cfcfcf;
-    border-radius: 4px;
-    padding: 0.5rem;
+    /* border: 1px solid #cfcfcf; */
+    /* border-radius: 4px;
+    padding: 0.5rem; */
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
     margin-top: 1rem;
 }
+
 .field-label{
     margin-bottom: 0.5rem;
+}
+
+.searchable-dropdown{
+    width: -webkit-fill-available;
+}
+
+.search-record{
+    padding: 0.5rem;
 }

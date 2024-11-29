@@ -15,6 +15,7 @@
 
 public with sharing class CreateTemplateWrapper {
     
+    // Main method to build overall payload to pass in create template
     public static Map<String, Object> buildPayload(TemplateWrapper templateWrapper) {
         try {
             Map<String, Object> payload = new Map<String, Object>();
@@ -178,6 +179,7 @@ public with sharing class CreateTemplateWrapper {
         return buttonComponents;
     }
     
+    // Handle response and store all in the template and template variable record.
     public static void handleSuccessResponse(HttpResponse res, Map<String, Object> payload, Map<String, Object> response, TemplateWrapper templateWrapper) {
         try {
             
@@ -209,63 +211,62 @@ public with sharing class CreateTemplateWrapper {
             List<Template_Variable__c> variableRecords = new List<Template_Variable__c>();
 
             List<Object> components = (List<Object>) payloadMap.get('components');
-            for (Object comp : components) {
-                if (comp instanceof Map<String, Object>) {
-                    Map<String, Object> component = (Map<String, Object>) comp;
-                    String type = (String) component.get('type');
-                    Map<String, Object> example = (Map<String, Object>) component.get('example');
-    
-                    if (type == 'HEADER') {
-                        headerType = (String) component.get('format');
-                        headerText = '<p><b>'+(String) component.get('text')+'</b></p>';
-
-                        if (example != null && example.containsKey('header_text') && example.get('header_text') instanceof List<Object>) {
-                            List<Object> headerExampleObj = (List<Object>) example.get('header_text');
             
-                            if (!headerExampleObj.isEmpty()) {
-                                headerMergeText = (String) headerExampleObj[0];
-                                headerMergeText = headerMergeText.replace('{{', '').replace('}}', '');
-                                List<String> parts = headerMergeText.split('\\.');
-                                if (parts.size() == 2) {
-                                    variableRecords.add(new Template_Variable__c(
-                                        Object_Name__c = 'Contact',
-                                        Field_Name__c = parts[1],
-                                        Type__c = 'Header'
-                                    ));
-                                }
+            for (Object comp : components) {
+                if (!(comp instanceof Map<String, Object>)) {
+                    System.debug('Expected component to be a Map<String, Object>, found: ' + comp);
+                    continue;
+                }
+            
+                Map<String, Object> component = (Map<String, Object>) comp;
+                String type = (String) component.get('type');
+                Map<String, Object> example = (Map<String, Object>) component.get('example');
+            
+                if (type == 'HEADER') {
+                    headerType = (String) component.get('format');
+                    headerText = '<p><b>' + (String) component.get('text') + '</b></p>';
+            
+                    if (example != null && example.containsKey('header_text') && example.get('header_text') instanceof List<Object>) {
+                        List<Object> headerExampleObj = (List<Object>) example.get('header_text');
+                        if (!headerExampleObj.isEmpty()) {
+                            headerMergeText = (String) headerExampleObj[0];
+                            headerMergeText = headerMergeText.replace('{{', '').replace('}}', '');
+                            List<String> parts = headerMergeText.split('\\.');
+                            if (parts.size() == 2) {
+                                variableRecords.add(new Template_Variable__c(
+                                    Object_Name__c = 'Contact',
+                                    Field_Name__c = parts[1],
+                                    Type__c = 'Header'
+                                ));
                             }
                         }
-                    } 
-                    else if (type == 'BODY') {
-                        Map<String, Object> result = handleBodyComponent(category, component, example);
-                        bodyText = (String) result.get('bodyText');
-                        bodyMergeText = (String) result.get('bodyMergeText');
-                        List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
-                       
-                        for (Map<String, String> field : parsedFields) {
-                            variableRecords.add(new Template_Variable__c(
-                                Object_Name__c = 'Contact',
-                                Field_Name__c = field.get('fieldName'),
-                                Type__c = 'Body'
-                            ));
-                        }
                     }
-                     else if (type == 'FOOTER') {
-                        footerText = (String) component.get('text');
-                    } else if (type == 'BUTTONS') { 
-                        buttonDetails = handleButtonComponent(component);
-                        for (Map<String, String> button : buttonDetails) {
-                            buttonType = button.get('type');
-                            buttonText = button.get('text');
-                            buttonValue = button.get('value');
-                        }
+                } else if (type == 'BODY') {
+                    Map<String, Object> result = handleBodyComponent(category, component, example);
+                    bodyText = (String) result.get('bodyText');
+                    bodyMergeText = (String) result.get('bodyMergeText');
+                    List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
+            
+                    for (Map<String, String> field : parsedFields) {
+                        variableRecords.add(new Template_Variable__c(
+                            Object_Name__c = 'Contact',
+                            Field_Name__c = field.get('fieldName'),
+                            Type__c = 'Body'
+                        ));
                     }
-
-                } else {
-                    System.debug('Expected component to be a Map<String, Object>, found: ' + comp);
+                }
+                else if (type == 'FOOTER') {
+                    footerText = (String) component.get('text');
+                } else if (type == 'BUTTONS') { 
+                    buttonDetails = handleButtonComponent(component);
+                    for (Map<String, String> button : buttonDetails) {
+                        buttonType = button.get('type');
+                        buttonText = button.get('text');
+                        buttonValue = button.get('value');
+                    }
                 }
             }
-    
+
             String formattedBodyText = (bodyText != null) ? convertMarkdownToHtml(bodyText) : '';
     
             // Create template record
@@ -361,8 +362,7 @@ public with sharing class CreateTemplateWrapper {
     
         return result; 
     }
-    
-    
+
     private static List<Map<String, String>> handleButtonComponent(Map<String, Object> component) {
         List<Map<String, String>> buttonDetails = new List<Map<String, String>>();
         try {
@@ -403,7 +403,7 @@ public with sharing class CreateTemplateWrapper {
         return buttonDetails; 
     }
     
-      
+    // Used to format text
     public static String convertMarkdownToHtml(String bodyText) {
         bodyText = bodyText.replaceAll('\\*{1,2}([^*]+)\\*{1,2}', '<strong>$1</strong>');
         bodyText = bodyText.replaceAll('_([^_]+)_', '<em>$1</em>');        
