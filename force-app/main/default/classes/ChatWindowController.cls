@@ -21,7 +21,7 @@ public with sharing class ChatWindowController {
         try {
             // Your Code
             chats = [SELECT Id,Type_of_Message__c, Message__c, Time_of_Message__c, Message_Status__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
-            Integer result = 10 / 0;
+            // Integer result = 10 / 0;
         } catch (Exception e) {
             // To Log The Exception
             // ExceptionHandler.logException(e);
