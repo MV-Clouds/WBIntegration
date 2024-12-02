@@ -1,48 +1,116 @@
 :host {
-    --chat-bg-color: white;
+    /* General Purpose Variables */
+    --height-of-main-chat-container : 30rem;
+    --height-for-emoji : 0;
+    --max-height-for-attachment-options: 0;
+    --max-height-for-send-options: 0;
+    --height-of-text-area : 20px;
+
+    /* THE LIGHT MODE STYLES */
+    /* Styles for main container */
+    --main-bg-color: #f9f7f5;
+
+    /* Styles for Mode Toggle */
     --toggle-bg : skyblue;
-    --box-shadow-color: #aaaaaaaa;
-    --text-bg-color: white;
+
+    /* Styles for the Received Message */
+    --received-message-bg-color: white;
+    --received-message-text-color: black;
+    --received-message-box-shadow: 0 0 2px 0 lightgray;
+    
+    /* Styles for the Sent Message */
+    --sent-message-bg-color: #DCF8C6;
+    --sent-message-text-color: black;
+    --sent-message-box-shadow: 0 0 2px 0 lightgray;
+
+    /* Styles for Dates */
+    --date-bg-color: #eff2f5;
+    --date-text-color: #000000aa;
+
+    /* Styles for the Message Compose */
+    --composer-bg-color: white;
+    --composer-text-color: black;
+    --composer-box-shadow: inset 0 0 5px 0 darkgray;
+
+    /* Styles for Top - Down BG */
+    --top-down-bg-color: #eff2f5;
+    --border-bottom-color : #eaeaea;
 }
 :host([data-theme="dark"]) {
-    --chat-bg-color: black;
+    /* THE DARK MODE STYLES */
+    /* Styles for main container */
+    --main-bg-color: black;
+
+    /* Styles for Mode Toggle */
     --toggle-bg : white;
-    color: white;
-    --box-shadow-color: white;
-    --text-bg-color: black;
+
+    /* Styles for the Received Message */
     --inverted-filter : invert(1);
+    --received-message-bg-color: #232626;
+    --received-message-text-color: white;
+    --received-message-box-shadow: none;
+
+    /* Styles for the Sent Message */
+    --sent-message-bg-color: #075E54;
+    --sent-message-text-color: white;
+    --sent-message-box-shadow: none;
+    
+    /* Styles for Dates */
+    --date-bg-color: #4d4d4d;
+    --date-text-color: #ffffffaa;
+
+    /* Styles for the Message Compose */
+    --composer-bg-color: #232626;
+    --composer-text-color: white;
+    --composer-box-shadow: none;
+
+    /* Styles for Top - Down BG */
+    --top-down-bg-color: #4d4d4d;
+    --border-bottom-color : #636363;
 }
 
 /* THEME TOGGLE SECTION */
 
 .main-chat-window-div{
-    background-color: var(--chat-bg-color,);
+    background-color: var(--main-bg-color, white);
     width: 100%;
-    min-height: 50vh;
-    background-image: url('/resource/WBI_chat_bg');
-    background-size: cover;
+    min-height: 20rem;
+    background-image: url(/resource/WBI_chat_bg);
+    background-size: auto;
     background-repeat: repeat;
     background-position: center;
-    max-height: 70vh;
-    padding: 1rem;
+    max-height: 40rem;
     border-radius: 6px;
     display: flex;
     flex-direction: column;
+    height: var(--height-of-main-chat-container, 30rem);
+    border: 0.5px solid lightgray;
+    overflow: hidden;
+}
+
+.toggle-parent-div {
+    height: 30px;
+    background-color: var(--top-down-bg-color, #eff2f5);
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    padding-inline: 8px;
+    border-bottom: 1px solid var(--border-bottom-color, #eaeaea);
 }
 
 .toggle-mode-div {
     position: relative;
-    width: 60px;
-    height: 30px;
+    width: 30px;
+    min-height: 15px;
+    height: 15px;
     background: var(--toggle-bg, #ddd);
     border-radius: 15px;
     cursor: pointer;
     overflow: hidden;
     display: flex;
     align-items: center;
-    padding: 5px;
-    transition: all 0.5s ease;
-    margin-left: auto;
+    padding: 3px;
+    transition: all 0.4s ease;
 }
 
 .toggle-button {
@@ -55,7 +123,7 @@
 }
 
 .sun-icon.hide {
-    transform: translateX(26px);
+    transform: translateX(14px);
     opacity: 0;
     pointer-events: none;
 }
@@ -65,7 +133,7 @@
 }
 .moon-icon.show {
     opacity: 1;
-    transform: translateX(26px);
+    transform: translateX(14px);
     pointer-events: auto;
 }
 
@@ -73,39 +141,192 @@
 
 .chat-div{
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-block: 2px;
+    margin-block: 4px;
+    height: 100%;
+    overflow-y: scroll;
+    padding-inline: 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: lightgray transparent;
 }
 
-/* MESSAGE COMPOSE SECTION */
+.message-date-div {
+    margin-inline: auto;
+    border-radius: 4px;
+    background-color: var(--date-bg-color, #eff2f5);
+    color: var(--date-text-color, black);
+    width: fit-content;
+    padding-inline: 8px;
+    margin-block: 10px 8px;
+    font-size: 10px;
+    font-weight: 100;
+    box-shadow: 0 0 1px 0 darkgray;
+}
 
-.message-container {
+.chat-messages-by-date-div {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.message {
+    max-width: 75%;
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    word-wrap: break-word;
+}
+
+.message-full-length-div[data-type="sent-message"] {
+    display: flex;
+    justify-content: end;
+    flex-direction: row-reverse;
+}
+
+.message-full-length-div[data-type="received-message"] {
+    display: flex;
+    justify-content: start;
+}
+
+.message-full-length-div[data-type="sent-message"] .message {
+    background-color: var(--sent-message-bg-color, #DCF8C6);
+    box-shadow: var(--sent-message-box-shadow, 0 0 2px 0 lightgray);
+    color: var(--sent-message-text-color, black);
+}
+
+.message-full-length-div[data-type="received-message"] .message {
+    background-color: var(--received-message-bg-color, white);
+    box-shadow: var(--received-message-box-shadow, 0 0 2px 0 lightgray);
+    color: var(--received-message-text-color, black);
+}
+
+.timestamp {
+    font-size: 10px;
+    line-height: normal;
+    color: darkgray;
+    text-align: right;
+    display: flex;
+    justify-content: end;
+    gap: 4px;
     align-items: center;
+}
+
+.status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.message-full-length-div[data-type="received-message"] .status-icon{
+    display: none;
+}
+
+.action-options-btn{
+    position: relative;
+}
+.action-options-div {
+    position: absolute;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    display: none;
+    background-color: var(--composer-bg-color, white);
+    box-shadow: var(--composer-box-shadow, inset 0 0 5px 0 darkgray);
+    color: var(--composer-text-color, black);
+}
+
+.message-full-length-div[data-type="sent-message"] .action-options-div{
+    right : 16px;
+}
+
+.message-full-length-div[data-type="received-message"] .action-options-div{
+    left : 16px;
+}
+
+.action-options-btn{
+    display: none;
+}
+
+.message-full-length-div:hover .action-options-btn{
+    display: unset;
+    cursor: pointer;
+}
+
+.action-options-btn:hover .action-options-div{
+    display: flex;
+}
+
+.action-option {
     width: 100%;
-    gap: 0.5rem;
+    text-align: center;
+    padding: 2px 10px;
+    cursor: pointer;
+}
+.action-option:hover {
+    background-color: #f0f0f050;
+}
+
+
+/* MESSAGE COMPOSE SECTION */
+.reply-to-message-div{
+    background-color: var(--top-down-bg-color, #eff2f5);
+    border-top:1px solid var(--border-bottom-color, #eaeaea);
+    padding: 4px 12px;
+}
+
+.message-div-container-parent {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    background-color: var(--top-down-bg-color, #eff2f5);
+    border-top:1px solid var(--border-bottom-color, #eaeaea);
+}
+
+.message-preview-div {
+    background-color: var(--composer-bg-color, white);
+    color: var(--composer-text-color, black);
+    padding: 4px 6px;
+    border-radius: 6px;
+    border-left: 6px solid #075E54;
+}
+
+.message-by{
+    color: #075E54;
+}
+
+.message-draft-container {
+    display: flex;
+    width: 100%;
+    gap: 4px;
 }
   
 .input-wrapper, .send-wrapper {
     display: flex;
     align-items: center;
     border-radius: 24px;
-    box-shadow: inset 0 0 5px 0 var(--box-shadow-color);
+    box-shadow: inset 0 0 5px 0 darkgray;
     background-color: white;
-    padding: 4px 8px;
-    height: 50px;
-    flex-grow: 1;
+    padding: 4px 10px;
+    height: 40px;
+    position: relative;
 }
 
 .input-wrapper{
-    filter: var(--inverted-filter, 0);
+    background-color: var(--composer-bg-color, white);
+    box-shadow: var(--composer-box-shadow, inset 0 0 5px 0 darkgray);
+    color: var(--composer-text-color, black);
+    flex-grow: 1;
+    min-height: 40px;
+    height: unset;
 }
 
 .send-wrapper {
-    display: flex;
-    align-items: center;
     background-color: #DCF8C6;
-    box-shadow: inset 0 0 5px 0 #aaaaaaaa;
-    gap: 4px;
     flex-grow: 0;
 }
 
@@ -117,44 +338,150 @@
     flex-grow: 1;
     border: none;
     outline: none;
-    padding: 0 10px;
-    font-size: 16px;
+    padding: 0px 8px;
+    /* font-size: 16px; */
     background: transparent;
+    resize: none;
+    width: 100%;
+    overflow-y: auto; /* Allow vertical scrolling */
+    height: var(--height-of-text-area, unset);
+    max-height: 8rem; /* Limit maximum height */
 }
 
-.send-btn, .dropdown-btn {
+.send-btn, .send-options-btn {
     background: none;
     border: none;
     cursor: pointer;
+    padding-inline: 6px;
 }
 
-.dropdown-menu {
+.send-options-menu {
     position: absolute;
-    top: 30px;
-    right: 0;
-    background: #fff;
-    box-shadow: 0 2px 4px var(--box-shadow-color);
-    border-radius: 4px;
-    width: 100px;
+    width: fit-content;
     text-align: left;
-    z-index: 100;
+    max-height: var(--max-height-for-send-options, 0);
+    height: fit-content;
+    background-color: var(--composer-bg-color, white);
+    color: var(--composer-text-color, black);
+    border-radius: 6px;
+    font-size: 14px;
+    right: 0;
+    bottom: 42px;
+    box-shadow: var(--composer-box-shadow, 0 0 10px 0 lightgray);
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
 }
 
-.dropdown-menu.hidden {
-    display: none;
-}
-
-.dropdown-wrapper{
-    position: relative;
-}
-
-.dropdown-item {
+.send-options-item {
     padding: 8px 12px;
     font-size: 14px;
     cursor: pointer;
 }
 
-.dropdown-item:hover {
-    background: #f0f0f0;
+.send-options-item:hover {
+    background: #f0f0f050;
 }
-  
+
+/* Styles for Emoji Picker */
+.emoji-picker-div{
+    height: var(--height-for-emoji, 0);
+    overflow-y: scroll;
+    background-color: var(--composer-bg-color, white);
+    color: var(--composer-text-color, black);
+    border-radius: 6px;
+    font-size: 14px;
+    position: absolute;
+    left: 0;
+    bottom: 42px;
+    box-shadow: var(--composer-box-shadow, 0 0 10px 0 lightgray);
+    transition: height 0.3s ease;
+    max-width: 320px;
+}
+
+.emoji-category-div{
+    margin: 4px 8px;
+    user-select: none;
+}
+
+.emoji-tray {
+    display: flex;
+    /* height: 10rem;
+    flex-direction: column; */
+    flex-wrap: wrap;
+    column-gap: 4px;
+    overflow-x: scroll;
+}
+
+.emoji { 
+    display: inline-block; 
+    cursor: pointer; 
+    font-size: 20px; 
+    width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+} 
+
+.emoji:hover { 
+    background-color: #f0f0f050; 
+}
+
+/* Styles for Attachments */
+.attachment-options-div{
+    user-select: none;
+    max-height: var(--max-height-for-attachment-options, 0);
+    height: fit-content;
+    background-color: var(--composer-bg-color, white);
+    color: var(--composer-text-color, black);
+    border-radius: 6px;
+    font-size: 14px;
+    position: absolute;
+    right: 0;
+    bottom: 42px;
+    box-shadow: var(--composer-box-shadow, 0 0 10px 0 lightgray);
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.all-attachment-options{
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 240px;
+    gap: 10px;
+}
+
+.attachment-options {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.attachment-options:hover{
+    background-color: #f0f0f050;
+}
+
+.attachment-options .icon {
+    background-color: purple;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+}
+
+.image .icon{
+    background-color: #C861FA50;
+}
+
+.template .icon{
+    background-color: #04A79650;
+}
