@@ -6,10 +6,10 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 25/11/2024
+ * Last Update Date : 2/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : 
- * Change Description :
+ * Name of methods changed (Comma separated if more then one) : closePreview
+ * Change Description : Added functionality to redirect the first page as close the preview.
  ********************************************************************** */
 
 import { LightningElement, track, wire } from 'lwc';
@@ -69,7 +69,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track header = '';
     @track footer = '';
     @track tempBody = 'Hello';
-    formattedText = '';
+    // formattedText = '';
     @track formatedTempBody=this.tempBody;
     @track btntext = '';
     @track webURL = '';
@@ -107,10 +107,9 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track filePreview='';
     @track languageOptions=[];
     @track countryType=[];
-    @track objects = [{ label: 'Contact', value: 'Contact' }]; 
+    // @track objects = [{ label: 'Contact', value: 'Contact' }]; 
     @track selectedObject = 'Contact';
     @track fields = [];
-
 
     get TypeOptions() {
         return [
@@ -164,6 +163,28 @@ export default class WbCreateTemplatePage extends LightningElement {
         })
     }
 
+    @wire(getEmojiData)
+    wiredEmojiData({ error, data }) {
+        if (data) {
+            this.processEmojiData(data);
+        } else if (error) {
+            console.error('Error fetching emoji data:', error);
+            this.showToastError('Error fetching emojis.');
+        }
+    }
+      
+    @wire(getWhatsAppTemplates)
+    wiredWhatsAppTemplates({ error, data }) {
+        if (data) {
+            console.log('Templates fetched successfully', data);
+            // this.isLoading=false;
+        } else if (error) {
+            console.error('Error fetching templates:', error);
+            // this.isLoading=false;
+            this.showToastError('Failed to refresh template list');
+        }
+    }
+
     addOutsideClickListener() {
         document.addEventListener('click', this.handleOutsideClick.bind(this));
     }
@@ -186,28 +207,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         ) {
             this.showEmojis = false;
             this.removeOutsideClickListener();
-        }
-    }
-
-    @wire(getEmojiData)
-    wiredEmojiData({ error, data }) {
-        if (data) {
-            this.processEmojiData(data);
-        } else if (error) {
-            console.error('Error fetching emoji data:', error);
-            this.showToastError('Error fetching emojis.');
-        }
-    }
-      
-    @wire(getWhatsAppTemplates)
-    wiredWhatsAppTemplates({ error, data }) {
-        if (data) {
-            console.log('Templates fetched successfully', data);
-            // this.isLoading=false;
-        } else if (error) {
-            console.error('Error fetching templates:', error);
-            // this.isLoading=false;
-            this.showToastError('Failed to refresh template list');
         }
     }
 
@@ -363,8 +362,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                 console.error('Failed upload session.', error.body);
 
             })
-
-           
         } catch (error) {
             console.error('Error starting upload session: ', error);
         }
@@ -510,7 +507,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             case 'language':
                 this.selectedLanguage = value;
                 break;
-            
             case 'footer':
                 this.footer = value;
                 break;
@@ -790,7 +786,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         return iconMap[type] || 'utility:question'; 
     }
     
-
     get visitWebsiteDisabled() {
         return this.visitWebsiteCount >= 2;
     }
@@ -807,7 +802,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.marketingOpt >= 1;
     }
 
- 
     handleCustomText(event) {
         const index = event.currentTarget.dataset.index; 
         const newValue = event.target.value;
@@ -1185,7 +1179,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                 }
             }
         }
-    
         return true;
     }
     
@@ -1199,16 +1192,6 @@ export default class WbCreateTemplatePage extends LightningElement {
     validatePhoneNumber(value) {
         const phonePattern = /^[0-9]{10,}$/;
         return phonePattern.test(value);
-    }
-    
-
-    clearWrapper() {
-        this.templateName = '';
-        this.selectedContentType = 'None';
-        this.selectedLanguage = 'en_US';
-        this.header = '';
-        this.tempBody = '';
-        this.footer = '';
     }
 
     handleConfirm(){
@@ -1319,8 +1302,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.error('Unexpected error occurred', error);
             this.showToastError('An unexpected error occurred while submitting the template.');
             this.isLoading = false;
-        }
-             
+        }       
     }
 
     showToastError(message) {
@@ -1341,8 +1323,15 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.dispatchEvent(toastEvent);
     }
     
-    closePreview(){
-        this.isPreviewTemplate=false;
-    }
+    closePreview() {
+        this.isLoading = true;     
+        setTimeout(() => {
+            this.isLoading = false; 
+            this.isPreviewTemplate = false;
+            // this.clearWrapper();
+            this.iseditTemplatevisible = false;
+            this.isAllTemplate = true;
+        }, 2000);
+    }    
     
 }

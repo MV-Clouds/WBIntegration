@@ -380,36 +380,6 @@ public with sharing class WBTemplateController {
         }
     }
 
-    // Used in WhatsappWebhook class to update status field as per webhook response
-    @future (callout=true)
-    public static void updateWhatsAppTemplateStatus(String templateId, String event) {
-        try {
-            List<Template__c> templates = [SELECT Id, Status__c FROM Template__c WHERE Template_Id__c = :templateId WITH SECURITY_ENFORCED LIMIT 1];
-            
-            if (!templates.isEmpty()) {
-                Template__c wbTemplate = templates[0];
-                
-                if (event == 'APPROVED') {
-                    wbTemplate.Status__c = 'Active-Quality Pending';
-                } else if (event == 'PENDING') {
-                    wbTemplate.Status__c = 'In-Review';
-                } else if (event == 'REJECTED') {
-                    wbTemplate.Status__c = 'Rejected';
-                }
-                
-                if(Template__c.SobjectType.getDescribe().isUpdateable()){
-                    update wbTemplate;
-                }
-               
-            } else {
-                System.debug('No WhatsApp Template found for Template Id: ' + templateId);
-            }
-        } catch (Exception e) {
-            System.debug('Exception in updateWhatsAppTemplateStatus: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'updateWhatsAppTemplateStatus',e.getLineNumber());
-        }
-    }
-
     // Method used to delete template from meta as well as from record page.
     @AuraEnabled
     public static string deleteTemplete(String templateId){

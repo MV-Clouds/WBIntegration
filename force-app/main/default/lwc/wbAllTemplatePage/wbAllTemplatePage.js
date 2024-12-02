@@ -18,7 +18,6 @@ import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateContr
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
-
 export default class WbAllTemplatePage extends LightningElement {
     @track isTemplateVisible = true;
     @track isCreateTemplate = false;
