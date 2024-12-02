@@ -316,7 +316,6 @@ public with sharing class WBTemplateController {
         } catch (Exception e) {
             System.debug('Error in startUploadSession: ' + e.getMessage());
             ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'startUploadSession',e.getLineNumber());
-
         }
         return null;
     }        

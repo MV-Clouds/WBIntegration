@@ -9,12 +9,13 @@
 
             <!-- Edit template screen -->
                 <div class="slds-theme_default main">
-                    <div class="slds-box slds-theme_default texttemp">
-                        <p class="templatetxt2">Create Templates</p>
+                    <!-- <div class="slds-box slds-theme_default texttemp"> -->
+                    <div class="texttemp">
+                        <p class="templatetxt2">New Template</p>
                     </div>
                     <div class="divcontainer2">
                         <div class="createtempdiv2">
-                            <div class="slds-box slds-theme_default templateContent2">
+                            <!-- <div class="slds-box slds-theme_default templateContent2">
                                 <div class="applyFlex">
                                     <lightning-icon icon-name="utility:announcement" size="x-small"
                                         class="announce-icon"></lightning-icon>
@@ -24,7 +25,6 @@
                                             <span class="dot">•</span>
                                             <span class="segment">{selectedLanguageLabel}</span>
                                         </div>
-
                                         <div class="formatted-text2">
                                             <span class="segment2">{activeTab}</span>
                                             <span class="dot2">•</span>
@@ -32,7 +32,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
                             <div class="slds-box slds-theme_default templateContent3">
                                 <div class="tempHead">
                                     <p class="name-language">Template name and language</p>
@@ -464,60 +464,60 @@
                             <div class="PreviewmainWP">
                                 <div class="templateheadWP">
                                     <p class="templatetextWP"><b>Template Preview</b></p>
-                                </div>
-                                <div class="PreviewtemplateWP">
-                                    <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
-                                        <template if:true={IsHeaderText}>
-                                            <div class="TextHeadingWP">
-                                                <p>{header}</p>
+                                    <div class="PreviewtemplateWP">
+                                        <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
+                                            <template if:true={IsHeaderText}>
+                                                <div class="TextHeadingWP">
+                                                    <p>{header}</p>
+                                                </div>
+                                            </template>
+                                            <template if:true={isImageFile}>
+                                                <div class="imagedivWP">
+                                                    <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yL/r/NztUdBQHuX5.png" alt="">
+                                                </div>
+                                            </template>
+                                            <template if:true={isImgSelected}>
+                                                <div>
+                                                    <img src={filePreview} alt="File Preview" style="max-width: 100%; height: auto;" />
+                                                </div>
+                                            </template>
+                                        
+                                            <template if:true={isDefault}>
+                                                <div class="TextBodyWP">
+                                                    <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
+                                                </div>
+    
+                                                <div class="textfooterWP">
+                                                    <p class="pfooterWP">{footer}</p>
+                                                </div>
+                                            </template>
+    
+                                            <div class="TextTimeWP">
+                                                <p class="timefooterWP">11:59</p>
                                             </div>
-                                        </template>
-                                        <template if:true={isImageFile}>
-                                            <div class="imagedivWP">
-                                                <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yL/r/NztUdBQHuX5.png" alt="">
-                                            </div>
-                                        </template>
-                                        <template if:true={isImgSelected}>
-                                            <div>
-                                                <img src={filePreview} alt="File Preview" style="max-width: 100%; height: auto;" />
-                                            </div>
-                                        </template>
-                                    
-                                        <template if:true={isDefault}>
-
-                                            <div class="TextBodyWP">
-                                                <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
-                                            </div>
-
-                                            <div class="textfooterWP">
-                                                <p class="pfooterWP">{footer}</p>
-                                            </div>
-                                        </template>
-
-                                        <div class="TextTimeWP">
-                                            <p class="timefooterWP">11:59</p>
+    
+                                            <template for:each={buttonList} for:item="button" for:index="index">
+                                                <hr key={button.id} class="separator-line"/>
+    
+                                                <div key={button.id} class="button-label-preview">
+                                                    <lightning-icon  icon-name={button.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+                                                    <p>{button.btntext}</p>
+                                                </div>
+                                            </template>
+                                            <template for:each={customButtonList} for:item="customButton" for:index="index">
+                                                <hr key={customButton.id} class="separator-line"/>
+    
+                                                <div key={customButton.id} class="button-label-preview">
+                                                    <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+    
+                                                    <p>{customButton.Cbtntext}</p>
+                                                </div>
+                                            </template>
+                            
                                         </div>
-
-                                        <template for:each={buttonList} for:item="button" for:index="index">
-                                            <hr key={button.id} class="separator-line"/>
-
-                                            <div key={button.id} class="button-label-preview">
-                                                <lightning-icon  icon-name={button.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-                                                <p>{button.btntext}</p>
-                                            </div>
-                                        </template>
-                                        <template for:each={customButtonList} for:item="customButton" for:index="index">
-                                            <hr key={customButton.id} class="separator-line"/>
-
-                                            <div key={customButton.id} class="button-label-preview">
-                                                <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-
-                                                <p>{customButton.Cbtntext}</p>
-                                            </div>
-                                        </template>
-                        
                                     </div>
                                 </div>
+                               
                             </div>
                         </div>
                     </div>

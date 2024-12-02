@@ -9,7 +9,7 @@ MODIFICATION LOG*
  * Last Update Date : 2/12/2024
  * Updated By : Kajal Tiwari
  * Name of methods changed (Comma separated if more then one) : closePreview
- * Change Description : Added functionality to redirect the first page as close the preview.
+ * Change Description : Added functionality to redirect the first page as close the preview. Also remove some div as per the figma till confirmation.
  ********************************************************************** */
 
 import { LightningElement, track, wire } from 'lwc';
@@ -402,8 +402,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                         }
                     })
                     .catch(error=>{
-                        console.error('Failed upload session.', error.body);
-        
+                        console.error('Failed upload session.', error);
+                        this.showToastError(error.body.message || 'An error occurred while uploading image.');
                     })
                 } catch (error) {
                     console.error('Error uploading file chunk: ', error);
