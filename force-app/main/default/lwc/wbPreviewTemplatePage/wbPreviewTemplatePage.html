@@ -13,11 +13,10 @@
                     <div class="createtempdiv2">
                         <div class="slds-box slds-theme_default templateContent3">
                             <div class="left">
-                                <!-- <template if:true={variables.length}> -->
                                     <p class="variable-heading">Select Record to Show Preview</p>
                                     <div class="true-div">
                                         <div class="object-div">
-                                            <select class="object-dropdown dropdown" disabled>
+                                            <select class="object-dropdown dropdown" disabled={isDisabled}>
                                                 <template for:each={options} for:item="option">
                                                     <option key={option.value} value={option.value} selected={option.isSelected}>
                                                         {option.label}
@@ -25,7 +24,7 @@
                                                 </template>
                                             </select>
                                         </div>
-                                        <select class="record-dropdown dropdown" onchange={handleRecordSelection}>
+                                        <select class="record-dropdown dropdown" onchange={handleRecordSelection} disabled={isDisabled}>
                                             <template for:each={records} for:item="record">
                                                 <option key={record.Id} value={record.Id}>
                                                     {record.Name}
@@ -33,7 +32,6 @@
                                             </template>
                                         </select>
                                     </div>
-                                    
                                     
                                     <template if:true={contactDetails}>
                                         <div class="con-details">
@@ -47,7 +45,6 @@
                                             </template>
                                         </div>
                                     </template>
-                                <!-- </template> -->
                                 <div class="phone">
                                     <label for="phone" class="phone-label">Phone No.</label>
                                     <div class="inputs">
@@ -74,7 +71,7 @@
                                            
                                             <template if:true={IsHeaderText}>
                                                 <div class="TextHeadingWP">
-                                                    <lightning-formatted-rich-text value={tempheader}></lightning-formatted-rich-text>
+                                                    <lightning-formatted-rich-text value={tempHeader}></lightning-formatted-rich-text>
                                                 </div>
                                             </template>
                                             <template if:true={isImgSelected}>
@@ -87,28 +84,21 @@
                                             </div>
                                 
                                             <div class="textfooterWP">
-                                                <p class="pfooterWP">{tempfooter}</p>
+                                                <p class="pfooterWP">{tempFooter}</p>
                                             </div>
                                             <div class="TextTimeWP">
                                                 <p class="timefooterWP">11:59</p>
                                             </div>
                                     
-                                            <template for:each={buttonlist} for:item="button" for:index="index">
-                                                <hr key={button.id} class="separator-line"/>
-                                    
-                                                <div key={button.id} class="button-label-preview">
-                                                    <lightning-icon  icon-name={button.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-                                                    <p>{button.btntext}</p>
-                                                </div>
+                                            <template if:true={buttonList}>
+                                                <template for:each={buttonList} for:item="button" for:index="index">
+                                                    <hr key={button.id} class="separator-line" />
+                                                    <div key={button.id} class="button-label-preview">
+                                                        <p>{button.btntext}</p>
+                                                    </div>
+                                                </template>
                                             </template>
-                                            <template for:each={custombtnlist} for:item="customButton" for:index="index">
-                                                <hr key={customButton.id} class="separator-line"/>
-                                    
-                                                <div key={customButton.id} class="button-label-preview">
-                                                    <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-                                                    <p>{customButton.Cbtntext}</p>
-                                                </div>
-                                            </template>
+                                           
                                         </div>
                                     </div>
                                     

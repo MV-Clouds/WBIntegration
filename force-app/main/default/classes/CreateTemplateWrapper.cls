@@ -211,21 +211,25 @@ public with sharing class CreateTemplateWrapper {
             List<Template_Variable__c> variableRecords = new List<Template_Variable__c>();
 
             List<Object> components = (List<Object>) payloadMap.get('components');
-            
+            List<String> headAlternateTexts = templateWrapper.headAlternateTexts; 
+            List<String> varAlternateTexts = templateWrapper.varAlternateTexts;   
+            Integer headerIndex = 0;                                      
+            Integer variableIndex = 0; 
+
             for (Object comp : components) {
                 if (!(comp instanceof Map<String, Object>)) {
                     System.debug('Expected component to be a Map<String, Object>, found: ' + comp);
                     continue;
                 }
-            
+
                 Map<String, Object> component = (Map<String, Object>) comp;
                 String type = (String) component.get('type');
                 Map<String, Object> example = (Map<String, Object>) component.get('example');
-            
+
                 if (type == 'HEADER') {
                     headerType = (String) component.get('format');
                     headerText = '<p><b>' + (String) component.get('text') + '</b></p>';
-            
+
                     if (example != null && example.containsKey('header_text') && example.get('header_text') instanceof List<Object>) {
                         List<Object> headerExampleObj = (List<Object>) example.get('header_text');
                         if (!headerExampleObj.isEmpty()) {
@@ -233,11 +237,19 @@ public with sharing class CreateTemplateWrapper {
                             headerMergeText = headerMergeText.replace('{{', '').replace('}}', '');
                             List<String> parts = headerMergeText.split('\\.');
                             if (parts.size() == 2) {
-                                variableRecords.add(new Template_Variable__c(
+                                Template_Variable__c headerVariable = new Template_Variable__c(
                                     Object_Name__c = 'Contact',
                                     Field_Name__c = parts[1],
                                     Type__c = 'Header'
-                                ));
+                                );
+
+                                // Add alternate text if available
+                                if (headerIndex < headAlternateTexts.size()) {
+                                    headerVariable.Alternate_Text__c = headAlternateTexts[headerIndex];
+                                }
+                                headerIndex++;
+
+                                variableRecords.add(headerVariable);
                             }
                         }
                     }
@@ -246,16 +258,25 @@ public with sharing class CreateTemplateWrapper {
                     bodyText = (String) result.get('bodyText');
                     bodyMergeText = (String) result.get('bodyMergeText');
                     List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
-            
+
                     for (Map<String, String> field : parsedFields) {
-                        variableRecords.add(new Template_Variable__c(
+                        Template_Variable__c bodyVariable = new Template_Variable__c(
                             Object_Name__c = 'Contact',
                             Field_Name__c = field.get('fieldName'),
                             Type__c = 'Body'
-                        ));
+                        );
+
+                        System.debug('variableIndex '+variableIndex);
+                        System.debug('varAlternateTexts.size() '+varAlternateTexts.size());
+                        // Add alternate text if available
+                        if (variableIndex < varAlternateTexts.size()) {
+                            bodyVariable.Alternate_Text__c = varAlternateTexts[variableIndex];
+                        }
+                        variableIndex++;
+
+                        variableRecords.add(bodyVariable);
                     }
-                }
-                else if (type == 'FOOTER') {
+                } else if (type == 'FOOTER') {
                     footerText = (String) component.get('text');
                 } else if (type == 'BUTTONS') { 
                     buttonDetails = handleButtonComponent(component);
@@ -266,9 +287,8 @@ public with sharing class CreateTemplateWrapper {
                     }
                 }
             }
-
             String formattedBodyText = (bodyText != null) ? convertMarkdownToHtml(bodyText) : '';
-    
+
             // Create template record
             Template__c whatsAppTemplate = new Template__c(
                 Name = templateName,
@@ -284,17 +304,17 @@ public with sharing class CreateTemplateWrapper {
                 Button_Type__c = buttonType,
                 Button_Label__c = buttonText,
                 Button_Body__c = String.isNotEmpty(buttonValue) ? buttonValue : buttonText
-            
             );
-    
+
             if (Template__c.sObjectType.getDescribe().isCreateable()) {
                 insert whatsAppTemplate;
             }
-    
+
+            // Link variables to the template and insert them
             for (Template_Variable__c variable : variableRecords) {
                 variable.Template__c = whatsAppTemplate.Id;
             }
-    
+
             if (Template_Variable__c.sObjectType.getDescribe().isCreateable() && !variableRecords.isEmpty()) {
                 insert variableRecords;
             }
@@ -423,6 +443,8 @@ public with sharing class CreateTemplateWrapper {
         @AuraEnabled public String tempLanguage;
         @AuraEnabled public String tempHeaderText;
         @AuraEnabled public List<String> tempHeaderExample;
+        @AuraEnabled public List<String> headAlternateTexts;
+        @AuraEnabled public List<String> varAlternateTexts;
         @AuraEnabled public String templateBody;
         @AuraEnabled public List<String> templateBodyText;
         @AuraEnabled public String tempFooterText;

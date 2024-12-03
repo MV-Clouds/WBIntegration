@@ -8,10 +8,10 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 29/11/2024
+ * Last Update Date : 3/11/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : deleteTemplete,getRecordsBySObject,getContactDetails,getTemplateWithReplacedValues
- * Change Description : Update getTemplateWithReplacedValues methods to get contact details and template variable to replace placeholder in preview page. Reduce parameter in method by using Wrapper.
+ * Name of methods changed (Comma separated if more then one) : getDynamicObjectData
+ * Change Description : Get dynamic template and contact data.
  ***********************************************************************/
 
 public with sharing class WBTemplateController {
@@ -73,19 +73,83 @@ public with sharing class WBTemplateController {
         return records;
     }
 
-    // Used to fetch contact detail based on the contactId
     @AuraEnabled(cacheable=true)
-    public static Contact getContactDetails(String contactId) {
-        try {
-            Contact contact = [SELECT Id, FirstName, LastName, Email, Phone, MailingAddress, AccountId FROM Contact WHERE Id = :contactId  WITH SECURITY_ENFORCED LIMIT 1];
-            return contact;
-        } catch (Exception e) {
-            System.debug('Error fetching contact details: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getContactDetails',e.getLineNumber());
-            return null;
-        }
-    }
+    public static TemplateDataWrapper getDynamicObjectData() {
+        TemplateDataWrapper wrapper = new TemplateDataWrapper();
+        Set<String> objectNames = new Set<String>();
+        Set<String> fieldNames = new Set<String>();
 
+        try {
+            // Fetch the specific template
+            Template__c template = [
+                SELECT Id, Name, Header_Body__c, Template_Body__c, Footer_Body__c, Button_Label__c
+                FROM Template__c WITH SECURITY_ENFORCED
+                ORDER BY CreatedDate DESC 
+                LIMIT 1 
+            ];
+    
+            if (template == null) {
+                System.debug('No template found.');
+            }
+            wrapper.template = template;
+    
+            // Fetch related template variable data
+            List<Template_Variable__c> templateVariables = [
+                SELECT Object_Name__c, Field_Name__c 
+                FROM Template_Variable__c 
+                WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
+            ];
+    
+            if (templateVariables.isEmpty()) {
+                System.debug('No template variables found for the template.');
+                return wrapper;
+            }
+
+            for (Template_Variable__c variable : templateVariables) {
+                objectNames.add(variable.Object_Name__c);
+                fieldNames.add(variable.Field_Name__c);
+            }
+
+            // Set the object names and field names to the wrapper
+            wrapper.objectNames = new List<String>(objectNames);
+            wrapper.fieldNames = new List<String>(fieldNames);
+    
+        } catch (Exception e) {
+            System.debug('Error in getDynamicObjectData: ' + e.getMessage());
+            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getDynamicObjectData', e.getLineNumber());
+        }
+    
+        return wrapper;
+    }
+ 
+    @AuraEnabled(cacheable=true)
+    public static Map<String, Object> fetchDynamicRecordData(String objectName, List<String> fieldNames, String recordId) {
+        Map<String, Object> resultMap = new Map<String, Object>();
+
+        try {
+            if (String.isEmpty(objectName) || fieldNames.isEmpty() || String.isEmpty(recordId)) {
+                throw new AuraHandledException('Invalid input parameters');
+            }
+
+            String fields = String.join(fieldNames, ',');
+            
+            String queryString = 'SELECT ' + fields + ' FROM ' + objectName + ' WHERE Id = :recordId LIMIT 1';            
+            List<SObject> queriedData = Database.query(queryString);
+
+            if (!queriedData.isEmpty()) {
+                resultMap.put('queriedData', queriedData[0]);  
+            } else {
+                resultMap.put('queriedData', null);
+            }
+
+        } catch (Exception e) {
+            System.debug('Error in fetchDynamicRecordData: ' + e.getMessage());
+            resultMap.put('error', e.getMessage());
+        }
+
+        return resultMap;
+    }
+    
     // It used to replace value of field with the variable placeholder in preview page.
     @AuraEnabled(cacheable=true)
     public static Map<String, String> getTemplateWithReplacedValues(String recordId) {
@@ -127,13 +191,17 @@ public with sharing class WBTemplateController {
             for (Integer i : headerFieldMapping.keySet()) {
                 String fieldName = headerFieldMapping.get(i);
                 Object value = record.get(fieldName);
-                templateHeader = templateHeader.replace('{{' + i + '}}', value != null ? value.toString() : '');
+    
+                String replacementValue = (value != null) ? value.toString() : variables[i - 1].Alternate_Text__c;
+                templateHeader = templateHeader.replace('{{' + i + '}}', replacementValue);
             }
-
+    
             for (Integer i : bodyFieldMapping.keySet()) {
                 String fieldName = bodyFieldMapping.get(i);
                 Object value = record.get(fieldName);
-                templateBody = templateBody.replace('{{' + i + '}}', value != null ? value.toString() : '');
+    
+                String replacementValue = (value != null) ? value.toString() : variables[i - 1].Alternate_Text__c;
+                templateBody = templateBody.replace('{{' + i + '}}', replacementValue);
             }
 
             Map<String, String> result = new Map<String, String>();
@@ -269,6 +337,11 @@ public with sharing class WBTemplateController {
 
             if (res.getStatusCode() == 200) {
                 CreateTemplateWrapper.handleSuccessResponse(res, payload, response,templateWrapper);
+                Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                String templateId = (String) responseBody.get('templateId'); 
+
+                response.put('success', true);
+                response.put('templateId', templateId);
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
@@ -427,5 +500,10 @@ public with sharing class WBTemplateController {
         @AuraEnabled public Integer chunkSize;
         @AuraEnabled public String fileName;
     }
-    
+    public class TemplateDataWrapper {
+        @AuraEnabled public Template__c template;
+        // @AuraEnabled public Object queriedData;
+        @AuraEnabled public List<String> objectNames;
+        @AuraEnabled public List<String> fieldNames;
+    }
 }

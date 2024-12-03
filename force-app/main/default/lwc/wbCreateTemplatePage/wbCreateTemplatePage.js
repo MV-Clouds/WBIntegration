@@ -111,6 +111,10 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track selectedObject = 'Contact';
     @track fields = [];
 
+    get acceptedFormats() {
+        return ['png','jpeg','jpg'];
+    }
+
     get TypeOptions() {
         return [
             { label: 'None', value: 'None'},
@@ -244,36 +248,27 @@ export default class WbCreateTemplatePage extends LightningElement {
             });
     }
 
-    handleFileChange(event) {
-        const fileInput = event.target.files[0];
-        if (fileInput) {
-            this.file = fileInput;
-            this.fileName = fileInput.name;
-            this.fileSize = fileInput.size;
-            this.fileType = fileInput.type;
+    // handleFileChange(event) {
+    //     console.log('enter in function');
 
-            if (this.selectedContentType === 'Image' && (fileInput.type === 'image/jpeg' || fileInput.type === 'image/png' || fileInput.type === 'image/jpg')) {
-                this.generatePreview(fileInput);
-            } else {
-                this.showToastError(`Unsupported file type. Please upload a valid file for ${this.selectedContentType}: ${this.getAllowedFileTypes(this.selectedContentType)}.`);
-                this.handleRemoveFile();
-                return; 
-            }
-        }
-        this.isfilename=true;
-        this.NoFileSelected=false;
-        console.log('fileInput ',fileInput);
-
-        this.uploadFile();
-    }
+    //     const uploadedFiles = event.detail.files;
+    //     if (uploadedFiles && uploadedFiles.length > 0) {
+    //         this.fileName = uploadedFiles[0].name;
+    //         this.isfilename = true;
+    //         this.NoFileSelected = false;
+    //         console.log('Uploaded File:', uploadedFiles[0]);
+    //     }
+    // }
 
     handleFileChange(event) {
         try {
+            console.log('enter in function');
+            
             const fileInput = event.target.files[0];
             if (!fileInput) {
                 throw new Error('No file selected. Please choose a file.');
             }
-    
+
             this.file = fileInput;
             this.fileName = fileInput.name;
             this.fileSize = fileInput.size;
@@ -301,7 +296,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
     }
     
-
     getAllowedFileTypes(contentType) {
         switch (contentType) {
             case 'Image':
@@ -876,6 +870,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     handleAlternateVarChange(event) {
         const variableId = event.target.dataset.id;
         const alternateText = event.target.value;
+        console.log('alternateText for body ',alternateText);
+        
         this.updateAlternateText(variableId, alternateText);
     }
 
@@ -942,6 +938,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.updateTextarea();
     }
 
+    // Header variable add-remove functionality start here
     addheadervariable() {
         this.addHeaderVar = true;
         const defaultField = this.fields[0].value; 
@@ -965,12 +962,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.updateVariableField(variableId, fieldName);
     }
 
-    handleAlternateTextChange(event) {
-        const variableId = event.target.dataset.id;
-        const alternateText = event.target.value;
-        this.updateVariableAlternateText(variableId, alternateText);
-    }
-
     updateVariableField(variableId, fieldName) {
         this.header_variables = this.header_variables.map(varItem =>
             varItem.id === parseInt(variableId)
@@ -983,13 +974,20 @@ export default class WbCreateTemplatePage extends LightningElement {
         );
     }
 
+    handleAlternateTextChange(event) {
+        const variableId = event.target.dataset.id;
+        const alternateText = event.target.value;
+        this.updateVariableAlternateText(variableId, alternateText);
+    }
+  
     updateVariableAlternateText(variableId, alternateText) {
         this.header_variables = this.header_variables.map(varItem =>
             varItem.id === parseInt(variableId)
-                ? { ...varItem, alternateText }
+                ? { ...varItem, alternateText } 
                 : varItem
         );
     }
+    
 
     handleHeaderVarRemove(event) {
         const index = event.currentTarget.dataset.index;
@@ -1120,19 +1118,10 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     get tempHeaderExample() {
         console.log('Generating header example...');
-        return this.header_variables.map(varItem => {
-            return varItem.alternateText && varItem.alternateText.trim() !== ''
-                ? varItem.alternateText 
-                : `{{${varItem.object}.${varItem.field}}}`; 
-        });
-    }    
-
+        return this.header_variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
+    }
     get templateBodyText() {
-        return this.variables.map(varItem => {
-            return varItem.alternateText && varItem.alternateText.trim() !== ''
-                ? varItem.alternateText 
-                : `{{${varItem.object}.${varItem.field}}}`; 
-        });
+        return this.variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
     }
 
     validateTemplate() {
@@ -1255,6 +1244,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
                 tempHeaderText: this.header ? this.header : '',
                 tempHeaderExample: (this.tempHeaderExample && this.tempHeaderExample.length > 0) ? this.tempHeaderExample : null,
+                headAlternateTexts: this.header_variables.map(varItem => varItem.alternateText || null),
+                varAlternateTexts: this.variables.map(varItem => varItem.alternateText || null),
                 templateBody: this.tempBody ? this.tempBody : '',
                 templateBodyText: (this.templateBodyText && this.templateBodyText.length > 0) ? this.templateBodyText : null,
                 tempFooterText: this.footer ? this.footer : null,

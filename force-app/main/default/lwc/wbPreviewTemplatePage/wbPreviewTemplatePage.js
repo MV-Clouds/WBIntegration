@@ -6,27 +6,29 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 28/11/2024
+ * Last Update Date : 3/11/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) :  Work with the updated UI with functionality.
+ * Name of methods changed (Comma separated if more then one) :  Work functionality to get template data and store alternate text and show in preview.
  * Change Description :
  ********************************************************************** */
 
 import { LightningElement,track,api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getRecordsBySObject from '@salesforce/apex/WBTemplateController.getRecordsBySObject'; 
-import getContactDetails from '@salesforce/apex/WBTemplateController.getContactDetails';
+import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
+import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateWithReplacedValues from '@salesforce/apex/WBTemplateController.getTemplateWithReplacedValues'; 
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;
-    @api tempbody;
-    @api tempheader;
-    @api tempfooter;
     @api filepreview;
-    @api buttonlist=[];
-    @api custombtnlist=[];
+    @track tempHeader;
+    @track tempBody;
+    @track tempFooter;
+    @track buttonList=[];
     @track formatedTempBody;
+    @track objectNames = []; 
+    @track fieldNames = [];
     @track isImgSelected = false;
     @track IsHeaderText = true;
     @track options = [
@@ -39,6 +41,10 @@ export default class WbPreviewTemplatePage extends LightningElement {
         return Object.entries(this.contactDetails)
             .filter(([key, value]) => value !== null && value !== undefined)
             .map(([key, value]) => ({ label: key, value }));
+    }
+
+    get isDisabled(){
+        return !(this.objectNames && this.fieldNames);
     }
 
     formatText(inputText) {
@@ -56,8 +62,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
             this.isImgSelected = true;
             this.IsHeaderText = false;
         }
-        this.tempbody = this.tempbody.replaceAll('\n', '<br/>');
-        this.formatedTempBody = this.formatText(this.tempbody);
+        this.fetchTemplateData();
         this.fetchRecords();
     }
 
@@ -76,17 +81,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     handleRecordSelection(event) {
         try {
-            this.selectedContactId = event.target.value;
-            console.log('Selected Record ID:', this.selectedContactId);    
-            this.fetchContactDetails();
-    
-            const hasVariables = this.tempbody.includes('{{') || this.tempheader.includes('{{');
+            const hasVariables = this.tempBody.includes('{{') || this.tempHeader.includes('{{');
 
             if (!hasVariables) {
                 console.warn('No variables found in the template. Please check the template structure.');
                 this.showToast('Warning!', 'No variables found in the template to replace.', 'warning');
                 return; 
             }
+
+            this.selectedContactId = event.target.value;
+            console.log('Selected Record ID:', this.selectedContactId);    
+            this.fetchContactData();
         
             getTemplateWithReplacedValues({
                 recordId: this.selectedContactId,
@@ -94,10 +99,10 @@ export default class WbPreviewTemplatePage extends LightningElement {
             .then(result => {
                 if (result) {
                     const { header, body } = result;    
-                    this.tempheader = this.formatText(header);
+                    this.tempHeader = this.formatText(header);
                     this.formatedTempBody = this.formatText(body);
     
-                    console.log('Formatted Header:', this.tempheader);
+                    console.log('Formatted Header:', this.tempHeader);
                     console.log('Formatted Body:', this.formatedTempBody);
                 } else {
                     console.warn('No template data returned.');
@@ -110,25 +115,67 @@ export default class WbPreviewTemplatePage extends LightningElement {
             console.error('Unexpected error in handleRecordSelection:', err);
         }
     }
-    
-    fetchContactDetails() {
-        try {
-            if (this.selectedContactId) {
-                getContactDetails({ contactId: this.selectedContactId })
-                    .then(result => {
-                        this.contactDetails = result;
-                        console.log('Fetched Contact Details:', result);
-                    })
-                    .catch(error => {
-                        this.contactDetails = {};  
-                        console.error('Error fetching contact details:', error);
-                    });
+
+    fetchContactData() {
+        fetchDynamicRecordData({
+            objectName: this.objectNames[0], 
+            fieldNames: this.fieldNames, 
+            recordId: this.selectedContactId
+        })
+        .then(result => {
+            if (result.queriedData) {
+                this.contactDetails = result.queriedData;
+                console.log('Queried Data:', this.contactDetails);
             } else {
-                console.warn('No Contact ID selected.');
+                console.warn('No data found for the provided record ID.');
             }
-        } catch (err) {
-            console.error('Unexpected error in fetchContactDetails:', err);
-        }
+        })
+        .catch(error => {
+            console.error('Error fetching dynamic data:', error);
+        });
+    }
+    
+    fetchTemplateData() {
+        this.isLoading = true;
+        getDynamicObjectData()
+        .then((result) => {
+            if (result) {
+                this.tempHeader = result.template.Header_Body__c;
+                this.tempBody = result.template.Template_Body__c;
+                this.tempFooter = result.template.Footer_Body__c;
+
+                const buttonLabels = result.template.Button_Label__c ? result.template.Button_Label__c.split(',') : [];
+                this.buttonList = buttonLabels.map((label, index) => ({
+                    id: index,
+                    btntext: label.trim()
+                }));
+                console.log('wrapper data==> ',result);
+                
+                this.objectNames = result.objectNames;
+                this.fieldNames = result.fieldNames;
+
+                console.log('Object Names:', this.objectNames);
+                console.log('Field Names:', this.fieldNames);
+                
+                this.formatedTempBody = this.formatText(this.tempBody);
+                this.isLoading = false;
+            }
+        })
+        .catch((error) => {
+            console.error('Error fetching template data:', error);
+            this.isLoading = false;
+        })       
+    }
+
+    clearPreview(){
+        this.tempHeader='';
+        this.tempBody='';
+        this.tempFooter='';
+        this.buttonList=[];
+        this.objectNames=[];
+        this.fieldNames=[];
+        this.contactDetails=[];
+        this.formatedTempBody='';
     }
 
     showToast(title,message,variant) {

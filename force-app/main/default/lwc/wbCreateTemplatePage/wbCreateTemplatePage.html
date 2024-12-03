@@ -94,6 +94,7 @@
                                                     Meta reviews template and variable parameters to protect the security and
                                                     integrity of our services.</p>
                                             </div>
+
                                             <template if:true={isImageFileUploader}>
                                                 <div class="chooseImage">
                                                     <p class="uploadlabel">Image</p>
@@ -108,7 +109,15 @@
                                                             <template if:true={isfilename}>
                                                                 <span>{fileName}</span>
                                                             </template>
-                                                            <input type="file" accept="image/png, image/jpeg,image/jpg" class="file-input" onchange={handleFileChange} />
+                                                             <input type="file" accept="image/png, image/jpeg,image/jpg" class="file-input" onchange={handleFileChange} />
+
+                                                            <!-- <lightning-file-upload
+                                                              class="file-input"
+                                                              name="fileUploader"
+                                                              accept={acceptedFormats}
+                                                              record-id={myRecordId}
+                                                              onuploadfinished={handleFileChange}   
+                                                            ></lightning-file-upload> -->
                                                         </label>
                                                     </div>
                                                     <template if:true={isfilename}>
@@ -560,7 +569,7 @@
             <div class="slds-modal__container preview-container">
                 <!-- modal body start -->
                 <div class="slds-modal__content slds-p-around_medium template-preview" id="modal-content-id-2">
-                    <c-wb-preview-template-page tempbody={tempBody} tempheader={header} tempfooter={footer} buttonlist={buttonList} custombtnlist={customButtonList} filepreview={filePreview}></c-wb-preview-template-page>
+                    <c-wb-preview-template-page filepreview={filePreview}></c-wb-preview-template-page>
                     <footer class="footer">
                         <button class="close-btn" onclick={closePreview}>Close</button>
                      </footer>
