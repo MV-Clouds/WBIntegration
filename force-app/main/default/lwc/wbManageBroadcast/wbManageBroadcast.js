@@ -14,8 +14,8 @@ MODIFICATION LOG*
 
 import { LightningElement,track,wire } from 'lwc';
 import getBroadcastGroup from '@salesforce/apex/WBManageBroadcastController.getBroadcastGroup';
-// import {loadStyle} from 'lightning/platformResourceLoader';
-// import wbBroadcastStyle from '@salesforce/resourceUrl/wbBroadcastStyle';
+import { deleteRecord } from 'lightning/uiRecordApi';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class WbManageBroadcast extends LightningElement {
 
@@ -30,14 +30,8 @@ export default class WbManageBroadcast extends LightningElement {
     @track visiblePages = 3;
     @track isLoading=false;
     @track searchInput='';
-
-    // renderedCallback() {
-    //     loadStyle(this, wbBroadcastStyle).then(() => {
-    //         console.log("Loaded Successfully")
-    //     }).catch(error => {
-    //         console.error("Error in loading the colors",error)
-    //     })
-    // }
+    @track isNewBroadcast=true;
+    @track showAllBroadcast=false;
 
     @wire(getBroadcastGroup)
     wiredBroadcastGroup({ error, data }) {
@@ -219,5 +213,52 @@ export default class WbManageBroadcast extends LightningElement {
         if (!dateString) return '';
         const options = { year: 'numeric', month: 'short', day: 'numeric' };
         return new Date(dateString).toLocaleDateString(undefined, options);
+    }
+
+    handleDelete(event) {
+        const recordId = event.target.dataset.id;
+        this.deleteRecord(recordId);
+    }
+    
+    deleteRecord(recordId) {
+        try {
+            deleteRecord(recordId)
+                .then(() => {
+                    this.showToast('Success', 'Record deleted successfully', 'success');
+                    this.filteredRecords = this.filteredRecords.filter(
+                        record => record.id !== recordId
+                    );
+                })
+                .catch((error) => {
+                    let errorMessage = 'An error occurred'; 
+                    if (error && error.body && error.body.message) {
+                        errorMessage = error.body.message;
+                    } else if (error && error.message) {
+                        errorMessage = error.message;
+                    }
+                    this.showToast('Error', errorMessage, 'error');
+                });
+        } catch (error) {
+            let errorMessage = 'An unexpected error occurred';
+            if (error && error.message) {
+                errorMessage = error.message;
+            }
+            this.showToast('Error', errorMessage, 'error');
+            console.error('Unexpected error:', error);
+        }
+    }    
+
+    showCreateBroadcast(){
+        this.isNewBroadcast=true;
+        this.showAllBroadcast=false;
+    }
+
+    showToast(title,message,variant) {
+        const toastEvent = new ShowToastEvent({
+            title,
+            message,
+            variant
+        });
+        this.dispatchEvent(toastEvent);
     }
 }
