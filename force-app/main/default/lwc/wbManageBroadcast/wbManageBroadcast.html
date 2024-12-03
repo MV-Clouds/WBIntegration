@@ -1,0 +1,114 @@
+<template>
+    <div class="main-container">
+        <template if:true={isLoading}>
+            <div class="spinner-overlay">
+                <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+            </div>
+        </template>
+
+        <div class="heading">
+            <p>Manage Broadcast Group</p>
+        </div>
+        <div class="filter-btn">
+            <div class="filter">
+                <lightning-input variant="label-hidden" class="filter" name="searchInput" type="search" placeholder="Search Name"
+                onchange={handleChange}></lightning-input>
+            </div>
+            <div class="new-btn">
+                <button class="custom-button">
+                    <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
+                        class="left-icon"></lightning-icon>
+                    <span>New Group</span>
+                </button>
+                <button class="custom-button">
+                    <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
+                        class="left-icon"></lightning-icon>
+                    <span>New Broadcast</span>
+                </button>
+            </div>
+        </div>
+        <div class="slds-theme_default data-table">
+            <!-- Custom HTML Table -->
+            <table class="slds-table">
+                <thead>
+                    <tr class="tablerow">
+                        <th class="tableHead" scope="col">
+                            <div class="slds-truncate">Broadcast Group Name</div>
+                        </th>
+                        <th class="tableHead" scope="col">
+                            <div class="slds-truncate">Description</div>
+                        </th>
+                        <th class="tableHead" scope="col">
+                            <div class="slds-truncate">Last Modified</div>
+                        </th>
+                        <th class="tableHead" scope="col">
+                            <div class="slds-truncate">No. of Members</div>
+                        </th>
+                        <th class="tableHead" scope="col">
+                            <div class="slds-truncate">Actions</div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template if:true={filteredRecords.length}>
+                        <template for:each={paginatedRecords} for:item="record">
+                            <tr class="slds-table_bordered tablerow" key={record.id}>
+                                <td class="tableData" data-label="Template Name">
+                                    <div class="slds-truncate">{record.Name}</div>
+                                </td>
+                                <td class="tableData" data-label="Description">
+                                    <div class="slds-truncate">{record.Description__c}</div>
+                                </td>
+                                <td class="tableData" data-label="LastModified">
+                                    <div class="slds-truncate">{record.LastModifiedDate}</div>
+                                </td>
+                                <td class="tableData" data-label="Status">
+                                    <div class="slds-truncate">{record.Count_of_Members__c}</div>
+                                </td>
+                                <td class="tableData tablebtns" data-label="Actions">
+                                    <lightning-button-icon icon-name="utility:delete" data-id={record.id} ></lightning-button-icon>
+                                </td>
+                            </tr>
+                        </template>
+                    </template>
+                    <template if:false={filteredRecords.length}>
+                        <tr>
+                            <td class="slds-text-align_center" colspan="5">
+                                No records found.
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>                    
+            </table>
+           <!-- Pagination Controls -->
+           <div class="paginationDiv slds-p-around_medium">
+            <div class="btnCover">
+                <button class="pagination-button" disabled={isFirstPage} onclick={handlePrevious}>
+                    <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
+                        <path d="M342 477 134 272c-6-6-6-16 0-22L342 45c6-6 16-6 22 0l22 22c6 6 6 16 0 22L221 250c-6 6-6 16 0 22l163 161c6 6 6 16 0 22l-22 22c-5 5-14 5-20 0z"/>
+                    </svg> 
+                        Back
+                </button>
+                                    
+                <template for:each={pageNumbers} for:item="page">
+                    <template if:false={page.isEllipsis}>
+                        <button key={page.number} data-id={page.number} class={page.className} onclick={handlePageChange}>
+                            {page.number}
+                        </button>
+                    </template>
+                    <template if:true={page.isEllipsis}>
+                        <span key={page.number} class="pagination-ellipsis">...</span>
+                    </template>
+                </template>
+                                    
+                <button class="pagination-button" disabled={isLastPage} onclick={handleNext}>
+                    Next 
+                    <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
+                        <path d="m179 44 207 205c6 6 6 16 0 22L179 476c-6 6-16 6-22 0l-22-22c-6-6-6-16 0-22l163-161c6-6 6-16 0-22L136 88c-6-6-6-16 0-22l22-22c6-5 15-5 21 0z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        </div>
+    </div>
+</template>
