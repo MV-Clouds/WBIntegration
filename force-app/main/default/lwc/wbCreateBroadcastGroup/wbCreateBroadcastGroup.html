@@ -1,0 +1,29 @@
+<template>
+    <div class="main-container">
+        <template if:true={isLoading}>
+            <div class="spinner-overlay">
+                <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+            </div>
+        </template>
+
+        <div class="main">
+            <div class="heading">
+                <p>New Broadcast Group</p>
+            </div>
+            <div class="left-section">
+                <div class="left-top">
+                    <div class="broadcast-name inputs">
+                        <label for="name">Broadcast Group Name</label>
+                        <input type="text" name="bg-name" class="bg-name">
+                    </div>
+                    <div class="broadcast-desc inputs">
+                        <label for="desc">Description</label>
+                        <textarea name="description" class="description"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="right-section"></div>
+        </div>
+    </div>
+</template>
+
