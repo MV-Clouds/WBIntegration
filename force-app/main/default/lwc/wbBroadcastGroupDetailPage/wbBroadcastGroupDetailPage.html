@@ -1,0 +1,61 @@
+<template>
+    <template if:true={showBGDetail}>
+        <div class="main-container">
+            <template if:true={isLoading}>
+                <div class="spinner-overlay">
+                    <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+                </div>
+            </template>
+            <div class="main">
+                <div class="heading">
+                    <p class="heading-name">Broadcast Group</p>
+                    <button class="custom-button" onclick={showCreateBroadcast}>
+                        <lightning-icon icon-name="utility:edit" alternative-text="Edit" size="x-small"
+                            class="left-icon"></lightning-icon>
+                        <span>Edit Group</span>
+                    </button>
+                </div>
+                <div class="name-detail">
+                    <div class="broadcast-name inputs">
+                        <label for="name" class="labels">Name</label>
+                        <input type="text" name="bg-name" value={bgName} class="bg-name" oninput={handleInputChange} disabled={isDisabled}>
+                    </div>
+                    <div class="broadcast-desc inputs">
+                        <label for="desc" class="labels">Description</label>
+                        <textarea name="description" class="description" oninput={handleInputChange} disabled={isDisabled}>{bgDescription}</textarea>
+                    </div>
+                </div>
+
+                <div class="group-section">
+                    <div class="group-heading">
+                        <p>Group Members</p>
+                    </div>
+                    <div class="members">
+                        <div class="slds-pill_container">
+                            <template if:true={selectedContacts.length}>
+                                <template for:each={selectedContacts} for:item="contact">
+                                    <span class="slds-pill slds-pill_link" key={contact.id} data-id={contact.id} onremove={removePill}>
+                                        <a href="#" class="slds-pill__action" title="Full pill label verbiage mirrored here">
+                                            <span class="slds-pill__label">{contact.label}</span>
+                                            <lightning-icon 
+                                            icon-name="utility:close" 
+                                            size="xx-small" 
+                                            ></lightning-icon>
+                                            <span class="slds-assistive-text">Remove</span>
+                                        </a>
+                                        
+                                    </span>
+                                </template>
+                            </template>
+                            <template if:false={selectedContacts.length}>
+                                <p class="no-member">No members in Group.</p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </template>
+    
+</template>

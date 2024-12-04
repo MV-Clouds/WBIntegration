@@ -25,13 +25,16 @@ export default class WbManageBroadcast extends LightningElement {
     @track totalPages = 1;
     @track allRecords = [];
     @track pageNumber = 1;
-    @track pageSize = 10;
+    @track pageSize = 3;
     @track currentPage = 1;
     @track visiblePages = 3;
     @track isLoading=false;
     @track searchInput='';
-    @track isNewBroadcast=true;
-    @track showAllBroadcast=false;
+    @track isNewBroadcast=false;
+    @track showAllBroadcast=true;
+    @track isBroadcastGroupDetail=false;
+    @track totalRecords;
+    @track groupId='';
 
     @wire(getBroadcastGroup)
     wiredBroadcastGroup({ error, data }) {
@@ -45,6 +48,7 @@ export default class WbManageBroadcast extends LightningElement {
                         LastModifiedDate: this.formatDate(record.LastModifiedDate),
                     };
                 });
+                this.totalRecords = this.allRecords.length;
                 console.log('Mapped Records:', JSON.stringify(this.allRecords)); // Debug mapped records
                 this.filterRecords(); // Ensure this method works as intended
             } else if (error) {
@@ -144,6 +148,12 @@ export default class WbManageBroadcast extends LightningElement {
         return Math.min(this.currentPage * this.pageSize, this.totalItems);
     }
 
+    get paginationInfo() {
+        const start = (this.currentPage - 1) * this.pageSize + 1;
+        const end = Math.min(start + this.pageSize - 1, this.totalRecords);
+        return `Result: ${start}-${end} of ${this.totalRecords}`;
+    }
+
     handleChange(event) {
         const fieldName = event.target.name; 
         const value = event.detail?.value || event.target.value; 
@@ -219,15 +229,25 @@ export default class WbManageBroadcast extends LightningElement {
         const recordId = event.target.dataset.id;
         this.deleteRecord(recordId);
     }
-    
+
+    handleEdit(event){
+        const recordId = event.target.dataset.id;
+        this.groupId = recordId;
+        console.log('group id ',this.groupId);
+        this.isBroadcastGroupDetail=true;
+        this.showAllBroadcast=false;
+    }
+
     deleteRecord(recordId) {
         try {
             deleteRecord(recordId)
                 .then(() => {
                     this.showToast('Success', 'Record deleted successfully', 'success');
-                    this.filteredRecords = this.filteredRecords.filter(
+                    this.filteredRecords = [...this.filteredRecords.filter(
                         record => record.id !== recordId
-                    );
+                    )];
+
+                    this.updateShownData();
                 })
                 .catch((error) => {
                     let errorMessage = 'An error occurred'; 
@@ -248,10 +268,16 @@ export default class WbManageBroadcast extends LightningElement {
         }
     }    
 
-    showCreateBroadcast(){
-        this.isNewBroadcast=true;
-        this.showAllBroadcast=false;
+    showCreateBroadcast() {
+        this.isLoading = true; 
+    
+        setTimeout(() => {
+            this.isNewBroadcast = true;
+            this.showAllBroadcast = false;
+            this.isLoading = false; 
+        }, 1000); 
     }
+    
 
     showToast(title,message,variant) {
         const toastEvent = new ShowToastEvent({

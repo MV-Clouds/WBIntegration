@@ -85,6 +85,7 @@
 .tablebtns{
     display: flex;
     align-items: center;
+    gap: 0.3rem;
 }
 
 .Actionbtn{
@@ -167,12 +168,15 @@ span {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    padding: 0.59rem;
 }
-
 
 .paginationDiv{
     height:15%;
     background-position: bottom;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .paginationDiv .btnCover{
@@ -187,3 +191,7 @@ span {
     align-items: center;  
 }
 
+.pagination-info{
+    font-size: small;
+    font-weight: 400;
+}

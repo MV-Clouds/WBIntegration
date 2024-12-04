@@ -1,29 +1,92 @@
 <template>
-    <div class="main-container">
-        <template if:true={isLoading}>
-            <div class="spinner-overlay">
-                <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
-            </div>
-        </template>
+    <template if:true={isNewBroadcast}>
+        <div class="main-container">
+            <template if:true={isLoading}>
+                <div class="spinner-overlay">
+                    <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+                </div>
+            </template>
 
-        <div class="main">
-            <div class="heading">
-                <p>New Broadcast Group</p>
-            </div>
-            <div class="left-section">
-                <div class="left-top">
-                    <div class="broadcast-name inputs">
-                        <label for="name">Broadcast Group Name</label>
-                        <input type="text" name="bg-name" class="bg-name">
+            <div class="main">
+                <div class="heading">
+                    <p>New Broadcast Group</p>
+                </div>
+                <div class="all-section">
+                    <div class="left-section">
+                        <div class="left-top">
+                            <div class="broadcast-name inputs">
+                                <label for="name">Name</label>
+                                <input type="text" name="bg-name" value={bgName} class="bg-name" oninput={handleInputChange}>
+                            </div>
+                            <div class="broadcast-desc inputs">
+                                <label for="desc">Description</label>
+                                <textarea name="description" class="description" oninput={handleInputChange}>{bgDescription}</textarea>
+                            </div>
+                        </div>
+                        <div class="contact-selection">
+                            <template if:true={tableData}>
+                                <!-- Search Bar -->
+                                <div class="search-bar">
+                                    <lightning-input
+                                        label="Select Member to Add in Group"
+                                        type="search"
+                                        placeholder="Search..."
+                                        onchange={search}
+                                        value={searchTerm}
+                                    >
+                                    </lightning-input>
+                                </div>
+                        
+                                <template if:true={filteredTableData.length}>
+                                    <div class="contacts-list">
+                                        <template for:each={filteredTableData} for:item="record">
+                                            <div key={record.id} class="contact-item" data-id={record.id} data-name={record.name} data-phone={record.phone} onclick={addToPills}>
+                                                <div class="slds-truncate" title={record.name}>
+                                                    <p>{record.name}</p>
+                                                </div>
+                                                <hr class="slds-m-top_xx-small slds-m-bottom_xx-small" />
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>                            
+
+                                <template if:false={filteredTableData.length}>
+                                    <p class="no-record">No records found.</p>
+                                </template>
+                            </template>
+                        </div>
+                        
                     </div>
-                    <div class="broadcast-desc inputs">
-                        <label for="desc">Description</label>
-                        <textarea name="description" class="description"></textarea>
+                    <div class="vertical-line"></div> 
+                    <div class="right-section">
+                        <div class="right-heading">
+                            <p>Selected Members</p>
+                        </div>
+                        <div class="members">
+                            <div class="slds-pill_container">
+                                <template if:true={selectedContacts.length}>
+                                    <template for:each={selectedContacts} for:item="contact">
+                                        <lightning-pill key={contact.id} label={contact.label} data-id={contact.id} onremove={removePill}></lightning-pill>
+                                    </template>
+                                </template>
+                                <template if:false={selectedContacts.length}>
+                                    <p class="no-member">No members selected.</p>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            
+                <div class="buttons">
+                    <button class="cancel-btn" onclick={cancelBroadcastGroup}>Cancel</button>
+                    <button class="save-btn" onclick={createBroadcastGroup}>Save</button>
+                </div>
             </div>
-            <div class="right-section"></div>
         </div>
-    </div>
+    </template>
+   
+    <template if:true={isAllBroadcast}>
+        <c-wb-manage-broadcast></c-wb-manage-broadcast>
+    </template>
 </template>
 

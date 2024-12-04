@@ -26,6 +26,9 @@
                             class="left-icon"></lightning-icon>
                         <span>New Broadcast</span>
                     </button>
+                    <button class="custom-button">
+                        <span>Broadcast History</span>
+                    </button>
                 </div>
             </div>
             <div class="slds-theme_default data-table">
@@ -43,7 +46,7 @@
                                 <div class="slds-truncate">Last Modified</div>
                             </th>
                             <th class="tableHead" scope="col">
-                                <div class="slds-truncate">No. of Members</div>
+                                <div class="slds-truncate">Total Members</div>
                             </th>
                             <th class="tableHead" scope="col">
                                 <div class="slds-truncate">Actions</div>
@@ -67,6 +70,8 @@
                                         <div class="slds-truncate">{record.Count_of_Members__c}</div>
                                     </td>
                                     <td class="tableData tablebtns" data-label="Actions">
+                                        <lightning-button-icon icon-name="utility:preview" data-id={record.id} onclick={handlePreview} ></lightning-button-icon>
+                                        <lightning-button-icon icon-name="utility:edit" data-id={record.id} onclick={handleEdit} ></lightning-button-icon>
                                         <lightning-button-icon icon-name="utility:delete" data-id={record.id} onclick={handleDelete} ></lightning-button-icon>
                                     </td>
                                 </tr>
@@ -83,12 +88,13 @@
                 </table>
                <!-- Pagination Controls -->
                <div class="paginationDiv slds-p-around_medium">
+                <p class="pagination-info">{paginationInfo}</p>
                 <div class="btnCover">
                     <button class="pagination-button" disabled={isFirstPage} onclick={handlePrevious}>
                         <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
                             <path d="M342 477 134 272c-6-6-6-16 0-22L342 45c6-6 16-6 22 0l22 22c6 6 6 16 0 22L221 250c-6 6-6 16 0 22l163 161c6 6 6 16 0 22l-22 22c-5 5-14 5-20 0z"/>
                         </svg> 
-                            Back
+                            
                     </button>
                                         
                     <template for:each={pageNumbers} for:item="page">
@@ -103,7 +109,7 @@
                     </template>
                                         
                     <button class="pagination-button" disabled={isLastPage} onclick={handleNext}>
-                        Next 
+                         
                         <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
                             <path d="m179 44 207 205c6 6 6 16 0 22L179 476c-6 6-16 6-22 0l-22-22c-6-6-6-16 0-22l163-161c6-6 6-16 0-22L136 88c-6-6-6-16 0-22l22-22c6-5 15-5 21 0z"/>
                         </svg>
@@ -116,5 +122,8 @@
     
     <template if:true={isNewBroadcast}>
         <c-wb-create-broadcast-group></c-wb-create-broadcast-group>
+    </template>
+    <template if:true={isBroadcastGroupDetail}>
+        <c-wb-broadcast-group-detail-page groupid={groupId}></c-wb-broadcast-group-detail-page>
     </template>
 </template>
