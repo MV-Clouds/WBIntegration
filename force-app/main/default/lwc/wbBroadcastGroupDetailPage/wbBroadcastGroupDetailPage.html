@@ -9,7 +9,7 @@
             <div class="main">
                 <div class="heading">
                     <p class="heading-name">Broadcast Group</p>
-                    <button class="custom-button" onclick={showCreateBroadcast}>
+                    <button class="custom-button" onclick={showEditBroadcast}>
                         <lightning-icon icon-name="utility:edit" alternative-text="Edit" size="x-small"
                             class="left-icon"></lightning-icon>
                         <span>Edit Group</span>
@@ -30,31 +30,93 @@
                     <div class="group-heading">
                         <p>Group Members</p>
                     </div>
-                    <div class="members">
-                        <div class="slds-pill_container">
-                            <template if:true={selectedContacts.length}>
-                                <template for:each={selectedContacts} for:item="contact">
-                                    <span class="slds-pill slds-pill_link" key={contact.id} data-id={contact.id} onremove={removePill}>
-                                        <a href="#" class="slds-pill__action" title="Full pill label verbiage mirrored here">
-                                            <span class="slds-pill__label">{contact.label}</span>
-                                            <lightning-icon 
-                                            icon-name="utility:close" 
-                                            size="xx-small" 
-                                            ></lightning-icon>
-                                            <span class="slds-assistive-text">Remove</span>
-                                        </a>
-                                        
-                                    </span>
+                    <template if:true={isExistingMembers}>
+                        <div class="members">
+                            <div class="slds-pill_container">
+                                <template if:true={selectedContacts.length}>
+                                    <template for:each={selectedContacts} for:item="contact">
+                                        <span class="slds-pill slds-pill_link" key={contact.id} data-id={contact.id} onremove={removePill}>
+                                            <a href="#" class="slds-pill__action" title="Full pill label verbiage mirrored here">
+                                                <span class="slds-pill__label">{contact.label}</span>
+                                                <lightning-icon 
+                                                icon-name="utility:close" 
+                                                size="xx-small" 
+                                                ></lightning-icon>
+                                                <span class="slds-assistive-text">Remove</span>
+                                            </a>
+                                            
+                                        </span>
+                                    </template>
                                 </template>
-                            </template>
-                            <template if:false={selectedContacts.length}>
-                                <p class="no-member">No members in Group.</p>
-                            </template>
+                                <template if:false={selectedContacts.length}>
+                                    <p class="no-member">No members in Group.</p>
+                                </template>
+                            </div>
                         </div>
-                    </div>
+                    </template>
+                   
+                    <template if:true={addMembers}>
+                        <div class="addMemberDiv">
+                            <div class="contact-selection">
+                                <template if:true={tableData}>
+                                    <!-- Search Bar -->
+                                    <div class="search-bar">
+                                        <lightning-input
+                                            label="Select Member to Add in Group"
+                                            type="search"
+                                            placeholder="Search..."
+                                            onchange={search}
+                                            value={searchTerm}
+                                        >
+                                        </lightning-input>
+                                    </div>
+                            
+                                    <template if:true={filteredTableData.length}>
+                                        <div class="contacts-list">
+                                            <template for:each={filteredTableData} for:item="record">
+                                                <div key={record.id} class="contact-item" data-id={record.id} data-name={record.name} data-phone={record.phone} onclick={addToPills}>
+                                                    <div class="slds-truncate" title={record.name}>
+                                                        <p>{record.name}</p>
+                                                    </div>
+                                                    <hr class="slds-m-top_xx-small slds-m-bottom_xx-small" />
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>                            
+    
+                                    <template if:false={filteredTableData.length}>
+                                        <p class="no-record">No records found.</p>
+                                    </template>
+                                </template>
+                            </div>
+    
+                            <div class="vertical-line"></div> 
+                            
+                            <div class="right-section">
+                                <div class="right-heading">
+                                    <p>Selected Members</p>
+                                </div>
+                                <div class="members">
+                                    <div class="slds-pill_container">
+                                        <template if:true={selectedContacts.length}>
+                                            <template for:each={selectedContacts} for:item="contact">
+                                                <lightning-pill key={contact.id} label={contact.label} data-id={contact.id} onremove={removePill}></lightning-pill>
+                                            </template>
+                                        </template>
+                                        <template if:false={selectedContacts.length}>
+                                            <p class="no-member">No members selected.</p>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
-            
+            <div class="buttons">
+                <button class="cancel-btn" onclick={cancelEditBroadcastGroup}>Cancel</button>
+                <button class="save-btn" onclick={editBroadcastGroup}>Save</button>
+            </div>
         </div>
     </template>
     

@@ -13,7 +13,7 @@ MODIFICATION LOG*
  ********************************************************************** */
 
 import { LightningElement,track,wire } from 'lwc';
-import getBroadcastGroup from '@salesforce/apex/WBManageBroadcastController.getBroadcastGroup';
+import getBroadcastGroup from '@salesforce/apex/WbBroadcastController.getBroadcastGroup';
 import { deleteRecord } from 'lightning/uiRecordApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
@@ -40,7 +40,6 @@ export default class WbManageBroadcast extends LightningElement {
     wiredBroadcastGroup({ error, data }) {
         try {
             if (data) {
-                console.log('Fetched Data:', JSON.stringify(data)); // Debug fetched data
                 this.allRecords = data.map(record => {
                     return {
                         ...record,
@@ -49,8 +48,7 @@ export default class WbManageBroadcast extends LightningElement {
                     };
                 });
                 this.totalRecords = this.allRecords.length;
-                console.log('Mapped Records:', JSON.stringify(this.allRecords)); // Debug mapped records
-                this.filterRecords(); // Ensure this method works as intended
+                this.filterRecords(); 
             } else if (error) {
                 console.error('Error fetching Broadcast Group: ', error);
             }
@@ -59,8 +57,8 @@ export default class WbManageBroadcast extends LightningElement {
         }
     }
 
-      // pagination logic start
-      get totalItems() {
+    // pagination logic start
+    get totalItems() {
         return this.allRecords.length;
     }
 
@@ -231,11 +229,25 @@ export default class WbManageBroadcast extends LightningElement {
     }
 
     handleEdit(event){
+        this.isLoading = true; 
         const recordId = event.target.dataset.id;
         this.groupId = recordId;
-        console.log('group id ',this.groupId);
-        this.isBroadcastGroupDetail=true;
-        this.showAllBroadcast=false;
+        setTimeout(() => {
+            console.log('group id ',this.groupId);
+            this.isBroadcastGroupDetail=true;
+            this.showAllBroadcast=false;
+        }, 1000); 
+    }
+
+    handlePreview(event){
+        this.isLoading = true; 
+        const recordId = event.target.dataset.id;
+        this.groupId = recordId;
+        setTimeout(() => {
+            console.log('group id ',this.groupId);
+            this.isBroadcastGroupDetail=true;
+            this.showAllBroadcast=false;
+        }, 1000); 
     }
 
     deleteRecord(recordId) {
@@ -278,7 +290,6 @@ export default class WbManageBroadcast extends LightningElement {
         }, 1000); 
     }
     
-
     showToast(title,message,variant) {
         const toastEvent = new ShowToastEvent({
             title,

@@ -124,6 +124,9 @@
         <c-wb-create-broadcast-group></c-wb-create-broadcast-group>
     </template>
     <template if:true={isBroadcastGroupDetail}>
-        <c-wb-broadcast-group-detail-page groupid={groupId}></c-wb-broadcast-group-detail-page>
+        <template if:true={groupId}>
+            <c-wb-broadcast-group-detail-page groupid={groupId}></c-wb-broadcast-group-detail-page>
+        </template>
+        <!-- <c-wb-broadcast-group-detail-page groupid={groupId}></c-wb-broadcast-group-detail-page> -->
     </template>
 </template>
