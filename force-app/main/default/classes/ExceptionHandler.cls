@@ -104,60 +104,60 @@ public with sharing class ExceptionHandler {
     @return          : none
     ********************************************************
     */
-        public static void createExceptionLog(ExceptionWrapper exceptionData) {
-            try {
-                Exception_Log__c exc = new Exception_Log__c();
-                exc.Class_Name__c = exceptionData.className;
-                exc.Method_Name__c = exceptionData.methodName;
-                exc.WB_Chat__c = exceptionData.chatId;
-                exc.Is_API_Exception__c = exceptionData.isApiException != null ? exceptionData.isApiException : false;
-                exc.Status_Code__c = exceptionData.statusCode;
+    public static void createExceptionLog(Map<String, Object> exceptionData) {
+        try {
+            Exception_Log__c exc = new Exception_Log__c();
+            exc.Class_Name__c = (String)exceptionData.get('className');
+            exc.Method_Name__c = (String)exceptionData.get('methodName');
+            exc.WB_Chat__c = (String)exceptionData.get('chatId');
+            exc.Is_API_Exception__c = (Boolean)exceptionData.get('isApiException') != null ? (Boolean)exceptionData.get('isApiException') : false;
+            exc.Status_Code__c = (Integer)exceptionData.get('statusCode');
+            Exception e = (Exception)exceptionData.get('exceptionObj');
 
-                Exception e = exceptionData.exceptionObj;
-                if(e != null){
-                    String queryLimit = '1. SOQL Queries used / SOQL Queries allowed: ' + Limits.getQueries() + '/' + Limits.getLimitQueries();
-                    String dMLimit = '2. Number of records queried so far /  Number allowed: ' + Limits.getDmlRows() + '/' + Limits.getLimitDmlRows();
-                    String dMLState = '3. Number of DML statements used so far / Number allowed: ' +  Limits.getDmlStatements() + '/' + Limits.getLimitDmlStatements();   
-                    String cPUTime = '4. Amount of CPU time (in ms) used so far / CPU usage time (in ms) allowed: ' + Limits.getCpuTime() + '/' + Limits.getLimitCpuTime();
-                    String calloutLimit = '5. Number of callouts used so far / Number allowed: ' + Limits.getCallouts() + '/' + Limits.getLimitCallouts();
-                    String heapSize = '6. Amount of Heap size used so far / Heap usage allowed:' + Limits.getHeapSize() + '/' + Limits.getLimitHeapSize();
-                
-                    exc.Governor_Limit_Used__c = String.format('{0}\n{1}\n{2}\n{3}\n{4}\n{5}',new List<string>{queryLimit, dMLimit,dMLState,cPUTime,calloutLimit,heapSize});
-                    exc.Exception_Message__c = e.getMessage();
-                    exc.Exception_Type__c = e.getTypeName();
-                    exc.Exception_Line_Number__c = e.getLineNumber();
-                    exc.Exception_Stack_Trace__c = e.getStackTraceString();
-                }
-                exc.More_Detail__c = exceptionData.moreDetails;
-                exc.Response__c = exceptionData.apiResponse;
-    
-                insert as user exc;
-            } catch (Exception e) {
-                System.debug('Error in createExceptionLog: ' + e.getMessage());
+            if(e != null){
+                String queryLimit = '1. SOQL Queries used / SOQL Queries allowed: ' + Limits.getQueries() + '/' + Limits.getLimitQueries();
+                String dMLimit = '2. Number of records queried so far /  Number allowed: ' + Limits.getDmlRows() + '/' + Limits.getLimitDmlRows();
+                String dMLState = '3. Number of DML statements used so far / Number allowed: ' +  Limits.getDmlStatements() + '/' + Limits.getLimitDmlStatements();   
+                String cPUTime = '4. Amount of CPU time (in ms) used so far / CPU usage time (in ms) allowed: ' + Limits.getCpuTime() + '/' + Limits.getLimitCpuTime();
+                String calloutLimit = '5. Number of callouts used so far / Number allowed: ' + Limits.getCallouts() + '/' + Limits.getLimitCallouts();
+                String heapSize = '6. Amount of Heap size used so far / Heap usage allowed:' + Limits.getHeapSize() + '/' + Limits.getLimitHeapSize();
+            
+                exc.Governor_Limit_Used__c = String.format('{0}\n{1}\n{2}\n{3}\n{4}\n{5}',new List<string>{queryLimit, dMLimit, dMLState, cPUTime, calloutLimit, heapSize});
+                exc.Exception_Message__c = e.getMessage();
+                exc.Exception_Type__c = e.getTypeName();
+                exc.Exception_Line_Number__c = e.getLineNumber();
+                exc.Exception_Stack_Trace__c = e.getStackTraceString();
             }
+            exc.More_Detail__c = (String)exceptionData.get('moreDetails');
+            exc.Response__c = (String)exceptionData.get('apiResponse');
+
+            insert as user exc;
+        } catch (Exception e) {
+            System.debug('Error in createExceptionLog: ' + e.getMessage());
         }
+    }
     
-    /*
-    *********************************************************
-    @description     : Wrapper class to pass the data of exception
-    @param           : className  - {String} - Name of the class, in which error occurred
-    @param           : methodName - {String} - Name of the method, in which error occurred
-    @param           : exceptionObj - {Exception} - Exception object data, which is provided by catch block
-    @param           : isApiException - {Boolean} - if the exception is api error or not
-    @param           : statusCode - {Integer} - status code of api response
-    @param           : chatId - {String} - Id of the related chat
-    @param           : moreDetails - {String} - more details to log
-    @param           : apiResponse - {String} - response of the api
-    ********************************************************
-    */
-        public class ExceptionWrapper {
-            public String className { get; set; } 
-            public String methodName { get; set; }
-            public Exception exceptionObj { get; set; }
-            public Boolean isApiException { get; set; }
-            public Integer statusCode { get; set; }
-            public String chatId { get; set; }
-            public String moreDetails { get; set; }
-            public String apiResponse { get; set; }
-        }
+    // /*
+    // *********************************************************
+    // @description     : Wrapper class to pass the data of exception
+    // @param           : className  - {String} - Name of the class, in which error occurred
+    // @param           : methodName - {String} - Name of the method, in which error occurred
+    // @param           : exceptionObj - {Exception} - Exception object data, which is provided by catch block
+    // @param           : isApiException - {Boolean} - if the exception is api error or not
+    // @param           : statusCode - {Integer} - status code of api response
+    // @param           : chatId - {String} - Id of the related chat
+    // @param           : moreDetails - {String} - more details to log
+    // @param           : apiResponse - {String} - response of the api
+    // ********************************************************
+    // */
+    //     public class ExceptionWrapper {
+    //         public String className { get; set; } 
+    //         public String methodName { get; set; }
+    //         public Exception exceptionObj { get; set; }
+    //         public Boolean isApiException { get; set; }
+    //         public Integer statusCode { get; set; }
+    //         public String chatId { get; set; }
+    //         public String moreDetails { get; set; }
+    //         public String apiResponse { get; set; }
+    //     }
 }

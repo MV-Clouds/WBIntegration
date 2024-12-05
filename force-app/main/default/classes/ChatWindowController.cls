@@ -27,19 +27,9 @@ public with sharing class ChatWindowController {
     public static List<Chat__c> fetchAllChats(String contactId){
         List<Chat__c> chats = new List<Chat__c>();
         try {
-            chats = [SELECT Id,Type_of_Message__c, Message__c, Time_of_Message__c, Message_Status__c, Is_Text__c, Is_Image__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
+            chats = [SELECT Id,Type_of_Message__c, Message__c, Time_of_Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
         } catch (Exception e) {
-
-            ExceptionHandler.ExceptionWrapper exceptionData = new ExceptionHandler.ExceptionWrapper();
-            exceptionData.className = 'ChatWindowController';
-            exceptionData.methodName = 'fetchAllChats';
-            exceptionData.exceptionObj = e;
-            exceptionData.isApiException = true; // Set true if it's an API exception
-            exceptionData.statusCode = 200; // Set if applicable (e.g., HTTP status code)
-            exceptionData.moreDetails = 'This is the more details provided by the api error';
-            exceptionData.apiResponse = '{This:{"this":"testing"}, {"testing" : "testing 2"}}';
-        
-            ExceptionHandler.createExceptionLog(exceptionData);
+            ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'fetchAllChats', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
         return chats;
     }
@@ -66,7 +56,6 @@ public with sharing class ChatWindowController {
             chat.Message__c = (messageType == 'Image') ? '/sfc/servlet.shepherd/version/download/'+ message : message;
             chat.Whatsapp_Template__c = templateId;
             chat.Contact__c = recordId;
-            chat.Type_of_Message__c = 'Action';
             chat.Type_of_Message__c	= 'OutBound Messages';
             chat.Message_Status__c = null;
             chat.Time_of_Message__c	= now.hour()+':'+now.minute();
@@ -76,9 +65,7 @@ public with sharing class ChatWindowController {
 
             if(messageType == 'Image'){
                 List<ContentVersion> cv = [SELECT Id, Title FROM ContentVersion WHERE Id =: message WITH SECURITY_ENFORCED];
-                if(cv.size() < 1){
-                    return null;
-                }
+                if(cv.size() < 1) {return null;}
                 ContentDistribution cd = new ContentDistribution();
                 cd.Name = cv[0].Title;
                 cd.ContentVersionId = message;
@@ -91,17 +78,10 @@ public with sharing class ChatWindowController {
             }
 
             insert as user chat;
-            chat = [SELECT Id,Type_of_Message__c, Message__c, Time_of_Message__c, Message_Status__c, Is_Text__c, Is_Image__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id,Type_of_Message__c, Message__c, Time_of_Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
         } catch (Exception e) {
-
-            ExceptionHandler.ExceptionWrapper exceptionData = new ExceptionHandler.ExceptionWrapper();
-            exceptionData.className = 'ChatWindowController';
-            exceptionData.methodName = 'createChat';
-            exceptionData.exceptionObj = e;
-            exceptionData.moreDetails = e.getMessage();
-        
-            ExceptionHandler.createExceptionLog(exceptionData);
+            ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
             return null;
         }
     }
@@ -124,14 +104,7 @@ public with sharing class ChatWindowController {
             update as user chat;
             return chat;
         }catch(Exception e){
-            ExceptionHandler.ExceptionWrapper exceptionData = new ExceptionHandler.ExceptionWrapper();
-            exceptionData.className = 'ChatWindowController';
-            exceptionData.methodName = 'updateReaction';
-            exceptionData.exceptionObj = e;
-            exceptionData.moreDetails = e.getMessage();
-            exceptionData.chatId = chatId;
-        
-            ExceptionHandler.createExceptionLog(exceptionData);
+            ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'updateReaction', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => chatId, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
             return null;
         }
     }
