@@ -85,7 +85,11 @@ export default class ChatWindow extends LightningElement {
         try {
             fetchAllChats({ contactId: this.recordId })
             .then(chats => {
-                this.chats = chats;
+                this.chats = chats.map(ch => {
+                    ch.isText = ch.Message_Type__c == 'Text';
+                    ch.isImage = ch.Message_Type__c == 'Image';
+                    return ch;
+                });                
                 this.showSpinner = false;
                 this.processChats(true);
             })
@@ -419,6 +423,8 @@ export default class ChatWindow extends LightningElement {
             .then(chat => {
                 if(chat){
                     console.log('The New Image Message is ::: ', chat);
+                    chat.isImage = true;
+                    chat.isText = false;
                     this.chats.push(chat);
                     this.messageText = '';
                     this.template.querySelector('.message-input').value = '';
@@ -508,6 +514,8 @@ export default class ChatWindow extends LightningElement {
                 if(chat){
                     let textareaMessageElement = this.template.querySelector('.message-input');
                     console.log('The New Message is ::: ', chat);
+                    chat.isImage = false;
+                    chat.isText = true;
                     this.chats.push(chat);
                     this.showSpinner = false;
                     this.messageText = '';

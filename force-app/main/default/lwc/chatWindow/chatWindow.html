@@ -28,17 +28,17 @@
                                 <!-- <pre>{chat.Message__c}</pre> -->
                                 <div class="message-preview-div" data-by={chat.replyTo.Message_By__c} if:true={chat.replyTo}>
                                     <div class="message-by">{chat.replyTo.Message_By__c}</div>
-                                    <div class="text-message-div" if:true={chat.replyTo.Is_Text__c}>
+                                    <div class="text-message-div" if:true={chat.replyTo.isText}>
                                         <div class="message-div reply-to-text-message-div">{chat.replyTo.Message__c}</div>
                                     </div>
-                                    <div if:true={chat.replyTo.Is_Image__c}>
+                                    <div if:true={chat.replyTo.isImage}>
                                         <img class="message-image" src={chat.replyTo.Message__c} alt="Image" />
                                     </div>
                                 </div>
-                                <div class="text-message-div" if:true={chat.Is_Text__c}>
+                                <div class="text-message-div" if:true={chat.isText}>
                                     <pre>{chat.Message__c}</pre>
                                 </div>
-                                <div class="image-message-div" if:true={chat.Is_Image__c} data-action="open" onclick={handleToggleImagePreview}>
+                                <div class="image-message-div" if:true={chat.isImage} data-action="open" onclick={handleToggleImagePreview}>
                                     <svg class="image-preview-close" data-action="close" onclick={handleToggleImagePreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="20" width="20"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
                                     <img class="message-image" src={chat.Message__c} onerror={handleImageError} alt="Image" />
                                 </div>
@@ -138,10 +138,10 @@
                 <div class="message-preview-div" data-reply-by={replyToMessage.Message_By__c}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48" height="12" width="12" data-action="cancel-reply" onclick={handleChatAction}><path fill="gray" d="M23.9999 0.48C11.0312 0.48 0.48 11.0312 0.48 23.9999 0.48 36.9688 11.0312 47.52 23.9999 47.52c12.9689 0 23.5201 -10.5512 23.5201 -23.5201C47.52 11.0312 36.9688 0.48 23.9999 0.48Zm8.516 29.4781c0.175 0.1663 0.3149 0.3659 0.4116 0.5872 0.0966 0.2214 0.1481 0.4597 0.1512 0.7012 0.0032 0.2415 -0.0421 0.4811 -0.1331 0.7049 -0.0911 0.2236 -0.2259 0.4268 -0.3967 0.5975 -0.1707 0.1708 -0.3739 0.3057 -0.5975 0.3967 -0.2238 0.091 -0.4634 0.1363 -0.7049 0.1331 -0.2415 -0.0031 -0.4798 -0.0546 -0.7012 -0.1512 -0.2213 -0.0967 -0.4209 -0.2366 -0.5873 -0.4116l-5.9581 -5.9569 -5.958 5.9569c-0.342 0.3249 -0.7975 0.5033 -1.2692 0.4974 -0.4717 -0.006 -0.9226 -0.1963 -1.2562 -0.5299 -0.3335 -0.3335 -0.5238 -0.7844 -0.5298 -1.2561 -0.006 -0.4717 0.1725 -0.9273 0.4974 -1.2692L21.441 24l-5.9569 -5.958c-0.3249 -0.3421 -0.5034 -0.7976 -0.4974 -1.2693 0.006 -0.4717 0.1963 -0.9226 0.5298 -1.2562 0.3336 -0.3335 0.7845 -0.5237 1.2562 -0.5298 0.4717 -0.006 0.9272 0.1725 1.2692 0.4975l5.958 5.9569 5.9581 -5.9569c0.342 -0.325 0.7976 -0.5035 1.2693 -0.4975 0.4717 0.0061 0.9226 0.1963 1.2561 0.5298 0.3336 0.3336 0.5238 0.7845 0.5299 1.2562 0.0059 0.4717 -0.1725 0.9272 -0.4975 1.2693L26.5589 24l5.9569 5.9581Z" stroke-width="1"></path></svg>
                     <div class="message-by">{replyToMessage.Message_By__c}</div>
-                    <div class="text-message-div" if:true={replyToMessage.Is_Text__c}>
+                    <div class="text-message-div" if:true={replyToMessage.isText}>
                         <div class="reply-to-text-message-div">{replyToMessage.Message__c}</div>
                     </div>
-                    <div class="image-reply-to" if:true={replyToMessage.Is_Image__c}>
+                    <div class="image-reply-to" if:true={replyToMessage.isImage}>
                         <img class="message-image-for-reply" src={replyToMessage.Message__c} alt="Image" />
                     </div>
                 </div>
