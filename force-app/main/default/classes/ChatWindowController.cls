@@ -27,7 +27,7 @@ public with sharing class ChatWindowController {
     public static List<Chat__c> fetchAllChats(String contactId){
         List<Chat__c> chats = new List<Chat__c>();
         try {
-            chats = [SELECT Id,Type_of_Message__c, Message__c, Time_of_Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
+            chats = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
         } catch (Exception e) {
             ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'fetchAllChats', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
@@ -52,14 +52,14 @@ public with sharing class ChatWindowController {
             String replyToChatId = chatData.get('replyToChatId');
 
             Chat__c chat = new Chat__c();
-            DateTime now = DateTime.now();
+            // DateTime now = DateTime.now();
             chat.Message__c = (messageType == 'Image') ? '/sfc/servlet.shepherd/version/download/'+ message : message;
             chat.Whatsapp_Template__c = templateId;
             chat.Contact__c = recordId;
             chat.Type_of_Message__c	= 'OutBound Messages';
             chat.Message_Status__c = null;
-            chat.Time_of_Message__c	= now.hour()+':'+now.minute();
-            chat.Date_of_Message__c  = now.date();
+            // chat.Time_of_Message__c	= now.hour()+':'+now.minute();
+            // chat.Date_of_Message__c  = now.date();
             chat.Message_Type__c = messageType;
             chat.Reply_To__c = replyToChatId;
 
@@ -78,7 +78,7 @@ public with sharing class ChatWindowController {
             }
 
             insert as user chat;
-            chat = [SELECT Id,Type_of_Message__c, Message__c, Time_of_Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
         } catch (Exception e) {
             ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});

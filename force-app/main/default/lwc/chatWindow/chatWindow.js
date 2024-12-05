@@ -125,6 +125,8 @@ export default class ChatWindow extends LightningElement {
             let groupedChats = this.chats?.reduce((acc, ch) => {
                 let createDate = new Date(ch.CreatedDate).toLocaleDateString('en-GB', options);
                 let dateGroup = createDate == today.toLocaleDateString('en-GB', options) ? 'Today' : (createDate == yesterday.toLocaleDateString('en-GB', options) ? 'Yesterday' : createDate);
+                let yourReaction= ch.Reaction__c?.split('<|USER|>')[0]?.split('<|DATA|>')[0];
+                let userReaction= ch.Reaction__c?.split('<|USER|>')[1]?.split('<|DATA|>')[0];
                 let chat = {
                     ...ch,
                     className: ch.Type_of_Message__c === 'Outbound Messages' ? 'sent-message' : 'received-message',
@@ -134,6 +136,9 @@ export default class ChatWindow extends LightningElement {
                     isFailed: ch.Message_Status__c === 'Failed',
                     isSending: ch.Message_Status__c == null,
                     dateGroup: dateGroup,
+                    yourReaction: yourReaction,
+                    userReaction: userReaction,
+                    isReaction: yourReaction || userReaction,
                     replyTo: this.chats?.find( chat => chat.Id === ch.Reply_to__c)
                 };
     
@@ -272,7 +277,7 @@ export default class ChatWindow extends LightningElement {
         try {
             if(this.reactToMessage){
                 let chat = this.chats?.find( ch => ch.Id === this.reactToMessage);
-                chat.Reaction__c = event.target.innerText;
+                chat.Reaction__c = event.target.innerText + (chat.Reaction__c ? chat.Reaction__c.slice(chat.Reaction__c.indexOf('<|DATA|>')) : '<|DATA|><|USER|><|DATA|>');
                 this.reactToMessage = null;
                 this.showReactEmojiPicker = false;
                 this.updateMessageReaction(chat);
@@ -285,7 +290,7 @@ export default class ChatWindow extends LightningElement {
     handleRemoveReaction(event){
         try {
             let chat = this.chats?.find( chat => chat.Id === event.currentTarget.dataset.chat);
-            chat.Reaction__c = null;
+            chat.Reaction__c = chat.Reaction__c?.slice(chat.Reaction__c.indexOf('<|DATA|>'));
             this.updateMessageReaction(chat);
         } catch (e) {
             console.log('Error in function handleRemoveReaction:::', e.message);

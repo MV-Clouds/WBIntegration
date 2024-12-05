@@ -362,6 +362,7 @@ img.message-image{
     justify-content: end;
     gap: 4px;
     align-items: center;
+    text-transform: uppercase;
 }
 
 .status-icon {
@@ -374,12 +375,12 @@ img.message-image{
     display: none;
 }
 
-.message .reaction {
+.message .reaction{
     position: absolute;
-    bottom: -14px;
+    bottom: -16px;
     background-color: var(--reaction-bg-color, white);
     border: 1px solid var(--reaction-border-color, #eaeaea);
-    padding: 1px 4px;
+    padding: 2px 3px 1px 3px;
     text-align: center;
     border-radius: 10px;
     right: 12px;
@@ -387,6 +388,20 @@ img.message-image{
     line-height: 14px;
     width: fit-content;
     height: unset;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.message .reaction .your-reaction{
+    background-color: #25D36620;
+    border-radius: 10px;
+    margin-top: -1px;
+    border: 1px solid #25D366bb;
+    padding: 2px 4px 1px 4px;
+    line-height: 10px;
+    font-size: 10px;
+    cursor: pointer;
 }
 
 .message-full-length-div[data-type="received-message"] .reaction{

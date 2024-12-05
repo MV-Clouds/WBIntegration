@@ -42,7 +42,12 @@
                                     <svg class="image-preview-close" data-action="close" onclick={handleToggleImagePreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="20" width="20"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
                                     <img class="message-image" src={chat.Message__c} onerror={handleImageError} alt="Image" />
                                 </div>
-                                <div class="timestamp">{chat.Time_of_Message__c}
+                                <div class="timestamp">
+                                    <lightning-formatted-date-time 
+                                      value={chat.CreatedDate}
+                                      hour="2-digit"
+                                      minute="2-digit"
+                                    ></lightning-formatted-date-time>
                                     <div class="status-icon" if:true={chat.isSent}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m3.125 7.5 3.125 3.125L12.5 4.375" stroke-width="1.5"></path></svg>
                                     </div>
@@ -59,8 +64,9 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="10" height="10" fill="#ff000030" stroke="orangered" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="6" x2="12" y2="12" stroke-width="3"/><circle cx="12" cy="17" r="1.1"/></svg>
                                     </div>
                                 </div> 
-                                <div class="reaction emoji" data-chat={chat.Id} if:true={chat.Reaction__c} ondblclick={handleRemoveReaction}>
-                                    {chat.Reaction__c}
+                                <div class="reaction" if:true={chat.isReaction}>
+                                    <div class="contact-reaction" if:true={chat.userReaction}>{chat.userReaction}</div>
+                                    <div class="your-reaction" data-chat={chat.Id} ondblclick={handleRemoveReaction} if:true={chat.yourReaction}>{chat.yourReaction} You</div>
                                 </div>
                             </div>
                             <div class="action-options-btn" onclick={handleToggleActions}>
