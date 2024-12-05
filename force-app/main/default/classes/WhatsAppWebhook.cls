@@ -3,7 +3,7 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
- * @Last Modified On : 12-02-2024
+ * @Last Modified On : 12-05-2024
  * @Modification Log :
  *==============================================================================
  * Ver | Date | Author | Modification
@@ -11,7 +11,7 @@
  * 1.0 | November 18, 2024 |   | Initial Version
  **/
 @RestResource(urlMapping = '/WBI/webhooks/v1/*')
-global without sharing class WhatsAppWebhook{
+global with sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
@@ -370,6 +370,7 @@ global without sharing class WhatsAppWebhook{
                 ContentLocation = 'S', 
                 OwnerId = contact.OwnerId
             );
+
             insert contentVersion;
 
             ContentVersion insertedContentVersion = [SELECT ContentDocumentId
