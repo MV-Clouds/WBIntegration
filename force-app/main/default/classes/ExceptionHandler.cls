@@ -96,7 +96,14 @@ public with sharing class ExceptionHandler {
     //     }
     // } 
 
-        // Method to create an exception log using wrapper data
+    /*
+    *********************************************************
+    @description     : Method is used to create a exception log record
+    @param           : exceptionData - {ExceptionWrapper} - The Wrapper containing all the data to be logged
+    @param           : chatId - {String} - Id of the chat, null if not specified
+    @return          : none
+    ********************************************************
+    */
         public static void createExceptionLog(ExceptionWrapper exceptionData) {
             try {
                 Exception_Log__c exc = new Exception_Log__c();
@@ -130,7 +137,19 @@ public with sharing class ExceptionHandler {
             }
         }
     
-        // Wrapper class to represent structured exception data
+    /*
+    *********************************************************
+    @description     : Wrapper class to pass the data of exception
+    @param           : className  - {String} - Name of the class, in which error occurred
+    @param           : methodName - {String} - Name of the method, in which error occurred
+    @param           : exceptionObj - {Exception} - Exception object data, which is provided by catch block
+    @param           : isApiException - {Boolean} - if the exception is api error or not
+    @param           : statusCode - {Integer} - status code of api response
+    @param           : chatId - {String} - Id of the related chat
+    @param           : moreDetails - {String} - more details to log
+    @param           : apiResponse - {String} - response of the api
+    ********************************************************
+    */
         public class ExceptionWrapper {
             public String className { get; set; } 
             public String methodName { get; set; }

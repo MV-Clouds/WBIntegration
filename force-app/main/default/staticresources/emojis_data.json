@@ -1,5 +1,81 @@
 [
   {
+    "emoji": "👍"
+  , "description": "thumbs up"
+  , "category": "Mostly Used"
+  , "aliases": [
+      "+1"
+    , "thumbsup"
+    ]
+  , "tags": [
+      "approve"
+    , "ok"
+    ]
+  , "skin_tones": true
+  }
+, {
+    "emoji": "❤️"
+  , "description": "red heart"
+  , "category": "Mostly Used"
+  , "aliases": [
+      "heart"
+    ]
+  , "tags": [
+      "love"
+    ]
+  }
+, {
+    "emoji": "😂"
+  , "description": "face with tears of joy"
+  , "category": "Mostly Used"
+  , "aliases": [
+      "joy"
+    ]
+  , "tags": [
+      "tears"
+    ]
+  }
+, {
+    "emoji": "😮"
+  , "description": "face with open mouth"
+  , "category": "Mostly Used"
+  , "aliases": [
+      "open_mouth"
+    ]
+  , "tags": [
+      "surprise"
+    , "impressed"
+    , "wow"
+    ]
+  }
+, {
+    "emoji": "😥"
+  , "description": "sad but relieved face"
+  , "category": "Mostly Used"
+  , "aliases": [
+      "disappointed_relieved"
+    ]
+  , "tags": [
+      "phew"
+    , "sweat"
+    , "nervous"
+    ]
+  }
+, {
+    "emoji": "🙏"
+  , "description": "folded hands"
+  , "category": "Mostly Used"
+  , "aliases": [
+      "pray"
+    ]
+  , "tags": [
+      "please"
+    , "hope"
+    , "wish"
+    ]
+  , "skin_tones": true
+  }
+, {
     "emoji": "😀"
   , "description": "grinning face"
   , "category": "Smileys & Emotion"
