@@ -289,6 +289,10 @@ export default class ChatWindow extends LightningElement {
 
     handleToggleImagePreview(event){
         try {
+            let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
+            if(isMobileDevice){
+                return;
+            }
             let action = event.currentTarget.dataset.action;
             console.log('Actions is :: ', action);
             
