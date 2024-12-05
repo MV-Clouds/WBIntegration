@@ -289,9 +289,9 @@ global with sharing class WhatsAppWebhook{
         try{
             String mediaUrl = 'https://graph.facebook.com/v20.0/' + documentId;
             String accessToken = '';
-            // WhatsAppConfig__mdt config = WhatsAppConfig__mdt.getOrgDefaults();
-            // accessToken = config.Access_token_for_whatsapp__c;
-            accessToken = 'EAAVUhq0jVsUBOZCkt9xOXCq4mUKfg5h8llZB9T5YxPfn4eiKZCRVQ8X7spld9ZA8a3OG8IE7uGg8abBdISiQuWbng3FXQLlR3TIZBggo6ZBJAi2ETG5FRvcdwS4mZAiYwvfBgEzXAMZBRKdqULwOiWWW54Wyz2ZBMIbZAYcy3CuD36sShJjevTzbyvmQbOUN3Dk3Y1owZDZD';
+            List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values();
+            accessToken = config[0].Access_token_for_WhatsApp__c;
+            
             if (accessToken != ''){
                 HttpRequest req = new HttpRequest();
                 req.setEndpoint(mediaUrl);
