@@ -127,6 +127,7 @@ export default class ChatWindow extends LightningElement {
                     isSent: ch.Message_Status__c === 'Sent',
                     isDelivered: ch.Message_Status__c === 'Delivered',
                     isSeen: ch.Message_Status__c === 'Seen',
+                    isFailed: ch.Message_Status__c === 'Failed',
                     isSending: ch.Message_Status__c == null,
                     dateGroup: dateGroup,
                     replyTo: this.chats?.find( chat => chat.Id === ch.Reply_to__c)
@@ -447,7 +448,8 @@ export default class ChatWindow extends LightningElement {
     handleImageError(event){
         try {
             console.log('The Image is Not Previewable.');
-            event.target.src = "/resource/Alt_Image";
+            event.currentTarget.src = "/resource/Alt_Image";
+            event.currentTarget.classList.add('not-loaded-image');
         } catch (e) {
             console.log('Error in function handleImageError:::', e.message);
         }
