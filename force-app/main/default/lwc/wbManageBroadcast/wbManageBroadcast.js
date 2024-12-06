@@ -31,8 +31,10 @@ export default class WbManageBroadcast extends LightningElement {
     @track isLoading=false;
     @track searchInput='';
     @track isNewBroadcast=false;
-    @track showAllBroadcast=true;
+    @track showAllBroadcast=false;
+    @track isNewBroadcastMessage=false;
     @track isBroadcastGroupDetail=false;
+    @track isBroadcastMessageDetail=true;
     @track totalRecords;
     @track groupId='';
 
@@ -285,6 +287,16 @@ export default class WbManageBroadcast extends LightningElement {
     
         setTimeout(() => {
             this.isNewBroadcast = true;
+            this.showAllBroadcast = false;
+            this.isLoading = false; 
+        }, 1000); 
+    }
+
+    showNewBroadcastMessage(){
+        this.isLoading = true; 
+    
+        setTimeout(() => {
+            this.isNewBroadcastMessage = true;
             this.showAllBroadcast = false;
             this.isLoading = false; 
         }, 1000); 

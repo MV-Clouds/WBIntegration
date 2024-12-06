@@ -1,0 +1,64 @@
+<template>
+    <template if:true={isBroadcastMessage}>
+        <div class="main-container">
+            <template if:true={isLoading}>
+                <div class="spinner-overlay">
+                    <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+                </div>
+            </template>
+
+            <div class="main">
+                <div class="heading">
+                    <p class="heading-name">Broadcast Message</p>
+                </div>
+                <div class="all-section">
+                    <div class="left-section">
+                        <div class="tempname inputs">
+                            <label for="name" class="labels">Template</label>
+                            <input type="text" name="temp-name" value={tempName} class="temp-name" oninput={handleInputChange} disabled={isDisabled}>
+                        </div>
+                        <div class="delivered inputs">
+                            <label for="desc" class="labels">Delivered Rate</label>
+                            <input type="text" name="deliver-name" value={delivered} class="deliver-rate" oninput={handleInputChange} disabled={isDisabled}>
+                        </div>
+                        <div class="sent inputs">
+                            <label for="desc" class="labels">Sent Date</label>
+                            <input name="sent" class="sent-date" value={sendDate} oninput={handleInputChange} disabled={isDisabled}>
+                        </div>
+                    </div>
+                    <div class="right-section">
+                        <div class="broadcast-group inputs">
+                            <label for="name" class="labels">Broadcast Group</label>
+                            <input type="text" name="bg-name" value={bgName} class="bg-name" oninput={handleInputChange} disabled={isDisabled}>
+                        </div>
+                        <div class="read inputs">
+                            <label for="desc" class="labels">Read Rate</label>
+                            <input name="read" class="read-rate" value={readRate} oninput={handleInputChange} disabled={isDisabled}>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-section">
+                    <div class="bottom-heading">
+                        <p>Message History</p>
+                    </div>
+                    <div class="messages">
+                        <div class="slds-pill_container">
+                            <template if:true={selectedContacts}>
+                                <template for:each={selectedContacts} for:item="contact">
+                                    <div class="show-bgGroup" key={contact.id} data-id={contact.id}>
+                                        <p>{contact.label}</p>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={selectedContacts}>
+                                <p class="no-member">No members selected.</p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</template>
+

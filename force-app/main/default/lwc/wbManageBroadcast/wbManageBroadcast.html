@@ -21,7 +21,7 @@
                             class="left-icon"></lightning-icon>
                         <span>New Group</span>
                     </button>
-                    <button class="custom-button">
+                    <button class="custom-button" onclick={showNewBroadcastMessage}>
                         <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                             class="left-icon"></lightning-icon>
                         <span>New Broadcast</span>
@@ -127,6 +127,12 @@
         <template if:true={groupId}>
             <c-wb-broadcast-group-detail-page groupid={groupId}></c-wb-broadcast-group-detail-page>
         </template>
-        <!-- <c-wb-broadcast-group-detail-page groupid={groupId}></c-wb-broadcast-group-detail-page> -->
+    </template>
+    <template if:true={isNewBroadcastMessage}>
+        <c-wb-create-broadcast-message></c-wb-create-broadcast-message>
+    </template>
+
+    <template if:true={isBroadcastMessageDetail}>
+        <c-wb-show-broadcast-message></c-wb-show-broadcast-message>
     </template>
 </template>

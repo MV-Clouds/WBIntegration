@@ -24,7 +24,7 @@ public with sharing class WBTemplateController {
     @AuraEnabled(cacheable=true)
     public static List<Template__c> getWhatsAppTemplates() {
         try {
-            List<Template__c> listName = [SELECT Id, Name, Template_Category__c, Language__c, Status__c, LastModifiedById, CreatedDate 
+            List<Template__c> listName = [SELECT Id, Name, Header_Body__c, Template_Body__c, Footer_Body__c, Button_Label__c, Template_Category__c, Language__c, Status__c, LastModifiedById, CreatedDate 
             FROM Template__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
 
             System.debug('list name==> ' + listName);
