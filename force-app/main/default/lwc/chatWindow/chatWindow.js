@@ -31,7 +31,7 @@ export default class ChatWindow extends LightningElement {
     @track showReactEmojiPicker = false;
     @track sendOnlyTemplate = false;
 
-    @track acceptedFormats = ['.jpg', '.png', '.jpeg'];
+    @track acceptedFormats = [];
     @track showFileUploader = false;
     @track uploadFileType = null;
 
@@ -220,6 +220,7 @@ export default class ChatWindow extends LightningElement {
             this.reactToMessage = null;
             this.showReactEmojiPicker = false;
             this.showFileUploader = false;
+            this.acceptedFormats = [];
             this.uploadFileType = null;
             this.showEmojiPicker = false;
             this.showAttachmentOptions = false;
@@ -437,6 +438,7 @@ export default class ChatWindow extends LightningElement {
                 return;
             }
             this.showFileUploader = true;
+            this.acceptedFormats = ['.jpg', '.png', '.jpeg'];
             this.uploadFileType = 'Image';
             this.closeAllPopups();
         } catch (e) {
@@ -477,6 +479,7 @@ export default class ChatWindow extends LightningElement {
             })
             this.uploadFileType = null;
             this.showFileUploader = false;
+            this.acceptedFormats = [];
         } catch (e) {
             this.showSpinner = false;
             this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');

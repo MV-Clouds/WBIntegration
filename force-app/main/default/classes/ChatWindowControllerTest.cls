@@ -18,7 +18,7 @@ public class ChatWindowControllerTest {
             );
             insert testChat;
         } catch (Exception e) {
-            ExceptionHandler.createExceptionLog(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'setup', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'setup', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 
@@ -35,7 +35,7 @@ public class ChatWindowControllerTest {
             System.assert( chats.size() > 0, 'Chats should be returned.');
             System.assertEquals('Test Message', chats[0].Message__c, 'Chat message should match the test data.');
         } catch (Exception e) {
-            ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowControllerTest', 'methodName' => 'testGetCombinedData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowControllerTest', 'methodName' => 'testGetCombinedData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     }
 
@@ -62,7 +62,7 @@ public class ChatWindowControllerTest {
             System.assertEquals('Hello!', newChat.Message__c, 'Message should match the input.');
             System.assertEquals(testContact.Id, newChat.Contact__c, 'Contact ID should match.');
         } catch (Exception e) {
-            ExceptionHandler.createExceptionLog(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testCreateChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testCreateChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 
@@ -94,7 +94,7 @@ public class ChatWindowControllerTest {
             System.assertNotEquals(null, newChat, 'New chat should be created.');
             System.assert(newChat.Message__c.contains('/sfc/servlet.shepherd/version/download/'), 'Message should be a file link.');
         } catch (Exception e) {
-            ExceptionHandler.createExceptionLog(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testCreateChatWithImage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testCreateChatWithImage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 
@@ -111,7 +111,7 @@ public class ChatWindowControllerTest {
             System.assertNotEquals(null, updatedChat, 'Chat should be updated.');
             System.assertEquals('Like', updatedChat.Reaction__c, 'Reaction should match the input.');
         } catch (Exception e) {
-            ExceptionHandler.createExceptionLog(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateReaction', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateReaction', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 
@@ -125,7 +125,7 @@ public class ChatWindowControllerTest {
 
             System.assertEquals(true, isSuccess, 'Custom setting should be created/updated successfully.');
         } catch (Exception e) {
-            ExceptionHandler.createExceptionLog(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateThemePreference', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateThemePreference', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 }

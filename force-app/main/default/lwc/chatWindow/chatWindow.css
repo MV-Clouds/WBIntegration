@@ -245,6 +245,7 @@
 
 .message {
     max-width: 75%;
+    min-width: 90px;
     padding: 2px 8px;
     border-radius: 10px;
     display: inline-block;
@@ -383,7 +384,7 @@ img.message-image{
     padding: 2px 3px 1px 3px;
     text-align: center;
     border-radius: 10px;
-    right: 5px;
+    right: 10px;
     font-size: 12px;
     line-height: 14px;
     width: fit-content;
@@ -405,7 +406,7 @@ img.message-image{
 }
 
 .message-full-length-div[data-type="received-message"] .reaction{
-    left: 5px;
+    left: 10px;
 }
 
 .message-full-length-div:hover .action-options-btn{
