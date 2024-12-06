@@ -81,8 +81,7 @@ global without sharing class WhatsAppWebhook {
                 }
             }
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WhatsAppWebhook', 'parseMessages',e.getLineNumber());
-            System.debug('Error in parseMessages: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'parseMessages', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     }
 
@@ -111,8 +110,7 @@ global without sharing class WhatsAppWebhook {
                 System.debug('No WhatsApp Template found for Template Id: ' + templateId);
             }
         } catch (Exception e) {
-            System.debug('Exception in updateWhatsAppTemplateStatus: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'updateWhatsAppTemplateStatus',e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'updateWhatsAppTemplateStatus', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     }
 }
