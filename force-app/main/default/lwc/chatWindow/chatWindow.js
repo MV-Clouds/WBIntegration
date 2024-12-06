@@ -243,10 +243,17 @@ export default class ChatWindow extends LightningElement {
 
     handleToggleActions(event){
         try {
-            this.template.querySelectorAll('.show-options').forEach(ele => {if(ele != event.currentTarget) ele.classList.remove('.show-options')});
             event.currentTarget.classList.toggle('show-options');
         } catch (e) {
             console.log('Error in function handleToggleActions:::', e.message);
+        }
+    }
+
+    handleHideActions(event){
+        try {
+            event.currentTarget.classList.remove('show-options');
+        } catch (e) {
+            console.log('Error in function handleHideActions:::', e.message);
         }
     }
 
@@ -262,6 +269,7 @@ export default class ChatWindow extends LightningElement {
                 this.showReactEmojiPicker = true;
             }else if(actionType === 'copy'){
                 navigator.clipboard.writeText(event.currentTarget.dataset.message);
+                this.showToast('Success!', 'The message text has been copied to clipboard.', 'success');
             }else if(actionType === 'cancel-reply'){
                 this.replyToMessage = null;
             }else if(actionType === 'cancel-react'){
