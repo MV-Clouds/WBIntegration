@@ -4,11 +4,9 @@ public class ChatWindowControllerTest {
     @testSetup
     static void setup() {
         try {
-            // Create test data for Contact
             Contact testContact = new Contact(LastName = 'Test Contact');
             insert testContact;
 
-            // Create test data for Chat__c
             Chat__c testChat = new Chat__c(
                 Message__c = 'Test Message',
                 Contact__c = testContact.Id,
@@ -25,30 +23,27 @@ public class ChatWindowControllerTest {
     }
 
     @isTest
-    static void testFetchAllChats() {
+    static void testGetCombinedData() {
         try {
-            // Get the Contact Id
             Contact testContact = [SELECT Id FROM Contact LIMIT 1];
 
             Test.startTest();
-            List<Chat__c> chats = ChatWindowController.fetchAllChats(testContact.Id);
+            Map<String, Object> combinedData = ChatWindowController.getCombinedData(testContact.Id);
             Test.stopTest();
 
-            // Assert that the method fetches the correct number of chats
-            System.assert(chats.size() > 0, 'Chats should be returned.');
+            list<Chat__c> chats = (list<Chat__c>) combinedData.get('chats');
+            System.assert( chats.size() > 0, 'Chats should be returned.');
             System.assertEquals('Test Message', chats[0].Message__c, 'Chat message should match the test data.');
         } catch (Exception e) {
-            ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowControllerTest', 'methodName' => 'testFetchAllChats', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowControllerTest', 'methodName' => 'testGetCombinedData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     }
 
     @isTest
     static void testCreateChat() {
         try {
-            // Get the Contact Id
             Contact testContact = [SELECT Id FROM Contact LIMIT 1];
 
-            // Create chat data map
             Map<String, String> chatData = new Map<String, String>{
                 'message' => 'Hello!',
                 'templateId' => null,
@@ -63,7 +58,6 @@ public class ChatWindowControllerTest {
             Chat__c wrongDataChat = ChatWindowController.createChat(chatData);
             Test.stopTest();
 
-            // Assert that the chat was created successfully
             System.assertNotEquals(null, newChat, 'New chat should be created.');
             System.assertEquals('Hello!', newChat.Message__c, 'Message should match the input.');
             System.assertEquals(testContact.Id, newChat.Contact__c, 'Contact ID should match.');
@@ -75,10 +69,8 @@ public class ChatWindowControllerTest {
     @isTest
     static void testCreateChatWithImage() {
         try {
-            // Get the Contact Id
             Contact testContact = [SELECT Id FROM Contact LIMIT 1];
 
-            // Create ContentVersion
             ContentVersion contentVersion = new ContentVersion(
                 Title = 'Test Image',
                 VersionData = Blob.valueOf('Test Content'),
@@ -87,7 +79,6 @@ public class ChatWindowControllerTest {
             insert contentVersion;
             ContentVersion cv = [SELECT Id FROM ContentVersion WHERE Title = 'Test Image' LIMIT 1];
 
-            // Create chat data map
             Map<String, String> chatData = new Map<String, String>{
                 'message' => cv.Id,
                 'templateId' => null,
@@ -100,7 +91,6 @@ public class ChatWindowControllerTest {
             Chat__c newChat = ChatWindowController.createChat(chatData);
             Test.stopTest();
 
-            // Assert that the chat was created successfully
             System.assertNotEquals(null, newChat, 'New chat should be created.');
             System.assert(newChat.Message__c.contains('/sfc/servlet.shepherd/version/download/'), 'Message should be a file link.');
         } catch (Exception e) {
@@ -111,7 +101,6 @@ public class ChatWindowControllerTest {
     @isTest
     static void testUpdateReaction() {
         try {
-            // Get the Chat Id
             Chat__c testChat = [SELECT Id FROM Chat__c LIMIT 1];
 
             Test.startTest();
@@ -119,11 +108,24 @@ public class ChatWindowControllerTest {
             Chat__c wrongDataChat = ChatWindowController.updateReaction('test', 'Like');
             Test.stopTest();
 
-            // Assert that the reaction was updated successfully
             System.assertNotEquals(null, updatedChat, 'Chat should be updated.');
             System.assertEquals('Like', updatedChat.Reaction__c, 'Reaction should match the input.');
         } catch (Exception e) {
             ExceptionHandler.createExceptionLog(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateReaction', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+    }
+
+    @isTest
+    static void testUpdateThemePreference() {
+        try {
+
+            Test.startTest();
+            Boolean isSuccess = ChatWindowController.updateThemePreference('light');
+            Test.stopTest();
+
+            System.assertEquals(true, isSuccess, 'Custom setting should be created/updated successfully.');
+        } catch (Exception e) {
+            ExceptionHandler.createExceptionLog(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateThemePreference', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 }

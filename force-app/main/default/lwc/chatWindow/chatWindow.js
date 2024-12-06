@@ -1,9 +1,10 @@
 import { LightningElement, api, track } from 'lwc';
-import fetchAllChats from '@salesforce/apex/ChatWindowController.fetchAllChats';
+import getCombinedData from '@salesforce/apex/ChatWindowController.getCombinedData';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
 import updateReaction from '@salesforce/apex/ChatWindowController.updateReaction';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import updateThemePreference from '@salesforce/apex/ChatWindowController.updateThemePreference';
 
 export default class ChatWindow extends LightningElement {
 
@@ -12,7 +13,7 @@ export default class ChatWindow extends LightningElement {
     @api height;
     chats = [];
     @track groupedChats = [];
-    @track isSun = true; // Default : Light mode (Sun)
+    @track isLightMode = true; // Default : Light mode (Sun)
     @track messageText = '';
     @track selectedTemplate = null;
     emojiCategories = [];
@@ -22,7 +23,7 @@ export default class ChatWindow extends LightningElement {
 
     //Control Variables
     @track showSpinner = false;
-    @track noChatMessages = false;
+    @track noChatMessages = true;
     showEmojiPicker = false;
     showAttachmentOptions = false;
     // showSendOptions = false;
@@ -38,10 +39,10 @@ export default class ChatWindow extends LightningElement {
 
     //Get Variables
     get sunClass() {
-        return `toggle-button sun-icon ${this.isSun ? "" : "hide"}`;
+        return `toggle-button sun-icon ${this.isLightMode ? "" : "hide"}`;
     }
     get moonClass() {
-        return `toggle-button moon-icon ${this.isSun ? "hide" : "show"}`;
+        return `toggle-button moon-icon ${this.isLightMode ? "hide" : "show"}`;
     }
     get showPopup(){
         return this.showFileUploader;
@@ -83,19 +84,24 @@ export default class ChatWindow extends LightningElement {
     getAllChats(){
         this.showSpinner = true;
         try {
-            fetchAllChats({ contactId: this.recordId })
-            .then(chats => {
-                this.chats = chats.map(ch => {
+            getCombinedData({ contactId: this.recordId })
+            .then(combinedData => {
+
+                if(combinedData.theme){
+                    this.isLightMode = combinedData.theme == 'light';
+                    if(!this.isLightMode) this.template.host.setAttribute("data-theme", combinedData.theme);
+                }
+                this.chats = combinedData.chats?.map(ch => {
                     ch.isText = ch.Message_Type__c == 'Text';
                     ch.isImage = ch.Message_Type__c == 'Image';
                     return ch;
-                });                
+                });
                 this.showSpinner = false;
                 this.processChats(true);
             })
             .catch(e => {
                 this.showSpinner = false;
-                console.error('Error in fetchAllChats:', e.message);
+                console.error('Error in getCombinedData:', e.message);
             });
         } catch (e) {
             this.showSpinner = false;
@@ -225,9 +231,23 @@ export default class ChatWindow extends LightningElement {
 // Theme Toggle
     toggleTheme() {
         try{
-            this.isSun = !this.isSun;
-            let theme = this.isSun ? "light" : "dark";
+            this.isLightMode = !this.isLightMode;
+            let theme = this.isLightMode ? "light" : "dark";
             this.template.host.setAttribute("data-theme", theme);
+            updateThemePreference({theme: theme})
+            .then((isSuccess) => {
+                if(isSuccess){
+                    this.showToast('Success!',`Your theme preference has been updated to ${theme}.`, 'success');
+                }else{
+                    this.showToast('Error!','Failed to save preference, you can continue using theme for this session.', 'error');
+                }
+                console.log('Update theme completed');
+                
+            })
+            .catch((e) => {
+                console.log('Failed to update theme preference!.', e.message);
+                
+            });
         }catch(e){
             console.log('Error in toggleTheme:::', e.message);
         }

@@ -6,13 +6,14 @@
 * Created By: Kevin Suvagiya
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
-* Last Modified Date: 05 Dec 2024
-* Last Modification Description: Updated the createChat to create the contentDistribution record for the files
+* Last Modified Date: 06 Dec 2024
+* Last Modification Description: Added implementation for the theme preference logic
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
 * 25 Nov, 2024  - Kevin Suvagiya - Added a method to link the chat record with the exception
 * 05 Dec, 2024  - Kevin Suvagiya - Updated the createChat to create the contentDistribution record for the files
+* 06 Dec, 2024  - Kevin Suvagiya - Added implementation for the theme preference logic
 **/
 public with sharing class ChatWindowController {
     
@@ -20,18 +21,23 @@ public with sharing class ChatWindowController {
     *********************************************************
     @description     : Method is used to fetch all the chats 
     @param           : contactId - {String} - Id of the contact to fetch related chats only
-    @return          : chats - {List<Chat__c>} - List of all the chat records
+    @return          : combinedData - {Map<String, Object>} - Map containing all the chats and theme preference
     ********************************************************
     */
     @AuraEnabled
-    public static List<Chat__c> fetchAllChats(String contactId){
-        List<Chat__c> chats = new List<Chat__c>();
+    public static Map<String, Object> getCombinedData(String contactId){
+        Map<String, Object> combinedData = new Map<String, Object>();
         try {
+            List<Chat__c> chats = new List<Chat__c>();
+            UserThemePreference__c userPreference = UserThemePreference__c.getInstance(UserInfo.getUserId());
+            String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
             chats = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Message_By__c, Reaction__c, CreatedDate, Contact__r.FirstName FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
+            combinedData.put('chats', chats);
+            combinedData.put('theme', theme);
         } catch (Exception e) {
             ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'fetchAllChats', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
-        return chats;
+        return combinedData;
     }
 
     /*
@@ -108,4 +114,32 @@ public with sharing class ChatWindowController {
             return null;
         }
     }
+
+    /*
+    *********************************************************
+    @description     : Method is used to update the theme preference for the current user
+    @param           : theme - {String} - The new theme preference ('Light' or 'Dark')
+    @return          : isSuccess - {Boolean} - success message for js controller
+    ********************************************************
+    */
+    @AuraEnabled
+    public static Boolean updateThemePreference(String theme) {
+        Boolean isSuccess = false;
+        try {
+            List<UserThemePreference__c> userPreferences = [SELECT Theme__c FROM UserThemePreference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
+            UserThemePreference__c userPreference = new UserThemePreference__c();
+            if (userPreferences.isEmpty()) {
+                userPreference.SetupOwnerId = UserInfo.getUserId();
+            }else{
+                userPreference = userPreferences[0];
+            }
+            userPreference.Theme__c = theme;
+            upsert as User userPreference;
+            isSuccess = true;
+        } catch (Exception e) {
+            ExceptionHandler.createExceptionLog(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'updateThemePreference', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+        return isSuccess;
+    }
+
 }
