@@ -8,10 +8,10 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 3/11/2024
+ * Last Update Date : 6/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : getDynamicObjectData
- * Change Description : Get dynamic template and contact data.
+ * Name of methods changed (Comma separated if more then one) : All methods
+ * Change Description : Change the exception class used in this class.
  ***********************************************************************/
 
 public with sharing class WBTemplateController {
@@ -20,7 +20,13 @@ public with sharing class WBTemplateController {
     public static String endpoint = System.Label.WHATSAPP_TEMPLATE_ENPOINT;
     public static String uploadEndpoint = System.Label.WB_TEMPLATE_UPLOAD_FILE;
 
-    // Used in WbAllTemplatePage to get all template record.
+      /*
+    *********************************************************
+    @description     : Used in WbAllTemplatePage to get all template record.
+    @param           : 
+    @return          : listName - Whatsapp Template record.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static List<Template__c> getWhatsAppTemplates() {
         try {
@@ -30,14 +36,19 @@ public with sharing class WBTemplateController {
             System.debug('list name==> ' + listName);
             return listName;
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getWhatsAppTemplates',e.getLineNumber());
-            System.debug('Error in getWhatsAppTemplates: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
        
     }
 
-    // Used to fetch all the field related to object name
+     /*
+    *********************************************************
+    @description     : Used to fetch all the field related to object name
+    @param           : 
+    @return          : fieldNames - Return fields that query for the objectname that pass.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static List<String> getObjectFields() {
         String objectName = 'Contact';
@@ -50,13 +61,18 @@ public with sharing class WBTemplateController {
             }
             fieldNames.sort();
         } catch (Exception e) {
-            System.debug('Error fetching fields: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getObjectFields',e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getObjectFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
         return fieldNames;
     }
 
-    // Fetch records based on the object name
+    /*
+    *********************************************************
+    @description     : Fetch records based on the object name
+    @param           : 
+    @return          : records - Return record that query for the objectname that pass.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static List<sObject> getRecordsBySObject() {
         String sObjectName='Contact';
@@ -67,12 +83,18 @@ public with sharing class WBTemplateController {
             records = Database.query(query);
             System.debug('records '+records);
         } catch (Exception e) {
-            System.debug('Error fetching records: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getObjectFields',e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getRecordsBySObject', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
         return records;
     }
 
+    /*
+    *********************************************************
+    @description     : Fetch records based on the object name
+    @param           : 
+    @return          : wrapper - Return wrapper that contain object name and field name from the Template Variable.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static TemplateDataWrapper getDynamicObjectData() {
         TemplateDataWrapper wrapper = new TemplateDataWrapper();
@@ -115,13 +137,19 @@ public with sharing class WBTemplateController {
             wrapper.fieldNames = new List<String>(fieldNames);
     
         } catch (Exception e) {
-            System.debug('Error in getDynamicObjectData: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getDynamicObjectData', e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getDynamicObjectData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     
         return wrapper;
     }
  
+    /*
+    *********************************************************
+    @description     : Fetch records based on the dynamic object name, fieldname and recordid
+    @param           : objectName, fieldNames, recordId
+    @return          : resultMap {Map<String, Object>} - Return queried data.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> fetchDynamicRecordData(String objectName, List<String> fieldNames, String recordId) {
         Map<String, Object> resultMap = new Map<String, Object>();
@@ -143,14 +171,20 @@ public with sharing class WBTemplateController {
             }
 
         } catch (Exception e) {
-            System.debug('Error in fetchDynamicRecordData: ' + e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'fetchDynamicRecordData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             resultMap.put('error', e.getMessage());
         }
 
         return resultMap;
     }
     
-    // It used to replace value of field with the variable placeholder in preview page.
+     /*
+    *********************************************************
+    @description     : It used to replace value of field with the variable placeholder in preview page.
+    @param           : recordId
+    @return          : result {Map<String, Object>} - Return the replace template content based on the template variable fields by fetching from contact object.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static Map<String, String> getTemplateWithReplacedValues(String recordId) {
         try {
@@ -211,19 +245,31 @@ public with sharing class WBTemplateController {
             return result;
 
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getTemplateWithReplacedValues', e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getTemplateWithReplacedValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
     }
 
-    // Check if same template already exist.
+      /*
+    *********************************************************
+    @description     : Check if same template already exist.
+    @param           : templateName
+    @return          : 
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static Boolean doesTemplateExist(String templateName) {
         Integer count = [SELECT COUNT() FROM Template__c WHERE Name = :templateName WITH SECURITY_ENFORCED];
         return count > 0;
     }
     
-    // Get picklist value for catagory and status used in WbAllTemplatePage to filter.
+       /*
+    *********************************************************
+    @description     : Get picklist value for catagory and status used in WbAllTemplatePage to filter.
+    @param           : 
+    @return          : picklistValues {Map<String, List<String>>} - return picklist value for catagory and status from template object.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static Map<String, List<String>> getCategoryAndStatusPicklistValues() {
         Map<String, List<String>> picklistValues = new Map<String, List<String>>();
@@ -249,14 +295,19 @@ public with sharing class WBTemplateController {
 
             return picklistValues;
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getCategoryAndStatusPicklistValues',e.getLineNumber());
-            System.debug('Error in getCategoryAndStatusPicklistValues: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getCategoryAndStatusPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
         
     }
 
-    // Fetch country and code which used as picklist in the Create Template Page.
+    /*
+    *********************************************************
+    @description     : Fetch country and code which used as picklist in the Create Template Page.
+    @param           : 
+    @return          : result List<Map<String, String>> - return country code with the name for country fetch from static resource.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static List<Map<String, String>> getCountryCodes() {
         List<Map<String, String>> result = new List<Map<String, String>>();
@@ -278,14 +329,19 @@ public with sharing class WBTemplateController {
             
             return result;
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getCountryCodes',e.getLineNumber());
-            System.debug('Error in getCountryCodes: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getCountryCodes', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
        
     }
 
-    // Fetch language and code which used as picklist in the Create Template Page.
+     /*
+    *********************************************************
+    @description     : Fetch language and code which used as picklist in the Create Template Page.
+    @param           : 
+    @return          : result List<Map<String, String>> - return language code with the name for language fetch from static resource.
+    ********************************************************
+    */
     @AuraEnabled(cacheable=true)
     public static List<Map<String, String>> getLanguages() {
         List<Map<String, String>> result = new List<Map<String, String>>();
@@ -307,13 +363,18 @@ public with sharing class WBTemplateController {
             
             return result;
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'getLanguages',e.getLineNumber());
-            System.debug('Error in getLanguages: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getLanguages', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
     }
 
-    // Callout to create template in the Meta and the Body creation and response handle in CreateTemplateWrapper Class.
+    /*
+    *********************************************************
+    @description     : Callout to create template in the Meta and the Body creation and response handle in CreateTemplateWrapper Class.
+    @param           : serializedWrapper - get serialize wrapper from the js to create template.
+    @return          : response Map<String, Object> - return response with the template id.
+    ********************************************************
+    */
     @AuraEnabled
     public static Map<String, Object> createWhatsappTemplate(String serializedWrapper) {
         Map<String, Object> response = new Map<String, Object>();
@@ -345,10 +406,19 @@ public with sharing class WBTemplateController {
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
+                ExceptionHandler.logException(new Map<String, Object>{
+                    'className' => 'WBTemplateController',
+                    'methodName' => 'createWhatsappTemplate',
+                    'exceptionObj' => null,
+                    'isApiException' => true,
+                    'statusCode' => res.getStatusCode(),
+                    'chatId' => null,
+                    'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
+                    'apiResponse' => res.getBody()
+                });
             }
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'createWhatsappTemplate',e.getLineNumber());
-            System.debug('Error in createWhatsappTemplate: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             response.put('status', 'error');
             response.put('message', e.getMessage());
         }
@@ -356,7 +426,13 @@ public with sharing class WBTemplateController {
         return response;
     }
 
-    // Method to get session Id for uploading file to meta.
+    /*
+    *********************************************************
+    @description     : Method to get session Id for uploading file to meta.
+    @param           : fileName,fileLength,fileType - get the all parameter from the js as user select the file.
+    @return          : sessionId - return sessionId to start upload file in meta.
+    ********************************************************
+    */
     @AuraEnabled
     public static String startUploadSession(String fileName, Integer fileLength, String fileType) {
         try {
@@ -385,15 +461,30 @@ public with sharing class WBTemplateController {
                 return sessionId; 
             } else {
                 System.debug('Error starting upload session: ' + res.getBody());
+                ExceptionHandler.logException(new Map<String, Object>{
+                    'className' => 'WBTemplateController',
+                    'methodName' => 'startUploadSession',
+                    'exceptionObj' => null,
+                    'isApiException' => true,
+                    'statusCode' => res.getStatusCode(),
+                    'chatId' => null,
+                    'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
+                    'apiResponse' => res.getBody()
+                });
             }
         } catch (Exception e) {
-            System.debug('Error in startUploadSession: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'startUploadSession',e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'startUploadSession', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
         return null;
     }        
 
-    // Method to upload file to meta and get file handle which use to create body for image header.
+    /*
+    *********************************************************
+    @description     : Method to upload file to meta and get file handle which use to create body for image header.
+    @param           : serializedWrapper - get serialize wrapper from the js with the detail of files.
+    @return          : headerHandle - return headerHandle so that can used to build body for media template.
+    ********************************************************
+    */
     @AuraEnabled
     public static String uploadFileChunk(String serializedWrapper) {
         try {
@@ -424,15 +515,30 @@ public with sharing class WBTemplateController {
                 return headerHandle; 
             } else {
                 System.debug('Error uploading file chunk: ' + res.getBody());
+                ExceptionHandler.logException(new Map<String, Object>{
+                    'className' => 'WBTemplateController',
+                    'methodName' => 'uploadFileChunk',
+                    'exceptionObj' => null,
+                    'isApiException' => true,
+                    'statusCode' => res.getStatusCode(),
+                    'chatId' => null,
+                    'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
+                    'apiResponse' => res.getBody()
+                });
             }
         } catch (Exception e) {
-            System.debug('Error in uploadFileChunk: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'uploadFileChunk', e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'uploadFileChunk', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
         return '';
     }
 
-    // Store the file in content version that can be used while sending template.
+    /*
+    *********************************************************
+    @description     : Store the file in content version that can be used while sending template.
+    @param           : headerHandle,fileName,fileBlob - Used to create content version of uploaded file for the history.
+    @return          : 
+    ********************************************************
+    */
     private static void createContentVersionAndDocument(String headerHandle, String fileName, Blob fileBlob) {
         try {
             ContentVersion contentVersion = new ContentVersion();
@@ -447,12 +553,17 @@ public with sharing class WBTemplateController {
             
             System.debug('Created ContentVersion and ContentDocument: ' + contentVersion.Id + ', ' + contentDocument.Id);
         } catch (Exception e) {
-            System.debug('Error creating ContentVersion and ContentDocument: ' + e.getMessage());
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'createContentVersionAndDocument', e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createContentVersionAndDocument', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     }
 
-    // Method used to delete template from meta as well as from record page.
+    /*
+    *********************************************************
+    @description     : Method used to delete template from meta as well as from record page.
+    @param           : templateId - using that can delete template.
+    @return          : Return the success or error message. 
+    ********************************************************
+    */
     @AuraEnabled
     public static string deleteTemplete(String templateId){
         try {
@@ -480,7 +591,16 @@ public with sharing class WBTemplateController {
                     System.debug('The operation was successful.');
                     return 'Template deleted successfully';
                 } else {
-                    System.debug('The operation was not successful.');
+                    ExceptionHandler.logException(new Map<String, Object>{
+                        'className' => 'WBTemplateController',
+                        'methodName' => 'deleteTemplete',
+                        'exceptionObj' => null,
+                        'isApiException' => true,
+                        'statusCode' => res.getStatusCode(),
+                        'chatId' => null,
+                        'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
+                        'apiResponse' => res.getBody()
+                    });
                     return 'Template is not deleted';
                 }
             } else {
@@ -488,7 +608,7 @@ public with sharing class WBTemplateController {
                 return 'Template is not deleted';
             }
         } catch (Exception e) {
-            ExceptionLog.exception(e.getMessage(), 'WBTemplateController', 'deleteTemplete',e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'deleteTemplete', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return e.getMessage();
         }
     }
