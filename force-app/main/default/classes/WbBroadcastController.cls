@@ -2,9 +2,9 @@
 * @File Name : WbBroadcastController.cls
 * @Description : This class involves functionality related to Broadcasting.
 * @Author : Kajal Tiwari
-* @Last Modified By :
-* @Last Modified On : Decemeber 5, 2024
-* @Modification Log :
+* @Last Modified By :Kajal Tiwari
+* @Last Modified On : Decemeber 6, 2024
+* @Modification Log : Added method fetchBroadcastDetails to get the Broadcast Message Details.
 *==============================================================================
 * Ver | Date | Author | Modification
 *==============================================================================
@@ -147,6 +147,71 @@ public with sharing class WbBroadcastController {
             ExceptionLog.exception(e.getMessage(), 'WbBroadcastController', 'updateBroadcastGroup', e.getLineNumber());
         }
     }
-    
+  
+    @AuraEnabled
+    public static Map<String, Object> fetchBroadcastDetails(Id broadcastId) {
+        Map<String, Object> result = new Map<String, Object>();
+
+        try { 
+            // Step 1: Fetch Broadcast details including Broadcast Group details
+            Broadcast__c broadcast = [SELECT Broadcast_Group__c,Template__c,Template__r.Name,Total_Sent__c,Total_Delivered__c,Total_Read__c,LastModifiedDate FROM Broadcast__c  WHERE Id = :broadcastId WITH SECURITY_ENFORCED LIMIT 1];
+
+            if (broadcast == null || broadcast.Broadcast_Group__c == null) {
+                return result;
+            }
+
+            Broadcast_Group__c broadcastGroup = [SELECT Name, Description__c FROM Broadcast_Group__c WHERE Id = :broadcast.Broadcast_Group__c WITH SECURITY_ENFORCED LIMIT 1];
+
+            // Step 2: Fetch Broadcast Group Members
+            List<Broadcast_Group_Member__c> members = [SELECT Id, Contact_ID__c, Contact_ID__r.Name, Contact_ID__r.Phone FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c = :broadcast.Broadcast_Group__c WITH SECURITY_ENFORCED];
+
+            // Step 3: Fetch Chat records for the Contacts in Broadcast Group Members
+            Set<Id> contactIds = new Set<Id>();
+            for (Broadcast_Group_Member__c member : members) {
+                if (member.Contact_ID__c != null) {
+                    contactIds.add(member.Contact_ID__c);
+                }
+            }
+
+            List<Chat__c> chats = [
+                SELECT 
+                    Contact__c, Message_Status__c,Message_Sent_Time__c
+                FROM Chat__c WHERE Contact__c IN :contactIds AND Message_Type__c = 'Broadcast' WITH SECURITY_ENFORCED
+            ];
+
+            // Step 4: Map chats to their contacts
+            Map<Id, Chat__c> contactChatMap = new Map<Id, Chat__c>();
+            for (Chat__c chat : chats) {
+                contactChatMap.put(chat.Contact__c, chat);
+            }
+
+            // Step 5: Create Member Data
+            List<Map<String, Object>> memberDetails = new List<Map<String, Object>>();
+            for (Broadcast_Group_Member__c member : members) {
+                if (contactChatMap.containsKey(member.Contact_ID__c)) {
+                    Chat__c chat = contactChatMap.get(member.Contact_ID__c);
+                    Map<String, Object> memberData = new Map<String, Object>();
+                    memberData.put('contactName', member.Contact_ID__r.Name);
+                    memberData.put('mobileNumber', member.Contact_ID__r.Phone);
+                    memberData.put('messageStatus', chat.Message_Status__c);
+                    memberData.put('sendDateTime', chat.Message_Sent_Time__c);
+                    memberDetails.add(memberData);
+                }
+            }
+
+            // Step 6: Add Group-Level Details to Result
+            result.put('broadcastGroupName', broadcastGroup.Name);
+            result.put('templateName', broadcast.Template__r.Name);
+            result.put('totalDelivered', broadcast.Total_Delivered__c);
+            result.put('totalSeen', broadcast.Total_Read__c);
+            result.put('broadcastSentDate', broadcast.LastModifiedDate);
+            result.put('members', memberDetails);
+
+        } catch (Exception e) {
+            System.debug('Error updating broadcast group: ' + e.getMessage());
+            ExceptionLog.exception(e.getMessage(), 'WbBroadcastController', 'fetchBroadcastDetails', e.getLineNumber());
+        }
+        return result;
+    }
 
 }
