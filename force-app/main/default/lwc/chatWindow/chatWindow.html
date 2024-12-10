@@ -26,8 +26,8 @@
                         <div key={chat.Id} class="message-full-length-div" data-type={chat.className}>
                             <div class="message">
                                 <!-- <pre>{chat.Message__c}</pre> -->
-                                <div class="message-preview-div" data-by={chat.replyTo.Message_By__c} if:true={chat.replyTo}>
-                                    <div class="message-by">{chat.replyTo.Message_By__c}</div>
+                                <div class="message-preview-div" data-by={chat.replyTo.messageBy} if:true={chat.replyTo}>
+                                    <div class="message-by">{chat.replyTo.messageBy}</div>
                                     <div class="text-message-div" if:true={chat.replyTo.isText}>
                                         <div class="message-div reply-to-text-message-div">{chat.replyTo.Message__c}</div>
                                     </div>
@@ -40,7 +40,7 @@
                                 </div>
                                 <div class="image-message-div" if:true={chat.isImage} data-action="open" onclick={handleToggleImagePreview}>
                                     <svg class="image-preview-close" data-action="close" onclick={handleToggleImagePreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="30" width="30"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
-                                    <img class="message-image" src={chat.Message__c} onerror={handleImageError} alt="Image" />
+                                    <img class="message-image" src={chat.Message__c} onerror={handleImageError} alt="Photo"/>
                                 </div>
                                 <div class="timestamp">
                                     <lightning-formatted-date-time 
@@ -58,10 +58,10 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="#34B7F1" stroke-linecap="round" stroke-linejoin="round"><path d="m4.375 7.5 3.125 3.125L13.75 4.375" stroke-width="1.5"></path><path d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125" stroke-width="1.5"></path></svg>
                                     </div>
                                     <div class="status-icon" if:true={chat.isSending}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" height="10" width="10" viewBox="-0.5 -0.5 16 16" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="M1.25 7.5a6.25 6.25 0 1 0 12.5 0 6.25 6.25 0 1 0 -12.5 0"></path><path d="m7.5 3.75 0 3.75 2.5 1.25" ></path></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" height="10" width="16" viewBox="-0.5 -0.5 16 16" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="M1.25 7.5a6.25 6.25 0 1 0 12.5 0 6.25 6.25 0 1 0 -12.5 0"></path><path d="m7.5 3.75 0 3.75 2.5 1.25" ></path></svg>
                                     </div>
                                     <div class="status-icon" if:true={chat.isFailed}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="10" height="10" fill="#ff000030" stroke="orangered" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="6" x2="12" y2="12" stroke-width="3"/><circle cx="12" cy="17" r="1.1"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="10" fill="#ff000030" stroke="orangered" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="6" x2="12" y2="12" stroke-width="3"/><circle cx="12" cy="17" r="1.1"/></svg>
                                     </div>
                                 </div> 
                                 <div class="reaction" if:true={chat.isReaction}>
@@ -75,7 +75,7 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="16" width="16" fill="teal"><path d="M205 34.8c11.5 5.1 19 16.6 19 29.2l0 64 112 0c97.2 0 176 78.8 176 176c0 113.3-81.5 163.9-100.2 174.1c-2.5 1.4-5.3 1.9-8.1 1.9c-10.9 0-19.7-8.9-19.7-19.7c0-7.5 4.3-14.4 9.8-19.5c9.4-8.8 22.2-26.4 22.2-56.7c0-53-43-96-96-96l-96 0 0 64c0 12.6-7.4 24.1-19 29.2s-25 3-34.4-5.4l-160-144C3.9 225.7 0 217.1 0 208s3.9-17.7 10.6-23.8l160-144c9.4-8.5 22.9-10.6 34.4-5.4z"/></svg>
                                         <div class="action-command">Reply</div>
                                     </div>
-                                    <div class="action-option" data-action="react" data-chat={chat.Id} onclick={handleChatAction}>
+                                    <div class="action-option" data-action="react" data-chat={chat.Id} onclick={handleChatAction} if:false={sendOnlyTemplate}>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="16" width="16" fill="#f5c400"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM164.1 325.5C182 346.2 212.6 368 256 368s74-21.8 91.9-42.5c5.8-6.7 15.9-7.4 22.6-1.6s7.4 15.9 1.6 22.6C349.8 372.1 311.1 400 256 400s-93.8-27.9-116.1-53.5c-5.8-6.7-5.1-16.8 1.6-22.6s16.8-5.1 22.6 1.6zM144.4 208a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm192-32a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>
                                         <div class="action-command">React</div>
                                     </div>
@@ -84,19 +84,6 @@
                                         <div class="action-command">Copy</div>
                                     </div>
                                 </div>
-                                <!-- <div class="react-emoji-div">
-                                    <div class="default-emojis">
-                                        <div class="emoji" onclick={handleEmojiClick}>👍</div>
-                                        <div class="emoji" onclick={handleEmojiClick}>❤️</div>
-                                        <div class="emoji" onclick={handleEmojiClick}>😂</div>
-                                        <div class="emoji" onclick={handleEmojiClick}>😮</div>
-                                        <div class="emoji" onclick={handleEmojiClick}>😥</div>
-                                        <div class="emoji" onclick={handleEmojiClick}>🙏</div>
-                                        <div class="show-other-emoji emoji" onclick={handleEmojiButtonClick}>
-                                            <svg viewBox="-0.5 -0.5 16 16" fill="gray" stroke-width="1" xmlns="http://www.w3.org/2000/svg" height="16" width="16"><path d="M13.931249999999999 6.58125h-5.5125V1.06875c0 -0.2436875 -0.09681250000000001 -0.477375 -0.269125 -0.6496875000000001C7.977375 0.2468125 7.743625 0.15 7.5 0.15c-0.24362499999999998 0 -0.477375 0.09681250000000001 -0.6496250000000001 0.2690625 -0.1723125 0.1723125 -0.269125 0.40599999999999997 -0.269125 0.6496875000000001v5.5125H1.06875c-0.2436875 0 -0.477375 0.09681250000000001 -0.6496875000000001 0.269125C0.2468125 7.022625 0.15 7.256375 0.15 7.5c0 0.24362499999999998 0.09681250000000001 0.477375 0.2690625 0.6496250000000001 0.1723125 0.1723125 0.40599999999999997 0.269125 0.6496875000000001 0.269125h5.5125v5.5125c0 0.24362499999999998 0.09681250000000001 0.477375 0.269125 0.6496250000000001s0.40599999999999997 0.269125 0.6496250000000001 0.269125c0.24362499999999998 0 0.477375 -0.09681250000000001 0.6496250000000001 -0.269125s0.269125 -0.40599999999999997 0.269125 -0.6496250000000001v-5.5125h5.5125c0.24362499999999998 0 0.477375 -0.09681250000000001 0.6496250000000001 -0.269125S14.850000000000001 7.743625 14.850000000000001 7.5c0 -0.24362499999999998 -0.09681250000000001 -0.477375 -0.269125 -0.6496250000000001s-0.40599999999999997 -0.269125 -0.6496250000000001 -0.269125Z"></path></svg>
-                                        </div>
-                                    </div>
-                                </div> -->
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="gray" stroke="gray" height="16" width="16" stroke-width="1"><circle cx="8" cy="3" r="1"></circle><circle cx="8" cy="8" r="1"></circle><circle cx="8" cy="13" r="1"></circle></svg>
                             </div>
                         </div>
@@ -138,12 +125,39 @@
                     variant="label-hidden"
               ></lightning-file-upload>
             </div>
+            <div class="template-select-div" if:true={showTemplateSelection}>
+                <div class="bold-text">Select Template</div>
+                <div class="search-template-div">
+                    <input placeholder="Search Template..." type="text" class="search-template-input" onkeyup={handleSearchTemplate} onchange={handleSearchTemplate}>
+                    <svg class="search-template-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="darkgray" viewBox="0 0 512 512"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></svg>
+                </div>
+                <div class="templates-list-div" if:true={filteredTemplate}>
+                    <template for:each={filteredTemplate} for:item="template"> 
+                        <div key={template.Id} class="template-div">
+                            <div class="template-title-div">
+                                {template.Name}
+                            </div>
+                            <div class="template-select-btn" data-id={template.Id} onclick={handleSelectTemplate}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 14 14" stroke-width="1" height="14" width="14"><path d="M3.18027 3.18027C2.44345 3.9171 2 5.04944 2 6.6344c0 1.38413 0.33908 2.42265 0.91107 3.15057 0.56614 0.72043 1.41908 1.21183 2.59918 1.39973 0.40906 0.0652 0.68784 0.4496 0.62269 0.8587 -0.06516 0.409 -0.44959 0.6878 -0.85865 0.6227 -1.48598 -0.2367 -2.70418 -0.8873 -3.54266 -1.9543C0.899011 9.65215 0.5 8.25751 0.5 6.6344c0 -1.86106 0.52574 -3.42092 1.61961 -4.51479C3.21348 1.02574 4.77334 0.5 6.6344 0.5c1.61601 0 3.00555 0.395508 4.0635 1.22082 1.0656 0.83122 1.719 2.03957 1.9619 3.51479 0.0673 0.40872 -0.2095 0.79459 -0.6182 0.86187 -0.4087 0.06728 -0.7946 -0.2095 -0.8619 -0.61821 -0.1924 -1.1689 -0.6846 -2.01426 -1.40436 -2.57574C9.048 2.33616 8.0125 2 6.6344 2c-1.58496 0 -2.7173 0.44345 -3.45413 1.18027Zm2.06842 2.06845c-0.26164 0.26164 -0.45352 0.69519 -0.45352 1.38568 0 0.7446 0.22208 1.19158 0.52235 1.44948 0.31423 0.26988 0.35018 0.74339 0.0803 1.05761 -0.26988 0.31423 -0.74339 0.35018 -1.05762 0.0803 -0.72287 -0.62086 -1.04503 -1.54129 -1.04503 -2.58739 0 -0.9666 0.27417 -1.82765 0.89286 -2.44634 0.61869 -0.61869 1.47974 -0.89286 2.44634 -0.89286 0.89942 0 1.70814 0.23681 2.31726 0.77187 0.3112 0.27336 0.34187 0.74724 0.06851 1.05844 -0.27336 0.3112 -0.74725 0.34188 -1.05845 0.06851 -0.26351 -0.23147 -0.68359 -0.39882 -1.32732 -0.39882 -0.69049 0 -1.12404 0.19188 -1.38568 0.45352Zm3.87846 7.18938c-0.54214 0.4161 -1.32565 0.2464 -1.59675 -0.381 -0.59808 -1.384 -0.91906 -2.90185 -0.65974 -4.42416 0.06739 -0.39563 0.37631 -0.70457 0.77193 -0.77198 1.52229 -0.25939 3.04021 0.06163 4.42421 0.65972 0.6273 0.2711 0.797 1.05457 0.3809 1.59671 -0.1617 0.21072 -0.3323 0.4217 -0.5101 0.63132 0.2725 0.22664 0.5466 0.46379 0.8069 0.72409 0.262 0.262 0.5005 0.538 0.7285 0.8122 0.3542 0.4261 0.3653 1.0564 0.0215 1.4909l-0.72 0.72c-0.4345 0.3438 -1.0648 0.3327 -1.4909 -0.0215 -0.2742 -0.228 -0.5503 -0.4665 -0.8122 -0.7285 -0.2606 -0.2606 -0.49802 -0.5351 -0.7249 -0.8079 -0.20568 0.1742 -0.41264 0.3414 -0.61935 0.5001Z"></path></svg>
+                                Select</div>
+                        </div>
+                    </template>
+                </div>
+                <div class="no-templates-div" if:false={filteredTemplate}>
+                    <template lwc:if={allTemplates}>
+                        No Matching Template Found.
+                    </template>
+                    <template lwc:else>
+                        No Template Available.
+                    </template>
+                </div>
+            </div>
         </div>
         <div class="message-draft-div">
             <div class="reply-to-message-div" if:true={replyToMessage}>
-                <div class="message-preview-div" data-reply-by={replyToMessage.Message_By__c}>
+                <div class="message-preview-div" data-reply-by={replyToMessage.messageBy}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48" height="12" width="12" data-action="cancel-reply" onclick={handleChatAction}><path fill="gray" d="M23.9999 0.48C11.0312 0.48 0.48 11.0312 0.48 23.9999 0.48 36.9688 11.0312 47.52 23.9999 47.52c12.9689 0 23.5201 -10.5512 23.5201 -23.5201C47.52 11.0312 36.9688 0.48 23.9999 0.48Zm8.516 29.4781c0.175 0.1663 0.3149 0.3659 0.4116 0.5872 0.0966 0.2214 0.1481 0.4597 0.1512 0.7012 0.0032 0.2415 -0.0421 0.4811 -0.1331 0.7049 -0.0911 0.2236 -0.2259 0.4268 -0.3967 0.5975 -0.1707 0.1708 -0.3739 0.3057 -0.5975 0.3967 -0.2238 0.091 -0.4634 0.1363 -0.7049 0.1331 -0.2415 -0.0031 -0.4798 -0.0546 -0.7012 -0.1512 -0.2213 -0.0967 -0.4209 -0.2366 -0.5873 -0.4116l-5.9581 -5.9569 -5.958 5.9569c-0.342 0.3249 -0.7975 0.5033 -1.2692 0.4974 -0.4717 -0.006 -0.9226 -0.1963 -1.2562 -0.5299 -0.3335 -0.3335 -0.5238 -0.7844 -0.5298 -1.2561 -0.006 -0.4717 0.1725 -0.9273 0.4974 -1.2692L21.441 24l-5.9569 -5.958c-0.3249 -0.3421 -0.5034 -0.7976 -0.4974 -1.2693 0.006 -0.4717 0.1963 -0.9226 0.5298 -1.2562 0.3336 -0.3335 0.7845 -0.5237 1.2562 -0.5298 0.4717 -0.006 0.9272 0.1725 1.2692 0.4975l5.958 5.9569 5.9581 -5.9569c0.342 -0.325 0.7976 -0.5035 1.2693 -0.4975 0.4717 0.0061 0.9226 0.1963 1.2561 0.5298 0.3336 0.3336 0.5238 0.7845 0.5299 1.2562 0.0059 0.4717 -0.1725 0.9272 -0.4975 1.2693L26.5589 24l5.9569 5.9581Z" stroke-width="1"></path></svg>
-                    <div class="message-by">{replyToMessage.Message_By__c}</div>
+                    <div class="message-by">{replyToMessage.messageBy}</div>
                     <div class="text-message-div" if:true={replyToMessage.isText}>
                         <div class="reply-to-text-message-div">{replyToMessage.Message__c}</div>
                     </div>
@@ -182,9 +196,9 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height="20" width="20" fill="#FFD43B"><path d="M372.2 52c0 20.9-12.4 39-30.2 47.2L448 192l104.4-20.9c-5.3-7.7-8.4-17.1-8.4-27.1c0-26.5 21.5-48 48-48s48 21.5 48 48c0 26-20.6 47.1-46.4 48L481 442.3c-10.3 23-33.2 37.7-58.4 37.7l-205.2 0c-25.2 0-48-14.8-58.4-37.7L46.4 192C20.6 191.1 0 170 0 144c0-26.5 21.5-48 48-48s48 21.5 48 48c0 10.1-3.1 19.4-8.4 27.1L192 192 298.1 99.1c-17.7-8.3-30-26.3-30-47.1c0-28.7 23.3-52 52-52s52 23.3 52 52z"/></svg>
                                     </div>
                                 </div>
-                                <div class="image attachment-options" onclick={handleImageUpload}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" height="20" width="20" fill="#B758E6"><path d="M160 32c-35.3 0-64 28.7-64 64l0 224c0 35.3 28.7 64 64 64l352 0c35.3 0 64-28.7 64-64l0-224c0-35.3-28.7-64-64-64L160 32zM396 138.7l96 144c4.9 7.4 5.4 16.8 1.2 24.6S480.9 320 472 320l-144 0-48 0-80 0c-9.2 0-17.6-5.3-21.6-13.6s-2.9-18.2 2.9-25.4l64-80c4.6-5.7 11.4-9 18.7-9s14.2 3.3 18.7 9l17.3 21.6 56-84C360.5 132 368 128 376 128s15.5 4 20 10.7zM192 128a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zM48 120c0-13.3-10.7-24-24-24S0 106.7 0 120L0 344c0 75.1 60.9 136 136 136l320 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-320 0c-48.6 0-88-39.4-88-88l0-224z"/></svg>
-                                    <div class="attachment-type">Photos</div>
+                                <div class="image attachment-options" data-media="Image" onclick={handleAttachmentOptionClick}>
+                                    <svg data-media="Image" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" height="20" width="20" fill="#B758E6"><path d="M160 32c-35.3 0-64 28.7-64 64l0 224c0 35.3 28.7 64 64 64l352 0c35.3 0 64-28.7 64-64l0-224c0-35.3-28.7-64-64-64L160 32zM396 138.7l96 144c4.9 7.4 5.4 16.8 1.2 24.6S480.9 320 472 320l-144 0-48 0-80 0c-9.2 0-17.6-5.3-21.6-13.6s-2.9-18.2 2.9-25.4l64-80c4.6-5.7 11.4-9 18.7-9s14.2 3.3 18.7 9l17.3 21.6 56-84C360.5 132 368 128 376 128s15.5 4 20 10.7zM192 128a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zM48 120c0-13.3-10.7-24-24-24S0 106.7 0 120L0 344c0 75.1 60.9 136 136 136l320 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-320 0c-48.6 0-88-39.4-88-88l0-224z"/></svg>
+                                    <div data-media="Image" class="attachment-type">Photos</div>
                                 </div>
                                 <div class="video attachment-options">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" height="20" width="20" fill="#049A8E"><path d="M0 128C0 92.7 28.7 64 64 64l256 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2l0 256c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1l0-17.1 0-128 0-17.1 14.2-9.5 96-64c9.8-6.5 22.4-7.2 32.9-1.6z"/></svg>
@@ -207,9 +221,9 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height="20" width="20" fill="#FFD43B"><path d="M372.2 52c0 20.9-12.4 39-30.2 47.2L448 192l104.4-20.9c-5.3-7.7-8.4-17.1-8.4-27.1c0-26.5 21.5-48 48-48s48 21.5 48 48c0 26-20.6 47.1-46.4 48L481 442.3c-10.3 23-33.2 37.7-58.4 37.7l-205.2 0c-25.2 0-48-14.8-58.4-37.7L46.4 192C20.6 191.1 0 170 0 144c0-26.5 21.5-48 48-48s48 21.5 48 48c0 10.1-3.1 19.4-8.4 27.1L192 192 298.1 99.1c-17.7-8.3-30-26.3-30-47.1c0-28.7 23.3-52 52-52s52 23.3 52 52z"/></svg>
                                     </div>
                                 </div>
-                                <div class="template attachment-options">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="20" width="20" fill="#00bfff"><path d="M0 128C0 92.7 28.7 64 64 64l384 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zm64 32l0 64c0 17.7 14.3 32 32 32l320 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L96 128c-17.7 0-32 14.3-32 32zM80 320c-13.3 0-24 10.7-24 24s10.7 24 24 24l56 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-56 0zm136 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l48 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0z"/></svg>
-                                    <div class="attachment-type">Template</div>
+                                <div class="template attachment-options" data-media="Template" onclick={handleAttachmentOptionClick}>
+                                    <svg data-media="Template" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="20" width="20" fill="#00bfff"><path d="M0 128C0 92.7 28.7 64 64 64l384 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zm64 32l0 64c0 17.7 14.3 32 32 32l320 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L96 128c-17.7 0-32 14.3-32 32zM80 320c-13.3 0-24 10.7-24 24s10.7 24 24 24l56 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-56 0zm136 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l48 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0z"/></svg>
+                                    <div data-media="Template" class="attachment-type">Template</div>
                                 </div>
                             </div>
                         </div>
@@ -244,7 +258,7 @@
                 </div>
                 <div class="send-template-button">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="20" width="20" fill="#00bfff"><path d="M0 128C0 92.7 28.7 64 64 64l384 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zm64 32l0 64c0 17.7 14.3 32 32 32l320 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L96 128c-17.7 0-32 14.3-32 32zM80 320c-13.3 0-24 10.7-24 24s10.7 24 24 24l56 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-56 0zm136 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l48 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0z"/></svg>
-                    <div class="send-template-text">Send Template</div>
+                    <div class="send-template-text" data-media="Template" onclick={handleAttachmentOptionClick}>Send Template</div>
                 </div>
             </div>
         </div>

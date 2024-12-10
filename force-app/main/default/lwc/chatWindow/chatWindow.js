@@ -2,6 +2,7 @@ import { LightningElement, api, track } from 'lwc';
 import getCombinedData from '@salesforce/apex/ChatWindowController.getCombinedData';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
 import updateReaction from '@salesforce/apex/ChatWindowController.updateReaction';
+import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import updateThemePreference from '@salesforce/apex/ChatWindowController.updateThemePreference';
@@ -12,10 +13,14 @@ export default class ChatWindow extends LightningElement {
     @api recordId;
     @api height;
     chats = [];
+
+    recordData;
     @track groupedChats = [];
     @track isLightMode = true; // Default : Light mode (Sun)
     @track messageText = '';
     @track selectedTemplate = null;
+    @track allTemplates = [];
+    @track templateSearchKey = null;
     emojiCategories = [];
     @track replyToMessage = null;
     @track reactToMessage = null;
@@ -33,6 +38,7 @@ export default class ChatWindow extends LightningElement {
 
     @track acceptedFormats = [];
     @track showFileUploader = false;
+    @track showTemplateSelection = false;
     @track uploadFileType = null;
 
     replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
@@ -45,21 +51,26 @@ export default class ChatWindow extends LightningElement {
         return `toggle-button moon-icon ${this.isLightMode ? "hide" : "show"}`;
     }
     get showPopup(){
-        return this.showFileUploader;
+        return this.showFileUploader || this.showTemplateSelection;
     }
     
     get displayBackDrop(){
-        return this.showEmojiPicker || this.showAttachmentOptions || this.showFileUploader;
+        return this.showEmojiPicker || this.showAttachmentOptions || this.showFileUploader || this.showTemplateSelection;
     }
 
     get uploadLabel(){
         return 'Upload '+ this.uploadFileType || 'File';
     }
 
+    get filteredTemplate(){
+        let searchedResult = (this.allTemplates?.filter(template => template.Name.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
+        return this.templateSearchKey ? (searchedResult.length > 0 ? searchedResult : null) : this.allTemplates;
+    }
+
     connectedCallback(){
         try {
             this.configureHeight();
-            this.getAllChats();
+            this.getInitialData();
             this.generateEmojiCategories();
         } catch (e) {
             console.log('Error in connectedCallback:::', e.message);
@@ -81,7 +92,7 @@ export default class ChatWindow extends LightningElement {
     }
 
 // Fetch Initial Data
-    getAllChats(){
+    getInitialData(){
         this.showSpinner = true;
         try {
             getCombinedData({ contactId: this.recordId })
@@ -91,9 +102,26 @@ export default class ChatWindow extends LightningElement {
                     this.isLightMode = combinedData.theme == 'light';
                     if(!this.isLightMode) this.template.host.setAttribute("data-theme", combinedData.theme);
                 }
+
+                if(combinedData.record){
+                    if(!combinedData.record.MobilePhone){
+                        this.showToast('Something went wrong!', 'The contact does not have a mobile number.', 'error');
+                        this.showSpinner = false;
+                        return;
+                    }
+                    combinedData.record.MobilePhone = combinedData.record.MobilePhone.replaceAll(' ', '').replace('+', '');
+                    this.recordData = combinedData.record;
+                }else{
+                    this.showToast('Something went wrong!', 'Couldn\'t fetch data of contact', 'error');
+                    this.showSpinner = false;
+                    return;
+                }
+
+                this.allTemplates = combinedData.templates;
                 this.chats = combinedData.chats?.map(ch => {
                     ch.isText = ch.Message_Type__c == 'Text';
                     ch.isImage = ch.Message_Type__c == 'Image';
+                    ch.messageBy = ch.Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.FirstName;
                     return ch;
                 });
                 this.showSpinner = false;
@@ -105,7 +133,7 @@ export default class ChatWindow extends LightningElement {
             });
         } catch (e) {
             this.showSpinner = false;
-            console.log('Error in function getAllChats:::', e.message);
+            console.log('Error in function getInitialData:::', e.message);
         }
     }
 
@@ -220,10 +248,12 @@ export default class ChatWindow extends LightningElement {
             this.reactToMessage = null;
             this.showReactEmojiPicker = false;
             this.showFileUploader = false;
+            this.showTemplateSelection = false;
             this.acceptedFormats = [];
             this.uploadFileType = null;
             this.showEmojiPicker = false;
             this.showAttachmentOptions = false;
+            this.selectedTemplate = null;
         } catch (e) {
             console.log('Error in function handleBackDropClick:::', e.message);
         }
@@ -431,18 +461,30 @@ export default class ChatWindow extends LightningElement {
         }
     }
 
-    handleImageUpload() {
+    handleAttachmentOptionClick(event) {
         try {
-            if(this.sendOnlyTemplate){
-                this.showToast('Cannot send photo!', 'You don\'t have any message from contact since last 24 hours.', 'info');
+            let mediaType = event.target.dataset.media;
+            if(this.sendOnlyTemplate && mediaType != 'Template'){
+                this.showToast(`Cannot send ${mediaType}!`, 'You don\'t have any message from contact since last 24 hours.', 'info');
                 return;
             }
-            this.showFileUploader = true;
-            this.acceptedFormats = ['.jpg', '.png', '.jpeg'];
-            this.uploadFileType = 'Image';
+            
+            switch (mediaType) {
+                case 'Template':
+                    this.showTemplateSelection = true;
+                    break;
+                case 'Image':
+                    this.showFileUploader = true;
+                    this.acceptedFormats = ['.jpg', '.png', '.jpeg'];
+                    this.uploadFileType = 'Image';
+                    break;
+                default:
+                    this.showToast('Something went wrong!', 'Could not process request, please try again.', 'error');
+                    break;
+            }
             this.closeAllPopups();
         } catch (e) {
-            console.error('Error in function handleImageUpload:::', e.message);
+            console.error('Error in function handleAttachmentOptionClick:::', e.message);
         }
     }
 
@@ -456,16 +498,29 @@ export default class ChatWindow extends LightningElement {
             }
             createChat({chatData: {message: event.detail.files[0].contentVersionId, templateId: this.selectedTemplate, messageType: 'Image', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null}})
             .then(chat => {
+                console.log('Chat is ::: ', chat);
+                
                 if(chat){
+                    let imagePayload = this.createJSONBody(this.recordData.MobilePhone, "image", {
+                        link: chat.Message__c,
+                        fileName: event.detail.files[0].title
+                    });
+                    sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id})
+                    .then(ch => {
+                        console.log('The chat saved is :: ', ch);
+                    })
+                    console.log("Image Payload:\n", imagePayload);
                     console.log('The New Image Message is ::: ', chat);
                     chat.isImage = true;
                     chat.isText = false;
+                    chat.messageBy = 'You';
                     this.chats.push(chat);
                     this.messageText = '';
                     this.template.querySelector('.message-input').value = '';
                     this.replyToMessage = null;
                     this.showSpinner = false;
                     this.processChats(true);
+                    this.handleBackDropClick();
                 }else{
                     this.showSpinner = false;
                     this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
@@ -491,9 +546,107 @@ export default class ChatWindow extends LightningElement {
         try {
             console.log('The Image is Not Previewable.');
             event.currentTarget.src = "/resource/Alt_Image";
-            event.currentTarget.classList.add('not-loaded-image');
+            event.currentTarget.parentNode.classList.add('not-loaded-image');
         } catch (e) {
             console.log('Error in function handleImageError:::', e.message);
+        }
+    }
+
+    handleSearchTemplate(event){
+        try {
+            this.templateSearchKey = event.target.value || null;
+        } catch (e) {
+            console.log('Error in function handleSearchTemplate:::', e.message);
+        }
+    }
+
+    handleSelectTemplate(event){
+        try {
+            this.showTemplateSelection = false;
+            this.selectedTemplate = event.currentTarget.dataset.id;
+            let template = this.allTemplates?.find(t => t.Id === this.selectedTemplate);
+            console.log('The template selected is :: ', template);
+            if(!template){
+                this.showToast('Something went wrong!', 'We Couldn\'t find the selected template' , 'error');
+                return;
+            }
+            createChat({chatData: {message: '', templateId: this.selectedTemplate, messageType: 'template', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null}})
+            .then(chat => {
+                if(chat){
+                    let templatePayload = this.createJSONBody(this.recordData.MobilePhone, "template", {
+                        templateName: template.Name,
+                        languageCode: template.Language__c,
+                        parameters: template.parameters || []
+                    });
+                    console.log("Template Payload:\n", templatePayload);
+                    let textareaMessageElement = this.template.querySelector('.message-input');
+                    console.log('The New Message is ::: ', chat);
+                    chat.isImage = false;
+                    chat.isText = false;
+                    chat.isTemplate = true;
+                    chat.messageBy = 'You';
+                    this.chats.push(chat);
+                    this.showSpinner = false;
+                    this.messageText = '';
+                    this.replyToMessage = null;
+                    this.processChats(true);
+                    textareaMessageElement.value = '';
+                    textareaMessageElement.style.height = 'auto';
+                    textareaMessageElement.style.height = `${textareaMessageElement.scrollHeight}px`;
+
+                    sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id})
+                    .then(ch => {
+                        console.log('The chat saved is :: ', ch);
+                        this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = ch.Message_Status__c;
+                        this.processChats(true);
+                    })
+                }else{
+                    this.showSpinner = false;
+                    this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
+                    console.log('there was some error sending the message!');
+                }
+            })
+            .catch((e) => {
+                this.showSpinner = false;
+                this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
+                console.log('Error in sendImmediateMessage > createChat :: ', e);
+            })
+        } catch (e) {
+            console.log('Error in function handleSelectTemplate:::', e.message);
+        }
+    }
+
+    createJSONBody(to, type, data){
+        try {
+                let payload = `{ "messaging_product": "whatsapp", "to": "${to}", "type": "${type}"`;
+            
+                if (type === "template") {
+                    payload += `, "template": { 
+                        "name": "${data.templateName}",
+                        "language": { "code": "${data.languageCode}" }`;
+        
+                    if (data.parameters && data.parameters.length > 0) {
+                        let parameters = data.parameters.map(
+                            (param) => `{ "type": "text", "text": "${param}" }`
+                        ).join(", ");
+                        payload += `, "components": [ 
+                            { 
+                                "type": "body", 
+                                "parameters": [ ${parameters} ] 
+                            } 
+                        ]`;
+                    }
+                    payload += ` }`;
+                } else if (type === "text") {
+                    payload += `, "text": { "body": "${data.textBody.replace(/\n/g, "\\n")}" }`;
+                } else if (type === "image") {
+                    payload += `, "image": { "imageLink": "${data.imageLink}" }`;
+                }
+                payload += ` }`;
+            
+                return payload;
+        } catch (e) {
+            console.log('Error in function createJSONBody:::', e.message);
         }
     }
 
@@ -548,10 +701,15 @@ export default class ChatWindow extends LightningElement {
             createChat({chatData: {message: this.messageText, templateId: this.selectedTemplate, messageType: 'text', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null}})
             .then(chat => {
                 if(chat){
+                    let textPayload = this.createJSONBody(this.recordData.MobilePhone, "text", {
+                        textBody: this.messageText
+                    });
+                    console.log("Text Payload:\n", textPayload);
                     let textareaMessageElement = this.template.querySelector('.message-input');
                     console.log('The New Message is ::: ', chat);
                     chat.isImage = false;
                     chat.isText = true;
+                    chat.messageBy = 'You';
                     this.chats.push(chat);
                     this.showSpinner = false;
                     this.messageText = '';
@@ -560,6 +718,13 @@ export default class ChatWindow extends LightningElement {
                     textareaMessageElement.value = '';
                     textareaMessageElement.style.height = 'auto';
                     textareaMessageElement.style.height = `${textareaMessageElement.scrollHeight}px`;
+
+                    sendWhatsappMessage({jsonData: textPayload, chatId: chat.Id})
+                    .then(ch => {
+                        console.log('The chat saved is :: ', ch);
+                        this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = ch.Message_Status__c;
+                        this.processChats(true);
+                    })
                 }else{
                     this.showSpinner = false;
                     this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
