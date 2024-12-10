@@ -1,186 +1,180 @@
-*{
+* {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
+.preview-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.template-preview{
+    padding: 0;
+    border-radius: 5px;
+    width: 60rem;
+    background-image: url('/resource/wbiTemplateBg');
+}
+.footer{
+    text-align: center;
+    margin-bottom: 1rem;
+}
 
-.filter{
-    margin-right: 2%;
+.close-btn{
+    border: 1px solid #c7c7c7;
+    border-radius: 3px;
+    color: black;
+    padding: 0.3rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    font-size: 14px;
+    background: white;
+    font-weight: 500;
+}
+
+.filter {
     width: 11rem;
 }
 
-.icon{
-    border: none;
-    color: black;
-}
 
-.filterparent{
+.filterparent {
     display: flex;
     justify-content: space-between;
+}
+
+.filterdiv {
+    display: flex;
+    gap: 2%;
+}
+
+.custom-button {
+    display: inline-flex;
+    width: max-content;
+    justify-content: center;
     align-items: center;
+    background-color: white;
+    color: #4194f9;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    padding: 0.23rem;
+    padding-right: 0.5rem;
+    border: none;
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.18);
 }
 
-.filterbtns{
-    display: flex;
+.custom-button:hover {
+    background-color: #F5F5F5;
 }
 
-.filterdiv{
-    display: flex;
+.left-icon {
+    border: 1px solid;
+    border-radius: 50%;
+    padding: 0.2rem;
+    transform: scale(0.6);
+    --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }
 
-.datatable{
+.datatable {
     margin-top: 1.5%;
-    border: 1px solid #c4bebe;
     border-radius: 8px;
-    padding: 2px;
+    background: transparent;
 }
 
-.text{
+.table-container {
+    border-radius: 0.4rem; 
+    overflow: hidden; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    border: 1px solid #dcdcdc; 
+}
+
+.slds-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.slds-truncate{
+    display: flex;
+    justify-content: center;
+}
+
+.text {
     font-size: large;
 }
 
-.main{
+.main {
     padding: 1%;
-    background-image: url('/resource/wbiTemplateBg');
+    background-image: url(/resource/wbiTemplateBg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: 5px;
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.5), 0 1px 8px 0 rgba(0, 0, 0, 0.29);
+    /* height: calc(100% + 1.5rem); */
+    margin-top: -0.75rem;
+    width: calc(100% + 1.5rem);
+    margin-left: -0.75rem;
 }
 
-.heading{
+.heading {
     display: flex;
-    margin-bottom: 1%;
+    margin-bottom: 2rem;
+    margin-top: 1rem;
+    justify-content: center;
+    align-items: center;
 }
 
-.txt{
+.txt {
     font-size: x-large;
-    font-weight: bold;
+    font-weight: 500;
+}
+
+table{
+    background: transparent;
+}
+
+tr{
+    border: none;
 }
 
 /* custom table CSS */
-.tableHead{
-    background-color: white;
-    font-size: 18px;
+.tableHead {
+    background-color: #0077B6;
+    color: white;
+    font-size: 16px;
     padding: 10px;
-    font-weight: bolder;
+    font-weight: 600;
+    text-align: center;
 }
 
-.tableData{
-    background-color: white;
+.tableData {
     height: 10%;
     padding: 10px;
-    font-size: 16px;
+    font-size: 15px;
+    text-align: center;
 }
 
-.tablerow{
+tr:nth-child(odd) {
+    background-color: #CAF0F866;
+    opacity: 0.8; 
+}
+
+tr:nth-child(even) {
     background-color: white;
+    opacity: 0.8;
 }
 
-.tablebtns{
+.tablebtns {
     display: flex;
     align-items: center;
-}
-
-.Actionbtn{
-    margin-right: 3%;
-}
-
-/* pagination css */
-
-.pagination-container {
-    display: flex;
-    align-items: center;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-}
-
-.pagination-button {
-    background-color: #ffffff;
-    border: 1px solid #d8d8d8;
-    color: #333;
-    padding: 6px 12px;
-    margin: 0 2px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    border-radius: 0.3rem;
-    font-size: 12px;
-}
-
-.pagination-button svg {
-    fill: black;
-    width: 0.7rem;
-    height: 0.7rem;
-}
-
-.pagination-button:hover {
-    background-color: #f0f0f0;
-}
-
-.pagination-button.active {
-    background-color: #0070d2;
-    color: white;
-    border-color: #0070d2;
-}
-
-.pagination-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.results-info {
-    margin-left: 15px;
-    color: #666;
-}
-
-.results-per-page {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-}
-
-.results-per-page label {
-    margin-right: 8px;
-    color: #666;
-}
-
-.results-per-page select {
-    padding: 4px 8px;
-    border: 1px solid #d8d8d8;
-    border-radius: 3px;
-}
-
-/* Style for the ellipsis */
-span {
-    margin: 0 5px;
-}
-
-/* Specific styles for Back and Next buttons */
-.pagination-button:first-child,
-.pagination-button:last-child {
-    display: flex;
-    align-items: center;
+    justify-content: center;
     gap: 0.5rem;
 }
 
-
-.paginationDiv{
-    height:15%;
-    background-position: bottom;
+.Actionbtn {
+    margin-right: 3%;
 }
-
-.paginationDiv .btnCover{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.paginationDiv .pageNumberDiv{
-    display: flex;
-    justify-content: center;
-    align-items: center;  
-}
-
 
 /* status font color and backgroud color CSS */
 .In-Review,
 .Paused,
-.Appeal.Requested{
+.Appeal.Requested {
     background-color: #fef2b8;
     color: #efa206;
     width: fit-content;
@@ -195,7 +189,7 @@ span {
     font-size: 14px;
 }
 
-.Rejected{
+.Rejected {
     background-color: #f5c9c9;
     color: #e43333;
     width: fit-content;
@@ -213,7 +207,7 @@ span {
 .Active-Quality.Pending,
 .Active-High.Quality,
 .Active-Medium.Quality,
-.Active-Low.Quality{
+.Active-Low.Quality {
     background-color: #ECF7FF;
     color: #3C96DE;
     width: fit-content;
@@ -228,7 +222,7 @@ span {
     font-size: 14px;
 }
 
-.Disabled{
+.Disabled {
     background-color: #dedfdf;
     color: #000000;
     width: fit-content;
@@ -241,4 +235,73 @@ span {
     align-items: center;
     justify-content: center;
     font-size: 14px;
+}
+
+.status{
+    text-align: center;
+    /* display: flex;
+    justify-content: center; */
+}
+
+.search-div {
+    width: 20rem;
+}
+
+img {
+    width: 18px;
+}
+
+.icon {
+    border: none;
+    color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.18);
+    background: white;
+    border-radius: 3px;
+    padding: 0.5rem;
+    height: fit-content;
+}
+
+.combobox-container {
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    opacity: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+}
+
+/* Visible state */
+.combobox-container.visible {
+    height: auto;
+    opacity: 1;
+    display: contents;
+    transition: height 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* Hidden state */
+.combobox-container.hidden {
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: height 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.action{
+    width: 26px;
+    color: black;
+    border: 1px solid #dfdddd;
+    background: white;
+    padding: 0.3rem;
+    border-radius: 3px;
+}
+
+.trash{
+    padding: 0.37rem;
+}
+
+.edit{
+    padding: 0.2rem;
 }

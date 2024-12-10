@@ -1,4 +1,4 @@
-/**
+/*
  * Component Name: WbCreateTemplatePage
  * @description: Used LWC components to show create templates in meta and store in the template record.
  * Date: 25/11/2024
@@ -15,16 +15,19 @@ MODIFICATION LOG*
 import { LightningElement, track, wire } from 'lwc';
 import {loadStyle} from 'lightning/platformResourceLoader';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import wbTemplateStyle from '@salesforce/resourceUrl/wbTemplateStyle';
+import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
+import richTextZip from '@salesforce/resourceUrl/richTextZip';
+import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
 import getCountryCodes from '@salesforce/apex/WBTemplateController.getCountryCodes';
 import getLanguages from '@salesforce/apex/WBTemplateController.getLanguages';
-import getEmojiData from '@salesforce/apex/EmojiDataController.getEmojiData';
-import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist'; 
-import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates'; 
-import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate'; 
-import startUploadSession from '@salesforce/apex/WBTemplateController.startUploadSession'; 
-import uploadFileChunk from '@salesforce/apex/WBTemplateController.uploadFileChunk'; 
-import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFields'; 
+import emojiData from '@salesforce/resourceUrl/emoji_data';
+// import getEmojiData from '@salesforce/apex/EmojiDataController.getEmojiData';
+import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist';
+import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
+import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate';
+import startUploadSession from '@salesforce/apex/WBTemplateController.startUploadSession';
+import uploadFileChunk from '@salesforce/apex/WBTemplateController.uploadFileChunk';
+import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFields';
 
 export default class WbCreateTemplatePage extends LightningElement {
     maxTempNamelength = 512;
@@ -33,7 +36,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     maxWebsiteUrl = 2000;
     maxBtnTxt = 25;
     maxPhonetxt = 20;
-    maxCodetxt = 15;   
+    maxCodetxt = 15;
     maxPackTxt=224;
     maxHashTxt=11;
     @track totalButtonsCount = 0;
@@ -107,9 +110,17 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track filePreview='';
     @track languageOptions=[];
     @track countryType=[];
-    // @track objects = [{ label: 'Contact', value: 'Contact' }]; 
     @track selectedObject = 'Contact';
     @track fields = [];
+    @track chatMessages = [];
+    @track richTextZip = richTextZip;
+    @track buttonIconsZip =buttonIconsZip;
+    @track toolbarButtons=[];
+    @track isDropdownOpen = false;
+    @track dropdownClass = 'dropdown-hidden';
+    @track emojiCategories=[];
+    @track templateId='';
+    @track contentdocumentId='';
 
     get acceptedFormats() {
         return ['png','jpeg','jpg'];
@@ -152,31 +163,27 @@ export default class WbCreateTemplatePage extends LightningElement {
         return selectedOption ? selectedOption.label : '';
     }
  
+    get hasButtons() {
+        return this.buttonList.length > 0 || this.customButtonList.length > 0;
+    }
+
     connectedCallback() {
         console.log('default option selected==> ' + this.selectedOption);       
         this.fetchCountries();
         this.fetchLanguages();
         this.fetchFields();
+        this.generateEmojiCategories();
     }
+    
 
     renderedCallback() {
-        loadStyle(this, wbTemplateStyle).then(() => {
+        loadStyle(this, wbCreateTempStyle).then(() => {
             console.log("Loaded Successfully")
         }).catch(error => {
             console.error("Error in loading the colors",error)
         })
     }
 
-    @wire(getEmojiData)
-    wiredEmojiData({ error, data }) {
-        if (data) {
-            this.processEmojiData(data);
-        } else if (error) {
-            console.error('Error fetching emoji data:', error);
-            this.showToastError('Error fetching emojis.');
-        }
-    }
-      
     @wire(getWhatsAppTemplates)
     wiredWhatsAppTemplates({ error, data }) {
         if (data) {
@@ -188,6 +195,25 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.showToastError('Failed to refresh template list');
         }
     }
+
+    getIconPath(iconName) {
+        return `${richTextZip}/rich-texticon/${iconName}.png`;
+    }
+
+    get toolbarButtonsWithClasses() {
+        return this.toolbarButtons.map(button => ({
+            ...button,
+            iconUrl: this.getIconPath(button.iconName), 
+            classes: `toolbar-button ${button.title.toLowerCase()}` 
+        }));
+    }
+
+    toolbarButtons = [
+        { title: 'bold', iconName: 'bold' },
+        { title: 'italic', iconName: 'italic' },
+        { title: 'strikethrough', iconName: 'stike' },
+        { title: 'code', iconName: 'code' }
+    ];
 
     addOutsideClickListener() {
         document.addEventListener('click', this.handleOutsideClick.bind(this));
@@ -202,7 +228,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     handleOutsideClick(event) {
-        const emojiContainer = this.template.querySelector('.emoji-container');
+        const emojiContainer = this.template.querySelector('.toolbar-button');
         const button = this.template.querySelector('button');
 
         if (
@@ -247,18 +273,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                 console.error('Error fetching language data:', error);
             });
     }
-
-    // handleFileChange(event) {
-    //     console.log('enter in function');
-
-    //     const uploadedFiles = event.detail.files;
-    //     if (uploadedFiles && uploadedFiles.length > 0) {
-    //         this.fileName = uploadedFiles[0].name;
-    //         this.isfilename = true;
-    //         this.NoFileSelected = false;
-    //         console.log('Uploaded File:', uploadedFiles[0]);
-    //     }
-    // }
 
     handleFileChange(event) {
         try {
@@ -384,7 +398,12 @@ export default class WbCreateTemplatePage extends LightningElement {
                     .then(result=>{
                         console.log('result ',result);
                         if (result) {
-                            this.headerHandle = result;
+                            let serializeResult = JSON.parse(result); 
+                            this.headerHandle = serializeResult.headerHandle;
+                            this.contentdocumentId = serializeResult.contentDocumentId;
+                            console.log('headerHandle ',this.headerHandle);
+                            console.log('contentdocumentId ',this.contentdocumentId);
+
                             chunkStart += this.chunkSize;
                             if (chunkStart < this.fileSize) {
                                 uploadNextChunk(); 
@@ -611,7 +630,8 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     handleMenuSelect(event) {
         try {
-            const selectedValue = event.detail.value;
+            // const selectedValue = event.detail.value;
+            const selectedValue = event.currentTarget.dataset.value; 
             this.menuButtonSelected = selectedValue;
             console.log('selectedValue ', selectedValue);
         
@@ -737,6 +757,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 id: this.customButtonList.length + 1,
                 selectedCustomType: btnType,
                 Cbtntext: btnText,
+                buttonClass: 'button-label-preview',
                 showFooterText: btnType === 'Marketing opt-out',
                 iconName: this.getButtonIcon(btnType),
                 hasError: false,  
@@ -768,7 +789,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             isDisabled: button.selectedCustomType === 'Marketing opt-out'
         }));
     }
-    
+
     getButtonIcon(type) {
         const iconMap = {
             'QUICK_REPLY': 'utility:reply',
@@ -796,6 +817,42 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.marketingOpt >= 1;
     }
 
+    handleButtonClick(event) {
+        const buttonId = event.currentTarget.dataset.id;
+        console.log('Button ID:', buttonId);
+    
+        // Find the clicked button in the customButtonList
+        const clickedButton = this.customButtonList.find(button => button.id == buttonId);
+        console.log('Clicked Button:', clickedButton);
+    
+        if (clickedButton) {
+             // Check if the button is already disabled
+            if (clickedButton.isDisabled) {
+                console.log('Button is already disabled.');
+                return; // Exit if the button is already disabled
+            }
+            // Create a reply message (you may want to choose which template to reply to)
+            let replyMessage = {
+                id: Date.now(), // Unique ID for the new reply message
+                body: `${clickedButton.Cbtntext}`, // The reply body
+                timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), // 24-hour format
+                replyToMessage: {
+                    body: this.formatedTempBody, // Use the template's body as the message being replied to
+                }
+            };
+    
+                // Add the reply message to the chat messages
+            this.chatMessages = [...this.chatMessages, replyMessage];
+
+            // Update the button state to disabled
+            clickedButton.isDisabled = true;
+            clickedButton.buttonClass = 'button-label-preview disabled'; // Add the disabled class
+
+            // Refresh the UI by reassigning the customButtonList
+            this.customButtonList = [...this.customButtonList];
+        }
+    }    
+
     handleCustomText(event) {
         const index = event.currentTarget.dataset.index; 
         const newValue = event.target.value;
@@ -819,28 +876,65 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.Cbtntext = newValue;  
         this.updateButtonErrors(true); 
     }
+    
 
     handleRemoveCustom(event) {
         const index = event.currentTarget.dataset.index;
         const removedButton = this.customButtonList[index];
+    
+        // Update marketing option count if applicable
         if (removedButton && removedButton.showFooterText) {
             this.marketingOpt--;
         }
+    
+        // Remove the button from the customButtonList
         this.customButtonList = this.customButtonList.filter((_, i) => i !== parseInt(index));
-        if (this.customButtonList.length == 0) {
+    
+        // If no custom buttons are left, update the state
+        if (this.customButtonList.length === 0) {
             this.isCustom = false;
         }
+    
+        // Update the total buttons count
         this.totalButtonsCount--;
-        console.log('after remove custom: ', this.totalButtonsCount);
+    
+        // Remove the reply message related to the removed button
+        if (removedButton?.Cbtntext) {
+            const filteredMessages = this.chatMessages.filter(message => {
+                // Remove messages that are replies to the removed button
+                const isReplyToRemoved = message.replyToMessage?.body === this.formatedTempBody && message.body === removedButton.Cbtntext;
+                return !isReplyToRemoved;
+            });
+            this.chatMessages = [...filteredMessages];
+        }
+    
+        // Ensure reactivity for customButtonList
+        this.customButtonList = [...this.customButtonList];
         this.updateButtonDisabledState();
+    }    
+
+    get buttonClass() {
+        return this.isButtonDisabled ? 'select-button disabled' : 'select-button';
     }
 
     updateButtonDisabledState() {
+        this.isDropdownOpen=false;
         this.isButtonDisabled = this.totalButtonsCount >= 1;
         this.buttonList.forEach(button => {
             button.isDisabled = button.selectedActionType === 'COPY_CODE';
         });
         console.log('Button disabled state:', this.isButtonDisabled);
+    }
+
+    refreshTempPreview(){
+        this.customButtonList = this.customButtonList.map(button => {
+            return {
+                ...button,
+                isDisabled: false, 
+                buttonClass: 'button-label-preview' 
+            };
+        });
+        this.chatMessages = [];
     }
 
     addvariable() {
@@ -1023,45 +1117,64 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
     }
 
-    processEmojiData(data) {
-        try {
-            const parsedData = JSON.parse(data);
-            this.emojis = parsedData.map(emoji => ({
-                char: emoji.emoji,
-                name: emoji.annotation,
-                unicode: emoji.shortcodes.join(',')
-            }));
-        } catch (e) {
-            console.error('Error parsing JSON:', e);
+    generateEmojiCategories() {
+        try{
+            fetch(emojiData)
+            .then((response) => response.json())
+            .then((data) => {
+                let groupedEmojis = Object.values(
+                    data.reduce((acc, item) => {
+                        let category = item.category;
+                        if (!acc[category]) {
+                            acc[category] = { category, emojis: [] };
+                        }
+                        acc[category].emojis.push(item);
+                        return acc;
+                    }, {})
+                );
+        
+                this.emojiCategories = groupedEmojis; 
+            })
+            .catch((e) => console.log('There was an error fetching the emoji.', e));
+        }catch(e){
+            console.log('Error in generateEmojiCategories', e);
+            
         }
     }
 
     handleEmoji(event) {
-        event.stopPropagation(); 
-
+        event.stopPropagation();        
         this.showEmojis = !this.showEmojis;
-        console.log(this.showEmojis);
+    
         if (this.showEmojis) {
             this.addOutsideClickListener();
         } else {
             this.removeOutsideClickListener();
-        }
+        }    
     }
-   
+    
     handleEmojiSelection(event) {
-        const emojiChar = event.target.textContent;
-        const textarea = this.template.querySelector('textarea');
+        event.stopPropagation();        
+        const emojiChar = event.target.textContent;    
+        const textarea = this.template.querySelector('textarea');        
+        const currentText = textarea.value || '';
         const cursorPos = textarea.selectionStart;
-        const currentText = textarea.value;
-        const newText = currentText.slice(0, cursorPos) + emojiChar + currentText.slice(cursorPos);
+    
+        const newText = currentText.slice(0, cursorPos) + emojiChar + currentText.slice(cursorPos);    
         this.tempBody = newText;
-        console.log(this.tempBody);
-        this.updateTextarea();
-        this.showEmojis = false;
+        textarea.value = newText;
+    
+        setTimeout(() => {
+            const newCursorPos = cursorPos + emojiChar.length;    
+            textarea.focus();    
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0); 
     }
-
+    
     handleFormat(event) {
-        const formatType = event.target.dataset.type;
+        const button = event.target.closest('button');
+        const formatType = button.dataset.format;
+        
         const textarea = this.template.querySelector('textarea');
         const cursorPos = textarea.selectionStart;
         const currentText = textarea.value;
@@ -1120,6 +1233,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         console.log('Generating header example...');
         return this.header_variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
     }
+
     get templateBodyText() {
         return this.variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
     }
@@ -1141,7 +1255,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
     
         const buttonData = [...this.buttonList, ...this.customButtonList];    
-       
         for (let button of buttonData) {
             if (button.isVisitSite) {
                 console.log('Validating URL:', button.webURL);
@@ -1241,6 +1354,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 templateType: this.selectedOption ? this.selectedOption : null,
                 tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
                 tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
+                tempContentDocId:  this.contentdocumentId ? this.contentdocumentId : null,
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
                 tempHeaderText: this.header ? this.header : '',
                 tempHeaderExample: (this.tempHeaderExample && this.tempHeaderExample.length > 0) ? this.tempHeaderExample : null,
@@ -1262,6 +1376,10 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.showToastSuccess('Template successfully created');
                     this.isPreviewTemplate=true;
                     this.isLoading=false;
+                    const templateId = result.templateId;  
+                    this.templateId = templateId;
+                    console.log('temp id==> ',this.templateId);
+                    
                     // this.clearWrapper();
                 } else {
                     const errorResponse = JSON.parse(result.errorMessage); 
@@ -1324,5 +1442,44 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.isAllTemplate = true;
         }, 2000);
     }    
+    
+    // --------------custom dropdown-----------
+
+    getButtonPath(iconName) {
+        return `${buttonIconsZip}/button-sectionIcons/${iconName}.png`;
+    }
+
+    toggleDropdown() {
+        this.isDropdownOpen = !this.isDropdownOpen;
+        this.dropdownClass = this.isDropdownOpen ? 'dropdown-visible' : 'dropdown-hidden';
+    }
+
+    dropdownOptions = [
+        { title: 'Custom', value: 'QUICK_REPLY', iconName: 'custom' },
+        { title: 'Marketing Opt-Out', value: 'Marketing opt-out', iconName: 'marketing',description:'Maximum 1 button can be added' },
+        { title: 'Call Phone Number', value: 'PHONE_NUMBER', iconName: 'phone', description:'Maximum 1 button can be added'},
+        { title: 'Visit Website', value: 'URL', iconName: 'site',description:'Maximum 2 button can be added' },
+        { title: 'Copy Offer Code', value: 'COPY_CODE', iconName: 'copy',description:'Maximum 1 button can be added' }
+    ];
+
+    get quickReplyOptions() {
+        return this.dropdownOptions
+            .filter(option => option.value === 'QUICK_REPLY' || option.value === 'Marketing opt-out')
+            .map(option => ({
+                ...option,
+                iconUrl: this.getButtonPath(option.iconName), 
+                classes: `dropdown-item ${option.title.toLowerCase().replace(/\s+/g, '-')}` 
+            }));
+    }
+    
+    get callToActionOptions() {
+        return this.dropdownOptions
+            .filter(option => option.value === 'PHONE_NUMBER' || option.value === 'URL' || option.value === 'COPY_CODE')
+            .map(option => ({
+                ...option,
+                iconUrl: this.getButtonPath(option.iconName), 
+                classes: `dropdown-item ${option.title.toLowerCase().replace(/\s+/g, '-')}` 
+            }));
+    }
     
 }

@@ -6,10 +6,10 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 25/11/2024
+ * Last Update Date : 7/12/2024
  * Updated By : Kajal Tiwari
  * Name of methods changed (Comma separated if more then one) : 
- * Change Description :
+ * Change Description :Change the UI as per figma design.
  ********************************************************************** */
 
 import { LightningElement, track, wire } from 'lwc';
@@ -17,6 +17,8 @@ import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhats
 import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import {loadStyle} from 'lightning/platformResourceLoader';
+import wbPreviewTemplateStyle from '@salesforce/resourceUrl/wbPreviewTemplateStyle';
 
 export default class WbAllTemplatePage extends LightningElement {
     @track isTemplateVisible = true;
@@ -25,19 +27,15 @@ export default class WbAllTemplatePage extends LightningElement {
     @track timePeriodValue;
     @track statusValues = [];
     @track searchInput;
-    @track filteredRecords = [];
-    @track paginatedRecords = [];
-    @track currentPage = 1;
-    @track totalPages = 1;
     @track categoryOptions = [];
     @track statusOptions = [];
     @track allRecords = [];
-    @track pageNumber = 1;
-    @track pageSize = 10;
-    @track currentPage = 1;
-    @track visiblePages = 3;
     @track isLoading=false;
-
+    @track filteredRecords=[];
+    
+    @track selectedTemplateId='';
+    @track showPreview = false;
+    // @track filterIcon=filterIcon;
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {
@@ -57,14 +55,15 @@ export default class WbAllTemplatePage extends LightningElement {
     wiredTemplates({ error, data }) {
         try {
             if (data) {
-                this.allRecords = data.map(record => {
+                this.allRecords = data.map((record, index) => {
                     return {
                         ...record,
                         id: record.Id,
+                        serialNumber: index + 1, 
                         LastModifiedDate: this.formatDate(record.LastModifiedDate)
                     };
                 });
-                this.filterRecords();
+                this.filteredRecords = [...this.allRecords];
             } else if (error) {
                 console.error('Error fetching WhatsApp templates: ', error);
             }
@@ -77,97 +76,15 @@ export default class WbAllTemplatePage extends LightningElement {
         console.log('default option selected==> '+ this.selectedOption);
     }
 
-    // pagination logic start
-    get totalItems() {
-        return this.allRecords.length;
+    renderedCallback() {
+        loadStyle(this, wbPreviewTemplateStyle).then(() => {
+            console.log("Loaded Successfully")
+        }).catch(error => {
+            console.error("Error in loading the colors",error)
+        })
     }
 
-    get totalPages() {
-        return Math.ceil(this.totalItems / this.pageSize);
-    }
-
-    get pageNumbers() {
-        try{
-            const totalPages = this.totalPages;
-            const currentPage = this.currentPage;
-            const visiblePages = this.visiblePages;
-
-            let pages = [];
-
-            if (totalPages <= visiblePages) {
-                // If the total pages are less than or equal to the visible pages, show all
-                for (let i = 1; i <= totalPages; i++) {
-                    pages.push({
-                        number: i,
-                        isEllipsis: false,
-                        className: `pagination-button ${i === currentPage ? 'active' : ''}`
-                    });
-                }
-            } else {
-                // Always show the first page
-                pages.push({
-                    number: 1,
-                    isEllipsis: false,
-                    className: `pagination-button ${currentPage === 1 ? 'active' : ''}`
-                });
-
-                if (currentPage > 3) {
-                    // Show ellipsis if the current page is greater than 3
-                    pages.push({ isEllipsis: true });
-                }
-
-                // Show the middle pages
-                let start = Math.max(2, currentPage - 1);
-                let end = Math.min(currentPage + 1, totalPages - 1);
-
-                for (let i = start; i <= end; i++) {
-                    pages.push({
-                        number: i,
-                        isEllipsis: false,
-                        className: `pagination-button ${i === currentPage ? 'active' : ''}`
-                    });
-                }
-
-                if (currentPage < totalPages - 2) {
-                    // Show ellipsis if the current page is less than totalPages - 2
-                    pages.push({ isEllipsis: true });
-                }
-
-                // Always show the last page
-                pages.push({
-                    number: totalPages,
-                    isEllipsis: false,
-                    className: `pagination-button ${currentPage === totalPages ? 'active' : ''}`
-                });
-            }
-            return pages;
-        }catch(error){
-            console.log('Error pageNumbers ->'+error);
-        }
-    }
-
-    get showEllipsis() {
-        return Math.ceil(this.totalItems / this.pageSize) > this.visiblePages;
-    }
-
-    get isFirstPage() {
-        return this.currentPage === 1;
-    }
-
-    get isLastPage() {
-        return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
-    }
-
-    get startIndex() {
-        return (this.currentPage - 1) * this.pageSize + 1;
-    }
-
-    get endIndex() {
-        return Math.min(this.currentPage * this.pageSize, this.totalItems);
-    }
-
-     // pagination logic end
-     get timePeriodOptions() {
+    get timePeriodOptions() {
         return [
             { label: 'All', value: '' },
             { label: 'Last 7 Days', value: 'last7days' },
@@ -176,46 +93,26 @@ export default class WbAllTemplatePage extends LightningElement {
         ];
     }
 
-    get languageOptions(){
-        return[
-            { label: 'English (US)', value: 'English (US)' }
-        ];      
+    @track isFilterVisible = false;
+
+    // Getter for dynamic class
+    get filterClass() {
+        return this.isFilterVisible ? 'combobox-container visible' : 'combobox-container hidden';
     }
 
-    updateShownData() {
-        try{
-            const startIndex = (this.currentPage - 1) * this.pageSize;
-            const endIndex = startIndex + this.pageSize;
-            this.paginatedRecords = this.filteredRecords.slice(startIndex, endIndex);
-        }catch(error){
-            console.log('Error updateShownData ->'+error);
-        }
+    // Toggle visibility
+    toggleFilterVisibility() {
+        this.isFilterVisible = !this.isFilterVisible;
     }
 
-    handlePrevious() {
-        if (this.currentPage > 1) {
-            this.currentPage--;
-            this.updateShownData();
-        }
-    }
-
-    handleNext() {
-        if (this.currentPage < this.totalPages) {
-            this.currentPage++;
-            this.updateShownData();
-        }
-    }
-
-    handlePageChange(event) {
-        const selectedPage = parseInt(event.target.getAttribute('data-id'), 10);
-        if (selectedPage !== this.currentPage) {
-            this.currentPage = selectedPage;
-            this.updateShownData();
-        }
-    }
     showCreateTemplate(){
-        this.isCreateTemplate=true;
-        this.isTemplateVisible = false;
+        this.isLoading=true;
+        setTimeout(() => {
+            this.isCreateTemplate=true;
+            this.isTemplateVisible = false;  
+            this.isLoading=false;          
+        }, 1000);
+        
     }
 
     handleChange(event) {
@@ -239,11 +136,15 @@ export default class WbAllTemplatePage extends LightningElement {
                 console.warn(`Unhandled field: ${fieldName}`);
                 break;
         }
-    
         console.log(`${fieldName}: ${value}`);
         this.filterRecords();
     }
-    
+  
+    formatDate(dateString) {
+        if (!dateString) return '';
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+    }
 
     filterRecords() {
         try {
@@ -281,21 +182,12 @@ export default class WbAllTemplatePage extends LightningElement {
             }
     
             this.filteredRecords = filtered;
-            this.currentPage = 1;
-            this.totalPages = Math.ceil(this.filteredRecords.length / this.pageSize);
-            this.updateShownData();
 
         } catch (error) {
             console.error('Error in filterRecords:', error);
             this.showToastError('An error occurred while filtering the records.');
         }
        
-    }
-
-    formatDate(dateString) {
-        if (!dateString) return '';
-        const options = { year: 'numeric', month: 'short', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
     }
 
     deleteTemplate(event){
@@ -311,10 +203,7 @@ export default class WbAllTemplatePage extends LightningElement {
                     if(data == 'Template deleted successfully'){
                         console.log('Template deleted successfully');
                         this.showToastSuccess('Template deleted successfully');
-                        this.allRecords = this.allRecords.filter(record => record.Id !== recordId);
-                        
-                        this.filteredRecords = this.allRecords; 
-                        this.updateShownData();
+                        this.allRecords = this.allRecords.filter(record => record.Id !== recordId);                        
                         this.isLoading=false;
                     }else{
                         console.log(data);
@@ -339,6 +228,15 @@ export default class WbAllTemplatePage extends LightningElement {
             this.isLoading = false;
         }
         
+    }
+
+    previewTemplate(event) {
+        this.selectedTemplateId =  event.currentTarget.dataset.id;
+        this.showPreview = true;
+    }
+
+    closePreview(){
+        this.showPreview = false;
     }
 
     showToastError(message) {

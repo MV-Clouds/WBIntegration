@@ -215,7 +215,8 @@ public with sharing class CreateTemplateWrapper {
     @return          : null as it final to create records.
     ********************************************************
     */
-    public static void handleSuccessResponse(HttpResponse res, Map<String, Object> payload, Map<String, Object> response, TemplateWrapper templateWrapper) {
+    public static Id handleSuccessResponse(HttpResponse res, Map<String, Object> payload, Map<String, Object> response, TemplateWrapper templateWrapper) {
+        Id templateId=null;
         try {
             
             Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
@@ -230,6 +231,7 @@ public with sharing class CreateTemplateWrapper {
             whatsAppTemplate.Template_Category__c = (String) payloadMap.get('category');
             whatsAppTemplate.Language__c = (String) payloadMap.get('language');
             whatsAppTemplate.Template_SubCatagory__c = templateWrapper.templateType;
+            whatsAppTemplate.Content_Document_Id__c = templateWrapper.tempContentDocId;
 
             List<Template_Variable__c> variableRecords = new List<Template_Variable__c>();
             List<Object> components = (List<Object>) payloadMap.get('components');
@@ -313,6 +315,7 @@ public with sharing class CreateTemplateWrapper {
             // Create template record
             if (Template__c.sObjectType.getDescribe().isCreateable()) {
                 insert whatsAppTemplate;
+                templateId = whatsAppTemplate.Id;
             }
 
             // Link variables to the template and insert them
@@ -325,11 +328,14 @@ public with sharing class CreateTemplateWrapper {
             }
 
             response.put('success', true);
+            response.put('templateId', templateId);
         } catch (Exception e) {
             response.put('success', false);
             response.put('errorMessage', e.getMessage());
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleSuccessResponse', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
+
+        return templateId; 
     }
     
      /*
@@ -462,6 +468,7 @@ public with sharing class CreateTemplateWrapper {
         @AuraEnabled public String templateType;
         @AuraEnabled public String tempHeaderFormat;
         @AuraEnabled public String tempHeaderHandle;
+        @AuraEnabled public String tempContentDocId;
         @AuraEnabled public String tempLanguage;
         @AuraEnabled public String tempHeaderText;
         @AuraEnabled public List<String> tempHeaderExample;

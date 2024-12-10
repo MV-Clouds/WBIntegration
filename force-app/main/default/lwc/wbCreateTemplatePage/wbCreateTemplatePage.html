@@ -69,7 +69,7 @@
                                     <template if:true={showDefaultBtn}>
                                         <div class="formatted-text3">
                                             <span class="seg-header">Header</span>
-                                            <span class="dot2">•</span>
+                                            <!-- <span class="dot2">•</span> -->
                                             <span class="seg-opt">Optional</span>
                                         </div>
                                         <div class="contentType">
@@ -139,10 +139,10 @@
                                                         oninput={handleInputChange} placeholder="Enter text in English" />
                                                     <p class="char-count header-count">{header.length}/{maxShortlength}</p>
                                                 </div>
-                                                <button class="custom-button" onclick={addheadervariable} disabled={buttonDisabled}>
+                                                <button class="custom-add-button" onclick={addheadervariable} disabled={buttonDisabled}>
                                                     <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                                                         class="left-icon"></lightning-icon>
-                                                    <span>Add variable</span>
+                                                    <span class="addvar-span">Add variable</span>
                                                 </button>
                                             </div>
                 
@@ -196,39 +196,38 @@
                                         <p class="char-count body-count">{tempBody.length}/{maxTempBodyLength}</p>
                                     </div>
                                     <div class="rich-button">
-                                        <div if:true={showEmojis} class="emoji-container smooth-transition">
-                                            <template if:true={emojis}>
-                                                <template for:each={emojis} for:item="emoji">
-                                                    <span key={emoji.unicode} title={emoji.name} class="emoji-span"
-                                                        onclick={handleEmojiSelection}>{emoji.char}</span>
-                                                </template>
-                                            </template>
-                                            <template if:false={emojis}>
-                                                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
-                                            </template>
-                                        </div>
+                                        <template if:true={showEmojis}>
+                                            <div class="emoji-picker-div"> 
+                                                <template for:each={emojiCategories} for:item="category"> 
+                                                    <div key={category.category} class="emoji-category-div"> 
+                                                        <h3 class="catagory-name">{category.category}</h3> 
+                                                        <div class="emoji-tray">
+                                                            <template for:each={category.emojis} for:item="item"> 
+                                                                <div key={item} class="emoji" title={item.description} onclick={handleEmojiSelection}>{item.emoji}</div> 
+                                                            </template> 
+                                                        </div>
+                                                    </div> 
+                                                </template> 
+                                            </div>
+                                        </template>
+                                       
                                         <div class="inner-rich">
                                             <div class="rich-icon">
-                                                <button style=" border: none;background: no-repeat;width: 2.12rem;"><img
-                                                        src="/resource/SmileIconWhatsapp" alt="" class="emojiImg"
-                                                        onclick={handleEmoji} > </button>
-                                                <emoji-picker lwc:external></emoji-picker>
-                                            
-                                                <button aria-label="Bold" class="bold-icon icon" onclick={handleFormat}
-                                                    data-type="bold">B</button>
-                                                <button aria-label="Italic" class="italic-icon icon" onclick={handleFormat}><i
-                                                        data-type="italic" style="font-family: none;">I</i></button>
-                                                <button aria-label="Strikethrough" class="strikethrough-icon icon"
-                                                    onclick={handleFormat}><s data-type="strikethrough">S</s></button>
-                                                <button aria-label="Code" class="code-icon icon" onclick={handleFormat}
-                                                    data-type="code">&lt;&gt;</button>
-            
+                                                <button class="toolbar-button" onclick={handleEmoji}>
+                                                <img src="/resource/wbSmileIcon" class="custom-icon" />
+                                                </button>
+                                                <template for:each={toolbarButtonsWithClasses} for:item="button">
+                                                    <button key={button.title} class={button.classes} title={button.title}
+                                                        data-format={button.title} onclick={handleFormat}>
+                                                        <img src={button.iconUrl} alt={button.title} class="custom-icon" />
+                                                    </button>
+                                                </template>
                                             </div>
             
                                             <button class="custom-button richtext" onclick={addvariable}>
                                                 <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                                                     class="left-icon"></lightning-icon>
-                                                <span>Add variable</span>
+                                                <span class="addvar-span">Add variable</span>
                                             </button>
                                         </div>
                                     </div>
@@ -282,7 +281,7 @@
                                     <div class="footer-div">
                                         <div class="formatted-text3">
                                             <span class="seg-header">Footer</span>
-                                            <span class="dot2">•</span>
+                                            <!-- <span class="dot2">•</span> -->
                                             <span class="seg-opt">Optional</span>
                                         </div>
                                         <div class="footer-input">
@@ -298,27 +297,55 @@
                                     <div class="slds-box slds-theme_default templateContent5">
                                         <div class="formatted-text3">
                                             <span class="seg-btn">Buttons</span>
-                                            <span class="dot-btn">•</span>
                                             <span class="btn-opt">Optional</span>
                                         </div>
                                         <div class="descp3">
                                             <p>Create buttons that let customers respond to your message or take action. You can add up to ten buttons. If you add more than three buttons, they will appear in a list.</p>
                                         </div>
+                                  
+                                        <button class={buttonClass} onclick={toggleDropdown} disabled={isButtonDisabled}>
+                                            <lightning-icon icon-name="utility:add" size="x-small" alternative-text="Add icon" class="dropdownIcon"></lightning-icon>
+                                            <span class="button-label">Add Button</span>                                                
+                                            <lightning-icon icon-name="utility:down" size="x-small" alternative-text="Arrow down icon" class="dropdownIcon"></lightning-icon>
+                                        </button>
                                     
-                                        <lightning-button-menu alternative-text="Add Button"
-                                            onselect={handleMenuSelect} label={selectedLabel} disabled={isButtonDisabled}>
-                                            <lightning-menu-item value="QUICK_REPLY" label="Custom"></lightning-menu-item>
-                                            <lightning-menu-item value="Marketing opt-out" label="Marketing opt-out" disabled={marketingOptDisabled} title="Maximum 1 button can be added"></lightning-menu-item>
-                                            <lightning-menu-item value="PHONE_NUMBER" label="Call Phone Number" disabled={callPhoneNumberDisabled} title="Maximum 1 button can be added"></lightning-menu-item>
-                                            <lightning-menu-item value="URL" label="Visit Website" disabled={visitWebsiteDisabled} title="Maximum 2 buttons can be added"></lightning-menu-item>
-                                            <lightning-menu-item value="COPY_CODE" label="Copy Offer Code" disabled={copyOfferDisabled} title="Maximum 1 button can be added"></lightning-menu-item>
-                                        </lightning-button-menu>
+                                        <!-- Dropdown menu -->
+                                         <template if:true={isDropdownOpen}>
+                                            <div class={dropdownClass} role="menu"  aria-haspopup="true">
+                                                <ul class="custom-dropdown">
+                                                    <!-- Quick Action Section -->
+                                                    <li class="quick-action-head">Quick Reply</li>                                        
+                                                    <template for:each={quickReplyOptions} for:item="option">
+                                                        <li key={option.value} class="dropdown-item" onclick={handleMenuSelect} data-value={option.value}>
+                                                            <img src={option.iconUrl} alt={option.title} class="dropdown-icon" />
+                                                            <div>
+                                                                <span class="dropdown-title">{option.title}</span>
+                                                                <p class="dropdown-description">{option.description}</p>
+                                                            </div>
+                                                        </li>
+                                                    </template>
+                                        
+                                                    <!-- Call Action Section -->
+                                                    <li class="dropdown-section-header">Call to Action</li>
+                                                    <template for:each={callToActionOptions} for:item="option">
+                                                        <li key={option.value} class="dropdown-item" onclick={handleMenuSelect} data-value={option.value}>
+                                                            <img src={option.iconUrl} alt={option.title} class="dropdown-icon" />
+                                                            <div>
+                                                                <span class="dropdown-title">{option.title}</span>
+                                                                <p class="dropdown-description">{option.description}</p>
+                                                            </div>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                         </template>
+                                       
                 
                                         <template if:true={createButton}>                            
                                                 <div class="true-btn">
                                                     <div class="formatted-text3">
                                                         <span class="seg-header">Call to action</span>
-                                                        <span class="dot2">•</span>
+                                                        <!-- <span class="dot2">•</span> -->
                                                         <span class="seg-opt">Optional</span>
                                                     </div>
                                                 </div>
@@ -327,15 +354,6 @@
                                                     <template for:each={buttonList} for:item="button" for:index="index" >
                                                         <div key={button.id} class="createbtn">
                                                             <!-- <template if:true={showCommonFields}> -->
-                                                                <div class="remove-btn">
-                                                                    <lightning-button-icon icon-name="utility:close"
-                                                                        alternative-text="Remove"
-                                                                        onclick={handleRemove}
-                                                                        data-index={index}
-                                                                        class="remove-icon">
-                                                                    </lightning-button-icon>
-                                                                </div>
-                                                            
                                                                 <div class="typeaction">
                                                                     <label for="action" class="label">Type of action</label>
                                                                     <lightning-combobox variant="label-hidden" class="actionInput" data-index={index} name="selectedActionType" disabled="true" value={button.selectedActionType}
@@ -396,8 +414,17 @@
                                                                         maxlength="15" data-index={index} oninput={handleInputChange} required />
                                                                     <p class="char-count btn-count">{button.offercode.length}/{maxCodetxt}</p>
                                                                 </div>
-                                                            
                                                             </template>
+                                                            <!-- <div class="remove-btn">
+                                                                <div class="img">
+                                                                    <img src="/resource/trashIcon" alt="remove" onclick={handleRemove} data-index={index} style="width: 9rem;">
+                                                                </div>
+                                                            </div> -->
+                                                            <div class="remove-btn">
+                                                                <button type="button" class="remove-button" onclick={handleRemove} data-index={index}>
+                                                                    <lightning-icon icon-name="utility:delete" size="x-small" alternative-text="Delete icon" class="remove-icon"></lightning-icon>
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </template>
                                                 </div>
@@ -417,15 +444,15 @@
                                             <div class="true-btn">
                                                 <div class="formatted-text3">
                                                     <span class="seg-header">Quick reply</span>
-                                                    <span class="dot2">•</span>
+                                                    <!-- <span class="dot2">•</span> -->
                                                     <span class="seg-opt">Optional</span>
                                                 </div>
                                                 <div  class="customtext">
                                                     <template for:each={customButtonList} for:item="button" for:index="index" >
                                                             <div key={button.id} class="quicktext">
-                                                                <div class="remove-btn">
+                                                                <!-- <div class="remove-btn">
                                                                     <lightning-button-icon icon-name="utility:close" alternative-text="Remove" onclick={handleRemoveCustom} data-index={index} class="remove-icon"></lightning-button-icon>
-                                                                </div>
+                                                                </div> -->
                                                                 <div class="typeaction">
                                                                     <label for="action" class="label">Type</label>
                                                                     <lightning-combobox variant="label-hidden" class="actionInput" data-index={index} disabled="true" value={button.selectedCustomType} options={customOption} onchange={handleCustom}></lightning-combobox>
@@ -447,7 +474,17 @@
                                                                         <input class="text-btn" type="text" disabled name="footertext" data-index={index} value='Not interested? Tap Stop promotion' />
                                                                     </div>
                                                                 </template>
-                                                            
+
+                                                                <!-- <div class="remove-btn">
+                                                                    <div class="img">
+                                                                        <img src="/resource/trashIcon" alt="remove" onclick={handleRemoveCustom} data-index={index} style="width: 3.7rem;">
+                                                                    </div>
+                                                                </div> -->
+                                                                <div class="remove-btn">
+                                                                    <button type="button" class="remove-button" onclick={handleRemoveCustom} data-index={index}>
+                                                                        <lightning-icon icon-name="utility:delete" size="x-small" alternative-text="Delete icon" class="remove-icon"></lightning-icon>
+                                                                    </button>
+                                                                </div>
                                                             </div> 
                                                     </template>
                                                     <template if:true={isStopMarketing}>
@@ -463,16 +500,24 @@
                                     </div>
                                 </template>
                             </template>
-                            <div class="slds-box slds-theme_default templatebtn">
+                            <!-- <div class="slds-box slds-theme_default templatebtn"> -->
+                            <!-- <div class="templatebtn">
                                 <lightning-button variant="brand-outline" onclick={handlePrevclick} label="Previous"
                                     class="slds-m-left_x-small"></lightning-button>
                                 <lightning-button variant="brand" label="Submit for Review" onclick={handleConfirm} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
-                            </div>
+                            </div> -->
                         </div>
+                        
                         <div class="creattempdiv3">
                             <div class="PreviewmainWP">
                                 <div class="templateheadWP">
-                                    <p class="templatetextWP"><b>Template Preview</b></p>
+                                    <div class="preview-head">
+                                        <p class="templatetextWP"><b>Template Preview</b></p>
+                                        <template if:true={isCustom}>
+                                            <img src="/resource/refreshIcon" class="refresh-icon" alt="refresh" onclick={refreshTempPreview}>
+                                        </template>
+                                    </div>
+                                  
                                     <div class="PreviewtemplateWP">
                                         <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
                                             <template if:true={IsHeaderText}>
@@ -495,40 +540,67 @@
                                                 <div class="TextBodyWP">
                                                     <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
                                                 </div>
-    
+                                    
                                                 <div class="textfooterWP">
                                                     <p class="pfooterWP">{footer}</p>
                                                 </div>
                                             </template>
-    
+                                    
                                             <div class="TextTimeWP">
                                                 <p class="timefooterWP">11:59</p>
                                             </div>
-    
-                                            <template for:each={buttonList} for:item="button" for:index="index">
-                                                <hr key={button.id} class="separator-line"/>
-    
-                                                <div key={button.id} class="button-label-preview">
-                                                    <lightning-icon  icon-name={button.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-                                                    <p>{button.btntext}</p>
-                                                </div>
-                                            </template>
-                                            <template for:each={customButtonList} for:item="customButton" for:index="index">
-                                                <hr key={customButton.id} class="separator-line"/>
-    
-                                                <div key={customButton.id} class="button-label-preview">
-                                                    <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-    
-                                                    <p>{customButton.Cbtntext}</p>
-                                                </div>
-                                            </template>
-                            
                                         </div>
+                                    
+                                        <template if:true={hasButtons}>
+                                            <div class="button-container">
+                                                <template for:each={buttonList} for:item="button" for:index="index">
+                                                    <div key={button.id} class="button-label-preview">
+                                                        <lightning-icon icon-name={button.iconName} class="btn-custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+                                                        <p>{button.btntext}</p>
+                                                    </div>
+                                                </template>
+                                                <template for:each={customButtonList} for:item="customButton" for:index="index">
+                                                    <div key={customButton.id} class={customButton.buttonClass} 
+                                                    data-id={customButton.id} onclick={handleButtonClick}>
+                                                        <lightning-icon icon-name={customButton.iconName} class="btn-custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+                                                        <p>{customButton.Cbtntext}</p>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        
+                                        <template for:each={chatMessages} for:item="message" for:index="index">
+                                            <div key={message.id} class="slds-box slds-theme_default chatWP-reply">
+                                                <!-- If the message is a reply -->
+                                                <template if:true={message.replyToMessage}>
+                                                    <div class="reply-to-message">
+                                                        <div class="reply-message">
+                                                            <p class="message-body">{message.replyToMessage.body}</p>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                        
+                                                <!-- Display the New Message Body -->
+                                            
+                                                <div class="chat-message">
+                                                    <div class="messagebody">
+                                                        <p>{message.body}</p>
+                                                        <p class="timefooterWP">{message.timestamp}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
                                     </div>
+
                                 </div>
                                
                             </div>
                         </div>
+                    </div>
+                    <div class="templatebtn">
+                        <lightning-button variant="brand-outline" onclick={handlePrevclick} label="Previous"
+                            class="slds-m-left_x-small"></lightning-button>
+                        <lightning-button variant="brand" label="Submit for Review" onclick={handleConfirm} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
                     </div>
                 </div>
         </div>
@@ -564,18 +636,22 @@
     <template if:true={isAllTemplate}>
         <c-wb-all-template-page></c-wb-all-template-page>
     </template>
-    <template if:true={isPreviewTemplate}>
+    <!-- <template if:true={isPreviewTemplate}>
         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container preview-container">
-                <!-- modal body start -->
                 <div class="slds-modal__content slds-p-around_medium template-preview" id="modal-content-id-2">
-                    <c-wb-preview-template-page filepreview={filePreview}></c-wb-preview-template-page>
-                    <footer class="footer">
-                        <button class="close-btn" onclick={closePreview}>Close</button>
-                     </footer>
+                    <c-wb-preview-template-page templateid={templateId}></c-wb-preview-template-page>
                 </div>
             </div>
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>
+    </template> -->
+
+    <template if:true={isPreviewTemplate}>
+        <c-wb-preview-template-page templateid={templateId}></c-wb-preview-template-page>
     </template>
 </template>
+
+<!-- <footer class="footer">
+                        <button class="close-btn" onclick={closePreview}>Close</button>
+                     </footer> -->

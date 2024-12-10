@@ -10,8 +10,8 @@
  MODIFICATION LOG*
  * Last Update Date : 6/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : All methods
- * Change Description : Change the exception class used in this class.
+ * Name of methods changed (Comma separated if more then one) : getDynamicObjectData
+ * Change Description : Return the image preview url so that can access directly.
  ***********************************************************************/
 
 public with sharing class WBTemplateController {
@@ -39,7 +39,6 @@ public with sharing class WBTemplateController {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
-       
     }
 
      /*
@@ -96,7 +95,7 @@ public with sharing class WBTemplateController {
     ********************************************************
     */
     @AuraEnabled(cacheable=true)
-    public static TemplateDataWrapper getDynamicObjectData() {
+    public static TemplateDataWrapper getDynamicObjectData(Id templateId) {
         TemplateDataWrapper wrapper = new TemplateDataWrapper();
         Set<String> objectNames = new Set<String>();
         Set<String> fieldNames = new Set<String>();
@@ -104,8 +103,8 @@ public with sharing class WBTemplateController {
         try {
             // Fetch the specific template
             Template__c template = [
-                SELECT Id, Name, Header_Body__c, Template_Body__c, Footer_Body__c, Button_Label__c
-                FROM Template__c WITH SECURITY_ENFORCED
+                SELECT Id, Name, Header_Body__c,Header_Type__c,Content_Document_Id__c, Template_Body__c, Footer_Body__c, Button_Label__c,Button_Type__c
+                FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED
                 ORDER BY CreatedDate DESC 
                 LIMIT 1 
             ];
@@ -114,9 +113,17 @@ public with sharing class WBTemplateController {
                 System.debug('No template found.');
             }
             wrapper.template = template;
-    
-            // Fetch related template variable data
-            List<Template_Variable__c> templateVariables = [
+
+            if (template.Content_Document_Id__c != null) {
+                ContentVersion contentVersion = [SELECT Id FROM ContentVersion WHERE ContentDocumentId = :template.Content_Document_Id__c WITH SECURITY_ENFORCED LIMIT 1];
+
+                String imageUrl = '/sfc/servlet.shepherd/version/download/' + contentVersion.Id;
+                wrapper.imageUrl = imageUrl; 
+            } else {
+                wrapper.imageUrl = null; 
+            }
+
+             List<Template_Variable__c> templateVariables = [
                 SELECT Object_Name__c, Field_Name__c 
                 FROM Template_Variable__c 
                 WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
@@ -185,16 +192,17 @@ public with sharing class WBTemplateController {
     @return          : result {Map<String, Object>} - Return the replace template content based on the template variable fields by fetching from contact object.
     ********************************************************
     */
-    @AuraEnabled(cacheable=true)
-    public static Map<String, String> getTemplateWithReplacedValues(String recordId) {
+    @AuraEnabled
+    public static Map<String, String> getTemplateWithReplacedValues(String recordId,String templateId) {
         try {
-            Template__c template = [SELECT Id, Name, Template_Body__c, Header_Body__c FROM Template__c WITH SECURITY_ENFORCED ORDER BY CreatedDate DESC LIMIT 1];
+            Template__c template = [SELECT Id, Name, Template_Body__c, Header_Body__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
 
             List<Template_Variable__c> variables = [
                 SELECT Id, Object_Name__c, Field_Name__c, Type__c, Alternate_Text__c
                 FROM Template_Variable__c
                 WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
             ];
+            System.debug('variables '+variables);
 
             Map<Integer, String> headerFieldMapping = new Map<Integer, String>();
             Map<Integer, String> bodyFieldMapping = new Map<Integer, String>();
@@ -207,17 +215,21 @@ public with sharing class WBTemplateController {
             Integer headerIndex = 1;
             Integer bodyIndex = 1;
             for (Template_Variable__c var : variables) {
-                objectName = var.Object_Name__c; 
-                fields.add(var.Field_Name__c);
-                if (var.Type__c == 'Header') {
-                    headerFieldMapping.put(headerIndex, var.Field_Name__c);
-                    headerIndex++;
-                } else if (var.Type__c == 'Body') {
-                    bodyFieldMapping.put(bodyIndex, var.Field_Name__c);
-                    bodyIndex++;
+                if (var.Object_Name__c != null && var.Field_Name__c != null) {
+                    objectName = var.Object_Name__c;  
+                    fields.add(var.Field_Name__c);  
+            
+                    if (var.Type__c == 'Header') {
+                        headerFieldMapping.put(headerIndex, var.Field_Name__c);
+                        headerIndex++;
+                    } else if (var.Type__c == 'Body') {
+                        bodyFieldMapping.put(bodyIndex, var.Field_Name__c);
+                        bodyIndex++;
+                    }
                 }
             }
             fields = new List<String>(new Set<String>(fields));
+            System.debug('fields '+fields);
 
             String query = 'SELECT ' + String.join(fields, ',') + ' FROM ' + objectName + ' WHERE Id = :recordId WITH SECURITY_ENFORCED';
             SObject record = Database.query(query);
@@ -397,12 +409,10 @@ public with sharing class WBTemplateController {
             System.debug('Response Body ==>' + res.getBody());
 
             if (res.getStatusCode() == 200) {
-                CreateTemplateWrapper.handleSuccessResponse(res, payload, response,templateWrapper);
-                Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-                String templateId = (String) responseBody.get('templateId'); 
-
+                // CreateTemplateWrapper.handleSuccessResponse(res, payload, response,templateWrapper);
+                Id templateId = CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
                 response.put('success', true);
-                response.put('templateId', templateId);
+                response.put('templateId', templateId); 
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
@@ -510,9 +520,13 @@ public with sharing class WBTemplateController {
             if (res.getStatusCode() == 200) {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                 String headerHandle = (String) responseMap.get('h');                
-                createContentVersionAndDocument(headerHandle, fileWrapper.fileName, fileBlob);
+                String contentDocumentId = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
 
-                return headerHandle; 
+                return JSON.serialize(new Map<String, String>{
+                    'headerHandle' => headerHandle,
+                    'contentDocumentId' => contentDocumentId
+                });
+                // return headerHandle; 
             } else {
                 System.debug('Error uploading file chunk: ' + res.getBody());
                 ExceptionHandler.logException(new Map<String, Object>{
@@ -539,7 +553,7 @@ public with sharing class WBTemplateController {
     @return          : 
     ********************************************************
     */
-    private static void createContentVersionAndDocument(String headerHandle, String fileName, Blob fileBlob) {
+    private static String createContentVersionAndDocument(String fileName, Blob fileBlob) {
         try {
             ContentVersion contentVersion = new ContentVersion();
             contentVersion.Title = fileName;
@@ -550,11 +564,16 @@ public with sharing class WBTemplateController {
             if (Schema.sObjectType.ContentVersion.isCreateable()) {
                 insert contentVersion;
             }            
-            
-            System.debug('Created ContentVersion and ContentDocument: ' + contentVersion.Id + ', ' + contentDocument.Id);
+             // Retrieve the ContentDocumentId
+            String contentDocumentId = [SELECT ContentDocumentId 
+            FROM ContentVersion 
+            WHERE Id = :contentVersion.Id].ContentDocumentId;
+            return contentDocumentId;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createContentVersionAndDocument', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            return null;
         }
+        
     }
 
     /*
@@ -625,5 +644,6 @@ public with sharing class WBTemplateController {
         // @AuraEnabled public Object queriedData;
         @AuraEnabled public List<String> objectNames;
         @AuraEnabled public List<String> fieldNames;
+        @AuraEnabled public String imageUrl;
     }
 }

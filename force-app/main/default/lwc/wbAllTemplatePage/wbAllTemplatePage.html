@@ -6,114 +6,97 @@
                     <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
                 </div>
             </template>
-            <div class="slds-box slds-theme_default">
+            <div>
                 <div class="heading">
                     <p class="txt">Message Template</p>
                 </div>
-
                 <div class="filterparent">
                     <div class="filterdiv">
-                        <lightning-input variant="label-hidden" class="filter" name="searchInput" type="search" placeholder="Search Name"
+                        <lightning-input variant="label-hidden" class="filter search-div" name="searchInput" type="search" placeholder="Search Name"
                             onchange={handleChange}></lightning-input>
-                        <lightning-combobox variant="label-hidden" class="filter" name="category" value={categoryValue}
-                            placeholder="Category" options={categoryOptions}
-                            onchange={handleChange}></lightning-combobox>
-                        <lightning-combobox variant="label-hidden" class="filter" name="status" value={statusValues}
-                            placeholder="Status" options={statusOptions}
-                            onchange={handleChange}></lightning-combobox>
-                        <lightning-combobox variant="label-hidden" class="filter" name="timePeriod" value={timePeriodValue}
-                            placeholder="Time" options={timePeriodOptions}
-                            onchange={handleChange}></lightning-combobox>
+                        <div class="icon" onclick={toggleFilterVisibility}>
+                            <img src="/resource/filterIcon" alt="filter">
+                        </div>
+                        <div class={filterClass}>
+                            <lightning-combobox variant="label-hidden" class="filter" name="category" value={categoryValue}
+                                placeholder="Category" options={categoryOptions} onchange={handleChange}></lightning-combobox>
+                            <lightning-combobox variant="label-hidden" class="filter" name="status" value={statusValues}
+                                placeholder="Status" options={statusOptions} onchange={handleChange}></lightning-combobox>
+                            <lightning-combobox variant="label-hidden" class="filter" name="timePeriod" value={timePeriodValue}
+                                placeholder="Time" options={timePeriodOptions} onchange={handleChange}></lightning-combobox>
+                        </div>
                     </div>
-
-                    <div class="filterbtns">
-                        <lightning-button variant="brand" label="Create Template" onclick={showCreateTemplate}
-                            class="slds-m-left_x-small"></lightning-button>
+                    <div class="btns">
+                        <button class="custom-button" onclick={showCreateTemplate}>
+                            <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small" class="left-icon"></lightning-icon>
+                            <span>Create Template</span>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="slds-theme_default datatable">
+            <div class="datatable">
                 <!-- Custom HTML Table -->
-                <table class="slds-table">
-                    <thead>
-                        <tr class="tablerow">
-                            <th class="tableHead" scope="col">
-                                <div class="slds-truncate">Template Name</div>
-                            </th>
-                            <th class="tableHead" scope="col">
-                                <div class="slds-truncate">Category</div>
-                            </th>
-                            <th class="tableHead" scope="col">
-                                <div class="slds-truncate">Language</div>
-                            </th>
-                            <th class="tableHead" scope="col">
-                                <div class="slds-truncate">Status</div>
-                            </th>
-                            <th class="tableHead" scope="col">
-                                <div class="slds-truncate">Actions</div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template if:true={filteredRecords.length}>
-                            <template for:each={paginatedRecords} for:item="record">
-                                <tr class="slds-table_bordered tablerow" key={record.id}>
-                                    <td class="tableData" data-label="Template Name">
-                                        <div class="slds-truncate">{record.Name}</div>
-                                    </td>
-                                    <td class="tableData" data-label="Category">
-                                        <div class="slds-truncate">{record.Template_Category__c}</div>
-                                    </td>
-                                    <td class="tableData" data-label="Language">
-                                        <div class="slds-truncate">{record.Language__c}</div>
-                                    </td>
-                                    <td class="tableData" data-label="Status">
-                                        <div class="slds-truncate"><p class={record.Status__c}>{record.Status__c}</p></div>
-                                    </td>
-                                    <td class="tableData tablebtns" data-label="Actions">
-                                        <lightning-button-icon icon-name="utility:delete" data-id={record.id} onclick={deleteTemplate}></lightning-button-icon>
+                <div class="table-container">
+                    <table class="slds-table">
+                        <thead>
+                            <tr class="tablerow">
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">No.</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Template Name</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Category</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Language</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Status</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Actions</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template if:true={allRecords.length}>
+                                <template for:each={filteredRecords} for:item="record">
+                                    <tr class="slds-table_bordered tablerow" key={record.id}>
+                                        <td class="tableData" data-label="Sr. No.">
+                                            <div class="slds-truncate">{record.serialNumber}</div>
+                                        </td>
+                                        <td class="tableData" data-label="Template Name">
+                                            <div class="slds-truncate">{record.Name}</div>
+                                        </td>
+                                        <td class="tableData" data-label="Category">
+                                            <div class="slds-truncate">{record.Template_Category__c}</div>
+                                        </td>
+                                        <td class="tableData" data-label="Language">
+                                            <div class="slds-truncate">{record.Language__c}</div>
+                                        </td>
+                                        <td class="tableData status" data-label="Status">
+                                            <div class="slds-truncate"><p class={record.Status__c}>{record.Status__c}</p></div>
+                                        </td>
+                                        <td class="tableData tablebtns" data-label="Actions">
+                                            <img src="/resource/previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
+                                            <img src="/resource/editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editTemplate}>
+                                            <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={record.id} onclick={deleteTemplate}>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </template>
+                            <template if:false={allRecords.length}>
+                                <tr>
+                                    <td class="slds-text-align_center" colspan="5">
+                                        No records found.
                                     </td>
                                 </tr>
                             </template>
-                        </template>
-                        <template if:false={filteredRecords.length}>
-                            <tr>
-                                <td class="slds-text-align_center" colspan="5">
-                                    No records found.
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>                    
-                </table>
-                <!-- Pagination Controls -->
-                <div class="paginationDiv slds-p-around_medium">
-                    <div class="btnCover">
-                        <button class="pagination-button" disabled={isFirstPage} onclick={handlePrevious}>
-                            <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
-                                <path d="M342 477 134 272c-6-6-6-16 0-22L342 45c6-6 16-6 22 0l22 22c6 6 6 16 0 22L221 250c-6 6-6 16 0 22l163 161c6 6 6 16 0 22l-22 22c-5 5-14 5-20 0z"/>
-                            </svg> 
-                                Back
-                        </button>
-                                            
-                        <template for:each={pageNumbers} for:item="page">
-                            <template if:false={page.isEllipsis}>
-                                <button key={page.number} data-id={page.number} class={page.className} onclick={handlePageChange}>
-                                    {page.number}
-                                </button>
-                            </template>
-                            <template if:true={page.isEllipsis}>
-                                <span key={page.number} class="pagination-ellipsis">...</span>
-                            </template>
-                        </template>
-                                            
-                        <button class="pagination-button" disabled={isLastPage} onclick={handleNext}>
-                            Next 
-                            <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
-                                <path d="m179 44 207 205c6 6 6 16 0 22L179 476c-6 6-16 6-22 0l-22-22c-6-6-6-16 0-22l163-161c6-6 6-16 0-22L136 88c-6-6-6-16 0-22l22-22c6-5 15-5 21 0z"/>
-                            </svg>
-                        </button>
-                    </div>
+                        </tbody>                    
+                    </table>
                 </div>
             </div>
         </div>
@@ -121,5 +104,21 @@
 
     <template if:true={isCreateTemplate}>
         <c-wb-create-template-page></c-wb-create-template-page>
+    </template>
+    
+    <template if:true={showPreview}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container preview-container">
+                <!-- modal body start -->
+                <div class="slds-modal__content slds-p-around_medium template-preview" id="modal-content-id-2">
+                    <!-- <c-wb-preview-template-page filepreview={filePreview}></c-wb-preview-template-page> -->
+                    <c-wb-preview-template-page templateid={selectedTemplateId}></c-wb-preview-template-page>
+                    <footer class="footer">
+                        <button class="close-btn" onclick={closePreview}>Close</button>
+                     </footer>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
 </template>
