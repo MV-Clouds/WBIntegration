@@ -821,34 +821,28 @@ export default class WbCreateTemplatePage extends LightningElement {
         const buttonId = event.currentTarget.dataset.id;
         console.log('Button ID:', buttonId);
     
-        // Find the clicked button in the customButtonList
         const clickedButton = this.customButtonList.find(button => button.id == buttonId);
         console.log('Clicked Button:', clickedButton);
     
         if (clickedButton) {
-             // Check if the button is already disabled
             if (clickedButton.isDisabled) {
                 console.log('Button is already disabled.');
-                return; // Exit if the button is already disabled
+                return; 
             }
-            // Create a reply message (you may want to choose which template to reply to)
             let replyMessage = {
-                id: Date.now(), // Unique ID for the new reply message
-                body: `${clickedButton.Cbtntext}`, // The reply body
-                timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), // 24-hour format
+                id: Date.now(),
+                body: `${clickedButton.Cbtntext}`,
+                timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
                 replyToMessage: {
-                    body: this.formatedTempBody, // Use the template's body as the message being replied to
+                    body: this.formatedTempBody,
                 }
             };
     
-                // Add the reply message to the chat messages
             this.chatMessages = [...this.chatMessages, replyMessage];
 
-            // Update the button state to disabled
             clickedButton.isDisabled = true;
-            clickedButton.buttonClass = 'button-label-preview disabled'; // Add the disabled class
+            clickedButton.buttonClass = 'button-label-preview disabled'; 
 
-            // Refresh the UI by reassigning the customButtonList
             this.customButtonList = [...this.customButtonList];
         }
     }    
@@ -882,33 +876,24 @@ export default class WbCreateTemplatePage extends LightningElement {
         const index = event.currentTarget.dataset.index;
         const removedButton = this.customButtonList[index];
     
-        // Update marketing option count if applicable
         if (removedButton && removedButton.showFooterText) {
             this.marketingOpt--;
-        }
-    
-        // Remove the button from the customButtonList
+        }    
         this.customButtonList = this.customButtonList.filter((_, i) => i !== parseInt(index));
-    
-        // If no custom buttons are left, update the state
         if (this.customButtonList.length === 0) {
             this.isCustom = false;
         }
     
-        // Update the total buttons count
         this.totalButtonsCount--;
     
-        // Remove the reply message related to the removed button
         if (removedButton?.Cbtntext) {
             const filteredMessages = this.chatMessages.filter(message => {
-                // Remove messages that are replies to the removed button
                 const isReplyToRemoved = message.replyToMessage?.body === this.formatedTempBody && message.body === removedButton.Cbtntext;
                 return !isReplyToRemoved;
             });
             this.chatMessages = [...filteredMessages];
         }
     
-        // Ensure reactivity for customButtonList
         this.customButtonList = [...this.customButtonList];
         this.updateButtonDisabledState();
     }    

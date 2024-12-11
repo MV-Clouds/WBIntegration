@@ -29,6 +29,15 @@
                                     </template> -->
 
                                     <div class="true-div">
+                                        <div class="object-div">
+                                            <select class="object-dropdown dropdown" disabled={isDisabled}>
+                                                <template for:each={options} for:item="option">
+                                                    <option key={option.value} value={option.value} selected={option.isSelected}>
+                                                        {option.label}
+                                                    </option>
+                                                </template>
+                                            </select>
+                                        </div>
                                         <template if:true={records}>
                                             <!-- Search Bar -->
                                             <div class="search-bar">
@@ -38,18 +47,20 @@
                                                     placeholder="Search..."
                                                     onchange={search}
                                                     value={searchTerm}
-                                                     onfocus={handleFocus}
-                                                     onblur={handleBlur}
-                                                     disabled={isDisabled}
+                                                    icon-name="standard:contact"
+                                                    onfocus={handleFocus}
+                                                    onblur={handleBlur}
+                                                    disabled={isDisabled}
                                                 >
                                                 </lightning-input>
                                             </div>
-                                    
+                                           
                                             <template if:true={isDropdownVisible}>
                                                 <template if:true={filteredRecordData.length}>
                                                     <div class="dropdown-list">
                                                         <template for:each={filteredRecordData} for:item="record">
                                                             <div key={record.Id} class="contact-item" data-id={record.Id} onclick={handleRecordSelection}>
+                                                                <lightning-icon icon-name="standard:contact" size="small" alternative-text="Contact" class="contact-icon"></lightning-icon>
                                                                 <div class="slds-truncate" title={record.Name}>
                                                                     <p>{record.Name}</p>
                                                                 </div>
@@ -74,19 +85,23 @@
                                             <div class="sub-var">
                                                 <p>Add sample text for the parameter, to help Meta in the process of reviewing the Message Template.</p>
                                             </div>
-                                            <div if:true={headerVariables} class="head-var">
+                                            <div if:true={headerVariables} class="var-heading">
+                                                <p class="variable-head">Header Variables</p>
                                                 <template for:each={headerVariables} for:item="headerVar">
-                                                    <label for="varName" key={headerVar.id} class="var-label">{headerVar.varName}</label>
-                                                    <input type="text" key={headerVar.id}
-                                                    name={headerVar.varName} data-id={headerVar.id} 
-                                                    placeholder={headerVar.placeholder}
-                                                    data-type="header" 
-                                                    value={headerVar.content}
-                                                    oninput={handleInputChange}>   
+                                                    <div class="head-var" key={headerVar.id} >
+                                                        <label for="varName" class="var-label">{headerVar.varName}</label>
+                                                        <input type="text"
+                                                        name={headerVar.varName} data-id={headerVar.id} 
+                                                        placeholder={headerVar.placeholder}
+                                                        data-type="header" 
+                                                        value={headerVar.content}
+                                                        onchange={handleInputChange}>  
+                                                    </div>
                                                 </template>    
                                             </div>
                                             
                                             <div if:true={bodyVariables} class="body-var">
+                                                <p class="variable-head">Body Variables</p>
                                                 <template for:each={bodyVariables} for:item="bodyVar">
                                                     <div class="single-var" key={bodyVar.id}>
                                                         <label for="varName" class="var-label">{bodyVar.varName}</label>
@@ -96,109 +111,58 @@
                                                             data-type="body" 
                                                             value={bodyVar.content}
                                                             placeholder={bodyVar.placeholder}
-                                                            oninput={handleInputChange}> 
+                                                            onchange={handleInputChange}> 
                                                     </div>
                                                 </template>
                                             </div>
                                         </div>
                                     </template>
-                                      
-                               
                             </div>
-                            <!-- <div class="creattempdiv3">
+                            <div class="creattempdiv3">
                                 <div class="PreviewmainWP">
-                                    <div class="heading">
-                                        <lightning-icon 
-                                          icon-name="utility:back" 
-                                          size="x-small" 
-                                          class="back-icon"
-                                        ></lightning-icon>
-                                        <div class="mvcloud">
-                                            <img src="/resource/mvcloudsIcon" alt="mvclouds">
-                                        </div>
-                                        <p class="sender-name">MV Clouds Pvt. Ltd.</p>
-                                    </div>
-                                    <div class="PreviewtemplateWP">
-                                        <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
-                                           
-                                            <template if:true={IsHeaderText}>
-                                                <div class="TextHeadingWP">
-                                                    <lightning-formatted-rich-text value={tempHeader}></lightning-formatted-rich-text>
+                                    <div class="templateheadWP">
+                                        <div class="PreviewtemplateWP">
+                                            <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
+                                               
+                                                <template if:true={IsHeaderText}>
+                                                    <div class="TextHeadingWP">
+                                                        <lightning-formatted-rich-text value={tempHeader}></lightning-formatted-rich-text>
+                                                    </div>
+                                                </template>
+                                                <template if:true={isImgSelected}>
+                                                    <div>
+                                                        <img src={filepreview} alt="File Preview" style="max-width: 100%; height: auto;" />
+                                                    </div>
+                                                </template>
+                                                <div class="TextBodyWP">
+                                                    <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
                                                 </div>
-                                            </template>
-                                            <template if:true={isImgSelected}>
-                                                <div>
-                                                    <img src={filepreview} alt="File Preview" style="max-width: 100%; height: auto;" />
-                                                </div>
-                                            </template>
-                                            <div class="TextBodyWP">
-                                                <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
-                                            </div>
-                                
-                                            <div class="textfooterWP">
-                                                <p class="pfooterWP">{tempFooter}</p>
-                                            </div>
-                                            <div class="TextTimeWP">
-                                                <p class="timefooterWP">11:59</p>
-                                            </div>
-                                           
-                                        </div>
-                                        <template if:true={buttonList}>
-                                            <template for:each={buttonList} for:item="button" for:index="index">
-                                                <div key={button.id} class="button-label-preview">
-                                                    <lightning-icon 
-                                                    icon-name={button.iconName} 
-                                                    size="x-small" 
-                                                    class="button-icon">
-                                                </lightning-icon>                                    
-                                                    <p>{button.btntext}</p>
-                                                </div>
-                                            </template>
-                                        </template>
-                                    </div>
                                     
-                                </div>
-                            </div> -->
-                            <div class="phone-container">
-                                <div class="screen">
-                                    <div class="PreviewtemplateWP">
-                                        <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
-                                            <template if:true={IsHeaderText}>
-                                                <div class="TextHeadingWP">
-                                                    <lightning-formatted-rich-text value={tempHeader}></lightning-formatted-rich-text>
+                                                <div class="textfooterWP">
+                                                    <p class="pfooterWP">{tempFooter}</p>
                                                 </div>
-                                            </template>
-                                            <template if:true={isImgSelected}>
-                                                <div>
-                                                    <img src={filepreview} alt="File Preview" class="file-preview-img" />
+                                                <div class="TextTimeWP">
+                                                    <p class="timefooterWP">11:59</p>
                                                 </div>
-                                            </template>
-                                            <div class="TextBodyWP">
-                                                <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
+                                               
                                             </div>
-                                            <div class="textfooterWP">
-                                                <p class="pfooterWP">{tempFooter}</p>
-                                            </div>
-                                            <div class="TextTimeWP">
-                                                <p class="timefooterWP">11:59</p>
-                                            </div>
-                                        </div>
-                                        <template if:true={buttonList}>
-                                            <template for:each={buttonList} for:item="button" for:index="index">
-                                                <div key={button.id} class="button-label-preview">
-                                                    <lightning-icon 
+                                            <template if:true={buttonList}>
+                                                <template for:each={buttonList} for:item="button" for:index="index">
+                                                    <div key={button.id} class="button-label-preview">
+                                                        <lightning-icon 
                                                         icon-name={button.iconName} 
                                                         size="x-small" 
                                                         class="button-icon">
                                                     </lightning-icon>                                    
-                                                    <p>{button.btntext}</p>
-                                                </div>
+                                                        <p>{button.btntext}</p>
+                                                    </div>
+                                                </template>
                                             </template>
-                                        </template>
+                                        </div>
                                     </div>
+                                    
                                 </div>
-                            </div>
-                            
+                            </div> 
                         </div>
                         <div class="phone">
                             <label for="phone" class="phone-label">Phone No.</label>
@@ -216,9 +180,8 @@
                                 <button class="close-btn" onclick={closePreview}>Close</button>
                             </div>
                         </div>
-                        
                     </div>
-                   
+
                 </div>
             </div>
         </div>

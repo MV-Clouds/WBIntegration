@@ -636,7 +636,7 @@
     <template if:true={isAllTemplate}>
         <c-wb-all-template-page></c-wb-all-template-page>
     </template>
-    <!-- <template if:true={isPreviewTemplate}>
+    <template if:true={isPreviewTemplate}>
         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container preview-container">
                 <div class="slds-modal__content slds-p-around_medium template-preview" id="modal-content-id-2">
@@ -645,11 +645,8 @@
             </div>
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>
-    </template> -->
-
-    <template if:true={isPreviewTemplate}>
-        <c-wb-preview-template-page templateid={templateId}></c-wb-preview-template-page>
     </template>
+
 </template>
 
 <!-- <footer class="footer">

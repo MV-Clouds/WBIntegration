@@ -7,10 +7,10 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 6/12/2024
+ * Last Update Date : 10/12/2024
  * Updated By : Kajal Tiwari
  * Name of methods changed (Comma separated if more then one) : handleSuccessResponse
- * Change Description : Remove extra variable assign in the method as per code review changes.
+ * Change Description : Add functionality to store variable as record name in template variable.
  ***********************************************************************/
 
 public with sharing class CreateTemplateWrapper {
@@ -263,6 +263,7 @@ public with sharing class CreateTemplateWrapper {
                             List<String> parts = headerMergeText.split('\\.');
                             if (parts.size() == 2) {
                                 Template_Variable__c headerVariable = new Template_Variable__c(
+                                    Name = '{{'+headerMergeText+'}}',
                                     Object_Name__c = 'Contact',
                                     Field_Name__c = parts[1],
                                     Type__c = 'Header'
@@ -282,9 +283,11 @@ public with sharing class CreateTemplateWrapper {
                     Map<String, Object> result = handleBodyComponent(whatsAppTemplate.Template_Category__c, component, example);
                     whatsAppTemplate.Template_Body__c = String.isNotBlank((String) result.get('bodyText')) ? convertMarkdownToHtml((String) result.get('bodyText')) : '';
                     List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
-
+                    String bodyMergeText = (String) result.get('bodyMergeText');
+                    System.debug('parsedFields '+parsedFields);
                     for (Map<String, String> field : parsedFields) {
                         Template_Variable__c bodyVariable = new Template_Variable__c(
+                            Name = bodyMergeText,
                             Object_Name__c = 'Contact',
                             Field_Name__c = field.get('fieldName'),
                             Type__c = 'Body'
@@ -371,6 +374,7 @@ public with sharing class CreateTemplateWrapper {
                                     fieldRef = fieldRef.replace('{{', '').replace('}}', '');
                                     List<String> parts = fieldRef.split('\\.');
                                     Map<String, String> fieldMap = new Map<String, String>();
+                                    fieldMap.put('objectName',parts[0]);
                                     fieldMap.put('fieldName', parts[1]); 
                                     parsedFields.add(fieldMap);
                                 }

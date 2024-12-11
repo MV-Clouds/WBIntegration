@@ -83,6 +83,10 @@ export default class WbPreviewTemplatePage extends LightningElement {
         }
     }
 
+    get contactIcon() {
+        return this.selectedContactId ? 'standard:contact' : ''; 
+    }
+
     connectedCallback() {
         this.fetchRecords();
         this.fetchCountries();
@@ -156,18 +160,16 @@ export default class WbPreviewTemplatePage extends LightningElement {
             const contactItem = event.target.closest('.contact-item');
             const selectedId = contactItem ? contactItem.dataset.id : null;
             console.log('selectedId ',selectedId);
-            
-            this.noContact = !selectedId; 
 
-            if (this.noContact) {
+            if(!selectedId){
                 this.tempHeader = this.originalHeader;
                 this.tempBody = this.originalBody;
                 this.formatedTempBody = this.formatText(this.originalBody);
                 this.searchTerm='None';
                 console.log('Reset to original template');
                 return;
-            }    
-    
+            }
+           
             const hasVariables = this.tempBody.includes('{{') || this.tempHeader.includes('{{');
             const selectedRecord = this.filteredRecordData.find(record => record.Id === selectedId);
 
@@ -207,6 +209,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
             .catch(error => {
                 console.error('Error replacing template:', error);
             });
+
         } catch (err) {
             console.error('Unexpected error in handleRecordSelection:', err);
         }
@@ -233,14 +236,58 @@ export default class WbPreviewTemplatePage extends LightningElement {
         .then(result => {
             if (result.queriedData) {
                 this.contactDetails = result.queriedData;
-                console.log('Queried Data:', this.contactDetails);
+                console.log('Queried Data:', JSON.stringify(this.contactDetails));
+                
+                this.updateVariableContents();
             } else {
                 console.warn('No data found for the provided record ID.');
             }
+
         })
         .catch(error => {
             console.error('Error fetching dynamic data:', error);
         });
+    }
+
+    updateVariableContents() {
+        console.log('Entering updateVariableContents...');
+        try {
+            const rawContactDetails = JSON.parse(JSON.stringify(this.contactDetails));
+            console.log(rawContactDetails);
+            
+            let contactDetailsArray = [];
+    
+            // Convert contactDetails to an array of objects with label and value
+            if (rawContactDetails && Array.isArray(rawContactDetails)) {
+                contactDetailsArray = rawContactDetails.map(record => {
+                    return { label: record.label, value: record.value, id: record.Id }; // Including the new 'id' field
+                });
+            } else {
+                console.error('contactDetails is not a valid array:', this.contactDetails);
+                return;
+            }
+    
+            // Process headerVariables if present
+            if (this.headerVariables && Array.isArray(this.headerVariables)) {
+                this.headerVariables = this.headerVariables.map(headerVar => {
+                    // Match using the 'id' field of contactDetailsArray
+                    const matchingDetail = contactDetailsArray.find(
+                        detail => detail.id === headerVar.varName
+                    );
+    
+                    if (matchingDetail) {
+                        // Update the content with the corresponding value
+                        headerVar.content = matchingDetail.value;
+                    }
+                    return headerVar;
+                });
+            }
+    
+            console.log('Updated headerVariables:', this.headerVariables);
+    
+        } catch (error) {
+            console.error('Error in updateVariableContents:', error);
+        }
     }
     
     fetchTemplateData() {
@@ -282,15 +329,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 this.headerVariables = this.extractVariables(this.tempHeader);
                 this.bodyVariables = this.extractVariables(this.tempBody);
 
-                if (
-                    (!this.headerVariables || this.headerVariables.length === 0) &&
-                    (!this.bodyVariables || this.bodyVariables.length === 0)
-                ) {
-                    this.noContact = false;
-                } else {
-                    this.noContact = true;
-                }
-
                 this.objectNames = result.objectNames;
                 this.fieldNames = result.fieldNames;
 
@@ -305,17 +343,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     extractVariables(templateText) {
-        const regex = /\{\{(\d+)\}\}/g; // Matches variables in the format {{n}}
+        const regex = /\{\{(\d+)\}\}/g; 
         const variables = [];
         let match;
-        let index = 0; // Initialize an index for generating unique IDs
+        let index = 0; 
         while ((match = regex.exec(templateText)) !== null) {
             variables.push({
-                id: index++, // Unique ID for each variable
-                varName: match[0], // The full variable text (e.g., {{1}})
-                label: `Variable ${match[1]}`, // Human-readable label (e.g., Variable 1)
-                placeholder: `Enter value for ${match[0]}`, // Placeholder text
-                content: '' // Default empty content
+                id: index++, 
+                varName: match[0], 
+                label: `Variable ${match[1]}`, 
+                placeholder: `Enter value for ${match[0]}`, 
+                content: ''
             });
         }
         return variables;
@@ -327,22 +365,89 @@ export default class WbPreviewTemplatePage extends LightningElement {
         const newContent = event.target.value;
         const variableId = id + 1; 
     
+        const placeholder = `{{${variableId}}}`;
+
         if (type === 'header') {
             this.headerVariables = this.headerVariables.map(varItem =>
                 varItem.id === id ? { ...varItem, content: newContent } : varItem
             );
-            this.tempHeader = this.tempHeader.replace(`{{${variableId}}}`, newContent); 
+            console.log('Before replacement:', this.tempHeader);
+            this.tempHeader = this.tempHeader.replace(placeholder, newContent); 
+            placeholder=newContent;
+            console.log('After replacement:', this.tempHeader);
+
         } else if (type === 'body') {
             this.bodyVariables = this.bodyVariables.map(varItem =>
                 varItem.id === id ? { ...varItem, content: newContent } : varItem
             );
-            this.formatedTempBody = this.formatedTempBody.replace(`{{${variableId}}}`, newContent); 
+            this.formatedTempBody = this.formatedTempBody.replace(placeholder, newContent); 
+            placeholder=newContent;
         }
     }
+
+    // newPlaceholder = '';
+
+    // handleInputChange(event) {
+    //     const id = parseInt(event.target.dataset.id, 10); 
+    //     const type = event.target.dataset.type;
+    //     const newContent = event.target.value;
+    //     console.log(newContent);
+        
+    //     const variableId = id + 1;  
+    //     const placeholder = `{{${variableId}}}`;
+        
+    //     console.log('initial newPlaceholder ', this.newPlaceholder);  
+
+    //     if (type === 'header') {
+    //         this.headerVariables = this.headerVariables.map(varItem =>
+    //             varItem.id === id ? { ...varItem, content: newContent } : varItem
+    //         );
+
+    //         if (this.tempHeader.includes(placeholder)) {
+    //             console.log('First replacement in header');
+                
+    //             this.tempHeader = this.tempHeader.replace(placeholder, newContent);
+
+    //             this.newPlaceholder = newContent;
+    //             console.log('Updated newPlaceholder after first replacement: ', this.newPlaceholder);
+    //         } 
+    //         else if (this.newPlaceholder!='') {
+    //             if (this.tempHeader.trim().includes(this.newPlaceholder.trim())) {
+    //                 console.log('Found newPlaceholder in tempHeader');
+    //                 this.tempHeader = this.tempHeader.replace(this.newPlaceholder, newContent);
+    //                 this.newPlaceholder = newContent; 
+    //                 console.log('Updated tempHeader after subsequent replacement: ', this.tempHeader);
+    //             } else {
+    //                 console.log('newPlaceholder not found in tempHeader');
+    //             }
+    //         }
+    //     } 
+    //     else if (type === 'body') {
+    //         this.bodyVariables = this.bodyVariables.map(varItem =>
+    //             varItem.id === id ? { ...varItem, content: newContent } : varItem
+    //         );
+
+    //         if (this.formatedTempBody.includes(placeholder)) {
+    //             console.log('First replacement in body');                
+    //             this.formatedTempBody = this.formatedTempBody.replace(placeholder, newContent);
+    //             this.newPlaceholder = newContent;
+    //             console.log('Updated newPlaceholder after first replacement: ', this.newPlaceholder);
+    //         } 
+    //         else if (this.newPlaceholder!='') {
+    //             this.formatedTempBody = this.formatedTempBody.replace(this.newPlaceholder, newContent);
+    //             this.newPlaceholder = newContent;  
+    //             console.log('Updated formatedTempBody on subsequent replacement: ', this.formatedTempBody);
+    //         }
+    //     }
+
+    //     console.log('Updated Header:', this.tempHeader);
+    //     console.log('Updated Body:', this.formatedTempBody);
+    // }
     
-    closePreview(){
-        this.ispreviewTemplate=false;
+    closePreview() {
+        this.dispatchEvent(new CustomEvent('closepopup'));
     }
+
     clearPreview(){
         this.tempHeader='';
         this.tempBody='';

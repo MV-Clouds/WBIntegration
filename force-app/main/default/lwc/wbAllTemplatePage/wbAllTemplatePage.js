@@ -34,8 +34,7 @@ export default class WbAllTemplatePage extends LightningElement {
     @track filteredRecords=[];
     
     @track selectedTemplateId='';
-    @track showPreview = false;
-    // @track filterIcon=filterIcon;
+    @track showPopup = false; 
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {
@@ -232,11 +231,13 @@ export default class WbAllTemplatePage extends LightningElement {
 
     previewTemplate(event) {
         this.selectedTemplateId =  event.currentTarget.dataset.id;
-        this.showPreview = true;
+        this.showPopup = true;
     }
 
-    closePreview(){
-        this.showPreview = false;
+    handlePopupClose() {
+        setTimeout(() => {
+            this.showPopup = false; 
+        }, 1000);
     }
 
     showToastError(message) {
