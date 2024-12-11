@@ -166,8 +166,8 @@ public with sharing class ChatWindowController {
         Chat__c chat = new Chat__c(Id = chatId);
         try {
             HttpRequest httpReq = new HttpRequest();
-            String endpoint = 'https://graph.facebook.com/v21.0/397858113402150/messages';
-            String accessToken = 'EAAHUUEnZB9J0BO7ybLPGXiLsapulqGefrR4wLrFKhr7u8l2jtZBk4n4ERz9CPgEJ8kdenfxJasSGC5xPWR8ip881IPn8cLyZB7Xj6AfV3XwzEeiRJE6leuVFRKSdOFibQZCsrZA5DxNHZARRYQqrTXI31YJ4XVgEiI6CiHnWePLogHsTtkRWV2TQQWyXYyVQ3C3QZDZD';
+            String endpoint = {{END_POINT}};
+            String accessToken = {{ACCESS_TOKEN}};
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
