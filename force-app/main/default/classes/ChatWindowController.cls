@@ -7,7 +7,7 @@
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
 * Last Modified Date: 06 Dec 2024
-* Last Modification Description: Added method to send the message to the user with http request
+* Last Modification Description: Added a method to fetch the full template data with replaced variables
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
@@ -15,6 +15,7 @@
 * 05 Dec, 2024  - Kevin Suvagiya - Updated the createChat to create the contentDistribution record for the files
 * 06 Dec, 2024  - Kevin Suvagiya - Added implementation for the theme preference logic
 * 09 Dec, 2024  - Kevin Suvagiya - Added method to send the message to the user with http request
+* 11 Dec, 2024  - Kevin Suvagiya - Added a method to fetch the full template data with replaced variables
 **/
 public with sharing class ChatWindowController {
     
@@ -34,94 +35,20 @@ public with sharing class ChatWindowController {
             Contact recordData = new Contact();
             UserThemePreference__c userPreference = UserThemePreference__c.getInstance(UserInfo.getUserId());
 
-            List<Map<String, Object>> templatesWithParameters = new List<Map<String, Object>>();
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
-            chats = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, CreatedDate FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
+            chats = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
             recordData = [SELECT Id, FirstName, MobilePhone FROM Contact WHERE Id=:contactId WITH SECURITY_ENFORCED LIMIT 1];
-            templates = [SELECT Id, Name, Language__c, (SELECT Id, Name, Field_Name__c, Object_Name__c FROM WB_Template_Variables__r) FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
-            
-            for(Template__c template: templates){
-                List<Template_Variable__c> variables = template.WB_Template_Variables__r;
-                if (variables.size() < 1) {
-                    templatesWithParameters.add(new Map<String, Object>(template.getPopulatedFieldsAsMap()));
-                    continue;
-                }else{
-                    Map<String, Object> tempMap = getTemplateWithParameters(template, contactId);
-                    if(tempMap != null){
-                        templatesWithParameters.add(tempMap);
-                    }else{
-                        throw new AuraHandledException('The Variables could not be fetched!');
-                    }
-                }
-            }
+            templates = [SELECT Id, Name FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
 
             combinedData.put('chats', chats);
             combinedData.put('theme', theme);
-            combinedData.put('templates', templatesWithParameters);
+            combinedData.put('templates', templates);
             combinedData.put('record', recordData);
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'fetchAllChats', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
         return combinedData;
-    }
-
-    /*
-    *********************************************************
-    @description     : Method is used to generate the map of templates containing the template data as well as parameters
-    @param           : contactId - {String} - the Id of the contact to fetch data from
-    @return          : chat - {Chat__c} - the newly created chat
-    ********************************************************
-    */
-    private static Map<String, Object> getTemplateWithParameters(Template__c template, String contactId) {
-        try {
-            Map<String, Set<String>> objectFieldMap = new Map<String, Set<String>>();
-            List<String> parameters = new List<String>();
-            for (Template_Variable__c variable : template.WB_Template_Variables__r) {
-                String objectName = variable.Object_Name__c;
-                String fieldName = variable.Field_Name__c;
-
-                if (!objectFieldMap.containsKey(objectName)) {
-                    objectFieldMap.put(objectName, new Set<String>());
-                }
-                objectFieldMap.get(objectName).add(fieldName);
-            }
-
-            String selectClause = '';
-            for (String objectName : objectFieldMap.keySet()) {
-                if (objectName == 'Contact') {
-                    selectClause += String.join(objectFieldMap.get(objectName), ',') + ',';
-                } else {
-                    selectClause += objectName + '.' + String.join(objectFieldMap.get(objectName), ',') + ',';
-                }
-            }
-            selectClause = selectClause.removeEnd(',');
-
-            String query = 'SELECT ' + selectClause + ' FROM Contact WHERE Id = :contactId';
-            Contact contactRecord = (Contact) Database.query(query);
-
-            for (Template_Variable__c variable : template.WB_Template_Variables__r) {
-                String objectName = variable.Object_Name__c;
-                String fieldName = variable.Field_Name__c;
-
-                if (objectName == 'Contact') {
-                    Object value = contactRecord.get(fieldName);
-                    parameters.add(value != null ? value.toString() : '');
-                } else {
-                    SObject parentRecord = (SObject) contactRecord.getSObject(objectName);
-                    if (parentRecord != null) {
-                        Object value = parentRecord.get(fieldName);
-                        parameters.add(value != null ? value.toString() : '');
-                    }
-                }
-            }
-            Map<String, Object> tempMap = new Map<String, Object>(template.getPopulatedFieldsAsMap());
-            tempMap.put('parameters', parameters);
-            return tempMap;
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getTemplateWithParameters', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
-            return null;
-        }
     }
 
     /*
@@ -169,7 +96,7 @@ public with sharing class ChatWindowController {
                 chat.Message__c = [SELECT ContentDownloadUrl FROM ContentDistribution WHERE Id=:cd.Id].ContentDownloadUrl;
             }
             insert as user chat;
-            chat = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, CreatedDate FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
@@ -266,13 +193,67 @@ public with sharing class ChatWindowController {
             }
 
             update as user chat;
-            chat = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, CreatedDate FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
 
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => chatId, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
         return chat;
+    }
+
+    /*
+    *********************************************************
+    @description     : Method to get the data for a specific template
+    @param           : templateId - {String} - Id of the template to fetch
+    @param           : contactId - {String} - Id of the contact to fetch related data for variables
+    @return          : template - {Template__c} - Template object with full data of it
+    ********************************************************
+    */
+    @AuraEnabled
+    public static Template__c getTemplateData(String templateId, String contactId){
+        try {
+            List<Template__c> templates = new List<Template__c>();
+            templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
+            if(templates.size() > 0 && templates[0].Template_Variable__c>0){
+                Template__c template= templates[0];
+                Set<String> fieldSelectionCause = new Set<String>();
+                for(Template_Variable__c tv: template.WB_Template_Variables__r){
+                    if(tv.Object_Name__c == 'Contact'){
+                        fieldSelectionCause.add(tv.Field_Name__c);
+                    }else{
+                        fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
+                    }
+                }
+                if(fieldSelectionCause.size() < 1){
+                    return templates[0];
+                }
+
+                String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM Contact WHERE Id =:contactId';
+                List<Contact> contacts = Database.query(String.escapeSingleQuotes(query));
+                if(contacts.size() > 0){
+                    Contact contactRecord = contacts[0];
+                    for (Template_Variable__c tv: template.WB_Template_Variables__r) {
+                        Object valueToReplace = '';
+                        if(tv.Object_Name__c == 'Contact'){
+                            valueToReplace = contactRecord.get(tv.Field_Name__c);
+                        }else{
+                            valueToReplace = contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c);
+                        }
+                        if (tv.Type__c == 'Header') {
+                            template.Header_Body__c = template.Header_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
+                        }else if(tv.Type__c == 'Body'){
+                            template.Template_Body__c = template.Template_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
+                        }
+                    }
+                }
+                return template;
+            }
+            return templates[0];
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
+        }
+        return null;
     }
 
 }

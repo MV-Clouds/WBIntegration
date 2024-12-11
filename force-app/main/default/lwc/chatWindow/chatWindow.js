@@ -39,6 +39,7 @@ export default class ChatWindow extends LightningElement {
     @track acceptedFormats = [];
     @track showFileUploader = false;
     @track showTemplateSelection = false;
+    @track showTemplatePreview = false;
     @track uploadFileType = null;
 
     replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
@@ -51,11 +52,11 @@ export default class ChatWindow extends LightningElement {
         return `toggle-button moon-icon ${this.isLightMode ? "hide" : "show"}`;
     }
     get showPopup(){
-        return this.showFileUploader || this.showTemplateSelection;
+        return this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview;
     }
     
     get displayBackDrop(){
-        return this.showEmojiPicker || this.showAttachmentOptions || this.showFileUploader || this.showTemplateSelection;
+        return this.showEmojiPicker || this.showAttachmentOptions || this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview;
     }
 
     get uploadLabel(){
@@ -67,9 +68,18 @@ export default class ChatWindow extends LightningElement {
         return this.templateSearchKey ? (searchedResult.length > 0 ? searchedResult : null) : this.allTemplates;
     }
 
+    get recordMobileNumber(){
+        return this.recordData.MobilePhone;
+    }
+
+    get replyToTemplateId(){
+        return this.allTemplates.find(t => t.Id == this.replyToMessage.Whatsapp_Template__c)?.Name || null;
+    }
+
     connectedCallback(){
         try {
             this.configureHeight();
+            this.checkLastMessage();
             this.getInitialData();
             this.generateEmojiCategories();
         } catch (e) {
@@ -118,9 +128,11 @@ export default class ChatWindow extends LightningElement {
                 }
 
                 this.allTemplates = combinedData.templates;
+                
                 this.chats = combinedData.chats?.map(ch => {
                     ch.isText = ch.Message_Type__c == 'Text';
                     ch.isImage = ch.Message_Type__c == 'Image';
+                    ch.isTemplate = ch.Message_Type__c == 'Template';
                     ch.messageBy = ch.Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.FirstName;
                     return ch;
                 });
@@ -175,6 +187,7 @@ export default class ChatWindow extends LightningElement {
                     isReaction: yourReaction || userReaction,
                     replyTo: this.chats?.find( chat => chat.Id === ch.Reply_to__c)
                 };
+                
     
                 if (!acc[chat.dateGroup]) {
                     acc[chat.dateGroup] = [];
@@ -190,7 +203,6 @@ export default class ChatWindow extends LightningElement {
             }));
             
             this.showSpinner = false;
-            this.checkLastMessage();
 
             if(needToScroll) this.scrollBottom = true;
             
@@ -205,17 +217,17 @@ export default class ChatWindow extends LightningElement {
         this.showSpinner = true;
         try {
             let inboundMessages = this.chats.filter(msg => msg.Type_of_Message__c === 'Inbound Messages');
-            let latestInboundMessage = inboundMessages.sort((a, b) => new Date(b.CreatedDate) - new Date(a.CreatedDate))[0];
+            let latestInboundMessage = inboundMessages.sort((a, b) => new Date(b.Last_Interaction_Date__c) - new Date(a.Last_Interaction_Date__c))[0];
 
             if (latestInboundMessage) {
                 let currentTime = new Date();
-                let messageTime = new Date(latestInboundMessage.CreatedDate);
+                let messageTime = new Date(latestInboundMessage.Last_Interaction_Date__c);
                 let timeDifferenceInMilliseconds = currentTime - messageTime;
                 let hoursDifference = timeDifferenceInMilliseconds / (1000 * 60 * 60);
 
                 if (hoursDifference > 24){
-                     this.sendOnlyTemplate = true;
-                     this.noteText = "Only template can be sent as no messages were received from this contact in last 24 hours.";
+                    this.sendOnlyTemplate = true;
+                    this.noteText = "Only template can be sent as no messages were received from this contact in last 24 hours.";
                 }
             } else {
                 console.log('No inbound messages found.');
@@ -249,6 +261,7 @@ export default class ChatWindow extends LightningElement {
             this.showReactEmojiPicker = false;
             this.showFileUploader = false;
             this.showTemplateSelection = false;
+            this.showTemplatePreview = false;
             this.acceptedFormats = [];
             this.uploadFileType = null;
             this.showEmojiPicker = false;
@@ -356,6 +369,44 @@ export default class ChatWindow extends LightningElement {
         }
     }
 
+    handleReplyMessageClick(event){
+        try {            
+            let replyTo = event.currentTarget.dataset.replyTo;
+
+            let replyToChatEle = this.template.querySelector(`.message-full-length-div[data-id="${replyTo}"]`);
+            if(!replyToChatEle){
+                return;
+            }
+            replyToChatEle.scrollIntoView({behavior: 'smooth', block:'center'});
+
+            let newspaperSpinning = [
+                { backgroundColor: "#a9a9a990" },
+                { backgroundColor: "transparent" },
+            ];
+            
+            let newspaperTiming = {
+                duration: 1000,
+                iterations: 1,
+            };
+            let observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            replyToChatEle.animate(newspaperSpinning, newspaperTiming);
+                            observer.unobserve(entry.target); // Stop observing once it's in view
+                        }
+                    });
+                },
+                { threshold: 0.1 } // Trigger when 10% of the element is visible
+            );
+    
+            // Start observing the element
+            observer.observe(replyToChatEle);
+            
+        } catch (e) {
+            console.log('Error in function handleReplyMessageClick:::', e.message);
+        }
+    }
     handleToggleImagePreview(event){
         try {
             let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
@@ -363,7 +414,6 @@ export default class ChatWindow extends LightningElement {
                 return;
             }
             let action = event.currentTarget.dataset.action;
-            console.log('Actions is :: ', action);
             
             if(action == 'open'){
                 event.currentTarget.classList.add('show-image-preview');
@@ -464,14 +514,17 @@ export default class ChatWindow extends LightningElement {
     handleAttachmentOptionClick(event) {
         try {
             let mediaType = event.target.dataset.media;
+            this.checkLastMessage();
             if(this.sendOnlyTemplate && mediaType != 'Template'){
-                this.showToast(`Cannot send ${mediaType}!`, 'You don\'t have any message from contact since last 24 hours.', 'info');
+                this.showToast(`Cannot send ${mediaType}!`, 'You don\'t have any response from contact in last 24 hours.', 'info');
                 return;
             }
             
             switch (mediaType) {
                 case 'Template':
+                    this.showTemplatePreview = false;
                     this.showTemplateSelection = true;
+                    this.replyToMessage = null;
                     break;
                 case 'Image':
                     this.showFileUploader = true;
@@ -513,6 +566,7 @@ export default class ChatWindow extends LightningElement {
                     console.log('The New Image Message is ::: ', chat);
                     chat.isImage = true;
                     chat.isText = false;
+                    chat.isTemplate = false;
                     chat.messageBy = 'You';
                     this.chats.push(chat);
                     this.messageText = '';
@@ -560,59 +614,42 @@ export default class ChatWindow extends LightningElement {
         }
     }
 
-    handleSelectTemplate(event){
+    handleShowTemplatePreview(event){
+        try {
+            if(event.currentTarget.dataset.id){
+                this.selectedTemplate = event.currentTarget.dataset.id;
+                this.showTemplateSelection = false;
+                this.showTemplatePreview = true;
+            }
+        } catch (e) {
+            console.log('Error in function handleShowTemplatePreview:::', e.message);
+        }
+    }
+
+    handleBackToList(){
+        try {
+            this.selectedTemplate = null;
+            this.showTemplatePreview = false;
+            this.showTemplateSelection = true;
+        } catch (e) {
+            console.log('Error in function handleBackToList:::', e.message);
+        }
+    }
+
+    handleTemplateSent(event){
         try {
             this.showTemplateSelection = false;
-            this.selectedTemplate = event.currentTarget.dataset.id;
-            let template = this.allTemplates?.find(t => t.Id === this.selectedTemplate);
-            console.log('The template selected is :: ', template);
-            if(!template){
-                this.showToast('Something went wrong!', 'We Couldn\'t find the selected template' , 'error');
-                return;
-            }
-            createChat({chatData: {message: '', templateId: this.selectedTemplate, messageType: 'template', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null}})
-            .then(chat => {
-                if(chat){
-                    let templatePayload = this.createJSONBody(this.recordData.MobilePhone, "template", {
-                        templateName: template.Name,
-                        languageCode: template.Language__c,
-                        parameters: template.parameters || []
-                    });
-                    console.log("Template Payload:\n", templatePayload);
-                    let textareaMessageElement = this.template.querySelector('.message-input');
-                    console.log('The New Message is ::: ', chat);
-                    chat.isImage = false;
-                    chat.isText = false;
-                    chat.isTemplate = true;
-                    chat.messageBy = 'You';
-                    this.chats.push(chat);
-                    this.showSpinner = false;
-                    this.messageText = '';
-                    this.replyToMessage = null;
-                    this.processChats(true);
-                    textareaMessageElement.value = '';
-                    textareaMessageElement.style.height = 'auto';
-                    textareaMessageElement.style.height = `${textareaMessageElement.scrollHeight}px`;
-
-                    sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id})
-                    .then(ch => {
-                        console.log('The chat saved is :: ', ch);
-                        this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = ch.Message_Status__c;
-                        this.processChats(true);
-                    })
-                }else{
-                    this.showSpinner = false;
-                    this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
-                    console.log('there was some error sending the message!');
-                }
-            })
-            .catch((e) => {
-                this.showSpinner = false;
-                this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
-                console.log('Error in sendImmediateMessage > createChat :: ', e);
-            })
+            let eventChat = event.detail;
+            eventChat.isImage = false;
+            eventChat.isText = false;
+            eventChat.isTemplate = true;
+            eventChat.messageBy = 'You';
+            this.chats.push(eventChat);
+            this.handleBackDropClick();
+            this.showSpinner = false;
+            this.processChats(true);
         } catch (e) {
-            console.log('Error in function handleSelectTemplate:::', e.message);
+            console.log('Error in function handleTemplateSent:::', e.message);
         }
     }
 
@@ -688,6 +725,11 @@ export default class ChatWindow extends LightningElement {
             this.handleBackDropClick();
             this.template.querySelector('.dropdown-menu')?.classList?.add('hidden');
             this.messageText = this.template.querySelector('.message-input').value;
+            this.checkLastMessage();
+            if(this.sendOnlyTemplate){
+                this.showToast('Cannot send text message!', 'You don\'t have any response from contact in last 24 hours.', 'info');
+                return;
+            }
             if(this.messageText.trim().length < 1){
                 this.showToast('Something went wrong!', 'Please enter a message to send.', 'error');
                 this.showSpinner = false;
@@ -709,6 +751,7 @@ export default class ChatWindow extends LightningElement {
                     console.log('The New Message is ::: ', chat);
                     chat.isImage = false;
                     chat.isText = true;
+                    chat.isTemplate = false;
                     chat.messageBy = 'You';
                     this.chats.push(chat);
                     this.showSpinner = false;
