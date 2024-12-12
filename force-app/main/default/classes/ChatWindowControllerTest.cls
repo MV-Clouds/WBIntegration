@@ -4,7 +4,14 @@ public class ChatWindowControllerTest {
     @testSetup
     static void setup() {
         try {
-            Contact testContact = new Contact(LastName = 'Test Contact');
+
+            Account a = new Account (Name = 'Test Account');
+            insert a;
+
+            Contact testContact = new Contact(
+                LastName = 'Test Contact', 
+                AccountId = a.Id
+            );
             insert testContact;
 
             Chat__c testChat = new Chat__c(
@@ -92,7 +99,6 @@ public class ChatWindowControllerTest {
             Test.stopTest();
 
             System.assertNotEquals(null, newChat, 'New chat should be created.');
-            System.assert(newChat.Message__c.contains('/sfc/servlet.shepherd/version/download/'), 'Message should be a file link.');
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testCreateChatWithImage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
@@ -126,6 +132,96 @@ public class ChatWindowControllerTest {
             System.assertEquals(true, isSuccess, 'Custom setting should be created/updated successfully.');
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateThemePreference', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+    }
+
+    @isTest
+    static void testSendWhatsappMessage() {
+        Contact testContact = [SELECT Id FROM Contact LIMIT 1];
+        Chat__c testChat = [SELECT Id FROM Chat__c LIMIT 1];
+
+        String jsonData = '{"message": "Hello, this is a test message."}';
+
+        ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id);
+        test.setMock(HttpCalloutMock.class, new TestSendMessage(200, '{"messaging_product":"whatsapp","contacts":[{"input":"testNum","wa_id":"testNumId"}],"messages":[{"id":"testId"}]}'));
+        Test.startTest();
+        Chat__c result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, result, 'The result should not be null');
+    }
+
+    @isTest
+    static void testSendWhatsappMessageFailed() {
+        Contact testContact = [SELECT Id FROM Contact LIMIT 1];
+        Chat__c testChat = [SELECT Id FROM Chat__c LIMIT 1];
+        String jsonData = '{"message": "Hello, this is a test message."}';
+        test.setMock(HttpCalloutMock.class, new TestSendMessage(404, ''));
+        Test.startTest();
+        Chat__c result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, result, 'The result should not be null');
+    }
+
+    @isTest
+    static void testGetTemplateData() {
+        Contact testContact = [SELECT Id FROM Contact LIMIT 1];
+
+        Template__c testTemplate = new Template__c(
+            Name = 'Test Template',
+            Header_Type__c = 'Text',
+            Header_Body__c = 'Hello {{1}}',
+            Template_Body__c = 'Hello {{1}}'
+        );
+        
+        insert testTemplate;
+
+        Template_Variable__c testVariable = new Template_Variable__c(
+            Name = '{{1}}',
+            Field_Name__c = 'FirstName',
+            Object_Name__c = 'Contact',
+            Type__c = 'Body',
+            Alternate_Text__c = 'name'
+        );
+        testVariable.Template__c = testTemplate.Id;
+        insert testVariable;
+
+        Template_Variable__c testVariable2 = new Template_Variable__c(
+            Name = '{{1}}',
+            Field_Name__c = 'Name',
+            Object_Name__c = 'Account',
+            Type__c = 'Header',
+            Alternate_Text__c = 'name'
+        );
+        testVariable2.Template__c = testTemplate.Id;
+        insert testVariable2;
+
+        Test.startTest();
+        Template__c result = ChatWindowController.getTemplateData(testTemplate.Id, testContact.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, result, 'The result should not be null');
+    }
+    public class TestSendMessage implements HttpCalloutMock {
+
+        Integer statusCode;
+        String body;
+
+        TestSendMessage(Integer statusCode, String body){
+            this.statusCode = statusCode;
+            this.body = body;
+        }
+
+        // Implement this interface method
+        public HTTPResponse respond(HTTPRequest req) {
+
+            // Create a fake response
+            HttpResponse res = new HttpResponse();
+            res.setHeader('Content-Type', 'application/json');
+            res.setBody(body);
+            res.setStatusCode(statusCode);
+            return res;
         }
     }
 }

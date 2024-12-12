@@ -6,6 +6,8 @@
     --max-height-for-send-options: 0;
     --height-of-text-area : 20px;
     --slds-g-color-neutral-base-30 : darkgray;
+    scrollbar-width: thin;
+    scrollbar-color: #a9a9a990 transparent;
 
     /* THE LIGHT MODE STYLES */
     /* Styles for main container */
@@ -32,9 +34,6 @@
     --composer-bg-color: white;
     --composer-text-color: black;
     --composer-box-shadow: 0 0 5px 0 darkgray;
-
-    /* Styles for the Emoji Tray */
-    --emoji-bg-color: #ffffff80;
 
     /* Styles for Top - Down BG */
     --top-down-bg-color: #eff2f5;
@@ -77,15 +76,12 @@
     --composer-text-color: white;
     --composer-box-shadow: none;
 
-    /* Styles for the Emoji Tray */
-    --emoji-bg-color: #00000080;
-
     /* Styles for Top - Down BG */
     --top-down-bg-color: #4d4d4d;
     --border-bottom-color : #636363;
 
     /* Styles for Reply to messages BG */
-    --reply-to-bg-color: #f1f1f115;
+    --reply-to-bg-color: #f1f1f120;
     --reply-to-received-border-color : #34B7F1;
     --reply-to-sent-border-color : #34C759;
 
@@ -182,7 +178,6 @@
 }
 
 /* CHAT SECTION */
-
 .chat-div{
     flex-grow: 1;
     display: flex;
@@ -192,8 +187,6 @@
     width: 100%;
     overflow-y: scroll;
     padding:2px 1rem 4px 1rem;
-    scrollbar-width: thin;
-    scrollbar-color: lightgray transparent;
     user-select: none;
 }
 
@@ -237,12 +230,6 @@
     gap: 6px;
 }
 
-.text-message-div pre{
-    font-family: inherit;
-    margin: 0;
-    text-wrap: inherit;
-}
-
 .message {
     max-width: 75%;
     min-width: 90px;
@@ -254,7 +241,7 @@
 }
 
 .message:has(.reaction) {
-    margin-bottom: 12px;
+    margin-bottom: 15px;
 }
 
 .message:has(.message-preview-div){
@@ -262,13 +249,18 @@
 }
 
 .image-message-div{
-    margin-top: 4px;
+    margin-block: 6px 4px;
     max-height: 10rem;
     cursor: pointer;
 }
 
+.image-message-div.not-loaded-image{
+    pointer-events: none;
+}
+
 .image-message-div img{
     max-height: 10rem;
+    border-radius: 4px;
 }
 
 img.message-image{
@@ -313,6 +305,12 @@ img.message-image{
     z-index: 30;
 }
 
+.template-message-div{
+    max-width: 15rem;
+    min-width: 12rem;
+    padding-block: 4px;
+}
+
 .message .message-preview-div{
     background-color: var(--reply-to-bg-color, #10101015);
     border-left : 6px solid var(--reply-to-received-border-color, #30ab9d);
@@ -329,6 +327,12 @@ img.message-image{
 
 .message .message-preview-div[data-by="You"] .message-by{
     color : var(--reply-to-sent-border-color, #30ab9d);
+}
+
+.message-full-length-div{
+    white-space: pre-line;
+    padding: 2px;
+    border-radius: 4px;
 }
 
 .message-full-length-div[data-type="sent-message"] {
@@ -420,6 +424,10 @@ img.message-image{
     display: none;
 }
 
+.action-options-btn:not(:has(.action-option)) {
+    display: none !important;
+}
+
 .action-options-div {
     position: absolute;
     border-radius: 4px;
@@ -492,6 +500,13 @@ img.message-image{
     white-space: nowrap;
 }
 
+.reply-to-template-message-div{
+    border: 1px solid darkgray;
+    padding: 0px 6px;
+    border-radius: 4px;
+    width: fit-content;
+}
+
 .message-div-container-parent {
     display: flex;
     align-items: center;
@@ -508,6 +523,7 @@ img.message-image{
     border-left: 6px solid var(--reply-to-received-border-color, #075E54);
     position: relative;
     margin-block: 4px;
+    cursor: pointer;
 }
 
 .message-preview-div .message-by{
@@ -642,9 +658,9 @@ img.message-image{
 .react-emoji-tray {
     height: max( 70%, 18rem);
     overflow-y: scroll;
-    background-color: var(--emoji-bg-color, #ffffff80);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background-color: #ffffff10;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     color: var(--composer-text-color, black);
     border-radius: 6px;
     font-size: 14px;
@@ -653,7 +669,10 @@ img.message-image{
     z-index: 15;
 }
 
+/* Styles for Popup Div */
+
 .popup-div {
+    max-height: 86%;
     height: fit-content;
     overflow-y: scroll;
     background-color: var(--composer-bg-color, white);
@@ -662,7 +681,7 @@ img.message-image{
     font-size: 14px;
     position: absolute;
     border: 1px solid #808080ab;
-    width: 320px;
+    width: min( 94%, 320px );
     z-index: 20;
 }
 
@@ -675,11 +694,91 @@ img.message-image{
     text-align: center;
 }
 
+.template-select-div {
+    display: flex;
+    flex-direction: column;
+    height: 18rem;
+    background-color: var(--top-down-bg-color, #eff2f5);
+    text-align: center;
+    user-select: none;
+}
+
+.template-select-div .bold-text{
+    margin-top: 6px;
+}
+
+.search-template-div{
+    position: relative;
+    margin: 6px;
+    display: flex;
+    align-items: center;
+}
+
+.search-template-input {
+    background-color: var(--composer-bg-color, white);
+    border: 1px solid #a9a9a970;
+    border-radius: 4px;
+    outline: none;
+    user-select: text;
+    width: 100%;
+    padding: 4px 6px 4px 24px;
+}
+
+.search-template-icon{
+    position: absolute;
+    left: 6px;
+}
+
+.templates-list-div {
+    flex-grow: 1;
+    overflow-y: scroll;
+    padding: 6px;
+    display: flex;
+    gap: 4px;
+    flex-direction: column;
+    border-top: 1px solid #a9a9a970;
+    scrollbar-width: thin;
+}
+
+.template-div {
+    display: flex;
+    padding: 4px;
+    background-color: var(--composer-bg-color, white);
+    border-radius: 4px;
+    border: 1px solid #a9a9a960;
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+}
+
+.template-div:hover {
+    border-radius: 6px;
+    background-color: var(--sent-message-bg-color, #DCF8C6);
+}
+
+.template-title-div{
+    flex-grow: 1;
+    text-align: left;
+    padding-left: 4px;
+}
+
+.no-templates-div{
+    text-align: center;
+    border-top: 1px solid #a9a9a970;
+    padding-top: 8px;
+}
+
+.show-template-preview{
+    background-color: var(--sent-message-bg-color, #DCF8C6);
+    box-shadow: var(--sent-message-box-shadow, 0 0 2px 0 lightgray);
+    color: var(--sent-message-text-color, black);
+    padding-top: 6px;
+}
+
 /* Styles for Emoji Picker */
 .emoji-picker-div{
     height: var(--height-for-emoji, 0);
     overflow-y: scroll;
-    background-color: var(--emoji-bg-color, #ffffff80);
+    background-color: #ffffff10;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     color: var(--composer-text-color, black);
