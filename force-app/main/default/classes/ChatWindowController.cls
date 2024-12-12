@@ -37,8 +37,8 @@ public with sharing class ChatWindowController {
 
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
-            chats = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
-            recordData = [SELECT Id, FirstName, MobilePhone FROM Contact WHERE Id=:contactId WITH SECURITY_ENFORCED LIMIT 1];
+            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
+            recordData = [SELECT Id, FirstName, Phone FROM Contact WHERE Id=:contactId WITH SECURITY_ENFORCED LIMIT 1];
             templates = [SELECT Id, Name FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
 
             combinedData.put('chats', chats);
@@ -96,7 +96,7 @@ public with sharing class ChatWindowController {
                 chat.Message__c = [SELECT ContentDownloadUrl FROM ContentDistribution WHERE Id=:cd.Id].ContentDownloadUrl;
             }
             insert as user chat;
-            chat = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
@@ -162,12 +162,13 @@ public with sharing class ChatWindowController {
     ********************************************************
     */
     @AuraEnabled
-    public static Chat__c sendWhatsappMessage(String jsonData, String chatId) {
+    public static Chat__c sendWhatsappMessage(String jsonData, String chatId, String isReaction) {
         Chat__c chat = new Chat__c(Id = chatId);
         try {
             HttpRequest httpReq = new HttpRequest();
-            String endpoint = {{END_POINT}};
-            String accessToken = {{ACCESS_TOKEN}};
+            String endpoint = 'https://graph.facebook.com/v21.0/397858113402150/messages';
+            List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values(); 
+            String accessToken = config[0].Access_token_for_WhatsApp__c;
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
@@ -193,7 +194,7 @@ public with sharing class ChatWindowController {
             }
 
             update as user chat;
-            chat = [SELECT Id,Type_of_Message__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
 
         } catch (Exception e) {
