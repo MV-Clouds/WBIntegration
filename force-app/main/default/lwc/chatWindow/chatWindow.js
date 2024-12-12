@@ -607,7 +607,7 @@ export default class ChatWindow extends LightningElement {
                         link: chat.Message__c,
                         fileName: event.detail.files[0].title
                     });
-                    sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id})
+                    sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false})
                     .then(ch => {
                         this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = ch.Message_Status__c;
                         this.chats.find(ch => ch.Id === chat.Id).WhatsAppMessageId__c = ch.WhatsAppMessageId__c;
@@ -627,7 +627,7 @@ export default class ChatWindow extends LightningElement {
             .catch((e) => {
                 this.showSpinner = false;
                 this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
-                console.log('Error in sendImmediateMessage > createChat :: ', e);
+                console.log('Error in handleUploadFinished > createChat :: ', e);
             })
             this.uploadFileType = null;
             this.showFileUploader = false;
@@ -761,7 +761,7 @@ export default class ChatWindow extends LightningElement {
                 });
                 console.log('ReactPayload :: ', reactPayload);
                 
-                sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id})
+                sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true})
                     .then(ch => {
                         console.log('Chat reply is :: ', chat.Id);
                         console.log('Ch :: ', ch);
@@ -825,7 +825,7 @@ export default class ChatWindow extends LightningElement {
                     textareaMessageElement.style.height = 'auto';
                     textareaMessageElement.style.height = `${textareaMessageElement.scrollHeight}px`;
 
-                    sendWhatsappMessage({jsonData: textPayload, chatId: chat.Id})
+                    sendWhatsappMessage({jsonData: textPayload, chatId: chat.Id, isReaction: false})
                     .then(ch => {
                         this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = ch.Message_Status__c;
                         this.chats.find(ch => ch.Id === chat.Id).WhatsAppMessageId__c = ch.WhatsAppMessageId__c;
@@ -840,12 +840,12 @@ export default class ChatWindow extends LightningElement {
             .catch((e) => {
                 this.showSpinner = false;
                 this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
-                console.log('Error in sendImmediateMessage > createChat :: ', e);
+                console.log('Error in handleSendMessage > createChat :: ', e);
             })
         } catch (e) {
             this.showSpinner = false;
             this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
-            console.log('Error in sendImmediateMessage:::', e.message);
+            console.log('Error in handleSendMessage:::', e.message);
         }
     }
     

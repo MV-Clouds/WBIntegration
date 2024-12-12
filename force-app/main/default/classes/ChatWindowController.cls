@@ -162,7 +162,7 @@ public with sharing class ChatWindowController {
     ********************************************************
     */
     @AuraEnabled
-    public static Chat__c sendWhatsappMessage(String jsonData, String chatId, String isReaction) {
+    public static Chat__c sendWhatsappMessage(String jsonData, String chatId, Boolean isReaction) {
         Chat__c chat = new Chat__c(Id = chatId);
         try {
             HttpRequest httpReq = new HttpRequest();
@@ -185,11 +185,15 @@ public with sharing class ChatWindowController {
                 String whatsAppMessageID = (String) firstMessage.get('id');
                 System.debug('WhatsApp Message ID: ' + whatsAppMessageID);
                 // Update the chat record
-                chat.WhatsAppMessageId__c = whatsAppMessageID;
-                chat.Message_Status__c = 'Sent';
+                if(!isReaction){
+                    chat.WhatsAppMessageId__c = whatsAppMessageID;
+                    chat.Message_Status__c = 'Sent';
+                }
             }else{
                 System.debug('Error sending WhatsApp Message: '+response.getBody());
-                chat.Message_Status__c = 'Failed';
+                if(!isReaction){
+                    chat.Message_Status__c = 'Failed';
+                }
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => response });
             }
 
