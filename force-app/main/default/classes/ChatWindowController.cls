@@ -7,7 +7,7 @@
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
 * Last Modified Date: 06 Dec 2024
-* Last Modification Description: Added a method to fetch the full template data with replaced variables
+* Last Modification Description: updated code for align with react on messages
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
