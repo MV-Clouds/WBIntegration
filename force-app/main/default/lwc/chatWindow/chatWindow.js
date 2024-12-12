@@ -180,7 +180,7 @@ export default class ChatWindow extends LightningElement {
                     return;
                 }
 
-                this.allTemplates = combinedData.templates;
+                this.allTemplates = combinedData.templates.length > 0 ? combinedData.templates : null;
                 
                 this.chats = combinedData.chats?.map(ch => {
                     ch.isText = ch.Message_Type__c == 'Text';
