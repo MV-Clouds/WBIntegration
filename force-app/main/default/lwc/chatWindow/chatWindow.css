@@ -332,7 +332,7 @@ img.message-image{
 .message-full-length-div{
     white-space: pre-line;
     padding: 2px;
-    border-radius: 4px;
+    border-radius: 10px;
 }
 
 .message-full-length-div[data-type="sent-message"] {

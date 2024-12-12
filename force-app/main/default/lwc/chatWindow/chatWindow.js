@@ -425,12 +425,12 @@ export default class ChatWindow extends LightningElement {
             }
             replyToChatEle.scrollIntoView({behavior: 'smooth', block:'center'});
 
-            let newspaperSpinning = [
+            let chatBlink = [
                 { backgroundColor: "#a9a9a990" },
                 { backgroundColor: "transparent" },
             ];
             
-            let newspaperTiming = {
+            let blinkTiming = {
                 duration: 1000,
                 iterations: 1,
             };
@@ -438,12 +438,12 @@ export default class ChatWindow extends LightningElement {
                 (entries) => {
                     entries.forEach((entry) => {
                         if (entry.isIntersecting) {
-                            replyToChatEle.animate(newspaperSpinning, newspaperTiming);
-                            observer.unobserve(entry.target); // Stop observing once it's in view
+                            replyToChatEle.animate(chatBlink, blinkTiming);
+                            observer.unobserve(entry.target);
                         }
                     });
                 },
-                { threshold: 0.1 } // Trigger when 10% of the element is visible
+                { threshold: 1 }
             );
     
             // Start observing the element
@@ -702,24 +702,7 @@ export default class ChatWindow extends LightningElement {
                                 "type": "${type}"`;
                 if(replyId) payload += `, "context": {"message_id": "${replyId}"}`;
             
-                if (type === "template") {
-                    payload += `, "template": { 
-                        "name": "${data.templateName}",
-                        "language": { "code": "${data.languageCode}" }`;
-        
-                    if (data.parameters && data.parameters.length > 0) {
-                        let parameters = data.parameters.map(
-                            (param) => `{ "type": "text", "text": "${param}" }`
-                        ).join(", ");
-                        payload += `, "components": [ 
-                            { 
-                                "type": "body", 
-                                "parameters": [ ${parameters} ] 
-                            } 
-                        ]`;
-                    }
-                    payload += ` }`;
-                } else if (type === "text") {
+                if (type === "text") {
                     payload += `, "text": { "body": "${data.textBody.replace(/\n/g, "\\n")}" }`;
                 } else if (type === "image") {
                     payload += `, "image": { "imageLink": "${data.imageLink}" }`;

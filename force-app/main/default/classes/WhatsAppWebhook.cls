@@ -11,7 +11,7 @@
  * 1.0 | November 18, 2024 |   | Initial Version
  **/
 @RestResource(urlMapping = '/WBI/webhooks/v1/*')
-global with sharing class WhatsAppWebhook{
+global without sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
