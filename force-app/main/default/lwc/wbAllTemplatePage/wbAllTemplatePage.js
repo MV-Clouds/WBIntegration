@@ -202,7 +202,12 @@ export default class WbAllTemplatePage extends LightningElement {
                     if(data == 'Template deleted successfully'){
                         console.log('Template deleted successfully');
                         this.showToastSuccess('Template deleted successfully');
-                        this.allRecords = this.allRecords.filter(record => record.Id !== recordId);                        
+                        this.allRecords = this.allRecords.filter(record => record.Id !== recordId); 
+                        this.allRecords = this.allRecords.map((record, index) => ({
+                            ...record,
+                            serialNumber: index + 1
+                        }));   
+                        this.filteredRecords = [...this.allRecords];                    
                         this.isLoading=false;
                     }else{
                         console.log(data);

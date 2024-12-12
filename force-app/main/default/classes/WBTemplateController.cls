@@ -8,10 +8,10 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 6/12/2024
+ * Last Update Date : 11/12/2024
  * Updated By : Kajal Tiwari
  * Name of methods changed (Comma separated if more then one) : getDynamicObjectData
- * Change Description : Return the image preview url so that can access directly.
+ * Change Description : Store Image url in header body field when header type is image.
  ***********************************************************************/
 
 public with sharing class WBTemplateController {
@@ -103,7 +103,7 @@ public with sharing class WBTemplateController {
         try {
             // Fetch the specific template
             Template__c template = [
-                SELECT Id, Name, Header_Body__c,Header_Type__c,Content_Document_Id__c, Template_Body__c, Footer_Body__c, Button_Label__c,Button_Type__c
+                SELECT Id, Name, Header_Body__c,Header_Type__c, Template_Body__c, Footer_Body__c, Button_Label__c,Button_Type__c
                 FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED
                 ORDER BY CreatedDate DESC 
                 LIMIT 1 
@@ -113,14 +113,8 @@ public with sharing class WBTemplateController {
                 System.debug('No template found.');
             }
             wrapper.template = template;
-
-            if (template.Content_Document_Id__c != null) {
-                ContentVersion contentVersion = [SELECT Id FROM ContentVersion WHERE ContentDocumentId = :template.Content_Document_Id__c WITH SECURITY_ENFORCED LIMIT 1];
-
-                String imageUrl = '/sfc/servlet.shepherd/version/download/' + contentVersion.Id;
-                wrapper.imageUrl = imageUrl; 
-            } else {
-                wrapper.imageUrl = null; 
+            if(template.Header_Type__c=='Image'){
+                wrapper.isImgUrl = true;
             }
 
              List<Template_Variable__c> templateVariables = [
@@ -237,19 +231,31 @@ public with sharing class WBTemplateController {
             for (Integer i : headerFieldMapping.keySet()) {
                 String fieldName = headerFieldMapping.get(i);
                 Object value = record.get(fieldName);
-    
-                String replacementValue = (value != null) ? value.toString() : variables[i - 1].Alternate_Text__c;
+            
+                String replacementValue = null;
+                for (Template_Variable__c var : variables) {
+                    if (var.Field_Name__c == fieldName) {
+                        replacementValue = (value != null) ? value.toString() : var.Alternate_Text__c;
+                        break;
+                    }
+                }
                 templateHeader = templateHeader.replace('{{' + i + '}}', replacementValue);
             }
-    
+            
             for (Integer i : bodyFieldMapping.keySet()) {
                 String fieldName = bodyFieldMapping.get(i);
                 Object value = record.get(fieldName);
-    
-                String replacementValue = (value != null) ? value.toString() : variables[i - 1].Alternate_Text__c;
+            
+                String replacementValue = null;
+                for (Template_Variable__c var : variables) {
+                    if (var.Field_Name__c == fieldName) {
+                        replacementValue = (value != null) ? value.toString() : var.Alternate_Text__c;
+                        break;
+                    }
+                }
                 templateBody = templateBody.replace('{{' + i + '}}', replacementValue);
             }
-
+            
             Map<String, String> result = new Map<String, String>();
             result.put('header', templateHeader);
             result.put('body', templateBody);
@@ -520,11 +526,11 @@ public with sharing class WBTemplateController {
             if (res.getStatusCode() == 200) {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                 String headerHandle = (String) responseMap.get('h');                
-                String contentDocumentId = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
+                String imageurl = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
 
                 return JSON.serialize(new Map<String, String>{
                     'headerHandle' => headerHandle,
-                    'contentDocumentId' => contentDocumentId
+                    'imageurl' => imageurl
                 });
                 // return headerHandle; 
             } else {
@@ -564,11 +570,8 @@ public with sharing class WBTemplateController {
             if (Schema.sObjectType.ContentVersion.isCreateable()) {
                 insert contentVersion;
             }            
-             // Retrieve the ContentDocumentId
-            String contentDocumentId = [SELECT ContentDocumentId 
-            FROM ContentVersion 
-            WHERE Id = :contentVersion.Id].ContentDocumentId;
-            return contentDocumentId;
+            String imageUrl = '/sfc/servlet.shepherd/version/download/' + contentVersion.Id;
+            return imageUrl;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createContentVersionAndDocument', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
@@ -644,6 +647,6 @@ public with sharing class WBTemplateController {
         // @AuraEnabled public Object queriedData;
         @AuraEnabled public List<String> objectNames;
         @AuraEnabled public List<String> fieldNames;
-        @AuraEnabled public String imageUrl;
+        @AuraEnabled public Boolean isImgUrl;
     }
 }

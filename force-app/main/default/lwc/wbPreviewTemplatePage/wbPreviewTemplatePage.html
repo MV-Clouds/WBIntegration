@@ -123,7 +123,6 @@
                                     <div class="templateheadWP">
                                         <div class="PreviewtemplateWP">
                                             <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
-                                               
                                                 <template if:true={IsHeaderText}>
                                                     <div class="TextHeadingWP">
                                                         <lightning-formatted-rich-text value={tempHeader}></lightning-formatted-rich-text>
@@ -131,7 +130,7 @@
                                                 </template>
                                                 <template if:true={isImgSelected}>
                                                     <div>
-                                                        <img src={filepreview} alt="File Preview" style="max-width: 100%; height: auto;" />
+                                                        <img src={tempHeader} alt="File Preview" style="max-width: 100%; height: auto;" />
                                                     </div>
                                                 </template>
                                                 <div class="TextBodyWP">

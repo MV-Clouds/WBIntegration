@@ -120,7 +120,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track dropdownClass = 'dropdown-hidden';
     @track emojiCategories=[];
     @track templateId='';
-    @track contentdocumentId='';
+    // @track contentdocumentId='';
 
     get acceptedFormats() {
         return ['png','jpeg','jpg'];
@@ -204,7 +204,8 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.toolbarButtons.map(button => ({
             ...button,
             iconUrl: this.getIconPath(button.iconName), 
-            classes: `toolbar-button ${button.title.toLowerCase()}` 
+            classes: `toolbar-button ${button.title.toLowerCase()}`,
+            imgClasses: `custom-icon ${button.iconName.toLowerCase()}`
         }));
     }
 
@@ -212,7 +213,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         { title: 'bold', iconName: 'bold' },
         { title: 'italic', iconName: 'italic' },
         { title: 'strikethrough', iconName: 'stike' },
-        { title: 'code', iconName: 'code' }
+        { title: 'codeIcon', iconName: 'code' }
     ];
 
     addOutsideClickListener() {
@@ -266,8 +267,14 @@ export default class WbCreateTemplatePage extends LightningElement {
         getLanguages()
             .then(result => {
                 this.languageOptions = result.map(lang => {
-                    return { label: `${lang.language}`, value: lang.code };
+                    return { label: `${lang.language}`, value: lang.code, isSelected: lang.code === this.selectedLanguage  };
                 });
+                  if (!this.languageOptions.some(option => option.isSelected)) {
+                    this.selectedLanguage = this.languageOptions[0]?.value || '';
+                    if (this.languageOptions[0]) {
+                        this.languageOptions[0].isSelected = true;
+                    }
+                }
             })
             .catch(error => {
                 console.error('Error fetching language data:', error);
@@ -400,9 +407,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                         if (result) {
                             let serializeResult = JSON.parse(result); 
                             this.headerHandle = serializeResult.headerHandle;
-                            this.contentdocumentId = serializeResult.contentDocumentId;
+                            this.imageurl = serializeResult.imageurl;
                             console.log('headerHandle ',this.headerHandle);
-                            console.log('contentdocumentId ',this.contentdocumentId);
+                            console.log('imageurl ',this.imageurl);
 
                             chunkStart += this.chunkSize;
                             if (chunkStart < this.fileSize) {
@@ -519,6 +526,10 @@ export default class WbCreateTemplatePage extends LightningElement {
                 break;
             case 'language':
                 this.selectedLanguage = value;
+                this.languageOptions = this.languageOptions.map(option => ({
+                    ...option,
+                    isSelected: option.value === this.selectedLanguage
+                }));
                 break;
             case 'footer':
                 this.footer = value;
@@ -1339,7 +1350,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                 templateType: this.selectedOption ? this.selectedOption : null,
                 tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
                 tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
-                tempContentDocId:  this.contentdocumentId ? this.contentdocumentId : null,
+                // tempContentDocId:  this.contentdocumentId ? this.contentdocumentId : null,
+                tempImgUrl:this.imageurl ? this.imageurl : null,
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
                 tempHeaderText: this.header ? this.header : '',
                 tempHeaderExample: (this.tempHeaderExample && this.tempHeaderExample.length > 0) ? this.tempHeaderExample : null,
@@ -1426,8 +1438,8 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.iseditTemplatevisible = false;
             this.isAllTemplate = true;
         }, 2000);
-    }    
-    
+    }  
+
     // --------------custom dropdown-----------
 
     getButtonPath(iconName) {

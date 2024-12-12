@@ -231,7 +231,7 @@ public with sharing class CreateTemplateWrapper {
             whatsAppTemplate.Template_Category__c = (String) payloadMap.get('category');
             whatsAppTemplate.Language__c = (String) payloadMap.get('language');
             whatsAppTemplate.Template_SubCatagory__c = templateWrapper.templateType;
-            whatsAppTemplate.Content_Document_Id__c = templateWrapper.tempContentDocId;
+            // whatsAppTemplate.Content_Document_Id__c = templateWrapper.tempContentDocId;
 
             List<Template_Variable__c> variableRecords = new List<Template_Variable__c>();
             List<Object> components = (List<Object>) payloadMap.get('components');
@@ -254,7 +254,11 @@ public with sharing class CreateTemplateWrapper {
                 if (type == 'HEADER') {
                     whatsAppTemplate.Header_Type__c = (String) component.get('format');
                     whatsAppTemplate.Header_Body__c = '<p><b>' + (String) component.get('text') + '</b></p>';
-
+                    if ((String) component.get('format') == 'IMAGE') {
+                        whatsAppTemplate.Header_Body__c = templateWrapper.tempImgUrl;
+                    } else {
+                        whatsAppTemplate.Header_Body__c = '<p><b>' + (String) component.get('text') + '</b></p>';
+                    }
                     if (example != null && example.containsKey('header_text') && example.get('header_text') instanceof List<Object>) {
                         List<Object> headerExampleObj = (List<Object>) example.get('header_text');
                         if (!headerExampleObj.isEmpty()) {
@@ -472,7 +476,7 @@ public with sharing class CreateTemplateWrapper {
         @AuraEnabled public String templateType;
         @AuraEnabled public String tempHeaderFormat;
         @AuraEnabled public String tempHeaderHandle;
-        @AuraEnabled public String tempContentDocId;
+        // @AuraEnabled public String tempContentDocId;
         @AuraEnabled public String tempLanguage;
         @AuraEnabled public String tempHeaderText;
         @AuraEnabled public List<String> tempHeaderExample;
@@ -488,6 +492,7 @@ public with sharing class CreateTemplateWrapper {
         @AuraEnabled public String url;
         @AuraEnabled public String quickText;
         @AuraEnabled public String copyCode;
+        @AuraEnabled public String tempImgUrl;
     }
 
 }

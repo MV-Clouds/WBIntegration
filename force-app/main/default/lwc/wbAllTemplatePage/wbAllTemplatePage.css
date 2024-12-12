@@ -13,7 +13,7 @@
     border-radius: 5px;
     width: 60rem;
     background-image: url('/resource/wbiTemplateBg');
-    height: 40rem;
+    /* height: 40rem; */
     /* overflow: hidden; */
 }
 .footer{

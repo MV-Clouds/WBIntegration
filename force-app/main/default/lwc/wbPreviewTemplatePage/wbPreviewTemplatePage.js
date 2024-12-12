@@ -236,13 +236,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
         .then(result => {
             if (result.queriedData) {
                 this.contactDetails = result.queriedData;
-                console.log('Queried Data:', JSON.stringify(this.contactDetails));
+                console.log('Queried Data:', JSOIsHeaderTextN.stringify(this.contactDetails));
                 
                 this.updateVariableContents();
             } else {
                 console.warn('No data found for the provided record ID.');
             }
-
         })
         .catch(error => {
             console.error('Error fetching dynamic data:', error);
@@ -257,26 +256,21 @@ export default class WbPreviewTemplatePage extends LightningElement {
             
             let contactDetailsArray = [];
     
-            // Convert contactDetails to an array of objects with label and value
             if (rawContactDetails && Array.isArray(rawContactDetails)) {
                 contactDetailsArray = rawContactDetails.map(record => {
-                    return { label: record.label, value: record.value, id: record.Id }; // Including the new 'id' field
+                    return { label: record.label, value: record.value, id: record.Id }; 
                 });
             } else {
                 console.error('contactDetails is not a valid array:', this.contactDetails);
                 return;
             }
-    
-            // Process headerVariables if present
+
             if (this.headerVariables && Array.isArray(this.headerVariables)) {
                 this.headerVariables = this.headerVariables.map(headerVar => {
-                    // Match using the 'id' field of contactDetailsArray
                     const matchingDetail = contactDetailsArray.find(
                         detail => detail.id === headerVar.varName
-                    );
-    
+                    );    
                     if (matchingDetail) {
-                        // Update the content with the corresponding value
                         headerVar.content = matchingDetail.value;
                     }
                     return headerVar;
@@ -295,15 +289,14 @@ export default class WbPreviewTemplatePage extends LightningElement {
         getDynamicObjectData({templateId:this.templateid})
         .then((result) => {
             if (result) {
-                if (result.imageUrl) {
-                    this.filepreview = result.imageUrl; 
+                if (result.isImgUrl) {
                     this.isImgSelected = true;
                      this.IsHeaderText = false;
                 } else {
-                    this.filepreview = null;
                     this.isImgSelected = false;
                      this.IsHeaderText = true; 
                 }
+                
                 console.log('template data ',JSON.stringify(result));
                 
                  this.originalHeader = result.template.Header_Body__c;
@@ -328,6 +321,10 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
                 this.headerVariables = this.extractVariables(this.tempHeader);
                 this.bodyVariables = this.extractVariables(this.tempBody);
+
+                if(this.headerVariables.length == 0 || this.bodyVariables.length == 0){
+                    this.noContact=false;
+                }
 
                 this.objectNames = result.objectNames;
                 this.fieldNames = result.fieldNames;
