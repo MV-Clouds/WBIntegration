@@ -380,7 +380,7 @@ input{
 .body-var{
     display: grid;
     gap: 0.5rem;
-    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .dropdown-list{
@@ -477,4 +477,9 @@ input{
     left: 0.2rem;
     padding-right: 0.4rem;
     border-right: 1px solid #d7d7d7;
+}
+
+.variable-head{
+    font-size: 14px;
+    font-weight: 500;
 }

@@ -233,7 +233,7 @@
                                             </div>
                                             <template for:each={variables} for:item="varItem" for:index="index">
                                                 <div key={varItem.id} class="true-div">
-                                                    <p class="var">{varItem.index}</p>
+                                                        <p class="var">{varItem.index}</p>
                                          
                                                         <select class="object-dropdown dropdown" disabled>
                                                             <option value={varItem.object} selected>{varItem.object}</option>
@@ -515,7 +515,7 @@
                                         <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
                                             <template if:true={IsHeaderText}>
                                                 <div class="TextHeadingWP">
-                                                    <p>{header}</p>
+                                                    <p>{previewHeader}</p>
                                                 </div>
                                             </template>
                                             <template if:true={isImageFile}>
@@ -531,7 +531,7 @@
                                         
                                             <template if:true={isDefault}>
                                                 <div class="TextBodyWP">
-                                                    <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
+                                                    <lightning-formatted-rich-text value={previewBody}></lightning-formatted-rich-text>
                                                 </div>
                                     
                                                 <div class="textfooterWP">

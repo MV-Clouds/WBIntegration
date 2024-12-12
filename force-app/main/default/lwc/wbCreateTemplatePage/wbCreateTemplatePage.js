@@ -72,6 +72,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track header = '';
     @track footer = '';
     @track tempBody = 'Hello';
+    @track previewBody='Hello';
+    @track previewHeader='';
     // formattedText = '';
     @track formatedTempBody=this.tempBody;
     @track btntext = '';
@@ -537,6 +539,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             case 'tempBody':
                 this.tempBody = value.replace(/(\n\s*){3,}/g, '\n\n');
                 this.formatedTempBody = this.formatText(this.tempBody);
+                this.previewBody=this.formatText(this.tempBody);
                 break;
             case 'btntext':
                 this.updateButtonProperty(index, 'btntext', value);
@@ -566,6 +569,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 break;
             case 'header':
                 this.header = value;
+                this.previewHeader=value;
                 break;
             default:
                 break;
@@ -942,10 +946,12 @@ export default class WbCreateTemplatePage extends LightningElement {
             field: defaultField,
             alternateText: '',
             index: `{{${this.nextIndex}}}`,        
+            // index: `{{${this.selectedObject}}}.{{${defaultField}}}`,        
         };
         this.variables = [...this.variables, newVariable];
         this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
         this.formatedTempBody=this.tempBody;
+        this.updatePreviewBody();
         console.log('this.tempBody after adding variable:', this.tempBody);
         this.updateTextarea();
         this.nextIndex++;
@@ -955,6 +961,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         const variableId = event.target.dataset.id;
         const fieldName = event.target.value;
         this.updateVarField(variableId, fieldName);
+        this.updatePreviewBody();
     }
 
     handleAlternateVarChange(event) {
@@ -971,10 +978,23 @@ export default class WbCreateTemplatePage extends LightningElement {
                 ? {
                       ...varItem,
                       field: fieldName,
-                      index: `{{Contact.${fieldName}}}` 
+                    //   index: `{{Contact.${fieldName}}}` 
                   }
                 : varItem
         );
+    }
+
+    updatePreviewBody() {
+        let updatedPreviewBody = this.tempBody;
+    
+        this.variables.forEach(varItem => {
+            const placeholderRegex = `{{${varItem.id}}}`; 
+            const replacement = `{{${varItem.object}.${varItem.field}}}`;
+            updatedPreviewBody = updatedPreviewBody.replace(placeholderRegex, replacement);
+        });
+    
+        this.previewBody = updatedPreviewBody;
+        console.log('Preview Body:', this.previewBody);
     }
 
     updateAlternateText(variableId, alternateText) {
@@ -1042,6 +1062,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.header_variables = [...this.header_variables, newVariable];
         this.originalHeader = (this.originalHeader || this.header || '') + ` {{${this.headIndex}}}`;
         this.header = this.originalHeader;
+        this.updatePreviewHeader();
         this.headIndex++;
         this.buttonDisabled = true;
     }
@@ -1050,6 +1071,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         const variableId = event.target.dataset.id;
         const fieldName = event.target.value;
         this.updateVariableField(variableId, fieldName);
+        this.updatePreviewHeader();
     }
 
     updateVariableField(variableId, fieldName) {
@@ -1058,10 +1080,22 @@ export default class WbCreateTemplatePage extends LightningElement {
                 ? {
                       ...varItem,
                       field: fieldName,
-                      index: `{{Contact.${fieldName}}}` 
+                    //   index: `{{Contact.${fieldName}}}` 
                   }
                 : varItem
         );
+    }
+    updatePreviewHeader() {
+        let updatedPreviewHeader = this.header;
+    
+        this.header_variables.forEach(varItem => {
+            const placeholderRegex = `{{${varItem.id}}}`; 
+            const replacement = `{{${varItem.object}.${varItem.field}}}`;
+            updatedPreviewHeader = updatedPreviewHeader.replace(placeholderRegex, replacement);
+        });
+    
+        this.previewHeader = updatedPreviewHeader;
+        console.log('Preview header:', this.previewHeader);
     }
 
     handleAlternateTextChange(event) {

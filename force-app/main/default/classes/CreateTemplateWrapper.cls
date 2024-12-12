@@ -7,10 +7,10 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 10/12/2024
+ * Last Update Date : 12/12/2024
  * Updated By : Kajal Tiwari
  * Name of methods changed (Comma separated if more then one) : handleSuccessResponse
- * Change Description : Add functionality to store variable as record name in template variable.
+ * Change Description : Store actual variable {{1}} in the name field of template variable.
  ***********************************************************************/
 
 public with sharing class CreateTemplateWrapper {
@@ -212,7 +212,7 @@ public with sharing class CreateTemplateWrapper {
     *********************************************************
     @description     : Handle response and store all in the template and template variable record.
     @param           : res,payload,response,templateWrapper - {HttpResponse,Map<String, Object>,Map<String, Object>,TemplateWrapper} 
-    @return          : null as it final to create records.
+    @return          : templateId of created template records.
     ********************************************************
     */
     public static Id handleSuccessResponse(HttpResponse res, Map<String, Object> payload, Map<String, Object> response, TemplateWrapper templateWrapper) {
@@ -261,51 +261,61 @@ public with sharing class CreateTemplateWrapper {
                     }
                     if (example != null && example.containsKey('header_text') && example.get('header_text') instanceof List<Object>) {
                         List<Object> headerExampleObj = (List<Object>) example.get('header_text');
+                        Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
+                        Matcher matcher = pattern.matcher((String) component.get('text'));
+
                         if (!headerExampleObj.isEmpty()) {
-                            headerMergeText = (String) headerExampleObj[0];
-                            headerMergeText = headerMergeText.replace('{{', '').replace('}}', '');
-                            List<String> parts = headerMergeText.split('\\.');
-                            if (parts.size() == 2) {
-                                Template_Variable__c headerVariable = new Template_Variable__c(
-                                    Name = '{{'+headerMergeText+'}}',
-                                    Object_Name__c = 'Contact',
-                                    Field_Name__c = parts[1],
-                                    Type__c = 'Header'
-                                );
+                            while (matcher.find()) {
+                                String placeholder = matcher.group();  
+                                headerMergeText = (String) headerExampleObj[0];
+                                headerMergeText = headerMergeText.replace('{{', '').replace('}}', '');
+                                List<String> parts = headerMergeText.split('\\.');
+                                if (parts.size() == 2) {
+                                    Template_Variable__c headerVariable = new Template_Variable__c(
+                                        Name = placeholder,
+                                        Object_Name__c = 'Contact',
+                                        Field_Name__c = parts[1],
+                                        Type__c = 'Header'
+                                    );
 
-                                // Add alternate text if available
-                                if (headerIndex < headAlternateTexts.size()) {
-                                    headerVariable.Alternate_Text__c = headAlternateTexts[headerIndex];
+                                    // Add alternate text if available
+                                    if (headerIndex < headAlternateTexts.size()) {
+                                        headerVariable.Alternate_Text__c = headAlternateTexts[headerIndex];
+                                    }
+                                    headerIndex++;
+
+                                    variableRecords.add(headerVariable);
                                 }
-                                headerIndex++;
-
-                                variableRecords.add(headerVariable);
                             }
                         }
                     }
                 } else if (type == 'BODY') {
                     Map<String, Object> result = handleBodyComponent(whatsAppTemplate.Template_Category__c, component, example);
                     whatsAppTemplate.Template_Body__c = String.isNotBlank((String) result.get('bodyText')) ? convertMarkdownToHtml((String) result.get('bodyText')) : '';
+                    
                     List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
                     String bodyMergeText = (String) result.get('bodyMergeText');
-                    System.debug('parsedFields '+parsedFields);
-                    for (Map<String, String> field : parsedFields) {
-                        Template_Variable__c bodyVariable = new Template_Variable__c(
-                            Name = bodyMergeText,
-                            Object_Name__c = 'Contact',
-                            Field_Name__c = field.get('fieldName'),
-                            Type__c = 'Body'
-                        );
 
-                        System.debug('variableIndex '+variableIndex);
-                        System.debug('varAlternateTexts.size() '+varAlternateTexts.size());
-                        // Add alternate text if available
-                        if (variableIndex < varAlternateTexts.size()) {
-                            bodyVariable.Alternate_Text__c = varAlternateTexts[variableIndex];
+                    Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
+                    Matcher matcher = pattern.matcher((String) result.get('bodyText'));
+
+                    while (matcher.find()) {
+                        String placeholder = matcher.group();                        
+                        for (Map<String, String> field : parsedFields) {
+                            Template_Variable__c bodyVariable = new Template_Variable__c(
+                                Name = placeholder,
+                                Object_Name__c = 'Contact',
+                                Field_Name__c = field.get('fieldName'),
+                                Type__c = 'Body'
+                            );
+    
+                            if (variableIndex < varAlternateTexts.size()) {
+                                bodyVariable.Alternate_Text__c = varAlternateTexts[variableIndex];
+                            }
+                            variableIndex++;
+    
+                            variableRecords.add(bodyVariable);
                         }
-                        variableIndex++;
-
-                        variableRecords.add(bodyVariable);
                     }
                 } else if (type == 'FOOTER') {
                     whatsAppTemplate.Footer_Body__c = (String) component.get('text');

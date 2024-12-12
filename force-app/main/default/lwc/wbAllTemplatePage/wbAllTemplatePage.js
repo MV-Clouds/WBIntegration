@@ -12,7 +12,7 @@ MODIFICATION LOG*
  * Change Description :Change the UI as per figma design.
  ********************************************************************** */
 
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, track, wire,api } from 'lwc';
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
@@ -50,28 +50,60 @@ export default class WbAllTemplatePage extends LightningElement {
         }
     }
 
-    @wire(getWhatsAppTemplates)
-    wiredTemplates({ error, data }) {
-        try {
-            if (data) {
-                this.allRecords = data.map((record, index) => {
-                    return {
-                        ...record,
-                        id: record.Id,
-                        serialNumber: index + 1, 
-                        LastModifiedDate: this.formatDate(record.LastModifiedDate)
-                    };
-                });
-                this.filteredRecords = [...this.allRecords];
-            } else if (error) {
-                console.error('Error fetching WhatsApp templates: ', error);
+    // @wire(getWhatsAppTemplates)
+    // wiredTemplates({ error, data }) {
+    //     try {
+    //         if (data) {
+    //             this.allRecords = data.map((record, index) => {
+    //                 return {
+    //                     ...record,
+    //                     id: record.Id,
+    //                     serialNumber: index + 1, 
+    //                     LastModifiedDate: this.formatDate(record.LastModifiedDate)
+    //                 };
+    //             });
+    //             this.filteredRecords = [...this.allRecords];
+    //         } else if (error) {
+    //             console.error('Error fetching WhatsApp templates: ', error);
+    //         }
+    //     } catch (err) {
+    //         console.error('Unexpected error in wiredTemplates: ', err);
+    //     }
+    // }
+
+    fetchAllTemplate(){
+        this.isLoading=true;
+        getWhatsAppTemplates()
+        .then(data => {
+            try {
+                if (data) {
+                    this.allRecords = data.map((record, index) => {
+                        return {
+                            ...record,
+                            id: record.Id,
+                            serialNumber: index + 1, 
+                            LastModifiedDate: this.formatDate(record.LastModifiedDate)
+                        };
+                    });
+                    this.filteredRecords = [...this.allRecords];
+                    this.isLoading=false;
+                } else if (error) {
+                    console.error('Error fetching WhatsApp templates: ', error);
+                    this.isLoading=false;
+                }
+            } catch (err) {
+                console.error('Unexpected error in wiredTemplates: ', err);
+                this.isLoading=false;
             }
-        } catch (err) {
-            console.error('Unexpected error in wiredTemplates: ', err);
-        }
+        })
+        .catch(error => {
+            console.log(error);
+            this.isLoading=false;
+        });
     }
 
     connectedCallback(){
+        this.fetchAllTemplate();
         console.log('default option selected==> '+ this.selectedOption);
     }
 

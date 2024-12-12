@@ -41,8 +41,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track contactDetails=[];
     // @api templateid;
     @track inputValues = {};
-    @track headerVariables=[];
-    @track bodyVariables=[];
+    // @track headerVariables=[];
+    // @track bodyVariables=[];
+    @track groupedVariables=[];
     @track noContact=true;
     @track selectedCountryType = '+91';  
     @track countryType=[];
@@ -166,6 +167,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 this.tempBody = this.originalBody;
                 this.formatedTempBody = this.formatText(this.originalBody);
                 this.searchTerm='None';
+                this.groupedVariables = this.groupedVariables.map(group => {
+                    return {
+                        ...group,
+                        mappings: group.mappings.map(mapping => {
+                            return {
+                                ...mapping,
+                                value: '' 
+                            };
+                        })
+                    };
+                });
                 console.log('Reset to original template');
                 return;
             }
@@ -190,25 +202,25 @@ export default class WbPreviewTemplatePage extends LightningElement {
             console.log('Selected Record ID:', this.selectedContactId);    
             this.fetchContactData();
         
-            getTemplateWithReplacedValues({
-                recordId: this.selectedContactId,
-                templateId:this._templateid
-            })
-            .then(result => {
-                if (result) {
-                    const { header, body } = result;    
-                    this.tempHeader = this.formatText(header);
-                    this.formatedTempBody = this.formatText(body);
+            // getTemplateWithReplacedValues({
+            //     recordId: this.selectedContactId,
+            //     templateId:this._templateid
+            // })
+            // .then(result => {
+            //     if (result) {
+            //         const { header, body } = result;    
+            //         this.tempHeader = this.formatText(header);
+            //         this.formatedTempBody = this.formatText(body);
     
-                    console.log('Formatted Header:', this.tempHeader);
-                    console.log('Formatted Body:', this.formatedTempBody);
-                } else {
-                    console.warn('No template data returned.');
-                }
-            })
-            .catch(error => {
-                console.error('Error replacing template:', error);
-            });
+            //         console.log('Formatted Header:', this.tempHeader);
+            //         console.log('Formatted Body:', this.formatedTempBody);
+            //     } else {
+            //         console.warn('No template data returned.');
+            //     }
+            // })
+            // .catch(error => {
+            //     console.error('Error replacing template:', error);
+            // });
 
         } catch (err) {
             console.error('Unexpected error in handleRecordSelection:', err);
@@ -228,62 +240,67 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     fetchContactData() {
-        fetchDynamicRecordData({
-            objectName: this.objectNames[0], 
-            fieldNames: this.fieldNames, 
-            recordId: this.selectedContactId
-        })
-        .then(result => {
-            if (result.queriedData) {
-                this.contactDetails = result.queriedData;
-                console.log('Queried Data:', JSOIsHeaderTextN.stringify(this.contactDetails));
-                
-                this.updateVariableContents();
-            } else {
-                console.warn('No data found for the provided record ID.');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching dynamic data:', error);
-        });
-    }
-
-    updateVariableContents() {
-        console.log('Entering updateVariableContents...');
         try {
-            const rawContactDetails = JSON.parse(JSON.stringify(this.contactDetails));
-            console.log(rawContactDetails);
-            
-            let contactDetailsArray = [];
-    
-            if (rawContactDetails && Array.isArray(rawContactDetails)) {
-                contactDetailsArray = rawContactDetails.map(record => {
-                    return { label: record.label, value: record.value, id: record.Id }; 
-                });
-            } else {
-                console.error('contactDetails is not a valid array:', this.contactDetails);
-                return;
-            }
+            fetchDynamicRecordData({
+                objectName: this.objectNames[0], 
+                fieldNames: this.fieldNames, 
+                recordId: this.selectedContactId
+            })
+            .then(result => {
+                if (result.queriedData) {
+                    this.contactDetails = result.queriedData;
+                    console.log('Queried Data:', JSON.stringify(this.contactDetails));
 
-            if (this.headerVariables && Array.isArray(this.headerVariables)) {
-                this.headerVariables = this.headerVariables.map(headerVar => {
-                    const matchingDetail = contactDetailsArray.find(
-                        detail => detail.id === headerVar.varName
-                    );    
-                    if (matchingDetail) {
-                        headerVar.content = matchingDetail.value;
-                    }
-                    return headerVar;
-                });
-            }
-    
-            console.log('Updated headerVariables:', this.headerVariables);
-    
+                    this.groupedVariables = this.groupedVariables.map(group => {
+                        return {
+                            ...group,
+                            mappings: group.mappings.map(mapping => {
+                                return {
+                                    ...mapping,
+                                    value: this.contactDetails[mapping.fieldName] || mapping.alternateText || ''
+                                };
+                            })
+                        };
+                    });
+                    this.updateTemplates();
+                    console.log('mapping variable1 ',JSON.stringify(this.groupedVariables));
+                    
+                } else {
+                    console.warn('No data found for the provided record ID.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching dynamic data:', error);
+            });
         } catch (error) {
-            console.error('Error in updateVariableContents:', error);
+            console.error('Something wrong in fetching dynamic data:', error);
         }
     }
+
+    updateTemplates() {
+        let updatedBody = this.tempBody;
+        let updatedHeader = this.tempHeader;
     
+        this.groupedVariables.forEach(group => {
+            group.mappings.forEach(mapping => {
+                const variableToken = `${mapping.variable}`;
+                if (group.type === 'Header') {
+                    while (updatedHeader.includes(variableToken)) {
+                        updatedHeader = updatedHeader.replace(variableToken, mapping.value);
+                    }
+                } else if (group.type === 'Body') {
+                    while (updatedBody.includes(variableToken)) {
+                        updatedBody = updatedBody.replace(variableToken, mapping.value);
+                    }
+                }
+            });
+        });
+    
+        this.formatedTempBody = updatedBody;
+        this.tempHeader = updatedHeader;
+    }
+    
+
     fetchTemplateData() {
         this.isLoading = true;
         getDynamicObjectData({templateId:this.templateid})
@@ -301,7 +318,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 
                  this.originalHeader = result.template.Header_Body__c;
                  this.originalBody = result.template.Template_Body__c;
- 
+                 const variableMappings = result.templateVariables;
+
                  this.tempHeader = this.originalHeader;
                  this.tempBody = this.originalBody;
                  this.tempFooter = result.template.Footer_Body__c;
@@ -319,10 +337,27 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     };
                 });
 
-                this.headerVariables = this.extractVariables(this.tempHeader);
-                this.bodyVariables = this.extractVariables(this.tempBody);
-
-                if(this.headerVariables.length == 0 || this.bodyVariables.length == 0){
+                const grouped = variableMappings.reduce((acc, mapping) => {
+                    const mappingWithValue = { 
+                        ...mapping, 
+                        value: '' 
+                    };
+                    const typeGroup = acc.find(group => group.type === mappingWithValue.type);                
+                    if (typeGroup) {
+                        typeGroup.mappings.push(mappingWithValue);
+                    } else {
+                        acc.push({ 
+                            type: mappingWithValue.type, 
+                            mappings: [mappingWithValue] 
+                        });
+                    }
+                    return acc;
+                }, []);                
+        
+                this.groupedVariables = grouped;
+                console.log('mapping variable ',JSON.stringify(this.groupedVariables));
+                
+                if(this.groupedVariables.length == 0){
                     this.noContact=false;
                 }
 
@@ -338,109 +373,21 @@ export default class WbPreviewTemplatePage extends LightningElement {
             this.isLoading = false;
         })       
     }
-
-    extractVariables(templateText) {
-        const regex = /\{\{(\d+)\}\}/g; 
-        const variables = [];
-        let match;
-        let index = 0; 
-        while ((match = regex.exec(templateText)) !== null) {
-            variables.push({
-                id: index++, 
-                varName: match[0], 
-                label: `Variable ${match[1]}`, 
-                placeholder: `Enter value for ${match[0]}`, 
-                content: ''
-            });
-        }
-        return variables;
-    }
     
     handleInputChange(event) {
-        const id = parseInt(event.target.dataset.id, 10); 
-        const type = event.target.dataset.type;
-        const newContent = event.target.value;
-        const variableId = id + 1; 
-    
-        const placeholder = `{{${variableId}}}`;
-
-        if (type === 'header') {
-            this.headerVariables = this.headerVariables.map(varItem =>
-                varItem.id === id ? { ...varItem, content: newContent } : varItem
-            );
-            console.log('Before replacement:', this.tempHeader);
-            this.tempHeader = this.tempHeader.replace(placeholder, newContent); 
-            placeholder=newContent;
-            console.log('After replacement:', this.tempHeader);
-
-        } else if (type === 'body') {
-            this.bodyVariables = this.bodyVariables.map(varItem =>
-                varItem.id === id ? { ...varItem, content: newContent } : varItem
-            );
-            this.formatedTempBody = this.formatedTempBody.replace(placeholder, newContent); 
-            placeholder=newContent;
-        }
+        const { name, value } = event.target; 
+        console.log('name',name);
+         console.log('value  ',value);
+         
+        this.groupedVariables.forEach(group => {
+            group.mappings.forEach(mapping => {
+                if (mapping.variable === name) {
+                    mapping.value = value;  
+                }
+            });
+        });
     }
 
-    // newPlaceholder = '';
-
-    // handleInputChange(event) {
-    //     const id = parseInt(event.target.dataset.id, 10); 
-    //     const type = event.target.dataset.type;
-    //     const newContent = event.target.value;
-    //     console.log(newContent);
-        
-    //     const variableId = id + 1;  
-    //     const placeholder = `{{${variableId}}}`;
-        
-    //     console.log('initial newPlaceholder ', this.newPlaceholder);  
-
-    //     if (type === 'header') {
-    //         this.headerVariables = this.headerVariables.map(varItem =>
-    //             varItem.id === id ? { ...varItem, content: newContent } : varItem
-    //         );
-
-    //         if (this.tempHeader.includes(placeholder)) {
-    //             console.log('First replacement in header');
-                
-    //             this.tempHeader = this.tempHeader.replace(placeholder, newContent);
-
-    //             this.newPlaceholder = newContent;
-    //             console.log('Updated newPlaceholder after first replacement: ', this.newPlaceholder);
-    //         } 
-    //         else if (this.newPlaceholder!='') {
-    //             if (this.tempHeader.trim().includes(this.newPlaceholder.trim())) {
-    //                 console.log('Found newPlaceholder in tempHeader');
-    //                 this.tempHeader = this.tempHeader.replace(this.newPlaceholder, newContent);
-    //                 this.newPlaceholder = newContent; 
-    //                 console.log('Updated tempHeader after subsequent replacement: ', this.tempHeader);
-    //             } else {
-    //                 console.log('newPlaceholder not found in tempHeader');
-    //             }
-    //         }
-    //     } 
-    //     else if (type === 'body') {
-    //         this.bodyVariables = this.bodyVariables.map(varItem =>
-    //             varItem.id === id ? { ...varItem, content: newContent } : varItem
-    //         );
-
-    //         if (this.formatedTempBody.includes(placeholder)) {
-    //             console.log('First replacement in body');                
-    //             this.formatedTempBody = this.formatedTempBody.replace(placeholder, newContent);
-    //             this.newPlaceholder = newContent;
-    //             console.log('Updated newPlaceholder after first replacement: ', this.newPlaceholder);
-    //         } 
-    //         else if (this.newPlaceholder!='') {
-    //             this.formatedTempBody = this.formatedTempBody.replace(this.newPlaceholder, newContent);
-    //             this.newPlaceholder = newContent;  
-    //             console.log('Updated formatedTempBody on subsequent replacement: ', this.formatedTempBody);
-    //         }
-    //     }
-
-    //     console.log('Updated Header:', this.tempHeader);
-    //     console.log('Updated Body:', this.formatedTempBody);
-    // }
-    
     closePreview() {
         this.dispatchEvent(new CustomEvent('closepopup'));
     }

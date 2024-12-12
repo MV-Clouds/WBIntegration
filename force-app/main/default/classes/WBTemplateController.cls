@@ -99,6 +99,7 @@ public with sharing class WBTemplateController {
         TemplateDataWrapper wrapper = new TemplateDataWrapper();
         Set<String> objectNames = new Set<String>();
         Set<String> fieldNames = new Set<String>();
+        wrapper.templateVariables = new List<Map<String, String>>();
 
         try {
             // Fetch the specific template
@@ -118,7 +119,7 @@ public with sharing class WBTemplateController {
             }
 
              List<Template_Variable__c> templateVariables = [
-                SELECT Object_Name__c, Field_Name__c 
+                SELECT Name,Object_Name__c, Field_Name__c,Type__c,Alternate_Text__c
                 FROM Template_Variable__c 
                 WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
             ];
@@ -129,6 +130,13 @@ public with sharing class WBTemplateController {
             }
 
             for (Template_Variable__c variable : templateVariables) {
+                Map<String, String> mapping = new Map<String, String>();
+                mapping.put('type', variable.Type__c);
+                mapping.put('variable', variable.Name);
+                mapping.put('alternateText', variable.Alternate_Text__c);
+                mapping.put('fieldName', variable.Field_Name__c);
+                wrapper.templateVariables.add(mapping);
+
                 objectNames.add(variable.Object_Name__c);
                 fieldNames.add(variable.Field_Name__c);
             }
@@ -235,8 +243,8 @@ public with sharing class WBTemplateController {
                 String replacementValue = null;
                 for (Template_Variable__c var : variables) {
                     if (var.Field_Name__c == fieldName) {
-                        replacementValue = (value != null) ? value.toString() : var.Alternate_Text__c;
-                        break;
+                        // replacementValue = (value != null) ? value.toString() : var.Alternate_Text__c;
+                        replacementValue = (value != null) ? value.toString() : (var.Alternate_Text__c != null) ? var.Alternate_Text__c : '';
                     }
                 }
                 templateHeader = templateHeader.replace('{{' + i + '}}', replacementValue);
@@ -249,8 +257,8 @@ public with sharing class WBTemplateController {
                 String replacementValue = null;
                 for (Template_Variable__c var : variables) {
                     if (var.Field_Name__c == fieldName) {
-                        replacementValue = (value != null) ? value.toString() : var.Alternate_Text__c;
-                        break;
+                        replacementValue = (value != null) ? value.toString() : 
+                        (var.Alternate_Text__c != null) ? var.Alternate_Text__c : '';
                     }
                 }
                 templateBody = templateBody.replace('{{' + i + '}}', replacementValue);
@@ -647,6 +655,7 @@ public with sharing class WBTemplateController {
         // @AuraEnabled public Object queriedData;
         @AuraEnabled public List<String> objectNames;
         @AuraEnabled public List<String> fieldNames;
+        @AuraEnabled public List<Map<String, String>> templateVariables; 
         @AuraEnabled public Boolean isImgUrl;
     }
 }
