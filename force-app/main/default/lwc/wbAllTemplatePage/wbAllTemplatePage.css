@@ -133,6 +133,7 @@
     margin-top: -0.75rem;
     width: calc(100% + 1.5rem);
     margin-left: -0.75rem;
+    height: calc(100% + 1.5rem);
 }
 
 .heading {
@@ -313,12 +314,13 @@ img {
 }
 
 .action{
-    width: 26px;
+    width: 27px;
     color: black;
     border: 1px solid #dfdddd;
     background: white;
-    padding: 0.3rem;
+    padding: 0.27rem;
     border-radius: 3px;
+    cursor: pointer;
 }
 
 .trash{

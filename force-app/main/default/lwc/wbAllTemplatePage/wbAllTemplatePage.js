@@ -252,9 +252,7 @@ export default class WbAllTemplatePage extends LightningElement {
     }
 
     handlePopupClose() {
-        setTimeout(() => {
-            this.showPopup = false; 
-        }, 1000);
+        this.showPopup = false; 
     }
 
     showToastError(message) {

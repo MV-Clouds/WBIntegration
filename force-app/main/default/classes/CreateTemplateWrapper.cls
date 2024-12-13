@@ -291,6 +291,7 @@ public with sharing class CreateTemplateWrapper {
                     }
                 } else if (type == 'BODY') {
                     Map<String, Object> result = handleBodyComponent(whatsAppTemplate.Template_Category__c, component, example);
+                    System.debug(((String) result.get('bodyText')));
                     whatsAppTemplate.Template_Body__c = String.isNotBlank((String) result.get('bodyText')) ? convertMarkdownToHtml((String) result.get('bodyText')) : '';
                     
                     List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
@@ -471,11 +472,13 @@ public with sharing class CreateTemplateWrapper {
     */
     
     public static String convertMarkdownToHtml(String bodyText) {
+        System.debug(bodyText);
         bodyText = bodyText.replaceAll('\\*{1,2}([^*]+)\\*{1,2}', '<strong>$1</strong>');
         bodyText = bodyText.replaceAll('_([^_]+)_', '<em>$1</em>');        
         bodyText = bodyText.replaceAll('~([^~]+)~', '<s>$1</s>');        
         bodyText = bodyText.replaceAll('```([^`]+)```', '<code>$1</code>');        
         bodyText = bodyText.replaceAll('\n', '<br/>');
+        bodyText = bodyText.replaceAll(' ', '&nbsp;');
         
         return bodyText;
     }

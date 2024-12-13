@@ -576,7 +576,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                 case 'tempBody':
                     this.tempBody = value.replace(/(\n\s*){3,}/g, '\n\n');
                     this.formatedTempBody = this.formatText(this.tempBody);
-                    // this.previewBody=this.formatText(this.tempBody);
+                    console.log('update1--> ', this.tempBody);
+                    
                     this.updatePreviewContent(this.formatedTempBody,'body');
                     break;
                 case 'btntext':
@@ -1233,6 +1234,8 @@ export default class WbCreateTemplatePage extends LightningElement {
         
             const newText = currentText.slice(0, cursorPos) + emojiChar + currentText.slice(cursorPos);    
             this.tempBody = newText;
+            this.formatedTempBody=this.tempBody;
+            this.previewBody=this.formatedTempBody;
             textarea.value = newText;
         
             setTimeout(() => {
@@ -1269,7 +1272,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                     marker = '~~';
                     markerLength = 1;
                     break;
-                case 'code':
+                case 'codeIcon':
                     marker = '``````';
                     markerLength = 3;
                     break;
@@ -1292,7 +1295,6 @@ export default class WbCreateTemplatePage extends LightningElement {
     formatText(inputText) {
         try {
             inputText = inputText.replace(/(\n\s*){3,}/g, '\n\n');
-
             let formattedText = inputText.replaceAll('\n', '<br/>');
             formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
             formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');

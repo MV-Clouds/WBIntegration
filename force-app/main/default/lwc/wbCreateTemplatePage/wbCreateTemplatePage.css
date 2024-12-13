@@ -17,9 +17,35 @@
 .template-preview{
     padding: 0;
     border-radius: 5px;
-    height: fit-content;
+    /* height: -webkit-fill-available; */
     width: 60rem;
     background-image: url('/resource/wbiTemplateBg');
+}
+
+/* Custom scrollbar styles for Webkit browsers */
+.template-preview::-webkit-scrollbar {
+    width: 9px; 
+    height: 8px; 
+}
+
+.template-preview::-webkit-scrollbar-thumb {
+    background-color: #0098e9; 
+    border-radius: 6px; 
+    border-left: 2px solid white;
+}
+
+.template-preview::-webkit-scrollbar-track {
+    background-color: transparent; 
+    border-radius: 6px; 
+}
+
+.template-preview::-webkit-scrollbar-thumb:hover {
+    background-color: #03a8ff;
+}
+
+.white-space{
+    white-space: pre-wrap; 
+    word-wrap: break-word; 
 }
 
 .texttemp{
