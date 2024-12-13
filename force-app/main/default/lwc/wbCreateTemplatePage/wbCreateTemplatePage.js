@@ -12,7 +12,7 @@ MODIFICATION LOG*
  * Change Description : Added functionality to redirect the first page as close the preview. Also remove some div as per the figma till confirmation.
  ********************************************************************** */
 
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, track, wire,api } from 'lwc';
 import {loadStyle} from 'lightning/platformResourceLoader';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
@@ -27,6 +27,7 @@ import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.create
 import startUploadSession from '@salesforce/apex/WBTemplateController.startUploadSession';
 import uploadFileChunk from '@salesforce/apex/WBTemplateController.uploadFileChunk';
 import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFields';
+import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 
 export default class WbCreateTemplatePage extends LightningElement {
     maxTempNamelength = 512;
@@ -38,6 +39,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     maxCodetxt = 15;
     maxPackTxt=224;
     maxHashTxt=11;
+    @track isNewTemplate=true;
+    @track isEditTemplate=false;
     @track totalButtonsCount = 0;
     @track visitWebsiteCount = 0;
     @track callPhoneNumber = 0;
@@ -120,6 +123,22 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track dropdownClass = 'dropdown-hidden';
     @track emojiCategories=[];
     @track templateId='';
+
+    @api
+    get edittemplateid() {
+        return this._edittemplateid;
+    }
+
+    set edittemplateid(value) {
+        console.log('Template ID set:', value);
+        this._edittemplateid = value;
+        if (this._edittemplateid) {
+            this.isNewTemplate=false;
+            this.isEditTemplate=true;
+            this.isAllTemplate=false;
+            this.fetchTemplateData();
+        }
+    }
 
     get acceptedFormats() {
         return ['png','jpeg','jpg'];
@@ -215,6 +234,30 @@ export default class WbCreateTemplatePage extends LightningElement {
         }).catch(error => {
             console.error("Error in loading the colors",error)
         })
+    }
+
+    fetchTemplateData() {
+        try {
+            getDynamicObjectData({templateId:this.edittemplateid})
+            .then((data) => {
+                const { template, templateVariables } = data;
+                this.templateName = template.Name || '';
+                this.header = template.Header_Body__c || '';
+                this.footer = template.Footer_Body__c || '';
+                this.selectedLanguage = template.Language__c;
+                this.tempBody =template.Template_Body__c || 'Hello';
+                this.selectedContentType=template.Header_Type__c;
+                this.btntext = template.Button_Label__c || '';
+                this.variables = templateVariables || [];
+                this.header_variables = templateVariables || [];
+                this.originalHeader = template.Header_Body__c || '';
+            })
+            .catch((error) => {
+                console.error('Error fetching fields: ', error);
+            });
+        } catch (error) {
+            console.error('Error fetching template data: ', error);
+        }
     }
 
     getIconPath(iconName) {

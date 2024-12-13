@@ -35,8 +35,8 @@
                                                     onchange={search}
                                                     value={searchTerm}
                                                     icon-name="standard:contact"
-                                                    onfocus={handleFocus}
                                                     onblur={handleBlur}
+                                                    onfocus={handleFocus}
                                                     disabled={isDisabled}
                                                 >
                                                 </lightning-input>
@@ -60,7 +60,7 @@
                                                         <p>No results found</p> 
                                                     </div>
                                                 </template>
-                                            </template>                           
+                                            </template>
                                         </template>
                                     </div>
 
@@ -148,8 +148,8 @@
                                     </select>
                                 </div>
                                 
-                                <input type="text" name="phone-num" class="phone-input" oninput={handleInputChange}>
-                                <button class="send-btn">Send Preview</button>
+                                <input type="text" name="phone-num" class="phone-input" oninput={handlePhoneChange}>
+                                <button class="send-btn" onclick={sendTemplatePreview}>Send Preview</button>
                                 <button class="close-btn" onclick={closePreview}>Close</button>
                             </div>
                         </div>

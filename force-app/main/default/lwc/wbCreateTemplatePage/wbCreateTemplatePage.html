@@ -10,9 +10,17 @@
             <!-- Edit template screen -->
                 <div class="slds-theme_default main">
                     <!-- <div class="slds-box slds-theme_default texttemp"> -->
-                    <div class="texttemp">
-                        <p class="templatetxt2">New Template</p>
-                    </div>
+                    <template if:true={isNewTemplate}>
+                        <div class="texttemp">
+                            <p class="templatetxt2">New Template</p>
+                        </div>
+                    </template>
+                    <template if:true={isEditTemplate}>
+                        <div class="texttemp">
+                            <p class="templatetxt2">Edit Template</p>
+                        </div>
+                    </template>
+                  
                     <div class="divcontainer2">
                         <div class="createtempdiv2">
                             <div class="slds-box slds-theme_default templateContent3">
@@ -584,16 +592,19 @@
                                             </div>
                                         </template>
                                     </div>
-
                                 </div>
-                               
                             </div>
                         </div>
                     </div>
                     <div class="templatebtn">
                         <lightning-button variant="brand-outline" onclick={handlePrevclick} label="Previous"
                             class="slds-m-left_x-small"></lightning-button>
-                        <lightning-button variant="brand" label="Submit for Review" onclick={handleConfirm} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
+                        <template if:true={isNewTemplate}>
+                            <lightning-button variant="brand" label="Submit for Review" onclick={handleConfirm} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
+                        </template>
+                        <template if:true={isEditTemplate}>
+                            <lightning-button variant="brand" label="Submit for Edit" onclick={handleEditTemplate} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
+                        </template>
                     </div>
                 </div>
         </div>
@@ -639,5 +650,4 @@
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
-
 </template>

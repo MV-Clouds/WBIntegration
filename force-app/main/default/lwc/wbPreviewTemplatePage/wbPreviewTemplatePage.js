@@ -24,11 +24,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track filepreview;
     @track originalHeader;
     @track originalBody;
+    @track template;
     @track tempHeader;
     @track tempBody;
     @track tempFooter;
     @track buttonList=[];
     @track formatedTempBody;
+    @track phoneNumber='';
     @track objectNames = []; 
     @track fieldNames = [];
     @track isImgSelected = false;
@@ -338,7 +340,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     }
                     
                     console.log('template data ',JSON.stringify(result));
-                    
+                    this.template = result.template;
                     this.originalHeader = result.template.Header_Body__c;
                     this.originalBody = result.template.Template_Body__c;
                     const variableMappings = result.templateVariables;
@@ -399,6 +401,72 @@ export default class WbPreviewTemplatePage extends LightningElement {
         } catch (error) {
             console.error('Something wrong in fetching template.',error);
         }     
+    }
+
+    handlePhoneChange(event){
+        this.phoneNumber=event.target.value;
+    }
+
+    sendTemplatePreview(){
+        this.isLoading = true;
+        try {
+            createChat({chatData: {message: '', templateId: this.templateid, messageType: 'template', recordId: null, replyToChatId: null}})
+            .then(chat => {
+                if(chat){
+                    let templatePayload = this.createJSONBody(this.phoneNumber, "template", {
+                        templateName: this.template.Name,
+                        languageCode: this.template.Language__c,
+                        parameters: this.templateData.parameters || []
+                    });
+                    console.log('the Payload is :: :', templatePayload);
+
+                    sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id})
+                    .then(ch => {
+                        this.dispatchEvent(new CustomEvent('message', {
+                            detail: ch
+                        }));
+                        this.isLoading = false;
+                    })
+                }else{
+                    this.isLoading = false;
+                    console.log('there was some error sending the message!');
+                }
+            })
+            .catch((e) => {
+                this.isLoading = false;
+                console.log('Error in handleSelectTemplate > createChat :: ', e);
+            })
+        } catch (e) {
+            console.log('Error in function handleSend:::', e.message);
+        }
+    }
+
+    createJSONBody(to, type, data){
+        try {
+                let payload = `{ "messaging_product": "whatsapp", "to": "${to}", "type": "${type}"`;
+            
+                payload += `, "template": { 
+                    "name": "${data.templateName}",
+                    "language": { "code": "${data.languageCode}" }`;
+    
+                if (data.parameters && data.parameters.length > 0) {
+                    let parameters = data.parameters.map(
+                        (param) => `{ "type": "text", "text": "${param}" }`
+                    ).join(", ");
+                    payload += `, "components": [ 
+                        { 
+                            "type": "body", 
+                            "parameters": [ ${parameters} ] 
+                        } 
+                    ]`;
+                }
+                payload += ` }`;
+                payload += ` }`;
+            
+                return payload;
+        } catch (e) {
+            console.log('Error in function createJSONBody:::', e.message);
+        }
     }
 
     closePreview() {

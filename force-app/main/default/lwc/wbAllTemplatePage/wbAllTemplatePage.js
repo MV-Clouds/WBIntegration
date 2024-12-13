@@ -35,7 +35,7 @@ export default class WbAllTemplatePage extends LightningElement {
     @track selectedTemplateId='';
     @track showPopup = false; 
     @track isFilterVisible = false;
-
+    @track editTemplateId='';
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {
@@ -249,6 +249,12 @@ export default class WbAllTemplatePage extends LightningElement {
     previewTemplate(event) {
         this.selectedTemplateId =  event.currentTarget.dataset.id;
         this.showPopup = true;
+    }
+
+    editTemplate(event){
+        this.editTemplateId =  event.currentTarget.dataset.id;
+        this.isCreateTemplate=true;
+        this.isTemplateVisible=false;
     }
 
     handlePopupClose() {

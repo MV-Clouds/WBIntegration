@@ -35,7 +35,6 @@ public with sharing class CreateTemplateWrapper {
             if (!components.isEmpty()) {
                 payload.put('components', components);
             }
-
             System.debug('Final Payload: ' + JSON.serialize(payload));
             return payload;
 
@@ -46,7 +45,7 @@ public with sharing class CreateTemplateWrapper {
     }
 
      /*
-    *********************************************************
+    **********************************************************
     @description     : Method to create component for template catagory of type marketing or utility.
     @param           : templateWrapper - {TemplateWrapper} - It is wrapper class that pass from WBTemplateController contain all data need to create template.
     @return          : components - {Map<String, Object>} - Return component use to create payload.
