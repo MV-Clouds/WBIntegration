@@ -10,8 +10,8 @@
  MODIFICATION LOG*
  * Last Update Date : 11/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : getDynamicObjectData
- * Change Description : Store Image url in header body field when header type is image.
+ * Name of methods changed (Comma separated if more then one) : getDynamicObjectData,getTemplateWithReplacedValues
+ * Change Description : Store Image url in header body field when header type is image. Also remove getTemplateWithReplacedValues to handle mapping in js.
  ***********************************************************************/
 
 public with sharing class WBTemplateController {
@@ -49,8 +49,8 @@ public with sharing class WBTemplateController {
     ********************************************************
     */
     @AuraEnabled(cacheable=true)
-    public static List<String> getObjectFields() {
-        String objectName = 'Contact';
+    public static List<String> getObjectFields(String objectName) {
+        // String objectName = 'Contact';
         List<String> fieldNames = new List<String>();
         try {
             Schema.DescribeSObjectResult objDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe();
@@ -194,87 +194,87 @@ public with sharing class WBTemplateController {
     @return          : result {Map<String, Object>} - Return the replace template content based on the template variable fields by fetching from contact object.
     ********************************************************
     */
-    @AuraEnabled
-    public static Map<String, String> getTemplateWithReplacedValues(String recordId,String templateId) {
-        try {
-            Template__c template = [SELECT Id, Name, Template_Body__c, Header_Body__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
+    // @AuraEnabled
+    // public static Map<String, String> getTemplateWithReplacedValues(String recordId,String templateId) {
+    //     try {
+    //         Template__c template = [SELECT Id, Name, Template_Body__c, Header_Body__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
 
-            List<Template_Variable__c> variables = [
-                SELECT Id, Object_Name__c, Field_Name__c, Type__c, Alternate_Text__c
-                FROM Template_Variable__c
-                WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
-            ];
-            System.debug('variables '+variables);
+    //         List<Template_Variable__c> variables = [
+    //             SELECT Id, Object_Name__c, Field_Name__c, Type__c, Alternate_Text__c
+    //             FROM Template_Variable__c
+    //             WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
+    //         ];
+    //         System.debug('variables '+variables);
 
-            Map<Integer, String> headerFieldMapping = new Map<Integer, String>();
-            Map<Integer, String> bodyFieldMapping = new Map<Integer, String>();
-            String templateHeader = template.Header_Body__c	 != null ? template.Header_Body__c	 : '';
-            String templateBody = template.Template_Body__c	 != null ? template.Template_Body__c	 : '';
+    //         Map<Integer, String> headerFieldMapping = new Map<Integer, String>();
+    //         Map<Integer, String> bodyFieldMapping = new Map<Integer, String>();
+    //         String templateHeader = template.Header_Body__c	 != null ? template.Header_Body__c	 : '';
+    //         String templateBody = template.Template_Body__c	 != null ? template.Template_Body__c	 : '';
 
-            String objectName = 'Contact';
-            List<String> fields = new List<String>();
+    //         String objectName = 'Contact';
+    //         List<String> fields = new List<String>();
 
-            Integer headerIndex = 1;
-            Integer bodyIndex = 1;
-            for (Template_Variable__c var : variables) {
-                if (var.Object_Name__c != null && var.Field_Name__c != null) {
-                    objectName = var.Object_Name__c;  
-                    fields.add(var.Field_Name__c);  
+    //         Integer headerIndex = 1;
+    //         Integer bodyIndex = 1;
+    //         for (Template_Variable__c var : variables) {
+    //             if (var.Object_Name__c != null && var.Field_Name__c != null) {
+    //                 objectName = var.Object_Name__c;  
+    //                 fields.add(var.Field_Name__c);  
             
-                    if (var.Type__c == 'Header') {
-                        headerFieldMapping.put(headerIndex, var.Field_Name__c);
-                        headerIndex++;
-                    } else if (var.Type__c == 'Body') {
-                        bodyFieldMapping.put(bodyIndex, var.Field_Name__c);
-                        bodyIndex++;
-                    }
-                }
-            }
-            fields = new List<String>(new Set<String>(fields));
-            System.debug('fields '+fields);
+    //                 if (var.Type__c == 'Header') {
+    //                     headerFieldMapping.put(headerIndex, var.Field_Name__c);
+    //                     headerIndex++;
+    //                 } else if (var.Type__c == 'Body') {
+    //                     bodyFieldMapping.put(bodyIndex, var.Field_Name__c);
+    //                     bodyIndex++;
+    //                 }
+    //             }
+    //         }
+    //         fields = new List<String>(new Set<String>(fields));
+    //         System.debug('fields '+fields);
 
-            String query = 'SELECT ' + String.join(fields, ',') + ' FROM ' + objectName + ' WHERE Id = :recordId WITH SECURITY_ENFORCED';
-            SObject record = Database.query(query);
+    //         String query = 'SELECT ' + String.join(fields, ',') + ' FROM ' + objectName + ' WHERE Id = :recordId WITH SECURITY_ENFORCED';
+    //         SObject record = Database.query(query);
 
-            for (Integer i : headerFieldMapping.keySet()) {
-                String fieldName = headerFieldMapping.get(i);
-                Object value = record.get(fieldName);
+    //         for (Integer i : headerFieldMapping.keySet()) {
+    //             String fieldName = headerFieldMapping.get(i);
+    //             Object value = record.get(fieldName);
             
-                String replacementValue = null;
-                for (Template_Variable__c var : variables) {
-                    if (var.Field_Name__c == fieldName) {
-                        // replacementValue = (value != null) ? value.toString() : var.Alternate_Text__c;
-                        replacementValue = (value != null) ? value.toString() : (var.Alternate_Text__c != null) ? var.Alternate_Text__c : '';
-                    }
-                }
-                templateHeader = templateHeader.replace('{{' + i + '}}', replacementValue);
-            }
+    //             String replacementValue = null;
+    //             for (Template_Variable__c var : variables) {
+    //                 if (var.Field_Name__c == fieldName) {
+    //                     // replacementValue = (value != null) ? value.toString() : var.Alternate_Text__c;
+    //                     replacementValue = (value != null) ? value.toString() : (var.Alternate_Text__c != null) ? var.Alternate_Text__c : '';
+    //                 }
+    //             }
+    //             templateHeader = templateHeader.replace('{{' + i + '}}', replacementValue);
+    //         }
             
-            for (Integer i : bodyFieldMapping.keySet()) {
-                String fieldName = bodyFieldMapping.get(i);
-                Object value = record.get(fieldName);
+    //         for (Integer i : bodyFieldMapping.keySet()) {
+    //             String fieldName = bodyFieldMapping.get(i);
+    //             Object value = record.get(fieldName);
             
-                String replacementValue = null;
-                for (Template_Variable__c var : variables) {
-                    if (var.Field_Name__c == fieldName) {
-                        replacementValue = (value != null) ? value.toString() : 
-                        (var.Alternate_Text__c != null) ? var.Alternate_Text__c : '';
-                    }
-                }
-                templateBody = templateBody.replace('{{' + i + '}}', replacementValue);
-            }
+    //             String replacementValue = null;
+    //             for (Template_Variable__c var : variables) {
+    //                 if (var.Field_Name__c == fieldName) {
+    //                     replacementValue = (value != null) ? value.toString() : 
+    //                     (var.Alternate_Text__c != null) ? var.Alternate_Text__c : '';
+    //                 }
+    //             }
+    //             templateBody = templateBody.replace('{{' + i + '}}', replacementValue);
+    //         }
             
-            Map<String, String> result = new Map<String, String>();
-            result.put('header', templateHeader);
-            result.put('body', templateBody);
-            System.debug('result '+result);
-            return result;
+    //         Map<String, String> result = new Map<String, String>();
+    //         result.put('header', templateHeader);
+    //         result.put('body', templateBody);
+    //         System.debug('result '+result);
+    //         return result;
 
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getTemplateWithReplacedValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-            return null;
-        }
-    }
+    //     } catch (Exception e) {
+    //         ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getTemplateWithReplacedValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+    //         return null;
+    //     }
+    // }
 
       /*
     *********************************************************

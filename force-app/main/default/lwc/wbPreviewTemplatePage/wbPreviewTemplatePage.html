@@ -81,8 +81,9 @@
                                                             <label for="" class="var-label">{mapping.variable}</label>
                                                             <input 
                                                                 name={mapping.variable}
+                                                                 data-group={group.type}
                                                                 value={mapping.value} 
-                                                                onchange={handleInputChange} />
+                                                                oninput={handleInputChange} />
                                                         </div>
                                                     </template>
                                                 </div>

@@ -23,7 +23,6 @@ import getLanguages from '@salesforce/apex/WBTemplateController.getLanguages';
 import emojiData from '@salesforce/resourceUrl/emoji_data';
 // import getEmojiData from '@salesforce/apex/EmojiDataController.getEmojiData';
 import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist';
-import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate';
 import startUploadSession from '@salesforce/apex/WBTemplateController.startUploadSession';
 import uploadFileChunk from '@salesforce/apex/WBTemplateController.uploadFileChunk';
@@ -74,7 +73,6 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track tempBody = 'Hello';
     @track previewBody='Hello';
     @track previewHeader='';
-    // formattedText = '';
     @track formatedTempBody=this.tempBody;
     @track btntext = '';
     @track webURL = '';
@@ -122,7 +120,6 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track dropdownClass = 'dropdown-hidden';
     @track emojiCategories=[];
     @track templateId='';
-    // @track contentdocumentId='';
 
     get acceptedFormats() {
         return ['png','jpeg','jpg'];
@@ -169,6 +166,41 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.buttonList.length > 0 || this.customButtonList.length > 0;
     }
 
+    get buttonListWithDisabledState() {
+        return this.customButtonList.map(button => ({
+            ...button,
+            isDisabled: button.selectedCustomType === 'Marketing opt-out'
+        }));
+    }
+    get visitWebsiteDisabled() {
+        return this.visitWebsiteCount >= 2;
+    }
+
+    get callPhoneNumberDisabled() {
+        return this.callPhoneNumber >= 1;
+    }
+
+    get copyOfferDisabled() {
+        return this.copyOfferCode >= 1;
+    }
+
+    get marketingOptDisabled() {
+        return this.marketingOpt >= 1;
+    }
+
+    get buttonClass() {
+        return this.isButtonDisabled ? 'select-button disabled' : 'select-button';
+    }
+
+    get tempHeaderExample() {
+        console.log('Generating header example...');
+        return this.header_variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
+    }
+
+    get templateBodyText() {
+        return this.variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
+    }
+    
     connectedCallback() {
         console.log('default option selected==> ' + this.selectedOption);       
         this.fetchCountries();
@@ -177,25 +209,12 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.generateEmojiCategories();
     }
     
-
     renderedCallback() {
         loadStyle(this, wbCreateTempStyle).then(() => {
             console.log("Loaded Successfully")
         }).catch(error => {
             console.error("Error in loading the colors",error)
         })
-    }
-
-    @wire(getWhatsAppTemplates)
-    wiredWhatsAppTemplates({ error, data }) {
-        if (data) {
-            console.log('Templates fetched successfully', data);
-            // this.isLoading=false;
-        } else if (error) {
-            console.error('Error fetching templates:', error);
-            // this.isLoading=false;
-            this.showToastError('Failed to refresh template list');
-        }
     }
 
     getIconPath(iconName) {
@@ -243,19 +262,24 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
     }
 
+    //fetch object related fields
     fetchFields() {
-        getObjectFields()
+        try {
+            getObjectFields({objectName:'Contact'})
             .then((result) => {
                 this.fields = result.map((field) => ({ label: field, value: field }));
             })
             .catch((error) => {
                 console.error('Error fetching fields: ', error);
             });
+        } catch (error) {
+            console.error('Error fetching objects fields: ', error);
+        }
     }
 
-
     fetchCountries() {
-        getCountryCodes()
+        try {
+            getCountryCodes()
             .then(result => {
                 this.countryType = result.map(country => {
                     return { label: `${country.name} (${country.callingCode})`, value: country.callingCode };
@@ -264,9 +288,13 @@ export default class WbCreateTemplatePage extends LightningElement {
             .catch(error => {
                 console.error('Error fetching country data:', error);
             });
+        } catch (error) {
+            console.error('Something wrong while fetching country data:', error);
+        }
     }
     fetchLanguages() {
-        getLanguages()
+        try {
+            getLanguages()
             .then(result => {
                 this.languageOptions = result.map(lang => {
                     return { label: `${lang.language}`, value: lang.code, isSelected: lang.code === this.selectedLanguage  };
@@ -281,6 +309,9 @@ export default class WbCreateTemplatePage extends LightningElement {
             .catch(error => {
                 console.error('Error fetching language data:', error);
             });
+        } catch (error) {
+            console.error('Something wrong while fetching language data:', error);
+        }
     }
 
     handleFileChange(event) {
@@ -385,81 +416,86 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     uploadChunks() {
-        let chunkStart = 0;
-        const uploadNextChunk = () => {
-            const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
-            const chunk = this.file.slice(chunkStart, chunkEnd);
-            const reader = new FileReader();
- 
-            reader.onloadend = async () => {
-                const base64Data = reader.result.split(',')[1]; 
-                const fileChunkWrapper = {
-                    uploadSessionId: this.uploadSessionId,
-                    fileContent: base64Data,
-                    chunkStart: chunkStart,
-                    chunkSize: base64Data.length,
-                    fileName: this.fileName,
-                };
-                const serializedWrapper = JSON.stringify(fileChunkWrapper);
-                
-                try {
-                    uploadFileChunk({serializedWrapper:serializedWrapper})
-                    .then(result=>{
-                        console.log('result ',result);
-                        if (result) {
-                            let serializeResult = JSON.parse(result); 
-                            this.headerHandle = serializeResult.headerHandle;
-                            this.imageurl = serializeResult.imageurl;
-                            console.log('headerHandle ',this.headerHandle);
-                            console.log('imageurl ',this.imageurl);
+        try {
+            let chunkStart = 0;
+            const uploadNextChunk = () => {
+                const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
+                const chunk = this.file.slice(chunkStart, chunkEnd);
+                const reader = new FileReader();
+    
+                reader.onloadend = async () => {
+                    const base64Data = reader.result.split(',')[1]; 
+                    const fileChunkWrapper = {
+                        uploadSessionId: this.uploadSessionId,
+                        fileContent: base64Data,
+                        chunkStart: chunkStart,
+                        chunkSize: base64Data.length,
+                        fileName: this.fileName,
+                    };
+                    const serializedWrapper = JSON.stringify(fileChunkWrapper);
+                    
+                        uploadFileChunk({serializedWrapper:serializedWrapper})
+                        .then(result=>{
+                            console.log('result ',result);
+                            if (result) {
+                                let serializeResult = JSON.parse(result); 
+                                this.headerHandle = serializeResult.headerHandle;
+                                this.imageurl = serializeResult.imageurl;
+                                console.log('headerHandle ',this.headerHandle);
+                                console.log('imageurl ',this.imageurl);
 
-                            chunkStart += this.chunkSize;
-                            if (chunkStart < this.fileSize) {
-                                uploadNextChunk(); 
+                                chunkStart += this.chunkSize;
+                                if (chunkStart < this.fileSize) {
+                                    uploadNextChunk(); 
+                                } else {
+                                    console.log('File upload completed.');
+                                }
                             } else {
-                                console.log('File upload completed.');
+                                console.error('Failed to upload file chunk.');
                             }
-                        } else {
-                            console.error('Failed to upload file chunk.');
-                        }
-                    })
-                    .catch(error=>{
-                        console.error('Failed upload session.', error);
-                        this.showToastError(error.body.message || 'An error occurred while uploading image.');
-                    })
-                } catch (error) {
-                    console.error('Error uploading file chunk: ', error);
-                }
+                        })
+                        .catch(error=>{
+                            console.error('Failed upload session.', error);
+                            this.showToastError(error.body.message || 'An error occurred while uploading image.');
+                        })
+                
+                };
+
+                reader.readAsDataURL(chunk); 
             };
 
-            reader.readAsDataURL(chunk); 
-        };
-
-        uploadNextChunk();
+            uploadNextChunk();
+        } catch (error) {
+            console.error('Error uploading file chunk: ', error);
+        }
     }
 
 
     handleContentType(event) {
-        this.NoFileSelected=true;
-        this.isfilename=false;
-        this.selectedContentType = event.target.value;
-        console.log(this.selectedContentType);
-
-        if (this.selectedContentType == 'Text') {
-            this.IsHeaderText = true;
-        } else {
-            this.IsHeaderText = false;
-        }
-        if (this.selectedContentType == 'Image') {
+        try {
+            this.NoFileSelected=true;
+            this.isfilename=false;
+            this.selectedContentType = event.target.value;
+            console.log(this.selectedContentType);
+    
+            if (this.selectedContentType == 'Text') {
+                this.IsHeaderText = true;
+            } else {
+                this.IsHeaderText = false;
+            }
+            if (this.selectedContentType == 'Image') {
+                    this.isImgSelected = false;
+                    this.isImageFileUploader=true;
+                    this.isImageFile = true;
+                    this.addMedia = true;
+            } else {
+                this.isImageFile = false;
+                this.isImageFileUploader=false
+                this.addMedia = false;
                 this.isImgSelected = false;
-                this.isImageFileUploader=true;
-                this.isImageFile = true;
-                this.addMedia = true;
-        } else {
-            this.isImageFile = false;
-            this.isImageFileUploader=false
-            this.addMedia = false;
-            this.isImgSelected = false;
+            }
+        } catch (error) {
+            console.error('Something wrong while selecting content type: ', error);
         }
     }
 
@@ -518,63 +554,70 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     handleInputChange(event) {
-        const { name, value, checked, dataset } = event.target;
-        const index = dataset.index;
+        try {
+            const { name, value, checked, dataset } = event.target;
+            const index = dataset.index;
 
-        switch (name) {
-            case 'templateName':
-                this.templateName = value.replace(/\s+/g, '_').toLowerCase();
-                this.checkTemplateExistence();
-                break;
-            case 'language':
-                this.selectedLanguage = value;
-                this.languageOptions = this.languageOptions.map(option => ({
-                    ...option,
-                    isSelected: option.value === this.selectedLanguage
-                }));
-                break;
-            case 'footer':
-                this.footer = value;
-                break;
-            case 'tempBody':
-                this.tempBody = value.replace(/(\n\s*){3,}/g, '\n\n');
-                this.formatedTempBody = this.formatText(this.tempBody);
-                this.previewBody=this.formatText(this.tempBody);
-                break;
-            case 'btntext':
-                this.updateButtonProperty(index, 'btntext', value);
-                this.validateButtonText(index, value);
-                break;
-            case 'selectedUrlType':
-                this.updateButtonProperty(index, 'selectedUrlType', value);
-                break;
-            case 'webURL':
-                this.updateButtonProperty(index, 'webURL', value);
-                if (!this.validateUrl(value)) {
-                    this.showToastError('URL should be properly formatted (e.g., https://example.com)');
-                }
-                break;
-            case 'selectedCountryType':
-                this.updateButtonProperty(index, 'selectedCountryType', value);
-                this.selectedCountryType = value;
-                break;
-            case 'phonenum':
-                this.updateButtonProperty(index, 'phonenum', value);
-                break;
-            case 'offercode':
-                this.updateButtonProperty(index, 'offercode', value);
-                break;
-            case 'isCheckboxChecked':
-                this.isCheckboxChecked = checked;
-                break;
-            case 'header':
-                this.header = value;
-                this.previewHeader=value;
-                break;
-            default:
-                break;
+            switch (name) {
+                case 'templateName':
+                    this.templateName = value.replace(/\s+/g, '_').toLowerCase();
+                    this.checkTemplateExistence();
+                    break;
+                case 'language':
+                    this.selectedLanguage = value;
+                    this.languageOptions = this.languageOptions.map(option => ({
+                        ...option,
+                        isSelected: option.value === this.selectedLanguage
+                    }));
+                    break;
+                case 'footer':
+                    this.footer = value;
+                    break;
+                case 'tempBody':
+                    this.tempBody = value.replace(/(\n\s*){3,}/g, '\n\n');
+                    this.formatedTempBody = this.formatText(this.tempBody);
+                    // this.previewBody=this.formatText(this.tempBody);
+                    this.updatePreviewContent(this.formatedTempBody,'body');
+                    break;
+                case 'btntext':
+                    this.updateButtonProperty(index, 'btntext', value);
+                    this.validateButtonText(index, value);
+                    break;
+                case 'selectedUrlType':
+                    this.updateButtonProperty(index, 'selectedUrlType', value);
+                    break;
+                case 'webURL':
+                    this.updateButtonProperty(index, 'webURL', value);
+                    if (!this.validateUrl(value)) {
+                        this.showToastError('URL should be properly formatted (e.g., https://example.com)');
+                    }
+                    break;
+                case 'selectedCountryType':
+                    this.updateButtonProperty(index, 'selectedCountryType', value);
+                    this.selectedCountryType = value;
+                    break;
+                case 'phonenum':
+                    this.updateButtonProperty(index, 'phonenum', value);
+                    break;
+                case 'offercode':
+                    this.updateButtonProperty(index, 'offercode', value);
+                    break;
+                case 'isCheckboxChecked':
+                    this.isCheckboxChecked = checked;
+                    break;
+                case 'header':
+                    this.header = value;
+                    // this.previewHeader=value;
+                    this.updatePreviewContent(this.header,'header');
+                    break;
+                default:
+                    break;
+            }
+        } catch (error) {
+            console.error('Something went wrong: ', error);
         }
     }
+    
 
     validateButtonText(index, newValue) {
         const isDuplicate = this.buttonList.some((button, idx) => button.btntext === newValue && idx !== parseInt(index));
@@ -624,23 +667,27 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     handleRemove(event) {
-        const index = event.currentTarget.dataset.index;
-        const removedButton = this.buttonList[index];
-        if (removedButton && removedButton.isVisitSite) {
-            this.visitWebsiteCount--;
-        } else if (removedButton && removedButton.isCallPhone) {
-            this.callPhoneNumber--;
-        } else if (removedButton && removedButton.isOfferCode) {
-            this.copyOfferCode--;
+        try {
+            const index = event.currentTarget.dataset.index;
+            const removedButton = this.buttonList[index];
+            if (removedButton && removedButton.isVisitSite) {
+                this.visitWebsiteCount--;
+            } else if (removedButton && removedButton.isCallPhone) {
+                this.callPhoneNumber--;
+            } else if (removedButton && removedButton.isOfferCode) {
+                this.copyOfferCode--;
+            }
+            this.buttonList = this.buttonList.filter((_, i) => i !== parseInt(index));
+            console.log('remaining ', this.buttonList.length);
+            if (this.buttonList.length == 0) {
+                this.createButton = false;
+            }
+            this.totalButtonsCount--;
+            console.log('after remove: ', this.totalButtonsCount);
+            this.updateButtonDisabledState();
+        } catch (error) {
+            console.error('Error while removing button.',error);
         }
-        this.buttonList = this.buttonList.filter((_, i) => i !== parseInt(index));
-        console.log('remaining ', this.buttonList.length);
-        if (this.buttonList.length == 0) {
-            this.createButton = false;
-        }
-        this.totalButtonsCount--;
-        console.log('after remove: ', this.totalButtonsCount);
-        this.updateButtonDisabledState();
     }
 
     handleMenuSelect(event) {
@@ -797,13 +844,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.error('Error creating custom button:', error);
         }
     }
-    
-    get buttonListWithDisabledState() {
-        return this.customButtonList.map(button => ({
-            ...button,
-            isDisabled: button.selectedCustomType === 'Marketing opt-out'
-        }));
-    }
 
     getButtonIcon(type) {
         const iconMap = {
@@ -815,107 +855,101 @@ export default class WbCreateTemplatePage extends LightningElement {
         };
         return iconMap[type] || 'utility:question'; 
     }
-    
-    get visitWebsiteDisabled() {
-        return this.visitWebsiteCount >= 2;
-    }
-
-    get callPhoneNumberDisabled() {
-        return this.callPhoneNumber >= 1;
-    }
-
-    get copyOfferDisabled() {
-        return this.copyOfferCode >= 1;
-    }
-
-    get marketingOptDisabled() {
-        return this.marketingOpt >= 1;
-    }
 
     handleButtonClick(event) {
-        const buttonId = event.currentTarget.dataset.id;
-        console.log('Button ID:', buttonId);
-    
-        const clickedButton = this.customButtonList.find(button => button.id == buttonId);
-        console.log('Clicked Button:', clickedButton);
-    
-        if (clickedButton) {
-            if (clickedButton.isDisabled) {
-                console.log('Button is already disabled.');
-                return; 
-            }
-            let replyMessage = {
-                id: Date.now(),
-                body: `${clickedButton.Cbtntext}`,
-                timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-                replyToMessage: {
-                    body: this.formatedTempBody,
+        try {
+            const buttonId = event.currentTarget.dataset.id;
+            console.log('Button ID:', buttonId);
+        
+            const clickedButton = this.customButtonList.find(button => button.id == buttonId);
+            console.log('Clicked Button:', clickedButton);
+        
+            if (clickedButton) {
+                if (clickedButton.isDisabled) {
+                    console.log('Button is already disabled.');
+                    return; 
                 }
-            };
+                let replyMessage = {
+                    id: Date.now(),
+                    body: `${clickedButton.Cbtntext}`,
+                    timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                    replyToMessage: {
+                        body: this.formatedTempBody,
+                    }
+                };
+        
+                this.chatMessages = [...this.chatMessages, replyMessage];
     
-            this.chatMessages = [...this.chatMessages, replyMessage];
-
-            clickedButton.isDisabled = true;
-            clickedButton.buttonClass = 'button-label-preview disabled'; 
-
-            this.customButtonList = [...this.customButtonList];
+                clickedButton.isDisabled = true;
+                clickedButton.buttonClass = 'button-label-preview disabled'; 
+    
+                this.customButtonList = [...this.customButtonList];
+            }
+        } catch (error) {
+            console.error('Error while replying to template.',error);
+            
         }
     }    
 
     handleCustomText(event) {
-        const index = event.currentTarget.dataset.index; 
-        const newValue = event.target.value;
-        this.customButtonList[index].Cbtntext = newValue;  
-    
-        const isDuplicate = this.customButtonList.some((button, idx) => button.Cbtntext === newValue && idx !== parseInt(index));
-    
-        if (index === 0) {
-            this.customButtonList[index].hasError = false;  
-            this.customButtonList[index].errorMessage = ''; 
-        } else {
-            if (isDuplicate) {
-                this.customButtonList[index].hasError = true;
-                this.customButtonList[index].errorMessage = 'You have entered the same text for multiple buttons.';
+        try {
+            const index = event.currentTarget.dataset.index; 
+            const newValue = event.target.value;
+            this.customButtonList[index].Cbtntext = newValue;  
+        
+            const isDuplicate = this.customButtonList.some((button, idx) => button.Cbtntext === newValue && idx !== parseInt(index));
+        
+            if (index === 0) {
+                this.customButtonList[index].hasError = false;  
+                this.customButtonList[index].errorMessage = ''; 
             } else {
-                this.customButtonList[index].hasError = false;
-                this.customButtonList[index].errorMessage = '';
+                if (isDuplicate) {
+                    this.customButtonList[index].hasError = true;
+                    this.customButtonList[index].errorMessage = 'You have entered the same text for multiple buttons.';
+                } else {
+                    this.customButtonList[index].hasError = false;
+                    this.customButtonList[index].errorMessage = '';
+                }
             }
+        
+            this.Cbtntext = newValue;  
+            this.updateButtonErrors(true); 
+        } catch (error) {
+            console.error('Error while handling the custom text.',error);
         }
-    
-        this.Cbtntext = newValue;  
-        this.updateButtonErrors(true); 
+        
     }
-    
 
     handleRemoveCustom(event) {
-        const index = event.currentTarget.dataset.index;
-        const removedButton = this.customButtonList[index];
-    
-        if (removedButton && removedButton.showFooterText) {
-            this.marketingOpt--;
-        }    
-        this.customButtonList = this.customButtonList.filter((_, i) => i !== parseInt(index));
-        if (this.customButtonList.length === 0) {
-            this.isCustom = false;
+        try {
+            const index = event.currentTarget.dataset.index;
+            const removedButton = this.customButtonList[index];
+        
+            if (removedButton && removedButton.showFooterText) {
+                this.marketingOpt--;
+            }    
+            this.customButtonList = this.customButtonList.filter((_, i) => i !== parseInt(index));
+            if (this.customButtonList.length === 0) {
+                this.isCustom = false;
+            }
+        
+            this.totalButtonsCount--;
+        
+            if (removedButton?.Cbtntext) {
+                const filteredMessages = this.chatMessages.filter(message => {
+                    const isReplyToRemoved = message.replyToMessage?.body === this.formatedTempBody && message.body === removedButton.Cbtntext;
+                    return !isReplyToRemoved;
+                });
+                this.chatMessages = [...filteredMessages];
+            }
+        
+            this.customButtonList = [...this.customButtonList];
+            this.updateButtonDisabledState();
+        } catch (error) {
+            console.error('Error while removing custom buttons.',error);
+            
         }
-    
-        this.totalButtonsCount--;
-    
-        if (removedButton?.Cbtntext) {
-            const filteredMessages = this.chatMessages.filter(message => {
-                const isReplyToRemoved = message.replyToMessage?.body === this.formatedTempBody && message.body === removedButton.Cbtntext;
-                return !isReplyToRemoved;
-            });
-            this.chatMessages = [...filteredMessages];
-        }
-    
-        this.customButtonList = [...this.customButtonList];
-        this.updateButtonDisabledState();
     }    
-
-    get buttonClass() {
-        return this.isButtonDisabled ? 'select-button disabled' : 'select-button';
-    }
 
     updateButtonDisabledState() {
         this.isDropdownOpen=false;
@@ -927,77 +961,65 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     refreshTempPreview(){
-        this.customButtonList = this.customButtonList.map(button => {
-            return {
-                ...button,
-                isDisabled: false, 
-                buttonClass: 'button-label-preview' 
-            };
-        });
-        this.chatMessages = [];
+        try {
+            this.customButtonList = this.customButtonList.map(button => {
+                return {
+                    ...button,
+                    isDisabled: false, 
+                    buttonClass: 'button-label-preview' 
+                };
+            });
+            this.chatMessages = [];
+        } catch (error) {
+            console.error('Error while refreshing the template.',error);
+        }
     }
 
     addvariable() {
-        this.addVar = true;
-        const defaultField = this.fields[0].value; 
-        const newVariable = {
-            id: this.nextIndex,
-            object: this.selectedObject,
-            field: defaultField,
-            alternateText: '',
-            index: `{{${this.nextIndex}}}`,        
-            // index: `{{${this.selectedObject}}}.{{${defaultField}}}`,        
-        };
-        this.variables = [...this.variables, newVariable];
-        this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
-        this.formatedTempBody=this.tempBody;
-        this.updatePreviewBody();
-        console.log('this.tempBody after adding variable:', this.tempBody);
-        this.updateTextarea();
-        this.nextIndex++;
+        try {
+            this.addVar = true;
+            const defaultField = this.fields[0].value; 
+            const newVariable = {
+                id: this.nextIndex,
+                object: this.selectedObject,
+                field: defaultField,
+                alternateText: '',
+                index: `{{${this.nextIndex}}}`,        
+            };
+            this.variables = [...this.variables, newVariable];
+            this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
+            this.formatedTempBody=this.tempBody;
+            console.log('this.tempBody after adding variable:', this.tempBody);
+            this.updateTextarea();
+            this.updatePreviewContent(this.formatedTempBody, 'body');
+            this.nextIndex++;
+        } catch (error) {
+            console.error('Error in adding variables.',error); 
+        } 
     }
 
     handleVarFieldChange(event) {
-        const variableId = event.target.dataset.id;
-        const fieldName = event.target.value;
-        this.updateVarField(variableId, fieldName);
-        this.updatePreviewBody();
+        try {
+            const variableId = event.target.dataset.id;
+            const fieldName = event.target.value;
+            this.variables = this.variables.map(varItem =>
+                varItem.id === parseInt(variableId)
+                    ? {
+                          ...varItem,
+                          field: fieldName,
+                      }
+                    : varItem
+            );
+            this.updatePreviewContent(this.formatedTempBody, 'body');
+        } catch (error) {
+            console.error('Something wrong while variable input.',error);
+        }
     }
 
     handleAlternateVarChange(event) {
         const variableId = event.target.dataset.id;
         const alternateText = event.target.value;
         console.log('alternateText for body ',alternateText);
-        
-        this.updateAlternateText(variableId, alternateText);
-    }
-
-    updateVarField(variableId, fieldName) {
-        this.variables = this.variables.map(varItem =>
-            varItem.id === parseInt(variableId)
-                ? {
-                      ...varItem,
-                      field: fieldName,
-                    //   index: `{{Contact.${fieldName}}}` 
-                  }
-                : varItem
-        );
-    }
-
-    updatePreviewBody() {
-        let updatedPreviewBody = this.tempBody;
-    
-        this.variables.forEach(varItem => {
-            const placeholderRegex = `{{${varItem.id}}}`; 
-            const replacement = `{{${varItem.object}.${varItem.field}}}`;
-            updatedPreviewBody = updatedPreviewBody.replace(placeholderRegex, replacement);
-        });
-    
-        this.previewBody = updatedPreviewBody;
-        console.log('Preview Body:', this.previewBody);
-    }
-
-    updateAlternateText(variableId, alternateText) {
         this.variables = this.variables.map(varItem =>
             varItem.id === parseInt(variableId)
                 ? { ...varItem, alternateText }
@@ -1014,136 +1036,155 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     handleVarRemove(event) {
-        const index = event.currentTarget.dataset.index;
-        const varIndexToRemove = parseInt(index, 10) + 1;
-        const variableToRemove = `{{${varIndexToRemove}}}`;
-        // console.log('Removing variable:', variableToRemove);
-        let updatedTempBody = this.tempBody.replace(variableToRemove, '');
-        // console.log('updatedTempBody after removing variable:', updatedTempBody);
-        this.variables = this.variables.filter((_, i) => i !== parseInt(index));
-        this.variables = this.variables.map((varItem, idx) => {
-            const newIndex = idx + 1;
-            return {
-                ...varItem,
-                id: newIndex,
-                index: `{{${newIndex}}}`,
-                placeholder: `Enter content for {{${newIndex}}}`
-            };
-        });
-        let placeholders = updatedTempBody.match(/\{\{\d+\}\}/g) || [];
-        placeholders.forEach((placeholder, idx) => {
-            const newIndex = `{{${idx + 1}}}`;
-            updatedTempBody = updatedTempBody.replace(placeholder, newIndex);
-        });
-        // console.log('newTempBody after re-indexing:', updatedTempBody);
-        this.tempBody = updatedTempBody.trim();
-        this.originalTempBody = this.tempBody;
-        this.formatedTempBody=this.originalTempBody;
-        // console.log('this.tempBody after re-indexing:', this.tempBody);
-        this.nextIndex = this.variables.length + 1;
-        if (this.variables.length === 0) {
-            this.addVar = false;
-            this.nextIndex = 1;
+        try {
+            const index = event.currentTarget.dataset.index;
+            const varIndexToRemove = parseInt(index, 10) + 1;
+            const variableToRemove = `{{${varIndexToRemove}}}`;
+            // console.log('Removing variable:', variableToRemove);
+            let updatedTempBody = this.tempBody.replace(variableToRemove, '');
+            // console.log('updatedTempBody after removing variable:', updatedTempBody);
+            this.variables = this.variables.filter((_, i) => i !== parseInt(index));
+            this.variables = this.variables.map((varItem, idx) => {
+                const newIndex = idx + 1;
+                return {
+                    ...varItem,
+                    id: newIndex,
+                    index: `{{${newIndex}}}`,
+                    placeholder: `Enter content for {{${newIndex}}}`
+                };
+            });
+            let placeholders = updatedTempBody.match(/\{\{\d+\}\}/g) || [];
+            placeholders.forEach((placeholder, idx) => {
+                const newIndex = `{{${idx + 1}}}`;
+                updatedTempBody = updatedTempBody.replace(placeholder, newIndex);
+            });
+            // console.log('newTempBody after re-indexing:', updatedTempBody);
+            this.tempBody = updatedTempBody.trim();
+            this.originalTempBody = this.tempBody;
+            this.formatedTempBody=this.originalTempBody;
+            this.updatePreviewContent(this.formatedTempBody, 'body');
+            // console.log('this.tempBody after re-indexing:', this.tempBody);
+            this.nextIndex = this.variables.length + 1;
+            if (this.variables.length === 0) {
+                this.addVar = false;
+                this.nextIndex = 1;
+            }
+            this.updateTextarea();
+        } catch (error) {
+            console.error('Something wrong while removing the variable.',error);
+            
         }
-        this.updateTextarea();
     }
 
     // Header variable add-remove functionality start here
     addheadervariable() {
-        this.addHeaderVar = true;
-        const defaultField = this.fields[0].value; 
-        const newVariable = {
-            id: this.headIndex,
-            object: this.selectedObject,
-            field: defaultField,
-            alternateText: '',
-            index: `{{${this.headIndex}}}`,        
-        };
-        this.header_variables = [...this.header_variables, newVariable];
-        this.originalHeader = (this.originalHeader || this.header || '') + ` {{${this.headIndex}}}`;
-        this.header = this.originalHeader;
-        this.updatePreviewHeader();
-        this.headIndex++;
-        this.buttonDisabled = true;
+        try {
+            this.addHeaderVar = true;
+            const defaultField = this.fields[0].value; 
+            const newVariable = {
+                id: this.headIndex,
+                object: this.selectedObject,
+                field: defaultField,
+                alternateText: '',
+                index: `{{${this.headIndex}}}`,        
+            };
+            this.header_variables = [...this.header_variables, newVariable];
+            this.originalHeader = (this.originalHeader || this.header || '') + ` {{${this.headIndex}}}`;
+            this.header = this.originalHeader;
+            this.updatePreviewContent(this.header, 'header');
+            this.headIndex++;
+            this.buttonDisabled = true;
+        } catch (error) {
+            console.error('Error in adding header variables.',error); 
+        } 
     }
 
     handleFieldChange(event) {
-        const variableId = event.target.dataset.id;
-        const fieldName = event.target.value;
-        this.updateVariableField(variableId, fieldName);
-        this.updatePreviewHeader();
-    }
-
-    updateVariableField(variableId, fieldName) {
-        this.header_variables = this.header_variables.map(varItem =>
+        try {
+            const variableId = event.target.dataset.id;
+            const fieldName = event.target.value;
+            this.header_variables = this.header_variables.map(varItem =>
             varItem.id === parseInt(variableId)
                 ? {
-                      ...varItem,
-                      field: fieldName,
-                    //   index: `{{Contact.${fieldName}}}` 
-                  }
+                        ...varItem,
+                        field: fieldName,
+                    }
                 : varItem
-        );
+            );
+            this.updatePreviewContent(this.header, 'header');
+        } catch (error) {
+            console.error('Something wrong while header variable input.',error);
+        }
     }
-    updatePreviewHeader() {
-        let updatedPreviewHeader = this.header;
-    
-        this.header_variables.forEach(varItem => {
-            const placeholderRegex = `{{${varItem.id}}}`; 
-            const replacement = `{{${varItem.object}.${varItem.field}}}`;
-            updatedPreviewHeader = updatedPreviewHeader.replace(placeholderRegex, replacement);
-        });
-    
-        this.previewHeader = updatedPreviewHeader;
-        console.log('Preview header:', this.previewHeader);
+
+    updatePreviewContent(inputContent, type) {
+        try {
+            let updatedContent = inputContent;
+            const variables = type === 'header' ? this.header_variables : this.variables;
+        
+            variables.forEach(varItem => {
+                const replacement = `{{${varItem.object}.${varItem.field}}}`;
+                updatedContent = updatedContent.replace(`{{${varItem.id}}}`, replacement);
+            });
+        
+            if (type === 'header') {
+                this.previewHeader = updatedContent;
+                console.log('Updated preview header:', this.previewHeader);
+            } else if (type === 'body') {
+                this.previewBody = updatedContent;
+                console.log('Updated preview body:', this.previewBody);
+            }
+        } catch (error) {
+            console.error('Something wrong while updating preview.',error);   
+        }
     }
 
     handleAlternateTextChange(event) {
         const variableId = event.target.dataset.id;
         const alternateText = event.target.value;
-        this.updateVariableAlternateText(variableId, alternateText);
-    }
-  
-    updateVariableAlternateText(variableId, alternateText) {
         this.header_variables = this.header_variables.map(varItem =>
             varItem.id === parseInt(variableId)
                 ? { ...varItem, alternateText } 
                 : varItem
         );
     }
-    
 
     handleHeaderVarRemove(event) {
-        const index = event.currentTarget.dataset.index;
-        const varIndexToRemove = parseInt(index, 10) + 1;
-        const variableToRemove = `{{${varIndexToRemove}}}`;
-        console.log('Removing variable:', variableToRemove);
-        let updatedHeader = this.header.replace(variableToRemove, '');
-        console.log('updatedHeader after removing variable:', updatedHeader);
-        this.header_variables = this.header_variables.filter((_, i) => i !== parseInt(index));
-        this.header_variables = this.header_variables.map((varItem, idx) => {
-            const newIndex = idx + 1;
-            return {
-                ...varItem,
-                id: newIndex,
-                index: `{{${newIndex}}}`,
-                placeholder: `Enter content for {{${newIndex}}}`
-            };
-        });
-        let placeholders = updatedHeader.match(/\{\{\d+\}\}/g) || [];
-        placeholders.forEach((placeholder, idx) => {
-            const newIndex = `{{${idx + 1}}}`;
-            updatedHeader = updatedHeader.replace(placeholder, newIndex);
-        });
-        console.log('newTempBody after re-indexing:', updatedHeader);
-        this.header = updatedHeader.trim();
-        this.originalHeader = this.header;
-        console.log('this.header after re-indexing:', this.header);
-        this.headIndex = this.header_variables.length + 1;
-        if (this.header_variables.length === 0) {
-            this.addHeaderVar = false;
-            this.buttonDisabled = false;
-            this.headIndex = 1;
+        try {
+            const index = event.currentTarget.dataset.index;
+            const varIndexToRemove = parseInt(index, 10) + 1;
+            const variableToRemove = `{{${varIndexToRemove}}}`;
+            console.log('Removing variable:', variableToRemove);
+            let updatedHeader = this.header.replace(variableToRemove, '');
+            console.log('updatedHeader after removing variable:', updatedHeader);
+            this.header_variables = this.header_variables.filter((_, i) => i !== parseInt(index));
+            this.header_variables = this.header_variables.map((varItem, idx) => {
+                const newIndex = idx + 1;
+                return {
+                    ...varItem,
+                    id: newIndex,
+                    index: `{{${newIndex}}}`,
+                    placeholder: `Enter content for {{${newIndex}}}`
+                };
+            });
+            let placeholders = updatedHeader.match(/\{\{\d+\}\}/g) || [];
+            placeholders.forEach((placeholder, idx) => {
+                const newIndex = `{{${idx + 1}}}`;
+                updatedHeader = updatedHeader.replace(placeholder, newIndex);
+            });
+            console.log('newTempBody after re-indexing:', updatedHeader);
+            this.header = updatedHeader.trim();
+            this.originalHeader = this.header;
+            this.updatePreviewContent(this.originalHeader, 'header');
+            console.log('this.header after re-indexing:', this.header);
+            this.headIndex = this.header_variables.length + 1;
+            if (this.header_variables.length === 0) {
+                this.addHeaderVar = false;
+                this.buttonDisabled = false;
+                this.headIndex = 1;
+            }
+        } catch (error) {
+            console.error('Something wrong while removing header variable.',error);   
         }
     }
 
@@ -1168,7 +1209,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             .catch((e) => console.log('There was an error fetching the emoji.', e));
         }catch(e){
             console.log('Error in generateEmojiCategories', e);
-            
         }
     }
 
@@ -1184,56 +1224,65 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
     
     handleEmojiSelection(event) {
-        event.stopPropagation();        
-        const emojiChar = event.target.textContent;    
-        const textarea = this.template.querySelector('textarea');        
-        const currentText = textarea.value || '';
-        const cursorPos = textarea.selectionStart;
-    
-        const newText = currentText.slice(0, cursorPos) + emojiChar + currentText.slice(cursorPos);    
-        this.tempBody = newText;
-        textarea.value = newText;
-    
-        setTimeout(() => {
-            const newCursorPos = cursorPos + emojiChar.length;    
-            textarea.focus();    
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
-        }, 0); 
+        try {
+            event.stopPropagation();        
+            const emojiChar = event.target.textContent;    
+            const textarea = this.template.querySelector('textarea');        
+            const currentText = textarea.value || '';
+            const cursorPos = textarea.selectionStart;
+        
+            const newText = currentText.slice(0, cursorPos) + emojiChar + currentText.slice(cursorPos);    
+            this.tempBody = newText;
+            textarea.value = newText;
+        
+            setTimeout(() => {
+                const newCursorPos = cursorPos + emojiChar.length;    
+                textarea.focus();    
+                textarea.setSelectionRange(newCursorPos, newCursorPos);
+            }, 0); 
+        } catch (error) {
+            console.error('Error in emoji selection.',error);
+            
+        }
     }
     
     handleFormat(event) {
-        const button = event.target.closest('button');
-        const formatType = button.dataset.format;
-        
-        const textarea = this.template.querySelector('textarea');
-        const cursorPos = textarea.selectionStart;
-        const currentText = textarea.value;
-        let marker;
-        let markerLength;
-        switch (formatType) {
-            case 'bold':
-                marker = '**';
-                markerLength = 1;
-                break;
-            case 'italic':
-                marker = '__';
-                markerLength = 1;
-                break;
-            case 'strikethrough':
-                marker = '~~';
-                markerLength = 1;
-                break;
-            case 'code':
-                marker = '``````';
-                markerLength = 3;
-                break;
-            default:
-                return;
+        try {
+            const button = event.target.closest('button');
+            const formatType = button.dataset.format;
+            
+            const textarea = this.template.querySelector('textarea');
+            const cursorPos = textarea.selectionStart;
+            const currentText = textarea.value;
+            let marker;
+            let markerLength;
+            switch (formatType) {
+                case 'bold':
+                    marker = '**';
+                    markerLength = 1;
+                    break;
+                case 'italic':
+                    marker = '__';
+                    markerLength = 1;
+                    break;
+                case 'strikethrough':
+                    marker = '~~';
+                    markerLength = 1;
+                    break;
+                case 'code':
+                    marker = '``````';
+                    markerLength = 3;
+                    break;
+                default:
+                    return;
+            }
+            const newText = this.applyFormattingAfter(currentText, cursorPos, marker);
+            const newCursorPos = cursorPos + markerLength;
+            this.tempBody = newText;
+            this.updateCursor(newCursorPos);
+        } catch (error) {
+            console.error('Something wrong while handling rich text.',error);
         }
-        const newText = this.applyFormattingAfter(currentText, cursorPos, marker);
-        const newCursorPos = cursorPos + markerLength;
-        this.tempBody = newText;
-        this.updateCursor(newCursorPos);
     }
 
     applyFormattingAfter(text, cursorPos, marker) {
@@ -1241,15 +1290,19 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     formatText(inputText) {
-        inputText = inputText.replace(/(\n\s*){3,}/g, '\n\n');
+        try {
+            inputText = inputText.replace(/(\n\s*){3,}/g, '\n\n');
 
-        let formattedText = inputText.replaceAll('\n', '<br/>');
-        formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
-        formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
-        formattedText = formattedText.replace(/~(.*?)~/g, '<s>$1</s>');
-        formattedText = formattedText.replace(/```(.*?)```/g, '<code>$1</code>');
-
-        return formattedText;
+            let formattedText = inputText.replaceAll('\n', '<br/>');
+            formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
+            formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
+            formattedText = formattedText.replace(/~(.*?)~/g, '<s>$1</s>');
+            formattedText = formattedText.replace(/```(.*?)```/g, '<code>$1</code>');
+    
+            return formattedText;
+        } catch (error) {
+            console.error('Error while returning formatted text.',error);
+        }
     }
 
     updateCursor(cursorPos) {
@@ -1259,59 +1312,56 @@ export default class WbCreateTemplatePage extends LightningElement {
         textarea.selectionStart = textarea.selectionEnd = cursorPos;
     }
 
-    get tempHeaderExample() {
-        console.log('Generating header example...');
-        return this.header_variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
-    }
-
-    get templateBodyText() {
-        return this.variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
-    }
-
     validateTemplate() {
-        if (!this.templateName || this.templateName.trim() === '') {
-            this.showToastError('Template Name is required');
-            return false;
-        }
-    
-        if (!this.selectedLanguage) {
-            this.showToastError('Please select a language');
-            return false;
-        }
-    
-        if (!this.tempBody || this.tempBody.trim() === '') {
-            this.showToastError('Template Body is required');
-            return false;
-        }
-    
-        const buttonData = [...this.buttonList, ...this.customButtonList];    
-        for (let button of buttonData) {
-            if (button.isVisitSite) {
-                console.log('Validating URL:', button.webURL);
-                if (!button.selectedUrlType || !button.webURL || !this.validateUrl(button.webURL)) {
-                    this.showToastError('Please provide a valid URL and URL type for the "Visit Website" button');
-                    return false;
+        try {
+            if (!this.templateName || this.templateName.trim() === '') {
+                this.showToastError('Template Name is required');
+                return false;
+            }
+        
+            if (!this.selectedLanguage) {
+                this.showToastError('Please select a language');
+                return false;
+            }
+        
+            if (!this.tempBody || this.tempBody.trim() === '') {
+                this.showToastError('Template Body is required');
+                return false;
+            }
+        
+            const buttonData = [...this.buttonList, ...this.customButtonList];    
+            for (let button of buttonData) {
+                if (button.isVisitSite) {
+                    console.log('Validating URL:', button.webURL);
+                    if (!button.selectedUrlType || !button.webURL || !this.validateUrl(button.webURL)) {
+                        this.showToastError('Please provide a valid URL and URL type for the "Visit Website" button');
+                        return false;
+                    }
+                } else if (button.isCallPhone) {
+                    if (!button.selectedCountryType || !button.phonenum || !this.validatePhoneNumber(button.phonenum)) {
+                        this.showToastError('Please provide a valid country and phone number for the "Call Phone Number" button');
+                        return false;
+                    }
+                } else if (button.isOfferCode) {
+                    if (!button.offercode || button.offercode.trim() === '') {
+                        this.showToastError('Please provide an offer code for the "Copy Offer Code" button');
+                        return false;
+                    }
                 }
-            } else if (button.isCallPhone) {
-                if (!button.selectedCountryType || !button.phonenum || !this.validatePhoneNumber(button.phonenum)) {
-                    this.showToastError('Please provide a valid country and phone number for the "Call Phone Number" button');
-                    return false;
-                }
-            } else if (button.isOfferCode) {
-                if (!button.offercode || button.offercode.trim() === '') {
-                    this.showToastError('Please provide an offer code for the "Copy Offer Code" button');
-                    return false;
+        
+                if (button.isCustom) {
+                    if (!button.Cbtntext || button.Cbtntext.trim() === '') {
+                        this.showToastError('Button text is required for the custom button');
+                        return false;
+                    }
                 }
             }
-    
-            if (button.isCustom) {
-                if (!button.Cbtntext || button.Cbtntext.trim() === '') {
-                    this.showToastError('Button text is required for the custom button');
-                    return false;
-                }
-            }
+            return true;
+        } catch (error) {
+            console.error('Something went wrong while validating template.',error);
+            return false;
         }
-        return true;
+       
     }
     
    validateUrl(value) {
@@ -1384,7 +1434,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                 templateType: this.selectedOption ? this.selectedOption : null,
                 tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
                 tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
-                // tempContentDocId:  this.contentdocumentId ? this.contentdocumentId : null,
                 tempImgUrl:this.imageurl ? this.imageurl : null,
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
                 tempHeaderText: this.header ? this.header : '',

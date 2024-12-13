@@ -32,9 +32,10 @@ export default class WbAllTemplatePage extends LightningElement {
     @track allRecords = [];
     @track isLoading=false;
     @track filteredRecords=[];
-    
     @track selectedTemplateId='';
     @track showPopup = false; 
+    @track isFilterVisible = false;
+
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {
@@ -50,26 +51,33 @@ export default class WbAllTemplatePage extends LightningElement {
         }
     }
 
-    // @wire(getWhatsAppTemplates)
-    // wiredTemplates({ error, data }) {
-    //     try {
-    //         if (data) {
-    //             this.allRecords = data.map((record, index) => {
-    //                 return {
-    //                     ...record,
-    //                     id: record.Id,
-    //                     serialNumber: index + 1, 
-    //                     LastModifiedDate: this.formatDate(record.LastModifiedDate)
-    //                 };
-    //             });
-    //             this.filteredRecords = [...this.allRecords];
-    //         } else if (error) {
-    //             console.error('Error fetching WhatsApp templates: ', error);
-    //         }
-    //     } catch (err) {
-    //         console.error('Unexpected error in wiredTemplates: ', err);
-    //     }
-    // }
+    get timePeriodOptions() {
+        return [
+            { label: 'All', value: '' },
+            { label: 'Last 7 Days', value: 'last7days' },
+            { label: 'Last 30 Days', value: 'last30days' },
+            { label: 'Last 90 Days', value: 'last90days' }
+        ];
+    }
+
+
+    // Getter for dynamic class
+    get filterClass() {
+        return this.isFilterVisible ? 'combobox-container visible' : 'combobox-container hidden';
+    }
+
+    connectedCallback(){
+        this.fetchAllTemplate();
+        console.log('default option selected==> '+ this.selectedOption);
+    }
+
+    renderedCallback() {
+        loadStyle(this, wbPreviewTemplateStyle).then(() => {
+            console.log("Loaded Successfully")
+        }).catch(error => {
+            console.error("Error in loading the colors",error)
+        })
+    }
 
     fetchAllTemplate(){
         this.isLoading=true;
@@ -102,35 +110,6 @@ export default class WbAllTemplatePage extends LightningElement {
         });
     }
 
-    connectedCallback(){
-        this.fetchAllTemplate();
-        console.log('default option selected==> '+ this.selectedOption);
-    }
-
-    renderedCallback() {
-        loadStyle(this, wbPreviewTemplateStyle).then(() => {
-            console.log("Loaded Successfully")
-        }).catch(error => {
-            console.error("Error in loading the colors",error)
-        })
-    }
-
-    get timePeriodOptions() {
-        return [
-            { label: 'All', value: '' },
-            { label: 'Last 7 Days', value: 'last7days' },
-            { label: 'Last 30 Days', value: 'last30days' },
-            { label: 'Last 90 Days', value: 'last90days' }
-        ];
-    }
-
-    @track isFilterVisible = false;
-
-    // Getter for dynamic class
-    get filterClass() {
-        return this.isFilterVisible ? 'combobox-container visible' : 'combobox-container hidden';
-    }
-
     // Toggle visibility
     toggleFilterVisibility() {
         this.isFilterVisible = !this.isFilterVisible;
@@ -147,28 +126,32 @@ export default class WbAllTemplatePage extends LightningElement {
     }
 
     handleChange(event) {
-        const fieldName = event.target.name; 
-        const value = event.detail?.value || event.target.value; 
-    
-        switch (fieldName) {
-            case 'category':
-                this.categoryValue = value;
-                break;
-            case 'timePeriod':
-                this.timePeriodValue = value;
-                break;
-            case 'status':
-                this.statusValues = value;
-                break;
-            case 'searchInput':
-                this.searchInput = value.toLowerCase();
-                break;
-            default:
-                console.warn(`Unhandled field: ${fieldName}`);
-                break;
+        try {
+            const fieldName = event.target.name; 
+            const value = event.detail?.value || event.target.value; 
+        
+            switch (fieldName) {
+                case 'category':
+                    this.categoryValue = value;
+                    break;
+                case 'timePeriod':
+                    this.timePeriodValue = value;
+                    break;
+                case 'status':
+                    this.statusValues = value;
+                    break;
+                case 'searchInput':
+                    this.searchInput = value.toLowerCase();
+                    break;
+                default:
+                    console.warn(`Unhandled field: ${fieldName}`);
+                    break;
+            }
+            console.log(`${fieldName}: ${value}`);
+            this.filterRecords();
+        } catch (error) {
+            console.error('Error while handling changes in the filter.',error);
         }
-        console.log(`${fieldName}: ${value}`);
-        this.filterRecords();
     }
   
     formatDate(dateString) {
@@ -223,11 +206,8 @@ export default class WbAllTemplatePage extends LightningElement {
 
     deleteTemplate(event){
         this.isLoading=true;
-        const recordId = event.currentTarget.dataset.id;
-
-        console.log('Record ID to delete:', recordId);
-
         try {
+            const recordId = event.currentTarget.dataset.id;
             if(recordId != undefined){
                 deleteTemplete({templateId: recordId})
                 .then(data => {
