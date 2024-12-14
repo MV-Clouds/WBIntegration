@@ -45,6 +45,11 @@
                                     <svg class="image-preview-close" data-action="close" onclick={handleToggleImagePreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="30" width="30"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
                                     <img class="message-image" src={chat.Message__c} onerror={handleImageError} alt="Photo"/>
                                 </div>
+                                <div class="video-message-div" if:true={chat.isVideo}>
+                                    <video controls>
+                                        <source src={chat.Message__c} >
+                                    </video>
+                                </div>
                                 <div class="template-message-div" if:true={chat.isTemplate}>
                                     <c-template-preview template-id={chat.Whatsapp_Template__c} record-id={recordId}></c-template-preview>
                                 </div>
@@ -54,14 +59,15 @@
                                       hour="2-digit"
                                       minute="2-digit"
                                     ></lightning-formatted-date-time>
-                                    <div class="status-icon" if:true={chat.isSent}>
+                                    <!-- <div class="status-icon" if:true={chat.isSent}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m3.125 7.5 3.125 3.125L12.5 4.375" stroke-width="1.5"></path></svg>
                                     </div>
                                     <div class="status-icon" if:true={chat.isDelivered}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m4.375 7.5 3.125 3.125L13.75 4.375" stroke-width="1.5"></path><path d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125" stroke-width="1.5"></path></svg>
-                                    </div>
-                                    <div class="status-icon" if:true={chat.isSeen}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="#34B7F1" stroke-linecap="round" stroke-linejoin="round"><path d="m4.375 7.5 3.125 3.125L13.75 4.375" stroke-width="1.5"></path><path d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125" stroke-width="1.5"></path></svg>
+                                    </div> -->
+                                    
+                                    <div class="status-icon" data-status={chat.Message_Status__c} if:true={chat.isTick}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path class="first-tick" stroke="#34B7F1" d="m4.375 7.5 3.125 3.125L13.75 4.375"></path><path class="second-tick" stroke="#34B7F1" d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125"></path></svg>
                                     </div>
                                     <div class="status-icon" if:true={chat.isSending}>
                                         <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" height="10" width="16" viewBox="-0.5 -0.5 16 16" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="M1.25 7.5a6.25 6.25 0 1 0 12.5 0 6.25 6.25 0 1 0 -12.5 0"></path><path d="m7.5 3.75 0 3.75 2.5 1.25" ></path></svg>
