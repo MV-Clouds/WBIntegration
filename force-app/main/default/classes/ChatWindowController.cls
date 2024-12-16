@@ -7,7 +7,7 @@
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
 * Last Modified Date: 06 Dec 2024
-* Last Modification Description: Added a method to fetch the full template data with replaced variables
+* Last Modification Description: added phone Id in the metadata
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
@@ -38,7 +38,7 @@ public with sharing class ChatWindowController {
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
             chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
-            recordData = [SELECT Id, FirstName, Phone FROM Contact WHERE Id=:contactId WITH SECURITY_ENFORCED LIMIT 1];
+            recordData = [SELECT Id, Name, Phone FROM Contact WHERE Id=:contactId WITH SECURITY_ENFORCED LIMIT 1];
             templates = [SELECT Id, Name FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
 
             combinedData.put('chats', chats);
@@ -162,13 +162,13 @@ public with sharing class ChatWindowController {
     ********************************************************
     */
     @AuraEnabled
-    public static Chat__c sendWhatsappMessage(String jsonData, String chatId, String isReaction) {
+    public static Chat__c sendWhatsappMessage(String jsonData, String chatId, Boolean isReaction) {
         Chat__c chat = new Chat__c(Id = chatId);
         try {
             HttpRequest httpReq = new HttpRequest();
-            String endpoint = 'https://graph.facebook.com/v21.0/397858113402150/messages';
             List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values(); 
             String accessToken = config[0].Access_token_for_WhatsApp__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].WhatsApp_PhoneNumber_ID__c + '/messages';
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
@@ -185,12 +185,16 @@ public with sharing class ChatWindowController {
                 String whatsAppMessageID = (String) firstMessage.get('id');
                 System.debug('WhatsApp Message ID: ' + whatsAppMessageID);
                 // Update the chat record
-                chat.WhatsAppMessageId__c = whatsAppMessageID;
-                chat.Message_Status__c = 'Sent';
+                if(!isReaction){
+                    chat.WhatsAppMessageId__c = whatsAppMessageID;
+                    chat.Message_Status__c = 'Sent';
+                }
             }else{
                 System.debug('Error sending WhatsApp Message: '+response.getBody());
-                chat.Message_Status__c = 'Failed';
-                ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => response });
+                if(!isReaction){
+                    chat.Message_Status__c = 'Failed';
+                }
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
 
             update as user chat;
@@ -212,10 +216,11 @@ public with sharing class ChatWindowController {
     ********************************************************
     */
     @AuraEnabled
-    public static Template__c getTemplateData(String templateId, String contactId){
+    public static Map<String, object> getTemplateData(String templateId, String contactId){
         try {
+            Map<String, Object> templateData = new Map<String, Object>();
             List<Template__c> templates = new List<Template__c>();
-            templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
+            templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name asc) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
             if(templates.size() > 0 && templates[0].Template_Variable__c>0){
                 Template__c template= templates[0];
                 Set<String> fieldSelectionCause = new Set<String>();
@@ -227,11 +232,14 @@ public with sharing class ChatWindowController {
                     }
                 }
                 if(fieldSelectionCause.size() < 1){
-                    return templates[0];
+                    templateData.put('template', templates[0]);
+                    return templateData;
                 }
 
                 String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM Contact WHERE Id =:contactId';
                 List<Contact> contacts = Database.query(String.escapeSingleQuotes(query));
+                List<Object> headerVariables = new List<Object>();
+                List<Object> bodyVariables = new List<Object>();
                 if(contacts.size() > 0){
                     Contact contactRecord = contacts[0];
                     for (Template_Variable__c tv: template.WB_Template_Variables__r) {
@@ -239,22 +247,74 @@ public with sharing class ChatWindowController {
                         if(tv.Object_Name__c == 'Contact'){
                             valueToReplace = contactRecord.get(tv.Field_Name__c);
                         }else{
-                            valueToReplace = contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c);
+                            valueToReplace = contactRecord.getSObject(tv.Object_Name__c)!=null ? contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
                         }
                         if (tv.Type__c == 'Header') {
+                            headerVariables.add(valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c);
                             template.Header_Body__c = template.Header_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
                         }else if(tv.Type__c == 'Body'){
+                            bodyVariables.add(valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c);
                             template.Template_Body__c = template.Template_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
                         }
                     }
                 }
-                return template;
+                templateData.put('template', template);
+                templateData.put('headerParams', headerVariables);
+                templateData.put('bodyParams', bodyVariables);
+
+                return templateData;
             }
-            return templates[0];
+            templateData.put('template', templates[0]);
+            return templateData;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
         }
         return null;
+    }
+
+    /*
+    *********************************************************
+    @description     : Method to mark all unread message IDs as "read"
+    @param           : messageIds - {List<String>} - List of chat IDs to be marked as read
+    @return          : none
+    *********************************************************
+    */
+    @AuraEnabled
+    public static void updateStatus(List<String> messageIds) {
+        List<Chat__c> chats = new List<Chat__c>();
+        chats = [SELECT Id, WhatsAppMessageId__c, Message_Status__c FROM Chat__c WHERE Id IN :messageIds WITH SECURITY_ENFORCED];
+        List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values(); 
+        String accessToken = config[0].Access_token_for_WhatsApp__c;
+        String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].WhatsApp_PhoneNumber_ID__c + '/messages';
+
+        try {
+            for (Chat__c chat : chats) {
+                String payload = JSON.serialize(new Map<String, Object>{
+                    'messaging_product' => 'whatsapp',
+                    'status' => 'read',
+                    'message_id' => chat.WhatsAppMessageId__c
+                });
+                Http http = new Http();
+                HttpRequest request = new HttpRequest();
+                request.setEndpoint(endpoint);
+                request.setMethod('POST');
+                request.setHeader('Authorization', 'Bearer ' + accessToken);
+                request.setHeader('Content-Type', 'application/json');
+                request.setBody(payload);
+
+                HttpResponse response = http.send(request);
+
+                Integer statusCode = response.getStatusCode();
+                if (statusCode != 200) {
+                    ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowController', 'methodName' => 'updateStatus', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode,'chatId' => null,  'moreDetails' => 'Error occurred for status update', 'apiResponse' => response.getBody() });
+                }else{
+                    chat.Message_Status__c = 'Seen';
+                }
+            }
+            update as user chats;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowController', 'methodName' => 'updateStatus', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null,'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
     }
 
 }
