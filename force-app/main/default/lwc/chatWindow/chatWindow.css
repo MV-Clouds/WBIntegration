@@ -254,14 +254,14 @@
     cursor: pointer;
 }
 
-.video-message-div{
+/* .video-message-div{
     margin-block: 6px 4px;
     max-height: 20rem;
 }
 
 .video-message-div video{
     max-height: 20rem;
-}
+} */
 
 .image-message-div.not-loaded-image{
     pointer-events: none;
@@ -312,6 +312,11 @@ img.message-image{
     top: 14px;
     right: 14px;
     z-index: 30;
+}
+
+.other-message-sub-text{
+    color: darkgray;
+    font-size: 10px;
 }
 
 .template-message-div{
