@@ -215,7 +215,7 @@ export default class ChatWindow extends LightningElement {
             this.chats = this.chats?.map(ch => {
                 ch.isText = ch.Message_Type__c == 'Text';
                 ch.isImage = ch.Message_Type__c == 'Image';
-                ch.isVideo = ch.Message_Type__c == 'Video';
+                ch.isOther = !['Text', 'Image'].includes(ch.Message_Type__c);
                 ch.isTemplate = ch.Message_Type__c == 'Template';
                 ch.messageBy = ch.Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
                 return ch;

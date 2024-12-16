@@ -142,10 +142,10 @@ public class ChatWindowControllerTest {
 
         String jsonData = '{"message": "Hello, this is a test message."}';
 
-        ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id);
+        ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, true);
         test.setMock(HttpCalloutMock.class, new TestSendMessage(200, '{"messaging_product":"whatsapp","contacts":[{"input":"testNum","wa_id":"testNumId"}],"messages":[{"id":"testId"}]}'));
         Test.startTest();
-        Chat__c result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id);
+        Chat__c result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, false);
         Test.stopTest();
 
         System.assertNotEquals(null, result, 'The result should not be null');
@@ -158,7 +158,7 @@ public class ChatWindowControllerTest {
         String jsonData = '{"message": "Hello, this is a test message."}';
         test.setMock(HttpCalloutMock.class, new TestSendMessage(404, ''));
         Test.startTest();
-        Chat__c result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id);
+        Chat__c result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, false);
         Test.stopTest();
 
         System.assertNotEquals(null, result, 'The result should not be null');
@@ -198,10 +198,32 @@ public class ChatWindowControllerTest {
         insert testVariable2;
 
         Test.startTest();
-        Template__c result = ChatWindowController.getTemplateData(testTemplate.Id, testContact.Id);
+        Map<String, Object> result = ChatWindowController.getTemplateData(testTemplate.Id, testContact.Id);
         Test.stopTest();
 
-        System.assertNotEquals(null, result, 'The result should not be null');
+        System.assertNotEquals(null, result.get('template'), 'The result should not be null');
+    }
+
+    @isTest
+    static void testUpdateStatus(){
+        try {
+            Chat__c testChat = [SELECT Id FROM Chat__c LIMIT 1];
+            testChat.WhatsAppMessageId__c = 'somethingId';
+
+            List<String> messageIds = new List<String>();
+            messageIds.add(testChat.Id);
+
+            test.setMock(HttpCalloutMock.class, new testUpdateStatus(200));
+            Test.startTest();
+            ChatWindowController.updateStatus(messageIds);
+            Test.stopTest();
+
+            Chat__c resultChat = [SELECT Id FROM Chat__c WHERE Id =: testChat.Id LIMIT 1];
+
+            System.assertEquals('Seen', resultChat.Message_Status__c, 'The chat status should be updated.');
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateStatus', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
     }
     public class TestSendMessage implements HttpCalloutMock {
 
@@ -213,13 +235,27 @@ public class ChatWindowControllerTest {
             this.body = body;
         }
 
-        // Implement this interface method
         public HTTPResponse respond(HTTPRequest req) {
-
-            // Create a fake response
             HttpResponse res = new HttpResponse();
             res.setHeader('Content-Type', 'application/json');
             res.setBody(body);
+            res.setStatusCode(statusCode);
+            return res;
+        }
+    }
+
+    public class TestUpdateStatus implements HttpCalloutMock {
+
+        Integer statusCode;
+
+        TestUpdateStatus(Integer statusCode){
+            this.statusCode = statusCode;
+        }
+
+        public HTTPResponse respond(HTTPRequest req) {
+            HttpResponse res = new HttpResponse();
+            res.setHeader('Content-Type', 'application/json');
+            res.setBody('test');
             res.setStatusCode(statusCode);
             return res;
         }

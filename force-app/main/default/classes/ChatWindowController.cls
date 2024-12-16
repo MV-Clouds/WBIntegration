@@ -7,7 +7,7 @@
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
 * Last Modified Date: 06 Dec 2024
-* Last Modification Description: updated code for align with react on messages
+* Last Modification Description: added phone Id in the metadata
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
@@ -166,9 +166,9 @@ public with sharing class ChatWindowController {
         Chat__c chat = new Chat__c(Id = chatId);
         try {
             HttpRequest httpReq = new HttpRequest();
-            String endpoint = 'https://graph.facebook.com/v21.0/397858113402150/messages';
             List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values(); 
             String accessToken = config[0].Access_token_for_WhatsApp__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].WhatsApp_PhoneNumber_ID__c + '/messages';
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
@@ -283,9 +283,9 @@ public with sharing class ChatWindowController {
     public static void updateStatus(List<String> messageIds) {
         List<Chat__c> chats = new List<Chat__c>();
         chats = [SELECT Id, WhatsAppMessageId__c, Message_Status__c FROM Chat__c WHERE Id IN :messageIds WITH SECURITY_ENFORCED];
-        String endpoint = 'https://graph.facebook.com/v21.0/397858113402150/messages';
         List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values(); 
-        String ACCESS_TOKEN = config[0].Access_token_for_WhatsApp__c;
+        String accessToken = config[0].Access_token_for_WhatsApp__c;
+        String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].WhatsApp_PhoneNumber_ID__c + '/messages';
 
         try {
             for (Chat__c chat : chats) {
@@ -298,7 +298,7 @@ public with sharing class ChatWindowController {
                 HttpRequest request = new HttpRequest();
                 request.setEndpoint(endpoint);
                 request.setMethod('POST');
-                request.setHeader('Authorization', 'Bearer ' + ACCESS_TOKEN);
+                request.setHeader('Authorization', 'Bearer ' + accessToken);
                 request.setHeader('Content-Type', 'application/json');
                 request.setBody(payload);
 
