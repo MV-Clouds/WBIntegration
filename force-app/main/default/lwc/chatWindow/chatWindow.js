@@ -215,7 +215,7 @@ export default class ChatWindow extends LightningElement {
             this.chats = this.chats?.map(ch => {
                 ch.isText = ch.Message_Type__c == 'Text';
                 ch.isImage = ch.Message_Type__c == 'Image';
-                ch.isOther = !['Text', 'Image'].includes(ch.Message_Type__c);
+                ch.isOther = !['Text', 'Image', 'Template'].includes(ch.Message_Type__c) ;
                 ch.isTemplate = ch.Message_Type__c == 'Template';
                 ch.messageBy = ch.Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
                 return ch;
@@ -611,9 +611,10 @@ export default class ChatWindow extends LightningElement {
                 if(chat){
                     this.chats.push(chat);
                     this.processChats(true);
-                    let imagePayload = this.createJSONBody(this.recordData.Phone, "image", this.replyToMessage?.WhatsAppMessageId__c || null, {
+                    
+                    let imagePayload = this.createJSONBody(this.recordData.Phone, "document", this.replyToMessage?.WhatsAppMessageId__c || null, {
                         link: chat.Message__c,
-                        fileName: event.detail.files[0].title
+                        fileName: event.detail.files[0].name || 'whatsapp image'
                     });
                     sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false})
                     .then(ch => {
@@ -708,8 +709,8 @@ export default class ChatWindow extends LightningElement {
             
                 if (type === "text") {
                     payload += `, "text": { "body": "${data.textBody.replace(/\n/g, "\\n")}" }`;
-                } else if (type === "image") {
-                    payload += `, "image": { "imageLink": "${data.imageLink}" }`;
+                } else if (type === "document") {
+                    payload += `, "document": { "link": "${data.link}", "filename": "${data.fileName}"}`;
                 } else if (type === "reaction"){
                     payload += `, "reaction": { 
                         "message_id": "${data.reactToId}",
