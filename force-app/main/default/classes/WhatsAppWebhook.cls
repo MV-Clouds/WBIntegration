@@ -3,7 +3,8 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
- * @Last Modified On : 12-12-2024
+
+ * @Last Modified On : 12-17-2024
  * @Modification Log :
  *==============================================================================
  * Ver | Date | Author | Modification
@@ -51,7 +52,7 @@ global without sharing class WhatsAppWebhook{
         }
     }
 
-    private static void processWhatsAppPayload(String jsonString){
+    public static void processWhatsAppPayload(String jsonString){
         try{
             System.debug('jsonString: ' + jsonString);
             List<WhatsAppMessage> parsedMessages = parseMessages(jsonString);
@@ -308,6 +309,7 @@ global without sharing class WhatsAppWebhook{
                 try{
                     Http http = new Http();
                     res = http.send(req);
+                    System.debug('res:- '+res);
 
                     if (res.getStatusCode() == 200){
                         // Parse the metadata response
@@ -359,7 +361,7 @@ global without sharing class WhatsAppWebhook{
         }
     }
 
-    private static Map<String, Object> saveMediaToSalesforce(Blob mediaBlob, String filename, String mimeType, Id parentRecordId){
+    public static Map<String, Object> saveMediaToSalesforce(Blob mediaBlob, String filename, String mimeType, Id parentRecordId){
         Map<String, Object> fileData = new Map<String, Object>();
         try{
             Contact contact = [SELECT Id, Name, OwnerId
