@@ -8,11 +8,11 @@
 **/
 public without sharing class WhatsAppConfigurationController {
     @AuraEnabled
-    public static String saveConfiguration(String WBAccountId, String AccessToken, String PhoneNumberId) {
+    public static String saveConfiguration(String WBAccountId, String AppId ,String AccessToken, String PhoneNumberId) {
 
         try {
             
-            List<WhatsAppConfiguration__mdt> configList = [SELECT Id, DeveloperName, MasterLabel, Access_token_for_WhatsApp__c, Whatsapp_Account_ID__c, WhatsApp_PhoneNumber_ID__c FROM WhatsAppConfiguration__mdt LIMIT 1];
+            List<WhatsAppConfiguration__mdt> configList = [SELECT Id, DeveloperName, MasterLabel, Access_token_for_WhatsApp__c, WhatsApp_App_Id__c, Whatsapp_Account_ID__c, WhatsApp_PhoneNumber_ID__c FROM WhatsAppConfiguration__mdt LIMIT 1];
             WhatsAppConfiguration__mdt config = new WhatsAppConfiguration__mdt();
             if (!configList.isEmpty()) {
                 config = configList[0];
@@ -36,6 +36,11 @@ public without sharing class WhatsAppConfigurationController {
             instance3.value = WBAccountId;
             mdata.values.add(instance3);
             
+            Metadata.CustomMetadataValue instance4 = new Metadata.CustomMetadataValue();
+            instance4.field = 'WhatsApp_App_Id__c';
+            instance4.value = AppId;
+            mdata.values.add(instance4);
+
             Metadata.DeployContainer container = new Metadata.DeployContainer();
             container.addMetadata(mdata);
             

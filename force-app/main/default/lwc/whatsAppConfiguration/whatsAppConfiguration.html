@@ -9,11 +9,15 @@
     <div class="container">
         <div class="configuration-box">
             <div class="logo">
-                <img src="" alt="">
+                <img src={WBConnectLogo} alt="">
             </div>
             <div class="field-container">
 
+                
                 <form action="">
+                    <!-- <div>
+                        <img src={WBConnectLogo} alt="">
+                    </div> -->
 
                     <div class="row">
                         <div class="col-25">
@@ -30,6 +34,15 @@
                         </div>
                         <div class="col-75">
                             <input type="text" id="wbaccountid" name="WBAccountId" placeholder="Your WhatsApp Business Account ID.." onkeypress={handleInput}>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-25">
+                            <label for="lname">WhatsApp App Id</label>
+                        </div>
+                        <div class="col-75">
+                            <input type="text" id="appid" name="WBAppId" placeholder="Your WhatsApp App Id.." onkeypress={handleInput}>
                         </div>
                     </div>
 
