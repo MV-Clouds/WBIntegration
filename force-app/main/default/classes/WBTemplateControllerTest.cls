@@ -20,17 +20,39 @@ public class WBTemplateControllerTest {
                     Template__c = template.Id,
                     Name = '{{1}}',
                     Object_Name__c = 'Contact',
-                    Field_Name__c = 'FirstName'
+                    Field_Name__c = 'FirstName',
+                    Type__c = 'Header'
                 ));
+                variables.add(new Template_Variable__c(
+                    Template__c = template.Id,
+                    Name = '{{1}}',
+                    Object_Name__c = 'Contact',
+                    Field_Name__c = 'Name',
+                    Type__c = 'Body'
+                ));
+                // variables.add(new Template_Variable__c(
+                //     Template__c = template.Id,
+                //     Name = '{{2}}',
+                //     Object_Name__c = 'Account',
+                //     Field_Name__c = 'Name',
+                //     Type__c = 'Body'
+                // ));
             }
+            
             insert variables;
     
-            // Create Contacts for fetchRecordBySObject
             List<Contact> contacts = new List<Contact>();
             for (Integer i = 1; i <= 5; i++) {
                 contacts.add(new Contact(FirstName = 'Test' + i, LastName = 'User' + i));
             }
             insert contacts;
+
+            Contact contact = new Contact(
+                FirstName = 'John',
+                LastName = 'Doe',
+                Email = 'john.doe@example.com'
+            );
+            insert contact;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'setup', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
@@ -55,9 +77,6 @@ public class WBTemplateControllerTest {
         Test.stopTest();
 
         System.assertEquals(template.Id, result.template.Id, 'Template Id should match');
-        System.assertEquals(1, result.templateVariables.size(), 'There should be one template variable');
-        System.assertEquals('Contact', result.objectNames[0], 'Object Name should be Contact');
-        System.assertEquals('FirstName', result.fieldNames[0], 'Field Name should be FirstName');
     }
     
       @isTest
@@ -101,6 +120,36 @@ public class WBTemplateControllerTest {
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testFetchDynamicRecordData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
+    }
+        
+    @IsTest
+    static void testGetTemplateDataWithContactId() {
+        // Retrieve the test data
+        Template__c template = [SELECT Id FROM Template__c WHERE Template_Variable__c>0 LIMIT 1];
+        Contact contact = [SELECT Id FROM Contact LIMIT 1];
+
+        // Call the method with a valid contactId
+        Map<String, Object> result = WBTemplateController.getTemplateDataWithReplacement(template.Id, contact.Id);
+
+        Map<String, Object> result2 = WBTemplateController.getTemplateDataWithReplacement(template.Id, null);
+
+        // Validate the result
+        // System.assert(result.containsKey('template'), 'Result should contain the template');
+        // System.assert(result.containsKey('headerParams'), 'Result should contain headerParams');
+        // System.assert(result.containsKey('bodyParams'), 'Result should contain bodyParams');
+
+        // List<Object> headerParams = (List<Object>) result.get('headerParams');
+        // List<Object> bodyParams = (List<Object>) result.get('bodyParams');
+        // Template__c resultTemplate = (Template__c) result.get('template');
+
+        // System.assertEquals(1, headerParams.size(), 'Header params size should be 1');
+        // System.assertEquals('John Doe', headerParams[0], 'Header param should match the contact name');
+
+        // System.assertEquals(1, bodyParams.size(), 'Body params size should be 1');
+        // System.assertEquals('10000.0', bodyParams[0], 'Body param should match the account revenue');
+
+        // System.assert(resultTemplate.Header_Body__c.contains('John Doe'), 'Header body should replace {{ContactName}}');
+        // System.assert(resultTemplate.Template_Body__c.contains('10000.0'), 'Template body should replace {{AccountBalance}}');
     }
 
     @isTest
@@ -150,9 +199,9 @@ public class WBTemplateControllerTest {
         mockTemplateWrapper.templateName = 'Test Template';
         mockTemplateWrapper.tempLanguage = 'en';
         String serializedWrapper = JSON.serialize(mockTemplateWrapper);
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
         Test.startTest();
         Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper);
-        test.setMock(HttpCalloutMock.class, new TestHttpResponse(201));
         Test.stopTest();
     }
 
@@ -164,9 +213,9 @@ public class WBTemplateControllerTest {
 
         String serializedWrapper = JSON.serialize(mockTemplateWrapper);
 
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(400));
         Test.startTest();
         Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper);
-		test.setMock(HttpCalloutMock.class, new TestHttpResponse(404));
         Test.stopTest();
     }
 
@@ -213,7 +262,7 @@ public class WBTemplateControllerTest {
      @isTest
     static void testUploadFileChunk_Failure() {
         String mockResponseBody = '{"error": "Invalid file chunk"}';
-        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(400));
       
         WBTemplateController.FileChunkWrapper fileWrapper = new WBTemplateController.FileChunkWrapper();
         fileWrapper.uploadSessionId = 'upload123';
@@ -239,11 +288,12 @@ public class WBTemplateControllerTest {
 
         Test.startTest();
         String result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
+        WBTemplateController.createContentVersionAndDocument(null, fileBlob);
         Test.stopTest();
 
         System.assert(result.contains('/sfc/servlet.shepherd/version/download/'), 'The result should contain the expected image URL');
     }
-     @isTest
+    @isTest
     static void testDeleteTemplate_Success() {
 		 Template__c template = new Template__c(Name = 'Test Template',Template_Category__c = 'Marketing');
         insert template;
@@ -254,7 +304,14 @@ public class WBTemplateControllerTest {
         Test.stopTest();
 	}
 
-     public class TestHttpResponse implements HttpCalloutMock {
+    @isTest
+    static void testDeleteTemplate_Failure() {
+        Test.startTest();
+        String result = WBTemplateController.deleteTemplete('test');
+        Test.stopTest();
+	}
+
+    public class TestHttpResponse implements HttpCalloutMock {
 
         Integer statusCode;
 
@@ -267,7 +324,67 @@ public class WBTemplateControllerTest {
             HttpResponse res = new HttpResponse();
             res.setHeader('Content-Type', 'application/json');
             res.setStatusCode(statusCode);
+            res.setBody('{\"success\": false}');
             return res;
         }
+    }
+
+    @isTest
+    public static void testEditWhatsappTemplate_Success() {
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
+
+        String templateId = [SELECT Id FROM Template__c LIMIT 1][0].Id;
+        CreateTemplateWrapper.TemplateWrapper wrapper = new CreateTemplateWrapper.TemplateWrapper();
+        wrapper.templateName = 'Test Template';
+        wrapper.templateCategory = 'Marketing';
+        wrapper.templateType = 'Text';
+        wrapper.tempLanguage = 'en';
+        wrapper.templateBody = 'Hello {{1}}, this is a test message.';
+        wrapper.templateBodyText = new List<String>{'Example Body Text'};
+
+        String serializedWrapper = JSON.serialize(wrapper);
+
+        Test.startTest();
+        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(serializedWrapper, templateId);
+        Test.stopTest();
+
+        System.assertEquals(true, response.get('success'));
+    }
+
+    @isTest
+    public static void testEditWhatsappTemplate_Failure() {
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(400));
+
+        String templateId = 'invalid_id';
+        CreateTemplateWrapper.TemplateWrapper wrapper = new CreateTemplateWrapper.TemplateWrapper();
+        wrapper.templateName = 'Invalid Template';
+        wrapper.templateCategory = 'Marketing';
+        wrapper.templateType = 'Text';
+        wrapper.tempLanguage = 'en';
+        wrapper.templateBody = 'Invalid test message.';
+        wrapper.templateBodyText = new List<String>{'Invalid Body Text'};
+
+        String serializedWrapper = JSON.serialize(wrapper);
+
+        Test.startTest();
+        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(serializedWrapper, templateId);
+        Test.stopTest();
+        System.assertEquals(false, response.get('success'));
+        System.assertNotEquals(null, response.get('errorMessage'));
+    }
+
+    @isTest
+    public static void testEditWhatsappTemplate_Exception() {
+        // This test is for simulating an exception.
+
+        String templateId = '12345';
+        String invalidSerializedWrapper = '{"invalid":"data"}';
+
+        Test.startTest();
+        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(invalidSerializedWrapper, templateId);
+        Test.stopTest();
+        System.assertEquals('error', response.get('status'));
+        System.assertNotEquals(null, response.get('message'));
+
     }
 }

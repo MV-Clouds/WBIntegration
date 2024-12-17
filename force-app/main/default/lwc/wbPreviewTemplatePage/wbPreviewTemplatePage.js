@@ -55,6 +55,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track isDropdownVisible = false;
     @track variableMapping = { header: {}, body: {} };
     @track isFieldDisabled=false;
+    @track isSendDisabled=false;
+    @track sendButtonClass;
 
     get contactFields() {
         return Object.entries(this.contactDetails)
@@ -177,9 +179,14 @@ export default class WbPreviewTemplatePage extends LightningElement {
             console.log('selectedId ',selectedId);
 
             if(!selectedId){
+                console.log('enter to if');
+                
                 this.tempHeader = this.originalHeader;
                 this.tempBody = this.originalBody;
-                this.formatedTempBody = this.formatText(this.originalBody);
+                this.formatedTempBody = this.formatText(this.tempBody);
+                console.log('this.tempBody ',this.tempBody);
+                console.log('this.formatedTempBody ',this.formatedTempBody);
+                
                 this.searchTerm='None';
                 this.groupedVariables = this.groupedVariables.map(group => {
                     return {
@@ -312,7 +319,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 });
             });
         
-            this.formatedTempBody = updatedBody;
+            this.formatedTempBody = this.formatText(updatedBody);
             this.tempHeader = updatedHeader;
         } catch (error) {
             console.error('Something went wrong while updating the template.',error);   
@@ -339,7 +346,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     fetchTemplateData() {
         try {
-            this.isLoading = true;
+            this.isLoading = true;            
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
@@ -354,6 +361,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     this.formattedtempHeader = this.originalHeader;
                     this.tempFooter = result.template.Footer_Body__c;
 
+                    this.isSendDisabled = result.template.Status__c !== 'Active-Quality Pending';
+                    this.sendButtonClass = this.isSendDisabled 
+                    ? 'send-btn send-btn-active' 
+                    : 'send-btn';
+                  
                     const buttonLabels = result.template.Button_Label__c ? result.template.Button_Label__c.split(',') : [];
                     const buttonTypes = result.template.Button_Type__c ? result.template.Button_Type__c.split(',') : [];
         

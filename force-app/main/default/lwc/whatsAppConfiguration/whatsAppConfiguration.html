@@ -1,0 +1,62 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 12-16-2024
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template>
+    <div class="container">
+        <div class="configuration-box">
+            <div class="logo">
+                <img src="" alt="">
+            </div>
+            <div class="field-container">
+
+                <form action="">
+
+                    <div class="row">
+                        <div class="col-25">
+                            <label for="fname">App Id:</label>
+                        </div>
+                        <div class="col-75">
+                            <input type="text" id="appid" name="AppId" placeholder="Your App Id.." onkeypress={handleInput}>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-25">
+                            <label for="lname">App Secret</label>
+                        </div>
+                        <div class="col-75">
+                            <input type="text" id="appsecret" name="AppSecret" placeholder="Your App Secret.." onkeypress={handleInput}>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-25">
+                            <label for="lname">Access Token</label>
+                        </div>
+                        <div class="col-75">
+                            <input type="text" id="accesstoken" name="AccessToken" placeholder="Your Access Token.." onkeypress={handleInput}>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-25">
+                            <label for="lname">Phone Number Id</label>
+                        </div>
+                        <div class="col-75">
+                            <input type="text" id="phoneid" name="PhoneNumberId" placeholder="Your Phone Number Id.." onkeypress={handleInput}>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+
+            <button class="save-button" onclick={handleSave}>Save</button>
+        </div>
+    </div>
+
+</template>

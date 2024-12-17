@@ -175,6 +175,14 @@ input{
     color: white;
     font-size: 14px;
     background-color: #0176D3;
+    cursor: pointer;
+}
+
+.send-btn-active{
+    background-color: #e0e0e0; /* Light gray for inactive state */
+    color: #a0a0a0; /* Gray text */
+    border: 1px solid #cccccc;
+    pointer-events: none;
 }
 .phone{
     /* margin-top: 1rem; */
