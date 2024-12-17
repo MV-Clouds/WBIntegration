@@ -3,7 +3,7 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
- * @Last Modified On : 12-05-2024
+ * @Last Modified On : 12-16-2024
  * @Modification Log :
  *==============================================================================
  * Ver | Date | Author | Modification
@@ -11,7 +11,7 @@
  * 1.0 | November 18, 2024 |   | Initial Version
  **/
 @RestResource(urlMapping = '/WBI/webhooks/v1/*')
-global with sharing class WhatsAppWebhook{
+global without sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
@@ -51,7 +51,7 @@ global with sharing class WhatsAppWebhook{
         }
     }
 
-    private static void processWhatsAppPayload(String jsonString){
+    public static void processWhatsAppPayload(String jsonString){
         try{
             System.debug('jsonString: ' + jsonString);
             List<WhatsAppMessage> parsedMessages = parseMessages(jsonString);
@@ -138,10 +138,15 @@ global with sharing class WhatsAppWebhook{
             String formattedNumber = senderId.substring(0, 3) + senderId.substring(3);
 
             List<Contact> contacts = new List<Contact>();
+            System.debug('Sender Id => ' + senderId);
+            System.debug('Contacts:- '+ [SELECT Id, Name, Phone, MobilePhone, OwnerId
+                                      FROM Contact]);
+            
             contacts = [SELECT Id, Name, Phone, MobilePhone, OwnerId
                                       FROM Contact
                                       WHERE Phone = :formattedNumber
                                       LIMIT 1];
+            System.debug('formattedNumber Id => ' + formattedNumber);
             Contact contact;
             if (!contacts.isEmpty()){
 
@@ -150,8 +155,8 @@ global with sharing class WhatsAppWebhook{
                 Contact Con = new Contact();
                 Map<String, Object> profile = (Map<String,Object>) sender.get('profile');
                 Con.LastName = (String) profile.get('name');
-                Con.Phone = '+' + (String) sender.get('wa_id');
-                upsert Con;
+                Con.Phone = (String) senderId;
+                insert Con;
                 contact = Con;
             }
             
@@ -163,6 +168,7 @@ global with sharing class WhatsAppWebhook{
             Chat__c whatsappChat = new Chat__c();
 
             if (existingChatRecords.isEmpty()){
+                System.debug('contact id:- '+ contact.Id );
                 whatsappChat.Contact__c = contact.Id;
                 whatsappChat.Type_of_Message__c = 'Inbound Messages';
                 whatsappChat.Message_Type__c = messageType;
@@ -302,6 +308,7 @@ global with sharing class WhatsAppWebhook{
                 try{
                     Http http = new Http();
                     res = http.send(req);
+                    System.debug('res:- '+res);
 
                     if (res.getStatusCode() == 200){
                         // Parse the metadata response
@@ -353,7 +360,7 @@ global with sharing class WhatsAppWebhook{
         }
     }
 
-    private static Map<String, Object> saveMediaToSalesforce(Blob mediaBlob, String filename, String mimeType, Id parentRecordId){
+    public static Map<String, Object> saveMediaToSalesforce(Blob mediaBlob, String filename, String mimeType, Id parentRecordId){
         Map<String, Object> fileData = new Map<String, Object>();
         try{
             Contact contact = [SELECT Id, Name, OwnerId
