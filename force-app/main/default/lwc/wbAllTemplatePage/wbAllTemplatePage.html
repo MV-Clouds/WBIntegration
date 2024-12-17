@@ -81,9 +81,15 @@
                                             <div class="slds-truncate"><p class={record.Status__c}>{record.Status__c}</p></div>
                                         </td>
                                         <td class="tableData tablebtns" data-label="Actions">
-                                            <img src="/resource/previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
-                                            <img src="/resource/editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editTemplate}>
-                                            <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={record.id} onclick={deleteTemplate}>
+                                            <button class="action-buttons">
+                                                <img src="/resource/previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
+                                            </button>
+                                            <button disabled={record.isButtonDisabled} class="action-buttons">
+                                                <img src="/resource/editIcon" class={record.cssClass} alt="edit" data-id={record.id} onclick={editTemplate} >
+                                            </button>
+                                            <button class="action-buttons">
+                                                <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={record.id} onclick={deleteTemplate}>
+                                            </button>
                                         </td>
                                     </tr>
                                 </template>

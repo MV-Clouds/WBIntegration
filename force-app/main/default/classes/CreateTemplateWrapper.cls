@@ -24,6 +24,7 @@
     */
     public static Map<String, Object> buildPayload(TemplateWrapper templateWrapper) {
         try {
+            System.debug('Template Wrapper is :: ' + templateWrapper);
             Map<String, Object> payload = new Map<String, Object>();
             payload.put('name', templateWrapper.templateName);
             payload.put('language', templateWrapper.tempLanguage);
@@ -217,6 +218,10 @@
 
     public static Id handleSuccessResponse(HttpResponse res, Map<String, Object> payload, Map<String, Object> response, TemplateWrapper templateWrapper) {
         Id templateId = null;
+                System.debug('Res is :: '+ res);
+                System.debug('payload is :: '+ payload);
+                System.debug('response is :: '+ response);
+                System.debug('templateWrapper is :: '+ templateWrapper);
         try {
             // Deserialize the response and payload
             Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());

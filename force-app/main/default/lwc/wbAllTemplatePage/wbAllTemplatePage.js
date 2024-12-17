@@ -61,7 +61,6 @@ export default class WbAllTemplatePage extends LightningElement {
     }
 
 
-    // Getter for dynamic class
     get filterClass() {
         return this.isFilterVisible ? 'combobox-container visible' : 'combobox-container hidden';
     }
@@ -86,11 +85,16 @@ export default class WbAllTemplatePage extends LightningElement {
             try {
                 if (data) {
                     this.allRecords = data.map((record, index) => {
+                        const isButtonDisabled = record.Status__c === 'In-Review';
+                        console.log('isButtonDisabled ',isButtonDisabled, record.Name);
+                        
                         return {
                             ...record,
                             id: record.Id,
                             serialNumber: index + 1, 
-                            LastModifiedDate: this.formatDate(record.LastModifiedDate)
+                            LastModifiedDate: this.formatDate(record.LastModifiedDate),
+                            isButtonDisabled,
+                            cssClass: isButtonDisabled ? 'action edit disabled' : 'action edit'
                         };
                     });
                     this.filteredRecords = [...this.allRecords];
@@ -108,6 +112,12 @@ export default class WbAllTemplatePage extends LightningElement {
             console.log(error);
             this.isLoading=false;
         });
+    }
+
+    handleTemplateUpdate(event) {
+        this.allRecords = event.detail; 
+        this.filteredRecords = [...this.allRecords];
+        console.log('Updated templates:', this.allrecord);
     }
 
     // Toggle visibility
@@ -251,11 +261,20 @@ export default class WbAllTemplatePage extends LightningElement {
         this.showPopup = true;
     }
 
-    editTemplate(event){
-        this.editTemplateId =  event.currentTarget.dataset.id;
-        this.isCreateTemplate=true;
-        this.isTemplateVisible=false;
+    editTemplate(event) {
+        const recordId = event.currentTarget.dataset.id;        
+        const record = this.filteredRecords.find(record => record.id === recordId);
+    
+        if (record && record.isButtonDisabled) {
+            console.log('Button is disabled, action not allowed.');
+            return;  
+        }
+    
+        this.editTemplateId = recordId;
+        this.isCreateTemplate = true; 
+        this.isTemplateVisible = false;  
     }
+    
 
     handlePopupClose() {
         this.showPopup = false; 

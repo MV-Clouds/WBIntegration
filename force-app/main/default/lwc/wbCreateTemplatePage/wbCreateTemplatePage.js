@@ -6,10 +6,10 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 2/12/2024
+ * Last Update Date : 17/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : closePreview
- * Change Description : Added functionality to redirect the first page as close the preview. Also remove some div as per the figma till confirmation.
+ * Name of methods changed (Comma separated if more then one) : handleSubmit,fetchTemplateData
+ * Change Description : To handle edit functionality for template.
  ********************************************************************** */
 
 import { LightningElement, track, wire,api } from 'lwc';
@@ -28,6 +28,7 @@ import editWhatsappTemplate from '@salesforce/apex/WBTemplateController.editWhat
 import startUploadSession from '@salesforce/apex/WBTemplateController.startUploadSession';
 import uploadFileChunk from '@salesforce/apex/WBTemplateController.uploadFileChunk';
 import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFields';
+import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 
 export default class WbCreateTemplatePage extends LightningElement {
@@ -126,8 +127,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track templateId='';
     @track metaTemplateId='';
     isHeaderTypeLoad=false;
-    isHeaderVariableLoad=false;
-    isBodyVariableLoad=false;
+    // isHeaderVariableLoad=false;
+    // isBodyVariableLoad=false;
 
     @api
     get edittemplateid() {
@@ -239,59 +240,55 @@ export default class WbCreateTemplatePage extends LightningElement {
         }).catch(error => {
             console.error("Error in loading the colors",error)
         })
-        if(this.isHeaderTypeLoad){
-            let headDiv=this.template.querySelector('.contentOption');
-            if(headDiv){
-                this.template.querySelectorAll('.contentOption').forEach(el => {
-                    if(el.value==this.selectedContentType){
-                        el.selected=true;
-                    }
-                });
-                this.isHeaderTypeLoad=false;
-            }
-        }
-        if(this.isHeaderVariableLoad){
-            let varDiv = this.template.querySelector('.header-field-option');
-            if(varDiv){
-                for(let i=0;i<this.header_variables.length;i++){
-                    this.template.querySelectorAll('.header-field-option').forEach(el => {
-                        if(el.value==this.header_variables[i].field){
-                            el.selected=true;
-                        }
-                    });
-                }
+        // if(this.isHeaderTypeLoad){
+        //     let headDiv=this.template.querySelector('.contentOption');
+        //     if(headDiv){
+        //         this.template.querySelector('.contentOption').value==this.selectedContentType;
+        //         this.isHeaderTypeLoad=false;
+        //     }
+        // }
+        // if(this.isHeaderVariableLoad){
+        //     let varDiv = this.template.querySelector('.header-field-option');
+        //     if(varDiv){
+        //         for(let i=0;i<this.header_variables.length;i++){
+        //             this.template.querySelectorAll('.header-field-option').forEach(el => {
+        //                 if(el.value==this.header_variables[i].field){
+        //                     el.selected=true;
+        //                 }
+        //             });
+        //         }
                
-                this.isHeaderVariableLoad=false;
-            }
-        }
-        if(this.isBodyVariableLoad){
-            let varDiv = this.template.querySelector('.body-field-option');
-            if(varDiv){
-                let varDivs = this.template.querySelectorAll('.body-field-option');
-                // varDivs.forEach(el => {
-                    console.log('length is  ',varDivs.length);
+        //         this.isHeaderVariableLoad=false;
+        //     }
+        // }
+        // if(this.isBodyVariableLoad){
+        //     let varDiv = this.template.querySelector('.body-field-option');
+        //     if(varDiv){
+        //         let varDivs = this.template.querySelectorAll('.body-field-option');
+        //         // varDivs.forEach(el => {
+        //             console.log('length is  ',varDivs.length);
                     
-                    // for(let i=0;i<this.variables.length;i++){
-                    //     console.log('this val ',this.variables[i].field);
-                        varDivs.forEach(el=> {
-                            // if(el.value==this.variables.find(v => v.id == i)){
-                            //     el.selected=true;
-                            //     return;
-                            // }
-                            console.log('The Sellected is :: ', el.parentNode.dataset.id);
-                            el
-                        })
-                        // if(varDivs.filter(el => el.value==this.variables[i].field)){
-                        //     console.log('el value ', this.variables[i].field);
-                        //     el.selected=true;
-                        //     break;
-                        // }
-                    // }
-                // });
+        //             // for(let i=0;i<this.variables.length;i++){
+        //             //     console.log('this val ',this.variables[i].field);
+        //                 varDivs.forEach(el=> {
+        //                     // if(el.value==this.variables.find(v => v.id == i)){
+        //                     //     el.selected=true;
+        //                     //     return;
+        //                     // }
+        //                     console.log('The Sellected is :: ', el.parentNode.dataset.id);
+        //                     el
+        //                 })
+        //                 // if(varDivs.filter(el => el.value==this.variables[i].field)){
+        //                 //     console.log('el value ', this.variables[i].field);
+        //                 //     el.selected=true;
+        //                 //     break;
+        //                 // }
+        //             // }
+        //         // });
                
-                this.isBodyVariableLoad=false;
-            }
-        }
+        //         this.isBodyVariableLoad=false;
+        //     }
+        // }
     }
 
     fetchTemplateData() {
@@ -304,15 +301,18 @@ export default class WbCreateTemplatePage extends LightningElement {
                 console.log('meta template id ',this.metaTemplateId);
                 
                 const header = template.Header_Body__c || '';
+                this.header = header.trim().replace(/^\*\*|\*\*$/g, '');
+                console.log(this.header);
                 
                 this.footer = template.Footer_Body__c || '';
                 this.selectedLanguage = template.Language__c;
                 this.tempBody = template.Template_Body__c || 'Hello';
                 this.previewBody= this.formatText(this.tempBody) || 'Hello';
                 this.previewHeader= this.formatText(this.header) ||'';
-                this.selectedContentType=template.Header_Type__c;
+                this.selectedContentType=template.Header_Type__c || 'None';
                 this.btntext = template.Button_Label__c || '';
-               
+                console.log('selectedContentType ',this.selectedContentType);
+                
                 let tvs =templateVariables.map(tv=>{
                     let temp = {
                         object:tv.objName,
@@ -330,14 +330,35 @@ export default class WbCreateTemplatePage extends LightningElement {
                 this.header_variables = tvs.filter(tv=>tv.type=='Header') || [];
                 console.log('variable length ',this.variables);
                 console.log('header length ',this.header_variables);
-                this.addHeaderVar=this.header_variables.length>0?true:false;
-                this.addVar=this.variables.length>0?true:false;
+                this.addHeaderVar=this.header_variables?.length>0?true:false;
+                this.addVar=this.variables?.length>0?true:false;
                 if (this.addHeaderVar) {
-                    this.isHeaderVariableLoad = true;
+                    // this.isHeaderVariableLoad = true;
                     this.buttonDisabled = true;
                 }                
-                if(this.addVar) this.isBodyVariableLoad=true;
+                // if(this.addVar) this.isBodyVariableLoad=true;
+
+                console.log('CP1');
+
+                setTimeout(() => {
+                    if(this.addHeaderVar) {
+                        let headerEls = this.template.querySelectorAll('.field-header-dd');
+                        for(let i=0; i< this.header_variables.length; i++){
+                            this.header_variables.forEach((hv, i) => {
+                                headerEls[i].value = hv.field;
+                            })
+                        }
+                    }
+                    if(this.addVar) {
+                        let bodyEls = this.template.querySelectorAll('.field-body-dd');
+                        this.variables.forEach((bv, i) => {
+                            bodyEls[i].value = bv.field;
+                        })
+                    }
+                }, 2000);
                 
+                console.log('CP2');
+
                 if(template.Button_Type__c && template.Button_Label__c){
                     let newButton = {
                         id: this.buttonList.length + 1,
@@ -357,9 +378,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                     };
                     
                     this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
-                    this.handleContentType({target:{value:template.Header_Type__c}});
                     // this.handleLanguageChange({ target: { value: template.Language__c } });
                 }
+                this.handleContentType({target:{value:template.Header_Type__c}});
             })
             .catch((error) => {
                 console.error('Error fetching fields: ', error);
@@ -403,14 +424,19 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     handleOutsideClick(event) {
         const emojiContainer = this.template.querySelector('.toolbar-button');
-        const button = this.template.querySelector('button');
-
+        const button = this.template.querySelector('button');        
         if (
             (emojiContainer && !emojiContainer.contains(event.target)) && 
             (button && !button.contains(event.target))
         ) {
             this.showEmojis = false;
             this.removeOutsideClickListener();
+        }
+        if (this.template.querySelector('.dropdown-container') && !this.template.querySelector('.dropdown-container').contains(event.target)) {
+            if (this.isDropdownOpen) {
+                this.isDropdownOpen = false;
+                this.dropdownClass = 'dropdown-hidden';
+            }
         }
     }
 
@@ -628,7 +654,10 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.NoFileSelected=true;
             this.isfilename=false;
             this.selectedContentType = event.target.value;
-            this.isHeaderTypeLoad=true;
+            // this.isHeaderTypeLoad=true;
+            setTimeout(() => {
+                this.template.querySelector('.conInput').value=this.selectedContentType;
+            }, 1000)
     
             if (this.selectedContentType == 'Text') {
                 this.IsHeaderText = true;
@@ -1621,11 +1650,12 @@ export default class WbCreateTemplatePage extends LightningElement {
                     if (result && result.success) { 
                         console.log('Template edit successfully', result);
                         this.showToastSuccess('Template successfully created');
-                        this.isPreviewTemplate=true;
+                        this.isAllTemplate=true;
+                        this.iseditTemplatevisible=false;
                         this.isLoading=false;
                         const templateId = result.templateId;  
                         this.templateId = templateId;
-                        // this.clearWrapper();
+                        this.fetchUpdatedTemplates();
                     } else {
                         const errorResponse = JSON.parse(result.errorMessage); 
                         const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
@@ -1659,12 +1689,13 @@ export default class WbCreateTemplatePage extends LightningElement {
                     if (result && result.success) { 
                         console.log('Template created successfully', result);
                         this.showToastSuccess('Template successfully created');
-                        this.isPreviewTemplate=true;
+                        this.isAllTemplate=true;
+                        this.iseditTemplatevisible=false;
                         this.isLoading=false;
                         const templateId = result.templateId;  
                         this.templateId = templateId;
                         console.log('temp id==> ',this.templateId);
-                        
+                        this.fetchUpdatedTemplates();
                         // this.clearWrapper();
                     } else {
                         const errorResponse = JSON.parse(result.errorMessage); 
@@ -1702,6 +1733,18 @@ export default class WbCreateTemplatePage extends LightningElement {
         }       
     }
 
+    fetchUpdatedTemplates() {
+        getWhatsAppTemplates()
+            .then(data => {
+                const event = new CustomEvent('templateupdate', { detail: data });
+                this.dispatchEvent(event);
+            })
+            .catch(error => {
+                console.error('Error fetching templates:', error);
+                this.showToastError('Failed to fetch updated templates.');
+            });
+    }
+
     showToastError(message) {
         const toastEvent = new ShowToastEvent({
             title: 'Error',
@@ -1737,11 +1780,17 @@ export default class WbCreateTemplatePage extends LightningElement {
         return `${buttonIconsZip}/button-sectionIcons/${iconName}.png`;
     }
 
-    toggleDropdown() {
+    toggleDropdown(event) {
+        event.stopPropagation();
         this.isDropdownOpen = !this.isDropdownOpen;
+        if (this.isDropdownOpen) {
+            this.addOutsideClickListener();
+        } else {
+            this.removeOutsideClickListener();
+        }
         this.dropdownClass = this.isDropdownOpen ? 'dropdown-visible' : 'dropdown-hidden';
     }
-
+ 
     dropdownOptions = [
         { title: 'Custom', value: 'QUICK_REPLY', iconName: 'custom' },
         { title: 'Marketing Opt-Out', value: 'Marketing opt-out', iconName: 'marketing',description:'Maximum 1 button can be added' },
