@@ -52,6 +52,7 @@ global without sharing class WhatsAppWebhook{
             processWhatsAppPayload(jsonString);
         } catch (Exception e){
             // ErrorHandler.insert_errordata(e, 'WhatsAppWebhook', 'doPost', e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'doPost', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error processing WhatsApp payload: ' + e.getMessage());
         }
     }
@@ -373,6 +374,7 @@ global without sharing class WhatsAppWebhook{
                         return null;
                     }
                 } catch (Exception e){
+                    ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'handleMediaAttachment', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
                     System.debug('Error in handleMediaAttachment: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
                     return null;
                 }
