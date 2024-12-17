@@ -6,6 +6,7 @@ export default class WhatsAppConfiguration extends LightningElement {
     @track wBAccountIdValue = '';
     @track accessTokenValue = '';
     @track phoneNoIdValue = '';
+    @track appIdValue = '';
 
     handleInput(event) {
         if(event.target.name == 'WBAccountId'){
@@ -14,6 +15,8 @@ export default class WhatsAppConfiguration extends LightningElement {
             this.accessTokenValue = event.target.value;
         } if(event.target.name == 'PhoneNumberId'){
             this.phoneNoIdValue = event.target.value;
+        } if(event.target.name == 'WBAppId'){
+            this.appIdValue = event.target.value;
         }
     }
 
@@ -28,7 +31,7 @@ export default class WhatsAppConfiguration extends LightningElement {
 
         // Handle saving logic (e.g., API calls, data storage)
         console.log('Saved values:', this.wBAccountIdValue, this.accessTokenValue, this.phoneNoIdValue);
-        saveWhatsAppConfiguration({WBAccountId : this.wBAccountIdValue, AccessToken : this.accessTokenValue, PhoneNumberId : this.phoneNoIdValue})
+        saveWhatsAppConfiguration({WBAccountId : this.wBAccountIdValue, AppId : this.appIdValue , AccessToken : this.accessTokenValue, PhoneNumberId : this.phoneNoIdValue})
         .then(() => {
             this.dispatchEvent(
                 new ShowToastEvent({

@@ -250,30 +250,21 @@
 
 .image-message-div{
     margin-block: 6px 4px;
-    max-height: 20rem;
+    max-height: 10rem;
     cursor: pointer;
 }
-
-/* .video-message-div{
-    margin-block: 6px 4px;
-    max-height: 20rem;
-}
-
-.video-message-div video{
-    max-height: 20rem;
-} */
 
 .image-message-div.not-loaded-image{
     pointer-events: none;
 }
 
 .image-message-div img{
-    max-height: 20rem;
+    max-height: 10rem;
     border-radius: 4px;
 }
 
 img.message-image{
-    max-height: 3rem;
+    max-height: 10rem;
 }
 
 .show-image-preview{
@@ -289,7 +280,7 @@ img.message-image{
     height: 100%;
     padding: 5rem;
     background-color: #a9a9a970;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(2px);
     cursor: default;
 }
 
@@ -312,11 +303,6 @@ img.message-image{
     top: 14px;
     right: 14px;
     z-index: 30;
-}
-
-.other-message-sub-text{
-    color: darkgray;
-    font-size: 10px;
 }
 
 .template-message-div{
@@ -346,7 +332,7 @@ img.message-image{
 .message-full-length-div{
     white-space: pre-line;
     padding: 2px;
-    border-radius: 10px;
+    border-radius: 4px;
 }
 
 .message-full-length-div[data-type="sent-message"] {
@@ -388,26 +374,6 @@ img.message-image{
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.status-icon path{
-    transition: all 0.5s;
-}
-
-.status-icon[data-status="Sent"] .first-tick{
-    stroke: darkgray;
-}
-
-.status-icon[data-status="Sent"] .second-tick{
-    stroke: transparent;
-}
-
-.status-icon[data-status="Delivered"] .first-tick{
-    stroke: darkgray;
-}
-
-.status-icon[data-status="Delivered"] .second-tick{
-    stroke: darkgray;
 }
 
 .message-full-length-div[data-type="received-message"] .status-icon{

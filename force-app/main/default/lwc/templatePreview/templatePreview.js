@@ -16,8 +16,6 @@ export default class TemplatePreview extends LightningElement {
     @track templateBody;
     @track footerBody;
     @track buttonLabel;
-    @track headerParams;
-    @track bodyParams;
 
     @track showSpinner = false;
 
@@ -34,19 +32,14 @@ export default class TemplatePreview extends LightningElement {
         try {
             getTemplateData({templateId: this.templateId, contactId:this.recordId})
             .then((templateData) => {
-
-                this.templateData = templateData.template;
-                
-                this.isTextHeader = this.templateData?.Header_Type__c === 'Text' ? true : false;
-                this.isImageHeader = this.templateData?.Header_Type__c === 'Image' ? true : false;
-                this.headerBody = this.templateData?.Header_Body__c;
-                this.templateBody = this.templateData?.Template_Body__c;
-                this.footerBody = this.templateData?.Footer_Body__c;
-                this.buttonLabel = this.templateData?.Button_Label__c;
+                this.templateData = templateData;
+                this.isTextHeader = templateData?.Header_Type__c === 'Text' ? true : false;
+                this.isImageHeader = templateData?.Header_Type__c === 'Image' ? true : false;
+                this.headerBody = templateData?.Header_Body__c;
+                this.templateBody = templateData?.Template_Body__c;
+                this.footerBody = templateData?.Footer_Body__c;
+                this.buttonLabel = templateData?.Button_Label__c;
                 this.showSpinner = false;
-
-                if(templateData.headerParams) this.headerParams = templateData.headerParams;
-                if(templateData.bodyParams) this.bodyParams = templateData.bodyParams;
 
                 let headerText = this.template.querySelector('.header-text');
                 let bodyText = this.template.querySelector('.body-text');
@@ -80,14 +73,11 @@ export default class TemplatePreview extends LightningElement {
                     let templatePayload = this.createJSONBody(this.mobileNumber, "template", {
                         templateName: this.templateData.Name,
                         languageCode: this.templateData.Language__c,
-                        headerParameters: this.headerParams,
-                        bodyParameters: this.bodyParams,
-                        buttonLabel: this.templateData.Button_Label__c,
-                        buttonType: this.templateData.Button_Type__c
+                        parameters: this.templateData.parameters || []
                     });
                     console.log('the Payload is :: :', templatePayload);
 
-                    sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id, isReaction: false})
+                    sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id})
                     .then(ch => {
                         this.dispatchEvent(new CustomEvent('message', {
                             detail: ch
@@ -111,43 +101,23 @@ export default class TemplatePreview extends LightningElement {
     createJSONBody(to, type, data){
         try {
                 let payload = `{ "messaging_product": "whatsapp", "to": "${to}", "type": "${type}"`;
+            
                 payload += `, "template": { 
                     "name": "${data.templateName}",
                     "language": { "code": "${data.languageCode}" }`;
-                let components = [];
-                if (data.headerParameters && data.headerParameters.length > 0) {
-                    let headerParams = data.headerParameters.map(
+    
+                if (data.parameters && data.parameters.length > 0) {
+                    let parameters = data.parameters.map(
                         (param) => `{ "type": "text", "text": "${param}" }`
                     ).join(", ");
-                    components.push(`{ 
-                        "type": "header", 
-                        "parameters": [ ${headerParams} ] 
-                    }`);
+                    payload += `, "components": [ 
+                        { 
+                            "type": "body", 
+                            "parameters": [ ${parameters} ] 
+                        } 
+                    ]`;
                 }
-                if (data.bodyParameters && data.bodyParameters.length > 0) {
-                    let bodyParams = data.bodyParameters.map(
-                        (param) => `{ "type": "text", "text": "${param}" }`
-                    ).join(", ");
-                    components.push(`{ 
-                        "type": "body", 
-                        "parameters": [ ${bodyParams} ] 
-                    }`);
-                }
-                if (data.buttonLabel && data.buttonType) {
-                    components.push(`{ 
-                        "type": "button", 
-                        "sub_type": "${data.buttonType}", 
-                        "index": 0, 
-                        "parameters": [{ 
-                            "type": "text", 
-                            "text": "${data.buttonLabel}" 
-                        }] 
-                    }`);
-                }
-                if (components.length > 0) {
-                    payload += `, "components": [ ${components.join(", ")} ]`;
-                }
-                payload += ` }`; 
+                payload += ` }`;
                 payload += ` }`;
             
                 return payload;
