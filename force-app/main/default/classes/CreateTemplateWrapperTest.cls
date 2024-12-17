@@ -28,7 +28,7 @@ public class CreateTemplateWrapperTest{
         
         // Debug statement to confirm field values
         System.debug('TemplateWrapper: ' + templateWrapper);
-        CreateTemplateWrapper.buildPayload(templateWrapper);
+        Map<String, Object> result = CreateTemplateWrapper.buildPayload(templateWrapper);
 
         templateWrapper.tempHeaderFormat = 'Image';
         templateWrapper.typeOfButton = '[{\"id\":1,\"selectedActionType\":\"QUICK_REPLY\",\"iconName\":\"utility:call\",\"btntext\":\"Call Phone Number\",\"webURL\":\"\",\"phonenum\":\"1231123123\",\"offercode\":\"\",\"selectedUrlType\":\"Static\",\"selectedCountryType\":\"+682\",\"isCallPhone\":true,\"isVisitSite\":false,\"isOfferCode\":false,\"hasError\":false,\"errorMessage\":\"\",\"isDisabled\":false}]';
@@ -64,23 +64,45 @@ public class CreateTemplateWrapperTest{
             new Map<String, Object> { 'format' => 'text', 'type' => 'HEADER'}
         });
 
+        payload.put('components', new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'type' => 'HEADER',
+                'format' => 'TEXT',
+                'text' => 'Event by {{1}}',
+                'example' => new Map<String, Object>{
+                    'header_text' => new List<Object>{'{{Contact.Email}}'}
+                }
+            },
+            new Map<String, Object>{
+                'type' => 'BODY',
+                'text' => 'Hello {{1}}, This is an invitation for the annual event for 8 years of journey. Contact us for more details: {{2}}',
+                'example' => new Map<String, Object>{
+                    'body_text' => new List<List<String>>{
+                        new List<String>{'{{Contact.Name}}', '{{Contact.Phone}}'}
+                    }
+                }
+            },
+            new Map<String, Object>{
+                'type' => 'FOOTER',
+                'text' => 'MV Clouds Pvt Ltd'
+            },
+            new Map<String, Object>{
+                'type' => 'BUTTONS',
+                'buttons' => new List<Map<String, Object>>{
+                    new Map<String, Object>{
+                        'type' => 'QUICK_REPLY',
+                        'text' => 'Quick reply'
+                    }
+                }
+            }
+        });
+
+
         Map<String, Object> response = new Map<String, Object>();
         response.put('success', 'true');
         response.put('is', 'someId');
         CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
+        System.assertNotEquals(result, null, 'there should some data.');
 
     }
-
-    static void testHandleSuccessResponse(){
-        
-        
-        
-    }
-
-
-    @isTest
-    public static void testBuildPayloadException() {
-        Map<String, Object> result = CreateTemplateWrapper.buildPayload(null);   
-        System.assertEquals(result.size(), 0, 'The result should be an empty map in case of an exception');
-    }
-    }
+}

@@ -6,10 +6,10 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 2/12/2024
+ * Last Update Date : 17/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : closePreview
- * Change Description : Added functionality to redirect the first page as close the preview. Also remove some div as per the figma till confirmation.
+ * Name of methods changed (Comma separated if more then one) : handleSubmit,fetchTemplateData
+ * Change Description : To handle edit functionality for template.
  ********************************************************************** */
 
 import { LightningElement, track, wire,api } from 'lwc';

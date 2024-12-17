@@ -1,0 +1,1355 @@
+{
+    "serverMaxRevisionCounter": 11655,
+    "sourceMembers": {
+        "Profile__B2B Reordering Portal Buyer Profile": {
+            "serverRevisionCounter": 10278,
+            "lastRetrievedFromServer": null,
+            "memberType": "Profile",
+            "isNameObsolete": false
+        },
+        "Layout__Chat__c-WB Chat Layout": {
+            "serverRevisionCounter": 10135,
+            "lastRetrievedFromServer": null,
+            "memberType": "Layout",
+            "isNameObsolete": false
+        },
+        "Profile__Admin": {
+            "serverRevisionCounter": 11263,
+            "lastRetrievedFromServer": null,
+            "memberType": "Profile",
+            "isNameObsolete": false
+        },
+        "CustomObject__Chat__c": {
+            "serverRevisionCounter": 10108,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Message__c": {
+            "serverRevisionCounter": 5,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Message_Type__c": {
+            "serverRevisionCounter": 8,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Date_of_Message__c": {
+            "serverRevisionCounter": 11,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Contact__c": {
+            "serverRevisionCounter": 16,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Time_of_Message__c": {
+            "serverRevisionCounter": 19,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.WhatsAppMessageId__c": {
+            "serverRevisionCounter": 22,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Message_Status__c": {
+            "serverRevisionCounter": 25,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Message_Sent_Time__c": {
+            "serverRevisionCounter": 28,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Message_Delivered_Time__c": {
+            "serverRevisionCounter": 31,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "Layout__Template__c-WB Template Layout": {
+            "serverRevisionCounter": 8853,
+            "lastRetrievedFromServer": null,
+            "memberType": "Layout",
+            "isNameObsolete": false
+        },
+        "CustomObject__Template__c": {
+            "serverRevisionCounter": 43,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Type_of_Message__c": {
+            "serverRevisionCounter": 34,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Message_Seen_Time__c": {
+            "serverRevisionCounter": 37,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Template_Category__c": {
+            "serverRevisionCounter": 44,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Template_Type__c": {
+            "serverRevisionCounter": 47,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Template_Body__c": {
+            "serverRevisionCounter": 10997,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Header_Body__c": {
+            "serverRevisionCounter": 11000,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast_Group__c.Description__c": {
+            "serverRevisionCounter": 119,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Footer_Body__c": {
+            "serverRevisionCounter": 11001,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Button_Body__c": {
+            "serverRevisionCounter": 59,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Button_Label__c": {
+            "serverRevisionCounter": 62,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Language__c": {
+            "serverRevisionCounter": 65,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Template_SubCatagory__c": {
+            "serverRevisionCounter": 576,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "Layout__Template_Variable__c-WB Template Variable Layout": {
+            "serverRevisionCounter": 1133,
+            "lastRetrievedFromServer": null,
+            "memberType": "Layout",
+            "isNameObsolete": false
+        },
+        "CustomObject__Template_Variable__c": {
+            "serverRevisionCounter": 83,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "CustomField__Template_Variable__c.Object_Name__c": {
+            "serverRevisionCounter": 76,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template_Variable__c.Field_Name__c": {
+            "serverRevisionCounter": 79,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template_Variable__c.Template__c": {
+            "serverRevisionCounter": 84,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template_Variable__c.Type__c": {
+            "serverRevisionCounter": 86,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Whatsapp_Template__c": {
+            "serverRevisionCounter": 91,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "Layout__Broadcast__c-WB Broadcast Layout": {
+            "serverRevisionCounter": 186,
+            "lastRetrievedFromServer": null,
+            "memberType": "Layout",
+            "isNameObsolete": false
+        },
+        "CustomObject__Broadcast__c": {
+            "serverRevisionCounter": 136,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast__c.Template__c": {
+            "serverRevisionCounter": 100,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast__c.Total_Sent__c": {
+            "serverRevisionCounter": 103,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast__c.Total_Delivered__c": {
+            "serverRevisionCounter": 106,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast__c.Total_Read__c": {
+            "serverRevisionCounter": 109,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast__c.Recipient_Count__c": {
+            "serverRevisionCounter": 112,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "Layout__Broadcast_Group__c-WB Broadcast Group Layout": {
+            "serverRevisionCounter": 183,
+            "lastRetrievedFromServer": null,
+            "memberType": "Layout",
+            "isNameObsolete": false
+        },
+        "CustomObject__Broadcast_Group__c": {
+            "serverRevisionCounter": 118,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "Layout__Broadcast_Group_Member__c-WB Broadcast Group Member Layout": {
+            "serverRevisionCounter": 133,
+            "lastRetrievedFromServer": null,
+            "memberType": "Layout",
+            "isNameObsolete": false
+        },
+        "CustomObject__Broadcast_Group_Member__c": {
+            "serverRevisionCounter": 131,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast_Group_Member__c.Broadcast_Group_ID__c": {
+            "serverRevisionCounter": 128,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast_Group_Member__c.Contact_ID__c": {
+            "serverRevisionCounter": 132,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast__c.Broadcast_Group__c": {
+            "serverRevisionCounter": 137,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Broadcast__c": {
+            "serverRevisionCounter": 142,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "Layout__Exception_Log__c-WB Exception Log Layout": {
+            "serverRevisionCounter": 4904,
+            "lastRetrievedFromServer": null,
+            "memberType": "Layout",
+            "isNameObsolete": false
+        },
+        "CustomObject__Exception_Log__c": {
+            "serverRevisionCounter": 4899,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Method_Name__c": {
+            "serverRevisionCounter": 152,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Class_Name__c": {
+            "serverRevisionCounter": 149,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Exception_Type__c": {
+            "serverRevisionCounter": 155,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Exception_Line_Numer__c": {
+            "serverRevisionCounter": 4889,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": true
+        },
+        "CustomField__Exception_Log__c.Exception_Message__c": {
+            "serverRevisionCounter": 161,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Exception_Stack_Trace__c": {
+            "serverRevisionCounter": 164,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Governer_Limits__c": {
+            "serverRevisionCounter": 4881,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": true
+        },
+        "CustomField__Exception_Log__c.More_Detail__c": {
+            "serverRevisionCounter": 170,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Is_API_Exception__c": {
+            "serverRevisionCounter": 173,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Header_Type__c": {
+            "serverRevisionCounter": 176,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Button_Type__c": {
+            "serverRevisionCounter": 605,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast_Group__c.Count_of_Members__c": {
+            "serverRevisionCounter": 182,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Broadcast__c.Message__c": {
+            "serverRevisionCounter": 185,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Template_Variable__c": {
+            "serverRevisionCounter": 188,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "LightningComponentBundle__wbAllTemplatePage": {
+            "serverRevisionCounter": 11605,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbAllTemplatePage/wbAllTemplatePage.js": {
+            "serverRevisionCounter": 11606,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbAllTemplatePage/wbAllTemplatePage.css": {
+            "serverRevisionCounter": 11607,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbAllTemplatePage/wbAllTemplatePage.js-meta.xml": {
+            "serverRevisionCounter": 11608,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbAllTemplatePage/wbAllTemplatePage.html": {
+            "serverRevisionCounter": 11609,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "CustomTab__WB_Manage_Templates": {
+            "serverRevisionCounter": 211,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomTab",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Status__c": {
+            "serverRevisionCounter": 214,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "ApexClass__WB_TemplateController": {
+            "serverRevisionCounter": 245,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "CustomTab__Template__c": {
+            "serverRevisionCounter": 223,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomTab",
+            "isNameObsolete": false
+        },
+        "ListView__Template__c.All": {
+            "serverRevisionCounter": 222,
+            "lastRetrievedFromServer": null,
+            "memberType": "ListView",
+            "isNameObsolete": false
+        },
+        "ApexClass__ExceptionLog": {
+            "serverRevisionCounter": 4888,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__WBTemplateController": {
+            "serverRevisionCounter": 11480,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "FlexiPage__Lead_Record_Page": {
+            "serverRevisionCounter": 314,
+            "lastRetrievedFromServer": null,
+            "memberType": "FlexiPage",
+            "isNameObsolete": false
+        },
+        "CustomObject__Lead": {
+            "serverRevisionCounter": 316,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "StaticResource__wbTemplateStyle": {
+            "serverRevisionCounter": 319,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__CountryJson": {
+            "serverRevisionCounter": 320,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__LanguageJson": {
+            "serverRevisionCounter": 321,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "ApexClass__EmojiDataController": {
+            "serverRevisionCounter": 418,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "LightningComponentBundle__wbCreateTemplatePage": {
+            "serverRevisionCounter": 11650,
+            "lastRetrievedFromServer": 11650,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateTemplatePage/wbCreateTemplatePage.css": {
+            "serverRevisionCounter": 11651,
+            "lastRetrievedFromServer": 11651,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateTemplatePage/wbCreateTemplatePage.html": {
+            "serverRevisionCounter": 11652,
+            "lastRetrievedFromServer": 11652,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateTemplatePage/wbCreateTemplatePage.js": {
+            "serverRevisionCounter": 11654,
+            "lastRetrievedFromServer": 11654,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateTemplatePage/wbCreateTemplatePage.js-meta.xml": {
+            "serverRevisionCounter": 11655,
+            "lastRetrievedFromServer": 11655,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "CustomLabel__WHATSAPP_TEMPLATE_ENPOINT": {
+            "serverRevisionCounter": 575,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomLabel",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Template_Id__c": {
+            "serverRevisionCounter": 10487,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "ApexClass__CreateTemplateWrapper": {
+            "serverRevisionCounter": 11547,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "StaticResource__SmileIconWhatsapp": {
+            "serverRevisionCounter": 5610,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__uploadImgIcon": {
+            "serverRevisionCounter": 416,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "RemoteSiteSetting__ExternalJsForEmojis": {
+            "serverRevisionCounter": 419,
+            "lastRetrievedFromServer": null,
+            "memberType": "RemoteSiteSetting",
+            "isNameObsolete": false
+        },
+        "StaticResource__EmojiJson": {
+            "serverRevisionCounter": 420,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "CustomLabel__WHATSAPP_ACCESS_TOKEN": {
+            "serverRevisionCounter": 6526,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomLabel",
+            "isNameObsolete": false
+        },
+        "RemoteSiteSetting__WhatsappTempEndpoint": {
+            "serverRevisionCounter": 564,
+            "lastRetrievedFromServer": null,
+            "memberType": "RemoteSiteSetting",
+            "isNameObsolete": false
+        },
+        "CustomLabel__WB_TEMPLATE_UPLOAD_FILE": {
+            "serverRevisionCounter": 595,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomLabel",
+            "isNameObsolete": false
+        },
+        "ApexClass__WhatsAppWebhook": {
+            "serverRevisionCounter": 4916,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexPage__SiteRegister": {
+            "serverRevisionCounter": 650,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__ChangePassword": {
+            "serverRevisionCounter": 651,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__ForgotPassword": {
+            "serverRevisionCounter": 652,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__SiteLogin": {
+            "serverRevisionCounter": 653,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__ForgotPasswordConfirm": {
+            "serverRevisionCounter": 654,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__SiteRegisterConfirm": {
+            "serverRevisionCounter": 655,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__MyProfilePage": {
+            "serverRevisionCounter": 656,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexClass__SiteLoginController": {
+            "serverRevisionCounter": 622,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__SiteLoginControllerTest": {
+            "serverRevisionCounter": 624,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__SiteRegisterController": {
+            "serverRevisionCounter": 626,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__SiteRegisterControllerTest": {
+            "serverRevisionCounter": 628,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__ChangePasswordController": {
+            "serverRevisionCounter": 630,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__ChangePasswordControllerTest": {
+            "serverRevisionCounter": 632,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__ForgotPasswordController": {
+            "serverRevisionCounter": 634,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__ForgotPasswordControllerTest": {
+            "serverRevisionCounter": 636,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__MyProfilePageController": {
+            "serverRevisionCounter": 638,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__MyProfilePageControllerTest": {
+            "serverRevisionCounter": 640,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "StaticResource__SiteSamples": {
+            "serverRevisionCounter": 641,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "ApexComponent__SitePoweredBy": {
+            "serverRevisionCounter": 643,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexComponent",
+            "isNameObsolete": false
+        },
+        "ApexComponent__SiteHeader": {
+            "serverRevisionCounter": 645,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexComponent",
+            "isNameObsolete": false
+        },
+        "ApexComponent__SiteFooter": {
+            "serverRevisionCounter": 647,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexComponent",
+            "isNameObsolete": false
+        },
+        "ApexComponent__SiteLogin": {
+            "serverRevisionCounter": 649,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexComponent",
+            "isNameObsolete": false
+        },
+        "ApexPage__StdExceptionTemplate": {
+            "serverRevisionCounter": 657,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__SiteTemplate": {
+            "serverRevisionCounter": 658,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__FileNotFound": {
+            "serverRevisionCounter": 659,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__BandwidthExceeded": {
+            "serverRevisionCounter": 660,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__Exception": {
+            "serverRevisionCounter": 661,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__InMaintenance": {
+            "serverRevisionCounter": 662,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__Unauthorized": {
+            "serverRevisionCounter": 663,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__UnderConstruction": {
+            "serverRevisionCounter": 664,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__IdeasHome": {
+            "serverRevisionCounter": 665,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "ApexPage__AnswersHome": {
+            "serverRevisionCounter": 666,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexPage",
+            "isNameObsolete": false
+        },
+        "Profile__Whatsapp Webhook Profile": {
+            "serverRevisionCounter": 10118,
+            "lastRetrievedFromServer": null,
+            "memberType": "Profile",
+            "isNameObsolete": false
+        },
+        "CustomSite__Whatsapp_Webhook": {
+            "serverRevisionCounter": 1851,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomSite",
+            "isNameObsolete": false
+        },
+        "LightningComponentBundle__wbPreviewTemplatePage": {
+            "serverRevisionCounter": 11507,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbPreviewTemplatePage/wbPreviewTemplatePage.js": {
+            "serverRevisionCounter": 11508,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbPreviewTemplatePage/wbPreviewTemplatePage.js-meta.xml": {
+            "serverRevisionCounter": 11509,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbPreviewTemplatePage/wbPreviewTemplatePage.css": {
+            "serverRevisionCounter": 11510,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbPreviewTemplatePage/wbPreviewTemplatePage.html": {
+            "serverRevisionCounter": 11511,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "CustomField__Template_Variable__c.Alternate_Text__c": {
+            "serverRevisionCounter": 1132,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomTab__Template_Variable__c": {
+            "serverRevisionCounter": 2670,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomTab",
+            "isNameObsolete": false
+        },
+        "ListView__Template_Variable__c.All": {
+            "serverRevisionCounter": 1237,
+            "lastRetrievedFromServer": null,
+            "memberType": "ListView",
+            "isNameObsolete": false
+        },
+        "StaticResource__wbiTemplateBg": {
+            "serverRevisionCounter": 1276,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__wbiTempPhonebg": {
+            "serverRevisionCounter": 1949,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": true
+        },
+        "StaticResource__wbiPhoneBg": {
+            "serverRevisionCounter": 1948,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": true
+        },
+        "StaticResource__mvcloudsIcon": {
+            "serverRevisionCounter": 1400,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__wbiBg": {
+            "serverRevisionCounter": 1426,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "ProfilePasswordPolicy__Whatsapp_Webhook_Profile_profilePasswordPolicy1733116461456": {
+            "serverRevisionCounter": 2141,
+            "lastRetrievedFromServer": null,
+            "memberType": "ProfilePasswordPolicy",
+            "isNameObsolete": false
+        },
+        "ProfileSessionSetting__Whatsapp_Webhook_Profile_profileSessionSetting1733116461579": {
+            "serverRevisionCounter": 2142,
+            "lastRetrievedFromServer": null,
+            "memberType": "ProfileSessionSetting",
+            "isNameObsolete": false
+        },
+        "CustomTab__Broadcast_Group__c": {
+            "serverRevisionCounter": 2671,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomTab",
+            "isNameObsolete": false
+        },
+        "ListView__Broadcast_Group__c.All": {
+            "serverRevisionCounter": 2669,
+            "lastRetrievedFromServer": null,
+            "memberType": "ListView",
+            "isNameObsolete": false
+        },
+        "LightningComponentBundle__wbManageBroadcast": {
+            "serverRevisionCounter": 4772,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbManageBroadcast/wbManageBroadcast.html": {
+            "serverRevisionCounter": 4773,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbManageBroadcast/wbManageBroadcast.css": {
+            "serverRevisionCounter": 4774,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbManageBroadcast/wbManageBroadcast.js": {
+            "serverRevisionCounter": 4775,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbManageBroadcast/wbManageBroadcast.js-meta.xml": {
+            "serverRevisionCounter": 4776,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "CustomTab__Manage_Broadcast": {
+            "serverRevisionCounter": 2682,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomTab",
+            "isNameObsolete": false
+        },
+        "ApexClass__WBManageBroadcastController": {
+            "serverRevisionCounter": 3839,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": true
+        },
+        "LightningComponentBundle__wbCreateBroadcastGroup": {
+            "serverRevisionCounter": 3992,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateBroadcastGroup/wbCreateBroadcastGroup.css": {
+            "serverRevisionCounter": 3993,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateBroadcastGroup/wbCreateBroadcastGroup.js": {
+            "serverRevisionCounter": 3994,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateBroadcastGroup/wbCreateBroadcastGroup.html": {
+            "serverRevisionCounter": 3995,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateBroadcastGroup/wbCreateBroadcastGroup.js-meta.xml": {
+            "serverRevisionCounter": 3996,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__BroadcastExtCSS": {
+            "serverRevisionCounter": 4354,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "ApexClass__WbBroadcastController": {
+            "serverRevisionCounter": 4867,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "LightningComponentBundle__wbBroadcastGroupDetailPage": {
+            "serverRevisionCounter": 4832,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbBroadcastGroupDetailPage/wbBroadcastGroupDetailPage.js-meta.xml": {
+            "serverRevisionCounter": 4833,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbBroadcastGroupDetailPage/wbBroadcastGroupDetailPage.css": {
+            "serverRevisionCounter": 4834,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbBroadcastGroupDetailPage/wbBroadcastGroupDetailPage.js": {
+            "serverRevisionCounter": 4835,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbBroadcastGroupDetailPage/wbBroadcastGroupDetailPage.html": {
+            "serverRevisionCounter": 4836,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentBundle__wbCreateBroadcastMessage": {
+            "serverRevisionCounter": 4578,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateBroadcastMessage/wbCreateBroadcastMessage.js-meta.xml": {
+            "serverRevisionCounter": 4579,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateBroadcastMessage/wbCreateBroadcastMessage.js": {
+            "serverRevisionCounter": 4580,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateBroadcastMessage/wbCreateBroadcastMessage.css": {
+            "serverRevisionCounter": 4581,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbCreateBroadcastMessage/wbCreateBroadcastMessage.html": {
+            "serverRevisionCounter": 4582,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbShowBroadcastMessage/wbShowBroadcastMessage.css": {
+            "serverRevisionCounter": 4783,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentBundle__wbShowBroadcastMessage": {
+            "serverRevisionCounter": 4779,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbShowBroadcastMessage/wbShowBroadcastMessage.html": {
+            "serverRevisionCounter": 4780,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbShowBroadcastMessage/wbShowBroadcastMessage.js-meta.xml": {
+            "serverRevisionCounter": 4781,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbShowBroadcastMessage/wbShowBroadcastMessage.js": {
+            "serverRevisionCounter": 4782,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "CustomTab__Broadcast__c": {
+            "serverRevisionCounter": 4613,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomTab",
+            "isNameObsolete": false
+        },
+        "ListView__Broadcast__c.All": {
+            "serverRevisionCounter": 4616,
+            "lastRetrievedFromServer": null,
+            "memberType": "ListView",
+            "isNameObsolete": false
+        },
+        "LightningComponentBundle__wbBroadcastHistoryPage": {
+            "serverRevisionCounter": 4861,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentBundle",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbBroadcastHistoryPage/wbBroadcastHistoryPage.html": {
+            "serverRevisionCounter": 4862,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbBroadcastHistoryPage/wbBroadcastHistoryPage.css": {
+            "serverRevisionCounter": 4863,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbBroadcastHistoryPage/wbBroadcastHistoryPage.js-meta.xml": {
+            "serverRevisionCounter": 4864,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "LightningComponentResource__wbBroadcastHistoryPage/wbBroadcastHistoryPage.js": {
+            "serverRevisionCounter": 4865,
+            "lastRetrievedFromServer": null,
+            "memberType": "LightningComponentResource",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Governor_Limit_Used__c": {
+            "serverRevisionCounter": 4886,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Exception_Line_Number__c": {
+            "serverRevisionCounter": 4894,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Response__c": {
+            "serverRevisionCounter": 4895,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.WB_Chat__c": {
+            "serverRevisionCounter": 4900,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Exception_Log__c.Status_Code__c": {
+            "serverRevisionCounter": 4903,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "ApexClass__ExceptionHandler": {
+            "serverRevisionCounter": 4907,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "StaticResource__wbPreviewTemplateStyle": {
+            "serverRevisionCounter": 5002,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__filterIcon": {
+            "serverRevisionCounter": 4971,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__previewIcon": {
+            "serverRevisionCounter": 5138,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__trashIcon": {
+            "serverRevisionCounter": 5139,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__editIcon": {
+            "serverRevisionCounter": 5140,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__refreshIcon": {
+            "serverRevisionCounter": 5342,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__wbCreateTempStyle": {
+            "serverRevisionCounter": 5609,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__wbSmileIcon": {
+            "serverRevisionCounter": 5672,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__richTextZip": {
+            "serverRevisionCounter": 8709,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__buttonIconsZip": {
+            "serverRevisionCounter": 5899,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__emoji_data": {
+            "serverRevisionCounter": 6255,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "CustomField__Template__c.Content_Document_Id__c": {
+            "serverRevisionCounter": 8852,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": true
+        },
+        "StaticResource__phoneImg": {
+            "serverRevisionCounter": 7581,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "StaticResource__ImageIcon": {
+            "serverRevisionCounter": 8744,
+            "lastRetrievedFromServer": null,
+            "memberType": "StaticResource",
+            "isNameObsolete": false
+        },
+        "CustomField__UserThemePreference__c.Theme__c": {
+            "serverRevisionCounter": 10105,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomObject__UserThemePreference__c": {
+            "serverRevisionCounter": 10106,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "CustomMetadata__WhatsAppConfiguration.WhatsAppConfig": {
+            "serverRevisionCounter": 10537,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomMetadata",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Reply_to__c": {
+            "serverRevisionCounter": 10109,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "Layout__WhatsAppConfiguration__mdt-WhatsAppConfiguration Layout": {
+            "serverRevisionCounter": 10536,
+            "lastRetrievedFromServer": null,
+            "memberType": "Layout",
+            "isNameObsolete": false
+        },
+        "CustomObject__WhatsAppConfiguration__mdt": {
+            "serverRevisionCounter": 10121,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomObject",
+            "isNameObsolete": false
+        },
+        "CustomField__WhatsAppConfiguration__mdt.Access_token_for_WhatsApp__c": {
+            "serverRevisionCounter": 10122,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__WhatsAppConfiguration__mdt.WhatsApp_App_Id__c": {
+            "serverRevisionCounter": 10124,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__WhatsAppConfiguration__mdt.WhatsApp_App_Secret__c": {
+            "serverRevisionCounter": 10126,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__WhatsAppConfiguration__mdt.WhatsApp_PhoneNumber_ID__c": {
+            "serverRevisionCounter": 10128,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Reaction__c": {
+            "serverRevisionCounter": 10131,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "CustomField__Chat__c.Last_Interaction_Date__c": {
+            "serverRevisionCounter": 10134,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "ApexClass__ChatWindowController": {
+            "serverRevisionCounter": 11007,
+            "lastRetrievedFromServer": null,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "ApexClass__WBTemplateControllerTest": {
+            "serverRevisionCounter": 11420,
+            "lastRetrievedFromServer": 11420,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        },
+        "CustomTab__Chat__c": {
+            "serverRevisionCounter": 10277,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomTab",
+            "isNameObsolete": false
+        },
+        "ListView__Chat__c.All": {
+            "serverRevisionCounter": 10280,
+            "lastRetrievedFromServer": null,
+            "memberType": "ListView",
+            "isNameObsolete": false
+        },
+        "CustomIndex__Template__c.Template_Id__c": {
+            "serverRevisionCounter": 10488,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomIndex",
+            "isNameObsolete": false
+        },
+        "CustomField__WhatsAppConfiguration__mdt.Whatsapp_Account_ID__c": {
+            "serverRevisionCounter": 10535,
+            "lastRetrievedFromServer": null,
+            "memberType": "CustomField",
+            "isNameObsolete": false
+        },
+        "ApexClass__CreateTemplateWrapperTest": {
+            "serverRevisionCounter": 11641,
+            "lastRetrievedFromServer": 11641,
+            "memberType": "ApexClass",
+            "isNameObsolete": false
+        }
+    }
+}
