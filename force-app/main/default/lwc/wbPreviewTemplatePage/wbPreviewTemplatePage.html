@@ -141,14 +141,14 @@
                             <label for="phone" class="phone-label">Phone No.</label>
                             <div class="inputs">
                                 <div class="urltype">
-                                    <select class="conInput" name="selectedCountryType"  onchange={handleCountryChange}>
+                                    <select class="conInput" name="selectedCountryType" onchange={handleCountryChange} disabled={isFieldDisabled}>
                                         <template for:each={countryType} for:item="option">
-                                            <option key={option.value} value={option.value}>{option.label}</option>
+                                            <option key={option.value} value={option.value} selected={option.isSelected}>{option.label}</option>
                                         </template>
                                     </select>
                                 </div>
                                 
-                                <input type="text" name="phone-num" class="phone-input" oninput={handlePhoneChange}>
+                                <input type="text" name="phone-num" class="phone-input" value={phoneNumber} oninput={handlePhoneChange} disabled={isFieldDisabled}>
                                 <button class="send-btn" onclick={sendTemplatePreview}>Send Preview</button>
                                 <button class="close-btn" onclick={closePreview}>Close</button>
                             </div>

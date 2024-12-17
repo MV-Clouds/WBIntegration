@@ -15,8 +15,11 @@ MODIFICATION LOG*
 import { LightningElement,track,api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getRecordsBySObject from '@salesforce/apex/WBTemplateController.getRecordsBySObject'; 
+import createChat from '@salesforce/apex/ChatWindowController.createChat';
+import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';  
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
+import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
 import getCountryCodes from '@salesforce/apex/WBTemplateController.getCountryCodes';
 
 export default class WbPreviewTemplatePage extends LightningElement {
@@ -28,6 +31,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track tempHeader;
     @track tempBody;
     @track tempFooter;
+    @track headerParams;
+    @track bodyParams;
     @track buttonList=[];
     @track formatedTempBody;
     @track phoneNumber='';
@@ -49,6 +54,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     searchTerm = 'None';
     @track isDropdownVisible = false;
     @track variableMapping = { header: {}, body: {} };
+    @track isFieldDisabled=false;
 
     get contactFields() {
         return Object.entries(this.contactDetails)
@@ -93,6 +99,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     connectedCallback() {
         this.fetchRecords();
         this.fetchCountries();
+        this.fetchReplaceVariableTemplate(this.templateid,null);
     }
 
     getIconName(btntype) {
@@ -159,7 +166,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     handleCountryChange(event){
-        this.selectedCountryType=event.target.value;
+        this.selectedCountryType = event.target.value;
+        console.log(this.selectedCountryType);
     }
 
     handleRecordSelection(event) {
@@ -188,9 +196,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     header: {},
                     body: {}
                 };
-            
+                this.isFieldDisabled=false;
                 console.log('Reset to original template');
                 return;
+            }else{
+                this.isFieldDisabled=true;
             }
            
             const hasVariables = this.tempBody.includes('{{') || this.tempHeader.includes('{{');
@@ -210,6 +220,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
             }
 
             this.selectedContactId = selectedId;
+
             console.log('Selected Record ID:', this.selectedContactId);    
             this.fetchContactData();
         
@@ -223,7 +234,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
             getCountryCodes()
             .then(result => {
                 this.countryType = result.map(country => {
-                    return { label: `(${country.callingCode})`, value: country.callingCode };
+                    return { label: `(${country.callingCode})`, value: country.callingCode, isSelected: country.callingCode === this.selectedCountryType  };
                 });
             })
             .catch(error => {
@@ -245,7 +256,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
             .then(result => {
                 if (result.queriedData) {
                     this.contactDetails = result.queriedData;
-
+                   
                     this.groupedVariables = this.groupedVariables.map(group => {
                         return {
                             ...group,
@@ -265,6 +276,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         };
                     });
                     this.updateTemplates();
+                    this.fetchReplaceVariableTemplate(this.templateid,this.selectedContactId);
                     
                 } else {
                     console.warn('No data found for the provided record ID.');
@@ -331,16 +343,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
-                    if (result.isImgUrl) {
-                        this.isImgSelected = true;
-                        this.IsHeaderText = false;
-                    } else {
-                        this.isImgSelected = false;
-                        this.IsHeaderText = true; 
-                    }
-                    
-                    console.log('template data ',JSON.stringify(result));
-                    this.template = result.template;
+                    this.isImgSelected = result.isImgUrl;
+                    this.IsHeaderText = !result.isImgUrl;                    
                     this.originalHeader = result.template.Header_Body__c;
                     this.originalBody = result.template.Template_Body__c;
                     const variableMappings = result.templateVariables;
@@ -405,62 +409,131 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     handlePhoneChange(event){
         this.phoneNumber=event.target.value;
+        console.log(this.phoneNumber);
+        
     }
 
-    sendTemplatePreview(){
-        this.isLoading = true;
+    fetchReplaceVariableTemplate(templateid,contactid){
         try {
-            createChat({chatData: {message: '', templateId: this.templateid, messageType: 'template', recordId: null, replyToChatId: null}})
-            .then(chat => {
-                if(chat){
-                    let templatePayload = this.createJSONBody(this.phoneNumber, "template", {
-                        templateName: this.template.Name,
-                        languageCode: this.template.Language__c,
-                        parameters: this.templateData.parameters || []
-                    });
-                    console.log('the Payload is :: :', templatePayload);
-
-                    sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id})
-                    .then(ch => {
-                        this.dispatchEvent(new CustomEvent('message', {
-                            detail: ch
-                        }));
-                        this.isLoading = false;
-                    })
-                }else{
-                    this.isLoading = false;
-                    console.log('there was some error sending the message!');
+            getTemplateDataWithReplacement({templateId: templateid, contactId:contactid})
+            .then((templateData) => {
+                if (templateData) {
+                    this.template = templateData.template;
+                    if(templateData.headerParams) this.headerParams = templateData.headerParams;
+                    if(templateData.bodyParams) this.bodyParams = templateData.bodyParams;
                 }
+               
             })
-            .catch((e) => {
+            .catch(e => {
                 this.isLoading = false;
-                console.log('Error in handleSelectTemplate > createChat :: ', e);
+                console.log('Error in fetchInitialData > getTemplateData ::: ', e.message);
             })
         } catch (e) {
-            console.log('Error in function handleSend:::', e.message);
+            this.isLoading = false;
+            console.log('Error in function fetchInitialData:::', e.message);
+        }
+    
+    }
+
+    sendTemplatePreview() {
+        this.isLoading = true;
+    
+        try {
+            let phonenum = this.selectedContactId 
+                ? this.contactDetails.Phone 
+                : (this.selectedCountryType && this.phoneNumber && this.phoneNumber.length >= 10) 
+                    ? `${this.selectedCountryType}${this.phoneNumber}`
+                    : null;
+    
+            if (!phonenum) {
+                this.showToast('Warning', 'Invalid country code or phone number', 'warning');
+                this.isLoading = false;
+                return;
+            }
+    
+            createChat({
+                chatData: {
+                    message: '',
+                    templateId: this.templateid,
+                    messageType: 'template',
+                    recordId: this.selectedContactId,
+                    replyToChatId: null
+                }
+            })
+            .then(chat => {
+                if (chat) {
+                    const templatePayload = this.createJSONBody(phonenum, "template", {
+                        templateName: this.template.Name,
+                        languageCode: this.template.Language__c,
+                        headerParameters: this.headerParams,
+                        bodyParameters: this.bodyParams,
+                        buttonLabel: this.template.Button_Label__c,
+                        buttonType: this.template.Button_Type__c
+                    });
+    
+                    return sendWhatsappMessage({ jsonData: templatePayload, chatId: chat.Id, isReaction: false });
+                } else {
+                    throw new Error('Error creating chat');
+                }
+            })
+            .then(() => {
+                this.showToast('Success', 'Template sent successfully', 'success');
+                this.closePreview();
+            })
+            .catch(e => {
+                this.showToast('Error', e.message || 'Failed to send template', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+    
+        } catch (e) {
+            console.error('Error in function handleSend:::', e.message);
+            this.isLoading = false;
         }
     }
+    
 
     createJSONBody(to, type, data){
         try {
                 let payload = `{ "messaging_product": "whatsapp", "to": "${to}", "type": "${type}"`;
-            
                 payload += `, "template": { 
                     "name": "${data.templateName}",
                     "language": { "code": "${data.languageCode}" }`;
-    
-                if (data.parameters && data.parameters.length > 0) {
-                    let parameters = data.parameters.map(
+                let components = [];
+                if (data.headerParameters && data.headerParameters.length > 0) {
+                    let headerParams = data.headerParameters.map(
                         (param) => `{ "type": "text", "text": "${param}" }`
                     ).join(", ");
-                    payload += `, "components": [ 
-                        { 
-                            "type": "body", 
-                            "parameters": [ ${parameters} ] 
-                        } 
-                    ]`;
+                    components.push(`{ 
+                        "type": "header", 
+                        "parameters": [ ${headerParams} ] 
+                    }`);
                 }
-                payload += ` }`;
+                if (data.bodyParameters && data.bodyParameters.length > 0) {
+                    let bodyParams = data.bodyParameters.map(
+                        (param) => `{ "type": "text", "text": "${param}" }`
+                    ).join(", ");
+                    components.push(`{ 
+                        "type": "body", 
+                        "parameters": [ ${bodyParams} ] 
+                    }`);
+                }
+                if (data.buttonLabel && data.buttonType) {
+                    components.push(`{ 
+                        "type": "button", 
+                        "sub_type": "${data.buttonType}", 
+                        "index": 0, 
+                        "parameters": [{ 
+                            "type": "text", 
+                            "text": "${data.buttonLabel}" 
+                        }] 
+                    }`);
+                }
+                if (components.length > 0) {
+                    payload += `, "components": [ ${components.join(", ")} ]`;
+                }
+                payload += ` }`; 
                 payload += ` }`;
             
                 return payload;

@@ -154,6 +154,9 @@ input{
     border-radius: 3px;
     padding: 0.3rem;
 }
+.phone-input{
+    padding-left: 5rem;
+}
 .left{
     width: 100%;
     position: relative;

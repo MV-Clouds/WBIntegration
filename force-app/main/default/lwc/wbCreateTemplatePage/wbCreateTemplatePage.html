@@ -61,14 +61,11 @@
                                     <template if:true={showDefaultBtn}>
                                         <div class="formatted-text3">
                                             <span class="seg-header">Header</span>
-                                            <!-- <span class="dot2">•</span> -->
                                             <span class="seg-opt">Optional</span>
                                         </div>
                                         <div class="contentType">
-                                            <!-- <lightning-combobox variant="label-hidden" class="conInput" value={selectedContentType}
-                                                options={TypeOptions} onchange={handleContentType}></lightning-combobox> -->
                                             <select class="conInput" onchange={handleContentType}>
-                                                <template for:each={TypeOptions} for:item="option">
+                                                <template for:each={typeOptions} for:item="option">
                                                     <option key={option.value} class="contentOption" value={option.value} disabled={option.isDisabled}>
                                                         {option.label}
                                                     </option>
@@ -129,6 +126,7 @@
                                                 <div class="header-composite">
                                                     <input class="con" type="text" maxlength="60" name="header" value={header}
                                                         oninput={handleInputChange} placeholder="Enter text in English" />
+                                                       
                                                     <p class="char-count header-count">{header.length}/{maxShortlength}</p>
                                                 </div>
                                                 <button class="custom-add-button" onclick={addheadervariable} disabled={buttonDisabled}>
@@ -158,9 +156,9 @@
                                                                 </select>
                                                 
                                                                 <!-- Dynamic Field Selection -->
-                                                                <select class="field-dropdown dropdown" data-id={varItem.id} onchange={handleFieldChange}>
+                                                                <select class="field-dropdown  dropdown" data-id={varItem.id} onchange={handleFieldChange}>
                                                                     <template for:each={fields} for:item="field">
-                                                                        <option key={field.value} value={field.value} selected={varItem.field}>
+                                                                        <option key={field.value} class="header-field-option" value={field.value} selected={varItem.field}>
                                                                             {field.label}
                                                                         </option>
                                                                     </template>
@@ -250,7 +248,7 @@
                                                         <!-- Dynamic Field Selection -->
                                                         <select class="field-dropdown dropdown" data-id={varItem.id} onchange={handleVarFieldChange}>
                                                             <template for:each={fields} for:item="field">
-                                                                <option key={field.value} value={field.value} selected={varItem.field}>
+                                                                <option key={field.value} class="body-field-option" value={field.value} selected={varItem.field}>
                                                                     {field.label}
                                                                 </option>
                                                             </template>
@@ -301,6 +299,7 @@
                                             <lightning-icon icon-name="utility:down" size="x-small" alternative-text="Arrow down icon" class="dropdownIcon"></lightning-icon>
                                         </button>
                                     
+
                                         <!-- Dropdown menu -->
                                          <template if:true={isDropdownOpen}>
                                             <div class={dropdownClass} role="menu"  aria-haspopup="true">
@@ -437,29 +436,21 @@
                                                     <lightning-input type="checkbox" name="isCheckboxChecked"  checked={isCheckboxChecked} onchange={handleInputChange}></lightning-input>
                                                     <p style="font-size: 15px;">You direct Meta to use link tracking to report website clicks. When this box is unticked, you will not see insights for website clicks.</p>
                                                 </div>
-                    
                                             </template>
-                                            
-                                        
                                         </template>
                                     
                                         <template if:true={isCustom}>
                                             <div class="true-btn">
                                                 <div class="formatted-text3">
                                                     <span class="seg-header">Quick reply</span>
-                                                    <!-- <span class="dot2">•</span> -->
                                                     <span class="seg-opt">Optional</span>
                                                 </div>
-                                                <div  class="customtext">
+                                                <div class="customtext">
                                                     <template for:each={customButtonList} for:item="button" for:index="index" >
                                                             <div key={button.id} class="quicktext">
-                                                                <!-- <div class="remove-btn">
-                                                                    <lightning-button-icon icon-name="utility:close" alternative-text="Remove" onclick={handleRemoveCustom} data-index={index} class="remove-icon"></lightning-button-icon>
-                                                                </div> -->
                                                                 <div class="typeaction">
                                                                     <label for="action" class="label">Type</label>
                                                                     <lightning-combobox variant="label-hidden" class="actionInput" data-index={index} disabled="true" value={button.selectedCustomType} options={customOption} onchange={handleCustom}></lightning-combobox>
-                                                                 
                                                                 </div>
                                                                 
                                                                 <div class="btntxt">
@@ -474,7 +465,6 @@
                                                                     </template>
                                                                 </div>
                                                             
-                
                                                                 <template if:true={button.showFooterText}>
                                                                     <div class="btntxt">
                                                                         <label for="btn-text">Footer text</label>
@@ -482,11 +472,6 @@
                                                                     </div>
                                                                 </template>
 
-                                                                <!-- <div class="remove-btn">
-                                                                    <div class="img">
-                                                                        <img src="/resource/trashIcon" alt="remove" onclick={handleRemoveCustom} data-index={index} style="width: 3.7rem;">
-                                                                    </div>
-                                                                </div> -->
                                                                 <div class="remove-btn">
                                                                     <button type="button" class="remove-button" onclick={handleRemoveCustom} data-index={index}>
                                                                         <lightning-icon icon-name="utility:delete" size="x-small" alternative-text="Delete icon" class="remove-icon"></lightning-icon>
@@ -603,7 +588,7 @@
                             <lightning-button variant="brand" label="Submit for Review" onclick={handleConfirm} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
                         </template>
                         <template if:true={isEditTemplate}>
-                            <lightning-button variant="brand" label="Submit for Edit" onclick={handleEditTemplate} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
+                            <lightning-button variant="brand" label="Submit for Edit" onclick={handleConfirm} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
                         </template>
                     </div>
                 </div>

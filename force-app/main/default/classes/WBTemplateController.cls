@@ -1,4 +1,4 @@
- /**
+/**
  * Class Name: WBTemplateController
  * Test Class: 
  * @description: Used in LWC components, it used to get the template record, 
@@ -8,17 +8,33 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 11/12/2024
+ * Last Update Date : 15/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : getDynamicObjectData,getTemplateWithReplacedValues
- * Change Description : Store Image url in header body field when header type is image. Also remove getTemplateWithReplacedValues to handle mapping in js.
+ * Name of methods changed (Comma separated if more then one) : getDynamicObjectData,getTemplateDataWithReplacement
+ * Change Description : Add method to handle variable replacement from backend for sending templates.
  ***********************************************************************/
 
-public with sharing class WBTemplateController {
+ public without sharing class WBTemplateController {
     
-    public static String accessToken = System.Label.WHATSAPP_ACCESS_TOKEN;
-    public static String endpoint = System.Label.WHATSAPP_TEMPLATE_ENPOINT;
-    public static String uploadEndpoint = System.Label.WB_TEMPLATE_UPLOAD_FILE;
+    public static String accessToken;
+    public static String endpoint;
+    public static String uploadEndpoint;
+    public static final WhatsAppConfiguration__mdt SETTINGS;
+
+    static {
+        try {
+            SETTINGS = [
+                SELECT Access_token_for_WhatsApp__c, WhatsApp_App_Id__c, WhatsApp_App_Secret__c,WhatsApp_PhoneNumber_ID__c,Whatsapp_Account_ID__c	
+                FROM WhatsAppConfiguration__mdt
+                WHERE DeveloperName = 'WhatsAppConfig' WITH SECURITY_ENFORCED
+                LIMIT 1
+            ];
+            
+            accessToken = SETTINGS.Access_token_for_WhatsApp__c;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'static', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+        }
+    }
 
       /*
     *********************************************************
@@ -89,7 +105,7 @@ public with sharing class WBTemplateController {
 
     /*
     *********************************************************
-    @description     : Fetch records based on the object name
+    @description     : This method use to fetch template data and variable mapping done in js.
     @param           : 
     @return          : wrapper - Return wrapper that contain object name and field name from the Template Variable.
     ********************************************************
@@ -104,7 +120,7 @@ public with sharing class WBTemplateController {
         try {
             // Fetch the specific template
             Template__c template = [
-                SELECT Id, Name, Header_Body__c,Header_Type__c, Template_Body__c, Footer_Body__c, Button_Label__c,Button_Type__c
+                SELECT Id, Name, Button_Body__c,Template_Id__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c
                 FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED
                 ORDER BY CreatedDate DESC 
                 LIMIT 1 
@@ -133,6 +149,7 @@ public with sharing class WBTemplateController {
                 Map<String, String> mapping = new Map<String, String>();
                 mapping.put('type', variable.Type__c);
                 mapping.put('variable', variable.Name);
+                mapping.put('objName', variable.Object_Name__c);
                 mapping.put('alternateText', variable.Alternate_Text__c);
                 mapping.put('fieldName', variable.Field_Name__c);
                 wrapper.templateVariables.add(mapping);
@@ -168,6 +185,9 @@ public with sharing class WBTemplateController {
                 throw new AuraHandledException('Invalid input parameters');
             }
 
+            if (!fieldNames.contains('Phone')) {
+                    fieldNames.add('Phone');
+            }
             String fields = String.join(fieldNames, ',');
             
             String queryString = 'SELECT ' + fields + ' FROM ' + objectName + ' WHERE Id = :recordId LIMIT 1';            
@@ -189,92 +209,118 @@ public with sharing class WBTemplateController {
     
      /*
     *********************************************************
-    @description     : It used to replace value of field with the variable placeholder in preview page.
+    @description     : It used to replace variable from backend to handle the sending of template variable.
     @param           : recordId
     @return          : result {Map<String, Object>} - Return the replace template content based on the template variable fields by fetching from contact object.
     ********************************************************
     */
-    // @AuraEnabled
-    // public static Map<String, String> getTemplateWithReplacedValues(String recordId,String templateId) {
-    //     try {
-    //         Template__c template = [SELECT Id, Name, Template_Body__c, Header_Body__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
 
-    //         List<Template_Variable__c> variables = [
-    //             SELECT Id, Object_Name__c, Field_Name__c, Type__c, Alternate_Text__c
-    //             FROM Template_Variable__c
-    //             WHERE Template__c = :template.Id WITH SECURITY_ENFORCED
-    //         ];
-    //         System.debug('variables '+variables);
+    @AuraEnabled
+    public static Map<String, Object> getTemplateDataWithReplacement(String templateId, String contactId) {
+        try {
+            Map<String, Object> templateData = new Map<String, Object>();
+            List<Template__c> templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c, 
+                                                Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, 
+                                                Template_Body__c, Template_Category__c, Template_SubCatagory__c, 
+                                                Template_Type__c, Template_Variable__c, 
+                                                (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c 
+                                                    FROM WB_Template_Variables__r ORDER BY Name ASC) 
+                                            FROM Template__c 
+                                            WHERE Id = :templateId 
+                                            WITH SECURITY_ENFORCED];
 
-    //         Map<Integer, String> headerFieldMapping = new Map<Integer, String>();
-    //         Map<Integer, String> bodyFieldMapping = new Map<Integer, String>();
-    //         String templateHeader = template.Header_Body__c	 != null ? template.Header_Body__c	 : '';
-    //         String templateBody = template.Template_Body__c	 != null ? template.Template_Body__c	 : '';
+            if (templates.size() > 0) {
+                Template__c template = templates[0];
 
-    //         String objectName = 'Contact';
-    //         List<String> fields = new List<String>();
+                // Check if Template_Variable__c exists
+                if (template.Template_Variable__c > 0) {
+                    List<Object> headerVariables = new List<Object>();
+                    List<Object> bodyVariables = new List<Object>();
 
-    //         Integer headerIndex = 1;
-    //         Integer bodyIndex = 1;
-    //         for (Template_Variable__c var : variables) {
-    //             if (var.Object_Name__c != null && var.Field_Name__c != null) {
-    //                 objectName = var.Object_Name__c;  
-    //                 fields.add(var.Field_Name__c);  
-            
-    //                 if (var.Type__c == 'Header') {
-    //                     headerFieldMapping.put(headerIndex, var.Field_Name__c);
-    //                     headerIndex++;
-    //                 } else if (var.Type__c == 'Body') {
-    //                     bodyFieldMapping.put(bodyIndex, var.Field_Name__c);
-    //                     bodyIndex++;
-    //                 }
-    //             }
-    //         }
-    //         fields = new List<String>(new Set<String>(fields));
-    //         System.debug('fields '+fields);
+                    // Scenario 1: Contact ID is passed
+                    if (String.isNotBlank(contactId)) {
+                        Set<String> fieldSelectionCause = new Set<String>();
+                        for (Template_Variable__c tv : template.WB_Template_Variables__r) {
+                            if (tv.Object_Name__c == 'Contact') {
+                                fieldSelectionCause.add(tv.Field_Name__c);
+                            } else {
+                                fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
+                            }
+                        }
 
-    //         String query = 'SELECT ' + String.join(fields, ',') + ' FROM ' + objectName + ' WHERE Id = :recordId WITH SECURITY_ENFORCED';
-    //         SObject record = Database.query(query);
+                        if (fieldSelectionCause.size() > 0) {
+                            String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM Contact WHERE Id =:contactId';
+                            List<Contact> contacts = Database.query(query);
+                            if (contacts.size() > 0) {
+                                Contact contactRecord = contacts[0];
+                                for (Template_Variable__c tv : template.WB_Template_Variables__r) {
+                                    Object valueToReplace = '';
+                                    if (tv.Object_Name__c == 'Contact') {
+                                        System.debug('fieldname '+tv.Field_Name__c);
+                                        valueToReplace = contactRecord.get(tv.Field_Name__c);
+                                        System.debug('value replaced '+valueToReplace);
+                                    } else {
+                                        valueToReplace = contactRecord.getSObject(tv.Object_Name__c) != null ? 
+                                                        contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
+                                    }
+                                    
+                                    if (tv.Type__c == 'Header') {
+                                        String replacement = (valueToReplace != null ? valueToReplace.toString() : 
+                                                              (tv.Alternate_Text__c != null ? tv.Alternate_Text__c : ''));
+                                    
+                                        headerVariables.add(replacement);
+                                        template.Header_Body__c = template.Header_Body__c.replace(tv.Name, replacement);
+                                    } else if (tv.Type__c == 'Body') {
+                                        String replacement = (valueToReplace != null ? valueToReplace.toString() : 
+                                                              (tv.Alternate_Text__c != null ? tv.Alternate_Text__c : ''));
+                                    
+                                        bodyVariables.add(replacement);
+                                        template.Template_Body__c = template.Template_Body__c.replace(tv.Name, replacement);
+                                    }
+                                    
+                                }
+                            }
+                        }
+                    } 
+                    // Scenario 2: Contact ID not passed
+                    else {
+                        for (Template_Variable__c tv : template.WB_Template_Variables__r) {
+                            if (tv.Type__c == 'Header') {
+                                headerVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                                template.Header_Body__c = template.Header_Body__c.replace(tv.Name, 
+                                                            tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                            } else if (tv.Type__c == 'Body') {
+                                bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                                template.Template_Body__c = template.Template_Body__c.replace(tv.Name, 
+                                                            tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                            }
+                        }
+                    }
 
-    //         for (Integer i : headerFieldMapping.keySet()) {
-    //             String fieldName = headerFieldMapping.get(i);
-    //             Object value = record.get(fieldName);
-            
-    //             String replacementValue = null;
-    //             for (Template_Variable__c var : variables) {
-    //                 if (var.Field_Name__c == fieldName) {
-    //                     // replacementValue = (value != null) ? value.toString() : var.Alternate_Text__c;
-    //                     replacementValue = (value != null) ? value.toString() : (var.Alternate_Text__c != null) ? var.Alternate_Text__c : '';
-    //                 }
-    //             }
-    //             templateHeader = templateHeader.replace('{{' + i + '}}', replacementValue);
-    //         }
-            
-    //         for (Integer i : bodyFieldMapping.keySet()) {
-    //             String fieldName = bodyFieldMapping.get(i);
-    //             Object value = record.get(fieldName);
-            
-    //             String replacementValue = null;
-    //             for (Template_Variable__c var : variables) {
-    //                 if (var.Field_Name__c == fieldName) {
-    //                     replacementValue = (value != null) ? value.toString() : 
-    //                     (var.Alternate_Text__c != null) ? var.Alternate_Text__c : '';
-    //                 }
-    //             }
-    //             templateBody = templateBody.replace('{{' + i + '}}', replacementValue);
-    //         }
-            
-    //         Map<String, String> result = new Map<String, String>();
-    //         result.put('header', templateHeader);
-    //         result.put('body', templateBody);
-    //         System.debug('result '+result);
-    //         return result;
+                    templateData.put('template', template);
+                    templateData.put('headerParams', headerVariables);
+                    templateData.put('bodyParams', bodyVariables);
+                } else {
+                    templateData.put('template', template);
+                }
 
-    //     } catch (Exception e) {
-    //         ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getTemplateWithReplacedValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-    //         return null;
-    //     }
-    // }
+                return templateData;
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'WBTemplateController',
+                'methodName' => 'getTemplateData',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+        }
+        return null;
+    }
+
 
       /*
     *********************************************************
@@ -410,6 +456,7 @@ public with sharing class WBTemplateController {
             System.debug('Deserialized TemplateWrapper: ' + templateWrapper);
 
             Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Whatsapp_Account_ID__c+'/message_templates';
             
             HttpRequest req = new HttpRequest();
             req.setEndpoint(endpoint);
@@ -464,7 +511,8 @@ public with sharing class WBTemplateController {
             payload.put('file_name', fileName);
             payload.put('file_length', fileLength);
             payload.put('file_type', fileType);
-            
+            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.WhatsApp_App_Id__c+'/uploads';
+
             HttpRequest req = new HttpRequest();
             Http http = new Http();
             req.setEndpoint(uploadEndpoint);
@@ -567,7 +615,7 @@ public with sharing class WBTemplateController {
     @return          : 
     ********************************************************
     */
-    private static String createContentVersionAndDocument(String fileName, Blob fileBlob) {
+    public static String createContentVersionAndDocument(String fileName, Blob fileBlob) {
         try {
             ContentVersion contentVersion = new ContentVersion();
             contentVersion.Title = fileName;
@@ -599,11 +647,10 @@ public with sharing class WBTemplateController {
         try {
             Template__c wbTempRec = [SELECT Id, Name FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
             
-            String deleteEndpoint = endpoint + '?name=' + wbTempRec.Name;
-            System.debug('endpoint: '+endpoint);
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Whatsapp_Account_ID__c+'/message_templates?name=' + wbTempRec.Name;
 
             HttpRequest req = new HttpRequest();         
-            req.setEndpoint(deleteEndpoint);
+            req.setEndpoint(endpoint);
             req.setMethod('DELETE');
             req.setHeader('Content-Type', 'application/json');
             req.setHeader('Authorization', 'Bearer ' + accessToken);
@@ -641,6 +688,60 @@ public with sharing class WBTemplateController {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'deleteTemplete', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return e.getMessage();
         }
+    }
+
+     /*
+    *********************************************************
+    @description     : Callout to edit template in the Meta and the Body creation and response handle in CreateTemplateWrapper Class.
+    @param           : serializedWrapper - get serialize wrapper from the js to create template.
+    @return          : response Map<String, Object> - return response with the template id.
+    ********************************************************
+    */
+    @AuraEnabled
+    public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String templateId) {
+        Map<String, Object> response = new Map<String, Object>();
+
+        try {
+            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+            System.debug('Deserialized TemplateWrapper: ' + templateWrapper);
+            String editEndpoint = 'https://graph.facebook.com/v20.0/'+templateId;
+            Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
+            
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(editEndpoint);
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Authorization', 'Bearer ' + accessToken);
+            req.setBody(JSON.serialize(payload));
+    
+            Http http = new Http();
+            HttpResponse res = http.send(req);
+            System.debug('Response Body ==>' + res.getBody());
+
+            if (res.getStatusCode() == 200) {
+                CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
+                response.put('success', true);
+            } else {
+                response.put('success', false);
+                response.put('errorMessage', res.getBody());
+                ExceptionHandler.logException(new Map<String, Object>{
+                    'className' => 'WBTemplateController',
+                    'methodName' => 'createWhatsappTemplate',
+                    'exceptionObj' => null,
+                    'isApiException' => true,
+                    'statusCode' => res.getStatusCode(),
+                    'chatId' => null,
+                    'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
+                    'apiResponse' => res.getBody()
+                });
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            response.put('status', 'error');
+            response.put('message', e.getMessage());
+        }
+
+        return response;
     }
 
     public class FileChunkWrapper {

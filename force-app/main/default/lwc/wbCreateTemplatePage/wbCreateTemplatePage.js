@@ -24,6 +24,7 @@ import emojiData from '@salesforce/resourceUrl/emoji_data';
 // import getEmojiData from '@salesforce/apex/EmojiDataController.getEmojiData';
 import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist';
 import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate';
+import editWhatsappTemplate from '@salesforce/apex/WBTemplateController.editWhatsappTemplate';
 import startUploadSession from '@salesforce/apex/WBTemplateController.startUploadSession';
 import uploadFileChunk from '@salesforce/apex/WBTemplateController.uploadFileChunk';
 import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFields';
@@ -123,6 +124,10 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track dropdownClass = 'dropdown-hidden';
     @track emojiCategories=[];
     @track templateId='';
+    @track metaTemplateId='';
+    isHeaderTypeLoad=false;
+    isHeaderVariableLoad=false;
+    isBodyVariableLoad=false;
 
     @api
     get edittemplateid() {
@@ -144,7 +149,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         return ['png','jpeg','jpg'];
     }
 
-    get TypeOptions() {
+    get typeOptions() {
         return [
             { label: 'None', value: 'None'},
             { label: 'Text', value: 'Text'},
@@ -234,6 +239,59 @@ export default class WbCreateTemplatePage extends LightningElement {
         }).catch(error => {
             console.error("Error in loading the colors",error)
         })
+        if(this.isHeaderTypeLoad){
+            let headDiv=this.template.querySelector('.contentOption');
+            if(headDiv){
+                this.template.querySelectorAll('.contentOption').forEach(el => {
+                    if(el.value==this.selectedContentType){
+                        el.selected=true;
+                    }
+                });
+                this.isHeaderTypeLoad=false;
+            }
+        }
+        if(this.isHeaderVariableLoad){
+            let varDiv = this.template.querySelector('.header-field-option');
+            if(varDiv){
+                for(let i=0;i<this.header_variables.length;i++){
+                    this.template.querySelectorAll('.header-field-option').forEach(el => {
+                        if(el.value==this.header_variables[i].field){
+                            el.selected=true;
+                        }
+                    });
+                }
+               
+                this.isHeaderVariableLoad=false;
+            }
+        }
+        if(this.isBodyVariableLoad){
+            let varDiv = this.template.querySelector('.body-field-option');
+            if(varDiv){
+                let varDivs = this.template.querySelectorAll('.body-field-option');
+                // varDivs.forEach(el => {
+                    console.log('length is  ',varDivs.length);
+                    
+                    // for(let i=0;i<this.variables.length;i++){
+                    //     console.log('this val ',this.variables[i].field);
+                        varDivs.forEach(el=> {
+                            // if(el.value==this.variables.find(v => v.id == i)){
+                            //     el.selected=true;
+                            //     return;
+                            // }
+                            console.log('The Sellected is :: ', el.parentNode.dataset.id);
+                            el
+                        })
+                        // if(varDivs.filter(el => el.value==this.variables[i].field)){
+                        //     console.log('el value ', this.variables[i].field);
+                        //     el.selected=true;
+                        //     break;
+                        // }
+                    // }
+                // });
+               
+                this.isBodyVariableLoad=false;
+            }
+        }
     }
 
     fetchTemplateData() {
@@ -242,15 +300,66 @@ export default class WbCreateTemplatePage extends LightningElement {
             .then((data) => {
                 const { template, templateVariables } = data;
                 this.templateName = template.Name || '';
-                this.header = template.Header_Body__c || '';
+                this.metaTemplateId = template.Template_Id__c || '';
+                console.log('meta template id ',this.metaTemplateId);
+                
+                const header = template.Header_Body__c || '';
+                
                 this.footer = template.Footer_Body__c || '';
                 this.selectedLanguage = template.Language__c;
-                this.tempBody =template.Template_Body__c || 'Hello';
+                this.tempBody = template.Template_Body__c || 'Hello';
+                this.previewBody= this.formatText(this.tempBody) || 'Hello';
+                this.previewHeader= this.formatText(this.header) ||'';
                 this.selectedContentType=template.Header_Type__c;
                 this.btntext = template.Button_Label__c || '';
-                this.variables = templateVariables || [];
-                this.header_variables = templateVariables || [];
-                this.originalHeader = template.Header_Body__c || '';
+               
+                let tvs =templateVariables.map(tv=>{
+                    let temp = {
+                        object:tv.objName,
+                        field:tv.fieldName,
+                        alternateText:tv.alternateText?tv.alternateText:'',
+                        id:tv.variable.slice(2,3),
+                        index:tv.variable,
+                        type:tv.type
+                    };
+                    return temp;
+                })
+                console.log('tvs ',tvs);
+                
+                this.variables = tvs.filter(tv=>tv.type=='Body') || [];
+                this.header_variables = tvs.filter(tv=>tv.type=='Header') || [];
+                console.log('variable length ',this.variables);
+                console.log('header length ',this.header_variables);
+                this.addHeaderVar=this.header_variables.length>0?true:false;
+                this.addVar=this.variables.length>0?true:false;
+                if (this.addHeaderVar) {
+                    this.isHeaderVariableLoad = true;
+                    this.buttonDisabled = true;
+                }                
+                if(this.addVar) this.isBodyVariableLoad=true;
+                
+                if(template.Button_Type__c && template.Button_Label__c){
+                    let newButton = {
+                        id: this.buttonList.length + 1,
+                        selectedActionType: template.Button_Type__c,
+                        iconName: this.getButtonIcon(template.Button_Type__c),
+                        btntext: template.Button_Label__c,
+                        webURL: template.Button_Body__c,
+                        phonenum: template.Button_Body__c?.split(' ')[1],
+                        offercode: template.Button_Body__c,
+                        selectedUrlType: 'Static',
+                        selectedCountryType: template.Button_Body__c?.split(' ')[0],
+                        isCallPhone: false,
+                        isVisitSite: false,
+                        isOfferCode: false,
+                        hasError: false,  
+                        errorMessage: ''   
+                    };
+                    
+                    this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
+                    this.handleContentType({target:{value:template.Header_Type__c}});
+                    // this.handleLanguageChange({ target: { value: template.Language__c } });
+                }
             })
             .catch((error) => {
                 console.error('Error fetching fields: ', error);
@@ -519,7 +628,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.NoFileSelected=true;
             this.isfilename=false;
             this.selectedContentType = event.target.value;
-            console.log(this.selectedContentType);
+            this.isHeaderTypeLoad=true;
     
             if (this.selectedContentType == 'Text') {
                 this.IsHeaderText = true;
@@ -538,7 +647,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 this.isImgSelected = false;
             }
         } catch (error) {
-            console.error('Something wrong while selecting content type: ', error);
+            console.error('Something wrong while selecting content type: ', JSON.stringify(error));
         }
     }
 
@@ -740,8 +849,9 @@ export default class WbCreateTemplatePage extends LightningElement {
             const selectedValue = event.currentTarget.dataset.value; 
             this.menuButtonSelected = selectedValue;
             console.log('selectedValue ', selectedValue);
+            let buttonData=event.currentTarget.dataset.buttonData;
         
-            let newButton = {
+            let newButton = buttonData ? buttonData:{
                 id: this.buttonList.length + 1,
                 selectedActionType: selectedValue,
                 iconName: this.getButtonIcon(selectedValue),
@@ -776,8 +886,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                     if (this.callPhoneNumber < 1) {
                         this.createButton = true;
                         newButton.isCallPhone = true;
-                        newButton.btntext = 'Call Phone Number';
-                        this.btntext = 'Call Phone Number';
+                        newButton.btntext = buttonData?.btntext || 'Call Phone Number';
+                        this.btntext = buttonData?.btntext || 'Call Phone Number';
                         this.callPhoneNumber++;
                     }
                     break;
@@ -786,8 +896,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                         this.createButton = true;
                         newButton.isVisitSite = true;
                         this.isVisitSite = true;
-                        newButton.btntext = 'Visit Website';
-                        this.btntext = 'Visit Website';
+                        newButton.btntext = buttonData?.btntext || 'Visit Website';
+                        this.btntext = buttonData?.btntext || 'Visit Website';
                         this.visitWebsiteCount++;
                     }
                     break;
@@ -795,8 +905,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                     if (this.copyOfferCode < 1) {
                         this.createButton = true;
                         newButton.isOfferCode = true;
-                        newButton.btntext = 'Copy Offer Code';
-                        this.btntext = 'Copy Offer Code';
+                        newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
+                        this.btntext = buttonData?.btntext || 'Copy Offer Code';
                         this.copyOfferCode++;
                     }
                     break;
@@ -1022,6 +1132,12 @@ export default class WbCreateTemplatePage extends LightningElement {
     addvariable() {
         try {
             this.addVar = true;
+            const maxId = this.variables.reduce((max, variable) => {
+                return Math.max(max, parseInt(variable.id)); 
+            }, 0); 
+            
+            this.nextIndex = maxId + 1;
+
             const defaultField = this.fields[0].value; 
             const newVariable = {
                 id: this.nextIndex,
@@ -1044,16 +1160,21 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     handleVarFieldChange(event) {
         try {
-            const variableId = event.target.dataset.id;
+            // const variableId = event.target.dataset.id;
+            const variableId = String(event.target.dataset.id); 
             const fieldName = event.target.value;
+            console.log('variableId ',variableId,' fieldName ',fieldName);
+            
             this.variables = this.variables.map(varItem =>
-                varItem.id === parseInt(variableId)
+                // varItem.id === parseInt(variableId)
+                String(varItem.id) === variableId 
                     ? {
                           ...varItem,
                           field: fieldName,
                       }
                     : varItem
             );
+            console.log('Updated variables:', JSON.stringify(this.variables));            
             this.updatePreviewContent(this.formatedTempBody, 'body');
         } catch (error) {
             console.error('Something wrong while variable input.',error);
@@ -1145,10 +1266,11 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     handleFieldChange(event) {
         try {
-            const variableId = event.target.dataset.id;
+            // const variableId = event.target.dataset.id;
+            const variableId = String(event.target.dataset.id); 
             const fieldName = event.target.value;
             this.header_variables = this.header_variables.map(varItem =>
-            varItem.id === parseInt(variableId)
+            String(varItem.id) === variableId
                 ? {
                         ...varItem,
                         field: fieldName,
@@ -1493,44 +1615,85 @@ export default class WbCreateTemplatePage extends LightningElement {
 
             console.log('Template Wrapper:', JSON.stringify(template));
             const serializedWrapper = JSON.stringify(template);
-        
-            createWhatsappTemplate({ serializedWrapper: serializedWrapper })
-            .then(result => {
-                if (result && result.success) { 
-                    console.log('Template created successfully', result);
-                    this.showToastSuccess('Template successfully created');
-                    this.isPreviewTemplate=true;
-                    this.isLoading=false;
-                    const templateId = result.templateId;  
-                    this.templateId = templateId;
-                    console.log('temp id==> ',this.templateId);
-                    
-                    // this.clearWrapper();
-                } else {
-                    const errorResponse = JSON.parse(result.errorMessage); 
-                    const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
-        
-                    this.showToastError('Template creation failed, reason - '+errorMsg);
-                    this.isLoading = false; 
-                }
-            })
-            .catch(error => {
-                console.error('Error creating template', error);
-                const errorTitle = 'Template creation failed: ';
-                let errorMsg;        
-                if (error.body && error.body.message) {
-                    if (error.body.message.includes('Read timed out')) {
-                        errorMsg = 'The request timed out. Please try again.';
+            if(this.metaTemplateId){
+                editWhatsappTemplate({ serializedWrapper: serializedWrapper,templateId:this.metaTemplateId })
+                .then(result => {
+                    if (result && result.success) { 
+                        console.log('Template edit successfully', result);
+                        this.showToastSuccess('Template successfully created');
+                        this.isPreviewTemplate=true;
+                        this.isLoading=false;
+                        const templateId = result.templateId;  
+                        this.templateId = templateId;
+                        // this.clearWrapper();
                     } else {
-                        errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
-                    }
-                } else {
-                    errorMsg = 'An unknown error occurred';
-                }
+                        const errorResponse = JSON.parse(result.errorMessage); 
+                        const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
             
-                this.showToastError(errorTitle, errorMsg);
-                this.isLoading = false;
-            });
+                        this.showToastError('Template creation failed, reason - '+errorMsg);
+                        this.isLoading = false; 
+                    }
+                })
+                .catch(error => {
+                    console.error('Error creating template', error);
+                    const errorTitle = 'Template creation failed: ';
+                    let errorMsg;        
+                    if (error.body && error.body.message) {
+                        if (error.body.message.includes('Read timed out')) {
+                            errorMsg = 'The request timed out. Please try again.';
+                        } else {
+                            errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+                        }
+                    } else {
+                        errorMsg = 'An unknown error occurred';
+                    }
+                
+                    this.showToastError(errorTitle, errorMsg);
+                    this.isLoading = false;
+                });
+                
+            }else{
+                console.log('enter into else');
+                createWhatsappTemplate({ serializedWrapper: serializedWrapper })
+                .then(result => {
+                    if (result && result.success) { 
+                        console.log('Template created successfully', result);
+                        this.showToastSuccess('Template successfully created');
+                        this.isPreviewTemplate=true;
+                        this.isLoading=false;
+                        const templateId = result.templateId;  
+                        this.templateId = templateId;
+                        console.log('temp id==> ',this.templateId);
+                        
+                        // this.clearWrapper();
+                    } else {
+                        const errorResponse = JSON.parse(result.errorMessage); 
+                        const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
+            
+                        this.showToastError('Template creation failed, reason - '+errorMsg);
+                        this.isLoading = false; 
+                    }
+                })
+                .catch(error => {
+                    console.error('Error creating template', error);
+                    const errorTitle = 'Template creation failed: ';
+                    let errorMsg;        
+                    if (error.body && error.body.message) {
+                        if (error.body.message.includes('Read timed out')) {
+                            errorMsg = 'The request timed out. Please try again.';
+                        } else {
+                            errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+                        }
+                    } else {
+                        errorMsg = 'An unknown error occurred';
+                    }
+                
+                    this.showToastError(errorTitle, errorMsg);
+                    this.isLoading = false;
+                });
+               
+            }
+           
 
         } catch (error) {
             console.error('Unexpected error occurred', error);

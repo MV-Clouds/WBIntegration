@@ -164,9 +164,10 @@ public with sharing class ChatWindowController {
     @AuraEnabled
     public static Chat__c sendWhatsappMessage(String jsonData, String chatId, String isReaction) {
         Chat__c chat = new Chat__c(Id = chatId);
+        System.debug('jsonData '+jsonData);
         try {
             HttpRequest httpReq = new HttpRequest();
-            String endpoint = 'https://graph.facebook.com/v21.0/397858113402150/messages';
+            String endpoint = 'https://graph.facebook.com/v21.0/544633438726755/messages';
             List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values(); 
             String accessToken = config[0].Access_token_for_WhatsApp__c;
             httpReq.setEndpoint(endpoint);
@@ -212,10 +213,11 @@ public with sharing class ChatWindowController {
     ********************************************************
     */
     @AuraEnabled
-    public static Template__c getTemplateData(String templateId, String contactId){
+    public static Map<String, object> getTemplateData(String templateId, String contactId){
         try {
+            Map<String, Object> templateData = new Map<String, Object>();
             List<Template__c> templates = new List<Template__c>();
-            templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
+            templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name asc) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
             if(templates.size() > 0 && templates[0].Template_Variable__c>0){
                 Template__c template= templates[0];
                 Set<String> fieldSelectionCause = new Set<String>();
@@ -227,11 +229,14 @@ public with sharing class ChatWindowController {
                     }
                 }
                 if(fieldSelectionCause.size() < 1){
-                    return templates[0];
+                    templateData.put('template', templates[0]);
+                    return templateData;
                 }
 
                 String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM Contact WHERE Id =:contactId';
                 List<Contact> contacts = Database.query(String.escapeSingleQuotes(query));
+                List<Object> headerVariables = new List<Object>();
+                List<Object> bodyVariables = new List<Object>();
                 if(contacts.size() > 0){
                     Contact contactRecord = contacts[0];
                     for (Template_Variable__c tv: template.WB_Template_Variables__r) {
@@ -239,18 +244,25 @@ public with sharing class ChatWindowController {
                         if(tv.Object_Name__c == 'Contact'){
                             valueToReplace = contactRecord.get(tv.Field_Name__c);
                         }else{
-                            valueToReplace = contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c);
+                            valueToReplace = contactRecord.getSObject(tv.Object_Name__c)!=null ? contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
                         }
                         if (tv.Type__c == 'Header') {
+                            headerVariables.add(valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c);
                             template.Header_Body__c = template.Header_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
                         }else if(tv.Type__c == 'Body'){
+                            bodyVariables.add(valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c);
                             template.Template_Body__c = template.Template_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
                         }
                     }
                 }
-                return template;
+                templateData.put('template', template);
+                templateData.put('headerParams', headerVariables);
+                templateData.put('bodyParams', bodyVariables);
+
+                return templateData;
             }
-            return templates[0];
+            templateData.put('template', templates[0]);
+            return templateData;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
         }
