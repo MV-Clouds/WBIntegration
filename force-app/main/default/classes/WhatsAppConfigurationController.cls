@@ -2,7 +2,8 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 12-16-2024
+
+ * @last modified on  : 12-17-2024
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public without sharing class WhatsAppConfigurationController {
@@ -17,6 +18,7 @@ public without sharing class WhatsAppConfigurationController {
                 System.debug('null config');
             }
             Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
+            instance1.field = 'Access_token_for_WhatsApp__c';
             mdata.fullName = 'WhatsAppConfiguration__mdt.' + config.DeveloperName; 
             mdata.label = config.MasterLabel;
             
