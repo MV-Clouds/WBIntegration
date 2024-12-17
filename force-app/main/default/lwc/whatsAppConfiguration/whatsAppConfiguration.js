@@ -1,5 +1,6 @@
 import { LightningElement, track } from 'lwc';
 import saveWhatsAppConfiguration from '@salesforce/apex/WhatsAppConfigurationController.saveConfiguration';
+import WBConnectLogo from '@salesforce/resourceUrl/WBConnectLogo';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class WhatsAppConfiguration extends LightningElement {
@@ -7,6 +8,7 @@ export default class WhatsAppConfiguration extends LightningElement {
     @track accessTokenValue = '';
     @track phoneNoIdValue = '';
     @track appIdValue = '';
+    @track WBConnectLogo = WBConnectLogo;
 
     handleInput(event) {
         if(event.target.name == 'WBAccountId'){
