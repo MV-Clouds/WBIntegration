@@ -3,7 +3,12 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
+<<<<<<< HEAD
+
  * @Last Modified On : 12-17-2024
+=======
+ * @Last Modified On : 12-17-2024
+>>>>>>> fec058122b87c4b28040f7f96c5820f18609007e
  * @Modification Log :
  *==============================================================================
  * Ver | Date | Author | Modification
@@ -185,6 +190,33 @@ global without sharing class WhatsAppWebhook{
             Chat__c whatsappChat = new Chat__c();
 
             if (existingChatRecords.isEmpty()){
+<<<<<<< HEAD
+<<<<<<< HEAD
+                System.debug('contact id:- '+ contact.Id );
+=======
+
+=======
+>>>>>>> fec058122b87c4b28040f7f96c5820f18609007e
+                if(messageType.equalsIgnoreCase('reaction')){
+                    List<Chat__c> reactToChat = [SELECT Id, Reaction__c, Contact__c FROM Chat__c WHERE WhatsAppMessageId__c =:reactToMessageId];
+                    if(reactToChat.size() > 0){
+                        reactToChat[0].Reaction__c = reactToChat[0].Reaction__c!=null ? reactToChat[0].Reaction__c : '<|USER|>';
+                        reactToChat[0].Reaction__c = reactToChat[0].Reaction__c.split('<|USER|>')[0] + '<|USER|>' + (reactedEmoji!=null ? reactedEmoji : '');
+                        whatsappChat = reactToChat[0];
+                        update whatsappChat;
+                        Chat_Message__e reactEvent = new Chat_Message__e();
+                        reactEvent.Chat_Data__c = JSON.serialize(whatsappChat);
+                        reactEvent.Type__c = 'react';
+                        reactEvent.ContactId__c = whatsappChat.Contact__c;
+                        EventBus.publish(reactEvent);
+                    }
+                    return;
+                }
+<<<<<<< HEAD
+
+>>>>>>> 77302c7 (with the webhook events configured 14/12/2024 04:43 PM)
+=======
+>>>>>>> fec058122b87c4b28040f7f96c5820f18609007e
                 whatsappChat.Contact__c = contact.Id;
                 whatsappChat.Type_of_Message__c = 'Inbound Messages';
                 whatsappChat.Message_Type__c = messageType;
