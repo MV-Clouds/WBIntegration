@@ -12,8 +12,8 @@ public without sharing class WhatsAppConfigurationController {
 
         try {
             
-            WhatsAppConfiguration__mdt config = [SELECT Id, DeveloperName, MasterLabel, Access_token_for_WhatsApp__c, Whatsapp_Account_ID__c, WhatsApp_PhoneNumber_ID__c FROM WhatsAppConfiguration__mdt LIMIT 1];
-            if (config == null) {
+            List<WhatsAppConfiguration__mdt> config = [SELECT Id, DeveloperName, MasterLabel, Access_token_for_WhatsApp__c, Whatsapp_Account_ID__c, WhatsApp_PhoneNumber_ID__c FROM WhatsAppConfiguration__mdt LIMIT 1];
+            if (config.isEmpty()) {
                 config = new WhatsAppConfiguration__mdt();
                 System.debug('null config');
             }
