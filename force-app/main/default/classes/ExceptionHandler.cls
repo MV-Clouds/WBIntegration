@@ -48,7 +48,7 @@ public with sharing class ExceptionHandler {
                 exc.Exception_Line_Number__c = excObj.getLineNumber();
                 exc.Exception_Stack_Trace__c = excObj.getStackTraceString();
             }
-            exc.More_Detail__c = (String)exceptionData.get('moreDetails');
+            exc.More_Details__c = (String)exceptionData.get('moreDetails');
             exc.Response__c = (String)exceptionData.get('apiResponse');
 
             insert as user exc;
