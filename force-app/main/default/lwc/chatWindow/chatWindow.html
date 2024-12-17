@@ -34,6 +34,9 @@
                                     <div if:true={chat.replyTo.isImage}>
                                         <img class="message-image" src={chat.replyTo.Message__c} alt="Image" />
                                     </div>
+                                    <div if:true={chat.replyTo.isOther}>
+                                        <div class="message-other">{chat.replyTo.Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
+                                    </div>
                                     <div if:true={chat.replyTo.isTemplate}>
                                         <div class="reply-to-template-message-div">{chat.replyTo.Whatsapp_Template__r.Name}</div>
                                     </div>
@@ -45,6 +48,15 @@
                                     <svg class="image-preview-close" data-action="close" onclick={handleToggleImagePreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="30" width="30"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
                                     <img class="message-image" src={chat.Message__c} onerror={handleImageError} alt="Photo"/>
                                 </div>
+                                <div class="other-message-div" if:true={chat.isOther}>
+                                    <div class="other-message-text">Shared {chat.Message_Type__c} with you.</div>
+                                    <div class="other-message-sub-text">You can not view this media due to limitation of your plan.</div>
+                                </div>
+                                <!-- <div class="video-message-div" if:true={chat.isVideo}>
+                                    <video controls>
+                                        <source src={chat.Message__c} >
+                                    </video>
+                                </div> -->
                                 <div class="template-message-div" if:true={chat.isTemplate}>
                                     <c-template-preview template-id={chat.Whatsapp_Template__c} record-id={recordId}></c-template-preview>
                                 </div>
@@ -54,14 +66,15 @@
                                       hour="2-digit"
                                       minute="2-digit"
                                     ></lightning-formatted-date-time>
-                                    <div class="status-icon" if:true={chat.isSent}>
+                                    <!-- <div class="status-icon" if:true={chat.isSent}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m3.125 7.5 3.125 3.125L12.5 4.375" stroke-width="1.5"></path></svg>
                                     </div>
                                     <div class="status-icon" if:true={chat.isDelivered}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m4.375 7.5 3.125 3.125L13.75 4.375" stroke-width="1.5"></path><path d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125" stroke-width="1.5"></path></svg>
-                                    </div>
-                                    <div class="status-icon" if:true={chat.isSeen}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="#34B7F1" stroke-linecap="round" stroke-linejoin="round"><path d="m4.375 7.5 3.125 3.125L13.75 4.375" stroke-width="1.5"></path><path d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125" stroke-width="1.5"></path></svg>
+                                    </div> -->
+                                    
+                                    <div class="status-icon" data-status={chat.Message_Status__c} if:true={chat.isTick}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path class="first-tick" stroke="#34B7F1" d="m4.375 7.5 3.125 3.125L13.75 4.375"></path><path class="second-tick" stroke="#34B7F1" d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125"></path></svg>
                                     </div>
                                     <div class="status-icon" if:true={chat.isSending}>
                                         <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" height="10" width="16" viewBox="-0.5 -0.5 16 16" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="M1.25 7.5a6.25 6.25 0 1 0 12.5 0 6.25 6.25 0 1 0 -12.5 0"></path><path d="m7.5 3.75 0 3.75 2.5 1.25" ></path></svg>
@@ -177,6 +190,9 @@
                     <div class="template-reply-to" if:true={replyToMessage.isTemplate}>
                         <div class="reply-to-template-message-div">{replyToTemplateId}</div>
                     </div>
+                    <div if:true={replyToMessage.isOther}>
+                        <div class="reply-to-other-message-div">{replyToMessage.Message_Type__c} shared by {replyToMessage.messageBy}.</div>
+                    </div>
                 </div>
             </div>
             <div class="message-div-container-parent" if:false={sendOnlyTemplate}>
@@ -247,20 +263,6 @@
                         <button class="send-btn" onclick={handleSendMessage}>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" viewBox="0 0 14 14" height="16" width="16" stroke-width="1"><path d="M11.8214 0.0977331c0.2883 -0.1052509 0.6005 -0.1264465 0.9005 -0.0610159 0.3029 0.0660858 0.5805 0.2177638 0.7997 0.4370018 0.2192 0.219238 0.3709 0.496818 0.437 0.799741 0.0654 0.29992 0.0442 0.6122 -0.061 0.90043l-3.574 10.71201 -0.0002 0.0007c-0.0871 0.2634 -0.2404 0.5001 -0.4453 0.6873 -0.2043 0.1867 -0.45301 0.3178 -0.72238 0.381 -0.26942 0.0657 -0.55131 0.0601 -0.81798 -0.0161 -0.26643 -0.0761 -0.50848 -0.2201 -0.70245 -0.4179l-1.91734 -1.9086 -2.01406 1.0415c-0.15705 0.0812 -0.34532 0.0734 -0.49515 -0.0205 -0.14982 -0.0938 -0.23893 -0.2599 -0.23434 -0.4366l0.08257 -3.18376 7.04493 -5.11741c0.2793 -0.20286 0.3413 -0.59371 0.1384 -0.87298 -0.2029 -0.27928 -0.59371 -0.34122 -0.87299 -0.13836L2.20283 8.0884 0.473125 6.35869l-0.000058 -0.00005 -0.000126 -0.00013c-0.187323 -0.18719 -0.325225 -0.41797 -0.4013217 -0.67163 -0.07555546 -0.25185 -0.0878308 -0.51841 -0.0357814 -0.77609 0.0521166 -0.28151 0.1779581 -0.54421 0.3647391 -0.76128 0.18806 -0.21856 0.431073 -0.38293 0.703923 -0.47612l0.00337 -0.00115 0 0.00001L11.8214 0.0977331Z"></path></svg>
                         </button>
-                        <!-- <svg width="2" height="20" viewBox="0 0 2 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="0.822368" y1="3.59475e-08" x2="0.822367" y2="20" stroke="#075e54" stroke-opacity="0.4" stroke-width="3"/>
-                        </svg>
-                        <div class="send-options-wrapper">
-                            <div class="send-options-menu hidden">
-                                <div class="send-options-item" onclick={handleSendMessage}>Send</div>
-                                <div class="send-options-item" onclick={handleScheduleMessage}>Schedule</div>
-                            </div>
-                            <button class="send-options-btn" onclick={handleOpenSendOptions}>
-                                <svg width="15" height="9" viewBox="0 0 14 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1L7 7L13 1" stroke="#075e54" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </div> -->
                     </div>
                 </div>       
             </div>
