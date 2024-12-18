@@ -448,7 +448,7 @@ input{
 .phone-container {
     width: 600px;
     height: 700px;
-    background: url(/resource/phoneImg) no-repeat center center;
+    background: url(/resource/MVWB__phoneImg) no-repeat center center;
     /* background-size: cover; */
     display: flex;
     justify-content: center;
