@@ -11,7 +11,7 @@ public class WhatsAppConfigurationTest {
     @IsTest
     static void testSaveConfigurations() {
         Test.startTest();
-        WhatsAppConfigurationController.saveConfiguration('123','123','123');
+        WhatsAppConfigurationController.saveConfiguration('123','123','123','123');
         Test.stopTest();
     }
 }

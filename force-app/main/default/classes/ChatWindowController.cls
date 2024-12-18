@@ -32,7 +32,7 @@ public with sharing class ChatWindowController{
             List<Chat__c> chats = new List<Chat__c>();
             List<Template__c> templates = new List<Template__c>();
             Contact recordData = new Contact();
-            UserThemePreference__c userPreference = UserThemePreference__c.getInstance(UserInfo.getUserId());
+            User_Theme_Preference__c userPreference = User_Theme_Preference__c.getInstance(UserInfo.getUserId());
 
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
@@ -158,11 +158,11 @@ public with sharing class ChatWindowController{
     public static Boolean updateThemePreference(String theme){
         Boolean isSuccess = false;
         try{
-            List<UserThemePreference__c> userPreferences = [SELECT Theme__c
-                                                            FROM UserThemePreference__c
+            List<User_Theme_Preference__c> userPreferences = [SELECT Theme__c
+                                                            FROM User_Theme_Preference__c
                                                             WHERE SetupOwnerId = :UserInfo.getUserId()
                                                             WITH SECURITY_ENFORCED];
-            UserThemePreference__c userPreference = new UserThemePreference__c();
+            User_Theme_Preference__c userPreference = new User_Theme_Preference__c();
             if (userPreferences.isEmpty()){
                 userPreference.SetupOwnerId = UserInfo.getUserId();
             } else{

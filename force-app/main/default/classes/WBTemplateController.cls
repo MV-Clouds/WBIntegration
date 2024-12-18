@@ -24,7 +24,7 @@
     static {
         try {
             SETTINGS = [
-                SELECT Access_token_for_WhatsApp__c, WhatsApp_App_Id__c, WhatsApp_App_Secret__c,WhatsApp_PhoneNumber_ID__c,Whatsapp_Account_ID__c	
+                SELECT Access_token_for_WhatsApp__c, WhatsApp_App_Id__c, WhatsApp_PhoneNumber_ID__c, Whatsapp_Account_ID__c	
                 FROM WhatsAppConfiguration__mdt
                 WHERE DeveloperName = 'WhatsAppConfig' WITH SECURITY_ENFORCED
                 LIMIT 1
