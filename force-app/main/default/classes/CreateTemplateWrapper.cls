@@ -389,7 +389,7 @@
                 }
             }
     
-            upsert whatsAppTemplate;
+            upsert whatsAppTemplate Template_Id__c;
             templateId = whatsAppTemplate.Id;
 
             for (Template_Variable__c variable : variableRecords) {
