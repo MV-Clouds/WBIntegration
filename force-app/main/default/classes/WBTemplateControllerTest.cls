@@ -9,7 +9,8 @@ public class WBTemplateControllerTest {
                 templates.add(new Template__c(
                     Name = 'Template' + i,
                     Template_Category__c = 'Marketing',
-                    Status__c = 'Active-Quality Pending'
+                    Status__c = 'Active-Quality Pending',
+                    Template_Id__c = 'testId'
                 ));
             }
             insert templates;
@@ -295,7 +296,7 @@ public class WBTemplateControllerTest {
     }
     @isTest
     static void testDeleteTemplate_Success() {
-		 Template__c template = new Template__c(Name = 'Test Template',Template_Category__c = 'Marketing');
+		 Template__c template = new Template__c(Name = 'Test Template',Template_Category__c = 'Marketing', Template_Id__c = 'testId');
         insert template;
 
      	Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));

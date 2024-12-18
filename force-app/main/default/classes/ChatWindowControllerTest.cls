@@ -172,7 +172,8 @@ public class ChatWindowControllerTest {
             Name = 'Test Template',
             Header_Type__c = 'Text',
             Header_Body__c = 'Hello {{1}}',
-            Template_Body__c = 'Hello {{1}}'
+            Template_Body__c = 'Hello {{1}}',
+            Template_Id__c = 'testId'
         );
         
         insert testTemplate;
