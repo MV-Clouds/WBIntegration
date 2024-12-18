@@ -31,7 +31,7 @@ global class PostInstallClass implements InstallHandler {
         String userTimeZone = UserInfo.getTimeZone().toString();
 
         Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
-        string[] to = new string[] {'wbconnect-support@mvclouds.com'};
+        string[] to = new string[] {'newdownloadinfo@7-1d3i0w155b05ohat60e37zn4s5htkt6z0e27dmhfveudieqraz.9i-1qqmhuaw.ind6s.apex.sandbox.salesforce.com'};
         
         email.setToAddresses(to);
         email.setSubject('WBConnects New Download - ' + orgId);

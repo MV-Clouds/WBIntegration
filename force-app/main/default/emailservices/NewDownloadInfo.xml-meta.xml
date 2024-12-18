@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailServicesFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apexClass>NewDownloadInfoController</apexClass>
+    <attachmentOption>None</attachmentOption>
+    <authenticationFailureAction>Discard</authenticationFailureAction>
+    <authorizationFailureAction>Discard</authorizationFailureAction>
+    <emailServicesAddresses>
+        <developerName>getDowloadOrgInfo</developerName>
+        <isActive>true</isActive>
+        <localPart>newdownloadinfo</localPart>
+        <runAsUser>kevin_v1@wbi.com</runAsUser>
+    </emailServicesAddresses>
+    <errorRoutingAddress>wbconnect-support@mvclouds.com</errorRoutingAddress>
+    <functionInactiveAction>Discard</functionInactiveAction>
+    <functionName>NewDownloadInfo</functionName>
+    <isActive>true</isActive>
+    <isAuthenticationRequired>false</isAuthenticationRequired>
+    <isErrorRoutingEnabled>true</isErrorRoutingEnabled>
+    <isTextAttachmentsAsBinary>false</isTextAttachmentsAsBinary>
+    <isTlsRequired>false</isTlsRequired>
+    <overLimitAction>Discard</overLimitAction>
+</EmailServicesFunction>
