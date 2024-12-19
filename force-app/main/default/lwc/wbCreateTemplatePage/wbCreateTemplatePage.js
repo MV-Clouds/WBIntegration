@@ -20,7 +20,7 @@ import richTextZip from '@salesforce/resourceUrl/richTextZip';
 import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
 import getCountryCodes from '@salesforce/apex/WBTemplateController.getCountryCodes';
 import getLanguages from '@salesforce/apex/WBTemplateController.getLanguages';
-import emojiData from '@salesforce/resourceUrl/emoji_data';
+import emojiData from '@salesforce/resourceUrl/emojis_data';
 // import getEmojiData from '@salesforce/apex/EmojiDataController.getEmojiData';
 import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist';
 import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate';
@@ -297,20 +297,20 @@ export default class WbCreateTemplatePage extends LightningElement {
             .then((data) => {
                 const { template, templateVariables } = data;
                 this.templateName = template.Name || '';
-                this.metaTemplateId = template.Template_Id__c || '';
+                this.metaTemplateId = template.MVWB__Template_Id__c || '';
                 console.log('meta template id ',this.metaTemplateId);
                 
-                const header = template.Header_Body__c || '';
+                const header = template.MVWB__Header_Body__c || '';
                 this.header = header.trim().replace(/^\*\*|\*\*$/g, '');
                 console.log(this.header);
                 
-                this.footer = template.Footer_Body__c || '';
-                this.selectedLanguage = template.Language__c;
-                this.tempBody = template.Template_Body__c || 'Hello';
+                this.footer = template.MVWB__Footer_Body__c || '';
+                this.selectedLanguage = template.MVWB__Language__c;
+                this.tempBody = template.MVWB__Template_Body__c || 'Hello';
                 this.previewBody= this.formatText(this.tempBody) || 'Hello';
                 this.previewHeader= this.formatText(this.header) ||'';
-                this.selectedContentType=template.Header_Type__c || 'None';
-                this.btntext = template.Button_Label__c || '';
+                this.selectedContentType=template.MVWB__Header_Type__c || 'None';
+                this.btntext = template.MVWB__Button_Label__c || '';
                 console.log('selectedContentType ',this.selectedContentType);
                 
                 let tvs =templateVariables.map(tv=>{
@@ -359,17 +359,17 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 console.log('CP2');
 
-                if(template.Button_Type__c && template.Button_Label__c){
+                if(template.MVWB__Button_Type__c && template.MVWB__Button_Label__c){
                     let newButton = {
                         id: this.buttonList.length + 1,
-                        selectedActionType: template.Button_Type__c,
-                        iconName: this.getButtonIcon(template.Button_Type__c),
-                        btntext: template.Button_Label__c,
-                        webURL: template.Button_Body__c,
-                        phonenum: template.Button_Body__c?.split(' ')[1],
-                        offercode: template.Button_Body__c,
+                        selectedActionType: template.MVWB__Button_Type__c,
+                        iconName: this.getButtonIcon(template.MVWB__Button_Type__c),
+                        btntext: template.MVWB__Button_Label__c,
+                        webURL: template.MVWB__Button_Body__c,
+                        phonenum: template.MVWB__Button_Body__c?.split(' ')[1],
+                        offercode: template.MVWB__Button_Body__c,
                         selectedUrlType: 'Static',
-                        selectedCountryType: template.Button_Body__c?.split(' ')[0],
+                        selectedCountryType: template.MVWB__Button_Body__c?.split(' ')[0],
                         isCallPhone: false,
                         isVisitSite: false,
                         isOfferCode: false,
@@ -377,10 +377,10 @@ export default class WbCreateTemplatePage extends LightningElement {
                         errorMessage: ''   
                     };
                     
-                    this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
-                    // this.handleLanguageChange({ target: { value: template.Language__c } });
+                    this.handleMenuSelect({currentTarget:{dataset:{value:template.MVWB__Button_Type__c,buttonData:newButton}}});
+                    // this.handleLanguageChange({ target: { value: template.MVWB__Language__c } });
                 }
-                this.handleContentType({target:{value:template.Header_Type__c}});
+                this.handleContentType({target:{value:template.MVWB__Header_Type__c}});
             })
             .catch((error) => {
                 console.error('Error fetching fields: ', error);

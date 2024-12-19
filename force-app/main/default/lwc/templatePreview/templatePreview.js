@@ -33,12 +33,12 @@ export default class TemplatePreview extends LightningElement {
             getTemplateData({templateId: this.templateId, contactId:this.recordId})
             .then((templateData) => {
                 this.templateData = templateData;
-                this.isTextHeader = templateData?.Header_Type__c === 'Text' ? true : false;
-                this.isImageHeader = templateData?.Header_Type__c === 'Image' ? true : false;
-                this.headerBody = templateData?.Header_Body__c;
-                this.templateBody = templateData?.Template_Body__c;
-                this.footerBody = templateData?.Footer_Body__c;
-                this.buttonLabel = templateData?.Button_Label__c;
+                this.isTextHeader = templateData?.MVWB__Header_Type__c === 'Text' ? true : false;
+                this.isImageHeader = templateData?.MVWB__Header_Type__c === 'Image' ? true : false;
+                this.headerBody = templateData?.MVWB__Header_Body__c;
+                this.templateBody = templateData?.MVWB__Template_Body__c;
+                this.footerBody = templateData?.MVWB__Footer_Body__c;
+                this.buttonLabel = templateData?.MVWB__Button_Label__c;
                 this.showSpinner = false;
 
                 let headerText = this.template.querySelector('.header-text');
@@ -72,7 +72,7 @@ export default class TemplatePreview extends LightningElement {
                 if(chat){
                     let templatePayload = this.createJSONBody(this.mobileNumber, "template", {
                         templateName: this.templateData.Name,
-                        languageCode: this.templateData.Language__c,
+                        languageCode: this.templateData.MVWB__Language__c,
                         parameters: this.templateData.parameters || []
                     });
                     console.log('the Payload is :: :', templatePayload);

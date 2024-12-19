@@ -3,7 +3,7 @@
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
 
- * @last modified on  : 12-17-2024
+ * @last modified on  : 12-19-2024
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public without sharing class WhatsAppConfigurationController {
@@ -18,26 +18,26 @@ public without sharing class WhatsAppConfigurationController {
                 config = configList[0];
             }
             Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
-            mdata.fullName = 'WhatsAppConfiguration__mdt.' + config.DeveloperName; 
+            mdata.fullName = 'MVWB__WhatsAppConfiguration__mdt.' + config.DeveloperName; 
             mdata.label = config.MasterLabel;
             
             Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
-            instance1.field = 'Access_token_for_WhatsApp__c';
+            instance1.field = 'MVWB__Access_token_for_WhatsApp__c';
             instance1.value = AccessToken;
             mdata.values.add(instance1);
             
             Metadata.CustomMetadataValue instance2 = new Metadata.CustomMetadataValue();
-            instance2.field = 'WhatsApp_PhoneNumber_ID__c';
+            instance2.field = 'MVWB__WhatsApp_PhoneNumber_ID__c';
             instance2.value = PhoneNumberId;
             mdata.values.add(instance2);
             
             Metadata.CustomMetadataValue instance3 = new Metadata.CustomMetadataValue();
-            instance3.field = 'Whatsapp_Account_ID__c';
+            instance3.field = 'MVWB__Whatsapp_Account_ID__c';
             instance3.value = WBAccountId;
             mdata.values.add(instance3);
             
             Metadata.CustomMetadataValue instance4 = new Metadata.CustomMetadataValue();
-            instance4.field = 'WhatsApp_App_Id__c';
+            instance4.field = 'MVWB__WhatsApp_App_Id__c';
             instance4.value = AppId;
             mdata.values.add(instance4);
 
