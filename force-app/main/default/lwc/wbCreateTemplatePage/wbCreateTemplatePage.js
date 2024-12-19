@@ -65,6 +65,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isButtonDisabled = false;
     @track isStopMarketing = false;
     @track buttonDisabled = false;
+    @track isRefreshEnabled = true;
     @track isDefault=true;
     @track isLoading=false;
     @track templateExists=false;
@@ -226,6 +227,10 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
     }
     
+    get refreshButtonClass() {
+        return this.isRefreshEnabled ? 'refresh-icon refresh-disabled' : 'refresh-icon';
+    }
+
     connectedCallback() {
         console.log('default option selected==> ' + this.selectedOption);       
         this.fetchCountries();
@@ -378,7 +383,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                     };
                     
                     this.handleMenuSelect({currentTarget:{dataset:{value:template.MVWB__Button_Type__c,buttonData:newButton}}});
-                    // this.handleLanguageChange({ target: { value: template.MVWB__Language__c } });
                 }
                 this.handleContentType({target:{value:template.MVWB__Header_Type__c}});
             })
@@ -1048,7 +1052,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.log('Clicked Button:', clickedButton);
         
             if (clickedButton) {
-                if (clickedButton.isDisabled) {
+                if (clickedButton.isDisabled) {                    
                     console.log('Button is already disabled.');
                     return; 
                 }
@@ -1067,10 +1071,11 @@ export default class WbCreateTemplatePage extends LightningElement {
                 clickedButton.buttonClass = 'button-label-preview disabled'; 
     
                 this.customButtonList = [...this.customButtonList];
+                this.isRefreshEnabled = false;
+                console.log(this.isRefreshEnabled);
             }
         } catch (error) {
             console.error('Error while replying to template.',error);
-            
         }
     }    
 
@@ -1100,7 +1105,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         } catch (error) {
             console.error('Error while handling the custom text.',error);
         }
-        
     }
 
     handleRemoveCustom(event) {
@@ -1153,6 +1157,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                 };
             });
             this.chatMessages = [];
+            this.isRefreshEnabled = true;
+            console.log(this.isRefreshEnabled);
+            
         } catch (error) {
             console.error('Error while refreshing the template.',error);
         }

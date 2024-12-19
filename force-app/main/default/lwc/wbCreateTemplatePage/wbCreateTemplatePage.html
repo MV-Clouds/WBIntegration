@@ -508,7 +508,9 @@
                                     <div class="preview-head">
                                         <p class="templatetextWP"><b>Template Preview</b></p>
                                         <template if:true={isCustom}>
-                                            <img src="/resource/MVWB__refreshIcon" class="refresh-icon" alt="refresh" onclick={refreshTempPreview}>
+                                            <button class="refresh-btn" onclick={refreshTempPreview} disabled={isRefreshEnabled}>
+                                                <img src="/resource/refreshIcon" class={refreshButtonClass} alt="refresh">
+                                            </button>
                                         </template>
                                     </div>
                                   
