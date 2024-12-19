@@ -7,6 +7,7 @@
     background-image: url('/resource/wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
+    border-radius: 5px;
 }
 .preview-container{
     display: grid;
@@ -788,8 +789,6 @@ textarea {
     align-items: center;
     justify-content: flex-end;
     font-size: smaller;
-    /* margin-top: 1%; */
-    margin-bottom: 1%;
     position: relative;
     /* top: 10px; */
 }
@@ -862,7 +861,7 @@ textarea {
 .pfooterWP {
     font-size: smaller;
     color: #b2b2b2;
-    max-width: 90%;
+    width: -webkit-fill-available;
 }
 
 .templateheadWP {
@@ -877,7 +876,7 @@ textarea {
     padding-top: 6px;
     padding-left: 7px;
     padding-right: 7px;
-    padding-bottom: 7px;
+    padding-bottom: 0px;
     width: auto;
     max-width: 300px;
     min-width: 150px;
@@ -896,17 +895,20 @@ textarea {
     border-top: 0px solid white;
     border-right: 18px solid white;
     border-bottom: 17px solid transparent;
-    transform: translateY(-50%);
+    /* transform: translateY(-50%); */
+    transform: translateY(-52%);
 }
 
 .textfooterWP {
     display: flex;
     justify-content: space-between;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
 }
 
 .timefooterWP {
     font-size: x-small;
-    margin-bottom: 0.2rem;
 }
 
 .comboboxWP {
@@ -960,9 +962,9 @@ textarea {
 .main-container {
     position: relative;
     /* height: calc(100% + 1.5rem); */
-    margin-top: -0.75rem;
+    /* margin-top: -0.75rem;
     width: calc(100% + 1.5rem);
-    margin-left: -0.75rem;
+    margin-left: -0.75rem; */
 }
 
 .spinner-overlay {
@@ -1113,6 +1115,24 @@ textarea {
     color: rgba(0, 119, 182, 1);
     margin-top: 8px;
     padding-left: 10px;
+}
+
+.dropdown-container{
+    position: relative;
+}
+
+.dropdown-visible{
+    position: absolute;
+    bottom: 26.5rem;
+}
+
+.refresh-btn{
+    padding: 0;
+    border: none;
+    background: white;
+}
+.refresh-disabled{
+    background-color: rgb(229 229 229 / 46%);
 }
 
 .dropdown-section-header {

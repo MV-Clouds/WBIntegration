@@ -72,6 +72,7 @@
 .filterdiv {
     display: flex;
     gap: 2%;
+    width: -webkit-fill-available;
 }
 
 .custom-button {
@@ -128,18 +129,18 @@
     font-size: large;
 }
 
-
 .main {
     padding: 1%;
     background-image: url(/resource/wbiTemplateBg);
     background-repeat: no-repeat;
     background-size: cover;
     border-radius: 5px;
+    height: 100%;
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.5), 0 1px 8px 0 rgba(0, 0, 0, 0.29);
     /* height: calc(100% + 1.5rem); */
-    margin-top: -0.75rem;
+    /* margin-top: -0.75rem;
     width: calc(100% + 1.5rem);
-    margin-left: -0.75rem;
+    margin-left: -0.75rem; */
     /* height: calc(100% + 1.5rem); */
 }
 
@@ -303,9 +304,9 @@ img {
     overflow: hidden;
     transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
     opacity: 0;
-    display: flex;
+    /* display: flex;
     flex-direction: row;
-    gap: 1rem;
+    gap: 1rem; */
 }
 
 /* Visible state */
@@ -313,6 +314,8 @@ img {
     height: auto;
     opacity: 1;
     display: contents;
+    /* display: flex;
+    gap: 1rem; */
     transition: height 0.3s ease-out, opacity 0.3s ease-out;
 }
 

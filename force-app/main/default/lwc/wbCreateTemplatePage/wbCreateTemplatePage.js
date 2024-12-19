@@ -65,6 +65,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isButtonDisabled = false;
     @track isStopMarketing = false;
     @track buttonDisabled = false;
+    @track isRefreshEnabled = true;
     @track isDefault=true;
     @track isLoading=false;
     @track templateExists=false;
@@ -226,6 +227,10 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.variables.map(varItem => `{{${varItem.object}.${varItem.field}}}`);
     }
     
+    get refreshButtonClass() {
+        return this.isRefreshEnabled ? 'refresh-icon refresh-disabled' : 'refresh-icon';
+    }
+
     connectedCallback() {
         console.log('default option selected==> ' + this.selectedOption);       
         this.fetchCountries();
@@ -297,20 +302,20 @@ export default class WbCreateTemplatePage extends LightningElement {
             .then((data) => {
                 const { template, templateVariables } = data;
                 this.templateName = template.Name || '';
-                this.metaTemplateId = template.Template_Id__c || '';
+                this.metaTemplateId = template.MVWB__Template_Id__c || '';
                 console.log('meta template id ',this.metaTemplateId);
                 
-                const header = template.Header_Body__c || '';
+                const header = template.MVWB__Header_Body__c || '';
                 this.header = header.trim().replace(/^\*\*|\*\*$/g, '');
                 console.log(this.header);
                 
-                this.footer = template.Footer_Body__c || '';
-                this.selectedLanguage = template.Language__c;
-                this.tempBody = template.Template_Body__c || 'Hello';
+                this.footer = template.MVWB__Footer_Body__c || '';
+                this.selectedLanguage = template.MVWB__Language__c;
+                this.tempBody = template.MVWB__Template_Body__c || 'Hello';
                 this.previewBody= this.formatText(this.tempBody) || 'Hello';
                 this.previewHeader= this.formatText(this.header) ||'';
-                this.selectedContentType=template.Header_Type__c || 'None';
-                this.btntext = template.Button_Label__c || '';
+                this.selectedContentType=template.MVWB__Header_Type__c || 'None';
+                this.btntext = template.MVWB__Button_Label__c || '';
                 console.log('selectedContentType ',this.selectedContentType);
                 
                 let tvs =templateVariables.map(tv=>{
@@ -359,17 +364,17 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 console.log('CP2');
 
-                if(template.Button_Type__c && template.Button_Label__c){
+                if(template.MVWB__Button_Type__c && template.MVWB__Button_Label__c){
                     let newButton = {
                         id: this.buttonList.length + 1,
-                        selectedActionType: template.Button_Type__c,
-                        iconName: this.getButtonIcon(template.Button_Type__c),
-                        btntext: template.Button_Label__c,
-                        webURL: template.Button_Body__c,
-                        phonenum: template.Button_Body__c?.split(' ')[1],
-                        offercode: template.Button_Body__c,
+                        selectedActionType: template.MVWB__Button_Type__c,
+                        iconName: this.getButtonIcon(template.MVWB__Button_Type__c),
+                        btntext: template.MVWB__Button_Label__c,
+                        webURL: template.MVWB__Button_Body__c,
+                        phonenum: template.MVWB__Button_Body__c?.split(' ')[1],
+                        offercode: template.MVWB__Button_Body__c,
                         selectedUrlType: 'Static',
-                        selectedCountryType: template.Button_Body__c?.split(' ')[0],
+                        selectedCountryType: template.MVWB__Button_Body__c?.split(' ')[0],
                         isCallPhone: false,
                         isVisitSite: false,
                         isOfferCode: false,
@@ -377,10 +382,10 @@ export default class WbCreateTemplatePage extends LightningElement {
                         errorMessage: ''   
                     };
                     
-                    this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
+                    this.handleMenuSelect({currentTarget:{dataset:{value:template.MVWB__Button_Type__c,buttonData:newButton}}});
                     // this.handleLanguageChange({ target: { value: template.Language__c } });
                 }
-                this.handleContentType({target:{value:template.Header_Type__c}});
+                this.handleContentType({target:{value:template.MVWB__Header_Type__c}});
             })
             .catch((error) => {
                 console.error('Error fetching fields: ', error);
@@ -1048,7 +1053,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.log('Clicked Button:', clickedButton);
         
             if (clickedButton) {
-                if (clickedButton.isDisabled) {
+                if (clickedButton.isDisabled) {                    
                     console.log('Button is already disabled.');
                     return; 
                 }
@@ -1067,10 +1072,11 @@ export default class WbCreateTemplatePage extends LightningElement {
                 clickedButton.buttonClass = 'button-label-preview disabled'; 
     
                 this.customButtonList = [...this.customButtonList];
+                this.isRefreshEnabled = false;
+                console.log(this.isRefreshEnabled);
             }
         } catch (error) {
             console.error('Error while replying to template.',error);
-            
         }
     }    
 
@@ -1100,7 +1106,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         } catch (error) {
             console.error('Error while handling the custom text.',error);
         }
-        
     }
 
     handleRemoveCustom(event) {
@@ -1153,6 +1158,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                 };
             });
             this.chatMessages = [];
+            this.isRefreshEnabled = true;
+            console.log(this.isRefreshEnabled);
+            
         } catch (error) {
             console.error('Error while refreshing the template.',error);
         }
