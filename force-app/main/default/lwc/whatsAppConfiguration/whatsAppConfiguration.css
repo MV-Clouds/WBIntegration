@@ -4,7 +4,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url(/resource/WB_Config_Bg);
+    background-image: url(/resource/MVWB__WB_Config_Bg);
 }
 
 .configuration-box {
@@ -45,16 +45,6 @@
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 5px;
-}
-
-.save-button {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 20px;
 }
 
 /* Modal styles */
@@ -107,7 +97,7 @@
   }
   
   button{
-    background-color: #004f43;
+    background-color: #01a1e1;
     color: white;
     padding: 12px 30px;
     border: none;
@@ -118,7 +108,7 @@
   }
   
   button:hover {
-    background-color: #018a75;
+    background-color: #26d368dd;
   }
   
   .container {

@@ -20,7 +20,7 @@ import richTextZip from '@salesforce/resourceUrl/richTextZip';
 import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
 import getCountryCodes from '@salesforce/apex/WBTemplateController.getCountryCodes';
 import getLanguages from '@salesforce/apex/WBTemplateController.getLanguages';
-import emojiData from '@salesforce/resourceUrl/emoji_data';
+import emojiData from '@salesforce/resourceUrl/emojis_data';
 // import getEmojiData from '@salesforce/apex/EmojiDataController.getEmojiData';
 import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist';
 import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate';
@@ -383,7 +383,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                     };
                     
                     this.handleMenuSelect({currentTarget:{dataset:{value:template.MVWB__Button_Type__c,buttonData:newButton}}});
-                    // this.handleLanguageChange({ target: { value: template.Language__c } });
                 }
                 this.handleContentType({target:{value:template.MVWB__Header_Type__c}});
             })
