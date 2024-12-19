@@ -15,7 +15,9 @@ global without sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
+
     //Callback URL :- https://mvclouds-d2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/WBI/webhooks/v1/
+
     @HttpGet // GET
     global static void doGet(){
         RestResponse response = RestContext.response;
@@ -60,7 +62,7 @@ global without sharing class WhatsAppWebhook{
             List<Object> listofmessages = (List<Object>)payload.get('entry');
             Object messageobj = listofmessages[0];
 
-            Map<String, Object> sender = new Map<String, Object>();
+            Map<String, Object> sender = new Map<String,Object>();
             // for (Object messageobj : listofmessages) {
             if (messageobj != null){
                 Map<String, Object> messageMap = (Map<String, Object>)messageobj;
@@ -80,8 +82,10 @@ global without sharing class WhatsAppWebhook{
                         messages = (List<Object>)value.get('messages');
                         List<Object> senders = new List<Object>();
                         senders = (List<Object>)value.get('contacts');
-                        sender = (Map<String, Object>)senders[0];
-
+                        if(senders !=null && senders.size() > 0){
+                            sender =  (Map<String, Object>) senders[0];
+                        }
+                        
                         // messages = (List<Object>) metadata.get('messages');
                         System.debug('messages ==> ' + messages);
                         // processWhatsAppMessages(messages);;
@@ -97,6 +101,7 @@ global without sharing class WhatsAppWebhook{
             }
             // processWhatsAppMessages(messages);
         } catch (Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processWhatsAppPayload', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in processWhatsAppPayload: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
         }
     }
@@ -107,6 +112,20 @@ global without sharing class WhatsAppWebhook{
             String senderId = (String) message.get('from');
             String messageType = (String) message.get('type');
             String whatsAppMessageID = (String) message.get('id');
+            Map<String, Object> context = (Map<String, Object>)message.get('context');
+            String contextId = '';
+            if (context != null){
+                contextId = (String) context.get('id');
+                System.debug('Context ID ==> ' + contextId);
+            }
+            Map<String, Object> reactionMessage = (Map<String, Object>)message.get('reaction');
+            String reactToMessageId = '';
+            String reactedEmoji= '';
+            if (reactionMessage != null){
+                reactToMessageId = (String) reactionMessage.get('message_id');
+                reactedEmoji= (String) reactionMessage.get('emoji');
+                System.debug('Context ID ==> ' + reactToMessageId);
+            }
             Integer timestampValue = Integer.valueOf(message.get('timestamp'));
             DateTime currentUTCDateTime = System.now();
             Timezone tzIST = Timezone.getTimeZone('Asia/Kolkata');
@@ -122,9 +141,9 @@ global without sharing class WhatsAppWebhook{
 
             // Query to check if the message has already been processed
             List<Chat__c> existingChatRecords = [SELECT Id
-                                                 FROM Chat__c
-                                                 WHERE WhatsAppMessageId__c = :whatsAppMessageID
-                                                 LIMIT 1];
+                                                          FROM Chat__c
+                                                          WHERE WhatsAppMessageId__c = :whatsAppMessageID
+                                                          LIMIT 1];
             if (!existingChatRecords.isEmpty()){
                 System.debug('Message already processed: ' + whatsAppMessageID);
                 return;
@@ -137,13 +156,13 @@ global without sharing class WhatsAppWebhook{
 
             List<Contact> contacts = new List<Contact>();
             System.debug('Sender Id => ' + senderId);
-            System.debug('Contacts:- ' + [SELECT Id, Name, Phone, MobilePhone, OwnerId
-                                          FROM Contact]);
-
+            System.debug('Contacts:- '+ [SELECT Id, Name, Phone, MobilePhone, OwnerId
+                                      FROM Contact]);
+            
             contacts = [SELECT Id, Name, Phone, MobilePhone, OwnerId
-                        FROM Contact
-                        WHERE Phone = :formattedNumber
-                        LIMIT 1];
+                                      FROM Contact
+                                      WHERE Phone = :formattedNumber
+                                      LIMIT 1];
             System.debug('formattedNumber Id => ' + formattedNumber);
             Contact contact;
             if (!contacts.isEmpty()){
@@ -151,13 +170,13 @@ global without sharing class WhatsAppWebhook{
                 contact = contacts[0];
             } else{
                 Contact Con = new Contact();
-                Map<String, Object> profile = (Map<String, Object>)sender.get('profile');
+                Map<String, Object> profile = (Map<String,Object>) sender.get('profile');
                 Con.LastName = (String) profile.get('name');
                 Con.Phone = (String) senderId;
                 insert Con;
                 contact = Con;
             }
-
+            
 
             DateTime myDateTime = DateTime.now();
             // String formattedDate = myDateTime.format(' d MMM yyyy');
@@ -166,24 +185,41 @@ global without sharing class WhatsAppWebhook{
             Chat__c whatsappChat = new Chat__c();
 
             if (existingChatRecords.isEmpty()){
-                System.debug('contact id:- ' + contact.Id);
+
+                if(messageType.equalsIgnoreCase('reaction')){
+                    List<Chat__c> reactToChat = [SELECT Id, Reaction__c, Contact__c FROM Chat__c WHERE WhatsAppMessageId__c =:reactToMessageId];
+                    if(reactToChat.size() > 0){
+                        reactToChat[0].Reaction__c = reactToChat[0].Reaction__c!=null ? reactToChat[0].Reaction__c : '<|USER|>';
+                        reactToChat[0].Reaction__c = reactToChat[0].Reaction__c.split('<|USER|>')[0] + '<|USER|>' + (reactedEmoji!=null ? reactedEmoji : '');
+                        whatsappChat = reactToChat[0];
+                        update whatsappChat;
+                        Chat_Message__e reactEvent = new Chat_Message__e();
+                        reactEvent.Chat_Data__c = JSON.serialize(whatsappChat);
+                        reactEvent.Type__c = 'react';
+                        reactEvent.ContactId__c = whatsappChat.Contact__c;
+                        EventBus.publish(reactEvent);
+                    }
+                    return;
+                }
+
                 whatsappChat.Contact__c = contact.Id;
                 whatsappChat.Type_of_Message__c = 'Inbound Messages';
                 whatsappChat.Message_Type__c = messageType;
                 whatsappChat.WhatsAppMessageId__c = whatsAppMessageID;
-                whatsappChat.Time_of_Message__c = formattedTime2;
                 whatsappChat.Date_of_Message__c = formattedDate;
+                List<Chat__c> replyToChat = [SELECT Id FROM Chat__c WHERE WhatsAppMessageId__c != null AND WhatsAppMessageId__c =:contextId];
+                whatsappChat.Reply_To__c = replyToChat.size() > 0 ? replyToChat[0].Id : null;
 
                 if (messageType.equalsIgnoreCase('text')){
-                    Map<String, Object> text = (Map<String, Object>)message.get('text');
+                    Map<String, Object> text = (Map<String, Object>) message.get('text');
                     String messageBody = '';
-                    if (text != null && text.values() != null){
+                    if(text != null && text.values() != null){
                         messageBody = (String) text.get('body');
                     }
                     whatsappChat.Message__c = messageBody;
                 }
                 if (messageType.equalsIgnoreCase('image')){
-                    Map<String, Object> image = (Map<String, Object>)message.get('image');
+                    Map<String, Object> image = (Map<String, Object>) message.get('image');
                     String imageId = (String) image.get('id');
                     String mimeType = (String) image.get('mime_type');
                     String filename = whatsAppMessageID + '-' + mimeType;
@@ -193,76 +229,77 @@ global without sharing class WhatsAppWebhook{
                     if (documentBody != null){
                         filedata = saveMediaToSalesforce(documentBody, filename, mimeType, contact.Id);
                     }
-                    whatsappChat.Message__c = filename;
+                    whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
                     whatsappChat.File_Data__c = JSON.serialize(fileData);
 
                 }
                 if (messageType.equalsIgnoreCase('document')){
                     Map<String, Object> document = (Map<String, Object>)message.get('document');
                     String mediaId = (String) document.get('id');
-                    String filename = (String) document.get('fileName');
                     String mimeType = (String) document.get('mime_type');
-
+                    String filename = whatsAppMessageID + '-' + mimeType;
+    
                     Blob documentBody = handleMediaAttachment(mediaId);
 
                     Map<String, Object> filedata = new Map<String, Object>();
                     if (documentBody != null){
                         filedata = saveMediaToSalesforce(documentBody, filename, mimeType, contact.Id);
                     }
-                    whatsappChat.Message__c = filename;
+                    whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
                     whatsappChat.File_Data__c = JSON.serialize(fileData);
                 }
                 if (messageType.equalsIgnoreCase('video')){
-                    Map<String, Object> video = (Map<String, Object>)message.get('video');
+                    Map<String, Object> video = (Map<String, Object>) message.get('video');
                     String videoId = (String) video.get('id');
-                    String filename = (String) video.get('fileName');
                     String mimeType = (String) video.get('mime_type');
+                    String filename = whatsAppMessageID + '-' + mimeType;
 
                     Blob documentBody = handleMediaAttachment(videoId);
                     Map<String, Object> filedata = new Map<String, Object>();
                     if (documentBody != null){
                         filedata = saveMediaToSalesforce(documentBody, filename, mimeType, contact.Id);
                     }
-                    whatsappChat.Message__c = filename;
+                    whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
                     whatsappChat.File_Data__c = JSON.serialize(fileData);
                 }
                 if (messageType.equalsIgnoreCase('audio')){
-                    Map<String, Object> video = (Map<String, Object>)message.get('audio');
+                    Map<String, Object> video = (Map<String, Object>) message.get('audio');
                     String audioId = (String) video.get('id');
-                    String filename = (String) video.get('fileName');
                     String mimeType = (String) video.get('mime_type');
+                    String filename = whatsAppMessageID + '-' + mimeType;
 
                     Blob documentBody = handleMediaAttachment(audioId);
                     Map<String, Object> filedata = new Map<String, Object>();
                     if (documentBody != null){
                         filedata = saveMediaToSalesforce(documentBody, filename, mimeType, contact.Id);
                     }
-                    whatsappChat.Message__c = filename;
+                    whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
                     whatsappChat.File_Data__c = JSON.serialize(fileData);
                 }
                 if (messageType.equalsIgnoreCase('button')){
                     Map<String, Object> button = (Map<String, Object>)message.get('button');
                     String payload = (String) button.get('payload');
                     String text = (String) button.get('text');
-                    Map<String, Object> context = (Map<String, Object>)message.get('context');
-                    String contextId = '';
-                    if (context != null){
-                        contextId = (String) context.get('id');
-                        System.debug('Context ID ==> ' + contextId);
-                    }
                     whatsappChat.Message__c = text;
                     if (contextId != null && contextId != ''){
                         whatsappChat.WhatsAppContextMessageID__c = contextId;
                     }
-
+                    whatsappChat.Message_Type__c = 'text';
                 }
             }
-
+            whatsappChat.Last_Interaction_Date__c = System.now();
             insert whatsappChat;
-            System.debug('Chat__c record created: ' + whatsappChat.Id);
+            // System.debug('Chat__c record created: ' + whatsappChat);
+            Chat_Message__e newChatEvent = new Chat_Message__e();
+            Chat__c chatToSend = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c, Contact__c FROM Chat__c WHERE Id =:whatsappChat.Id LIMIT 1];
+            newChatEvent.Chat_Data__c = JSON.serialize(chatToSend);
+            newChatEvent.Type__c = 'new';
+            newChatEvent.ContactId__c = whatsappChat.Contact__c;
+            EventBus.publish(newChatEvent);
             sendNotificationForContact(contact);
 
         } catch (Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processSingleMessage', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in processSingleMessage: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
         }
     }
@@ -295,7 +332,7 @@ global without sharing class WhatsAppWebhook{
             String accessToken = '';
             List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values();
             accessToken = config[0].Access_token_for_WhatsApp__c;
-
+            
             if (accessToken != ''){
                 HttpRequest req = new HttpRequest();
                 req.setEndpoint(mediaUrl);
@@ -306,7 +343,7 @@ global without sharing class WhatsAppWebhook{
                 try{
                     Http http = new Http();
                     res = http.send(req);
-                    System.debug('res:- ' + res);
+                    System.debug('res:- '+res);
 
                     if (res.getStatusCode() == 200){
                         // Parse the metadata response
@@ -329,6 +366,7 @@ global without sharing class WhatsAppWebhook{
                 return null;
             }
         } catch (Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processSingleMessage', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in handleMediaAttachment: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
             return null;
         }
@@ -353,6 +391,7 @@ global without sharing class WhatsAppWebhook{
                 return null;
             }
         } catch (Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'downloadMediaContent', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in downloadMediaContent: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
             return null;
         }
@@ -367,7 +406,7 @@ global without sharing class WhatsAppWebhook{
                                LIMIT 1];
 
             // Create ContentVersion with Contact's OwnerId
-            System.debug('filename--> ' + filename);
+            System.debug('filename--> '+ filename);
             ContentVersion contentVersion = new ContentVersion(
                 Title = filename, 
                 VersionData = mediaBlob, 
@@ -396,6 +435,7 @@ global without sharing class WhatsAppWebhook{
             fileData = new Map<String, Object>{ 'fileName' => filename, 'documentId' => contentDocumentId, 'contentVersionId' => contentVersion.Id, 'mimeType' => mimeType };
 
         } catch (Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'saveMediaToSalesforce', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in saveMediaToSalesforce: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
         }
         return filedata;
@@ -423,6 +463,7 @@ global without sharing class WhatsAppWebhook{
             customNotificationObj.send(addressee);
 
         } catch (Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'sendNotificationForContact', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in sendNotificationForContact: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
         }
     }
@@ -521,29 +562,29 @@ global without sharing class WhatsAppWebhook{
                                 for (Object statusObj : statuses){
                                     Map<String, Object> statusMap = (Map<String, Object>)statusObj;
                                     String status = (String) statusMap.get('status');
-                                    String waid = (String) statusMap.get('id');
+                                    String waid = statusMap!= null ? (String) statusMap.get('id') : null;
 
-                                    Chat__c waChat = [SELECT Id, WhatsAppMessageId__c
-                                                      FROM Chat__c
-                                                      WHERE WhatsAppMessageId__c = :waid
-                                                      LIMIT 1];
-                                    if (status == 'sent'){
-                                        waChat.Message_Status__c = 'Sent';
-                                    } else if (status == 'delivered'){
-                                        waChat.Message_Status__c = 'Delivered';
-                                    } else if (status == 'read'){
-                                        waChat.Message_Status__c = 'Read';
+                                    List<Chat__c> waChats = [SELECT Id, Message_Status__c, WhatsAppMessageId__c, Contact__c
+                                                               FROM Chat__c
+                                                               WHERE WhatsAppMessageId__c = :waid
+                                                               LIMIT 1];
+                                    if(waChats.size() > 0){
+                                        Chat__c waChat = waChats[0];
+                                        if (status == 'sent' && waChat.Message_Status__c != 'Delivered' && waChat.Message_Status__c != 'Seen'){
+                                            waChat.Message_Status__c = 'Sent';
+                                        } else if (status == 'delivered' && waChat.Message_Status__c != 'Seen'){
+                                            waChat.Message_Status__c = 'Delivered';
+                                        } else if (status == 'read'){
+                                            waChat.Message_Status__c = 'Seen';
+                                        } 
+                                        update waChat;
+                                        Chat_Message__e statusChangeEvent = new Chat_Message__e();
+                                        statusChangeEvent.Chat_Data__c = JSON.serialize(waChat);
+                                        statusChangeEvent.ContactId__c = waChat.Contact__c;
+                                        statusChangeEvent.Type__c = 'status';
+                                        EventBus.publish(statusChangeEvent);
                                     }
-                                    // else if (status == 'failed'){
-                                    //     waChat.Message_Status__c = true;
-                                    // }
 
-                                    // WhatsApp_Message_Status__e statusevent = new WhatsApp_Message_Status__e(
-                                    //     Status__c = status,
-                                    //     waId__c = waid
-                                    // );
-                                    // update waChat;
-                                    // EventBus.publish(statusevent);
                                 }
                             }
 
@@ -560,6 +601,7 @@ global without sharing class WhatsAppWebhook{
             }
             return messages;
         } catch (Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'parseMessages', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in parseMessages: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
             return null;
         }
@@ -572,8 +614,10 @@ global without sharing class WhatsAppWebhook{
     //                                                 FROM Template__c
     //                                                 WHERE Template_Id__c = :templateId
     //                                                 LIMIT 1];
+
     //         if (!templates.isEmpty()){
     //             Template__c waTemplate = templates[0];
+
     //             if (event == 'APPROVED'){
     //                 waTemplate.Status__c = 'Active-Quality Pending';
     //             } else if (event == 'PENDING'){
@@ -581,6 +625,7 @@ global without sharing class WhatsAppWebhook{
     //             } else if (event == 'REJECTED'){
     //                 waTemplate.Status__c = 'Rejected';
     //             }
+
     //             update waTemplate;
     //         } else{
     //             System.debug('No WhatsApp Template found for Template Id: ' + templateId);
@@ -589,17 +634,15 @@ global without sharing class WhatsAppWebhook{
     //         System.debug('Error in updateWhatsAppTemplateStatus: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
     //     }
     // }
+
     @future(callout = true)
     public static void sendEmail(String body){
         try{
-            EmailServicesAddress esa = [SELECT EmailDomainName, LocalPart
-                                        FROM EmailServicesAddress
-                                        WHERE Function.FunctionName = :'EmailService_WhatsApp'
-                                        LIMIT 1];
-
-            Messaging.SingleEmailMessage emailNotification = new Messaging.SingleEmailMessage();
+            EmailServicesAddress esa = [SELECT EmailDomainName, LocalPart FROM EmailServicesAddress WHERE Function.FunctionName =: 'EmailService_WhatsApp' LIMIT 1];
+         
+            Messaging.SingleEmailMessage emailNotification = new Messaging.SingleEmailMessage();        
             List<String> toAddresses = new List<String>();
-            toAddresses.add(esa.LocalPart + '@' + esa.EmailDomainName);
+            toAddresses.add(esa.LocalPart+'@' +esa.EmailDomainName);
             // if ( owea.size() > 0 ) {
             //     emailNotification.setOrgWideEmailAddressId(owea.get(0).Id);
             // }
@@ -610,11 +653,13 @@ global without sharing class WhatsAppWebhook{
 
 
         } catch (Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'sendEmail', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in sendEmailViaGmail: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
         }
     }
 
     // public static void updateContactUserConsent(Contact con){
+
     //     try{
     //         System.debug('con.MVEX__User_Consent_Received__c' + con.MVEX__User_Consent_Received__c);
     //         if (con.MVEX__User_Consent_Received__c == false){
@@ -626,6 +671,7 @@ global without sharing class WhatsAppWebhook{
     //         System.debug('Error in updateContactUserConsent: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
     //     }
     // }
+
     public class WhatsAppMessage{
         public String profileName{ get; set; }
 
