@@ -19,17 +19,17 @@
     public static String accessToken;
     public static String endpoint;
     public static String uploadEndpoint;
-    public static final WhatsAppConfiguration__mdt SETTINGS;
+    public static final MVWB__WBConnect_Configuration__mdt SETTINGS;
 
     static {
         try {
-            SETTINGS = [SELECT Access_token_for_WhatsApp__c, WhatsApp_App_Id__c, WhatsApp_PhoneNumber_ID__c, Whatsapp_Account_ID__c	
-                FROM WhatsAppConfiguration__mdt
+            SETTINGS = [SELECT MVWB__Access_Token__c, MVWB__Application_Id__c, MVWB__Phone_Number_Id__c, MVWB__Business_Account_Id__c
+                FROM MVWB__WBConnect_Configuration__mdt
                 WHERE DeveloperName = 'WhatsAppConfig' WITH SECURITY_ENFORCED
                 LIMIT 1
             ];
             
-            accessToken = SETTINGS.Access_token_for_WhatsApp__c;
+            accessToken = SETTINGS.MVWB__Access_Token__c;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'static', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
@@ -455,7 +455,7 @@
             System.debug('Deserialized TemplateWrapper: ' + templateWrapper);
 
             Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Whatsapp_Account_ID__c+'/message_templates';
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates';
             
             HttpRequest req = new HttpRequest();
             req.setEndpoint(endpoint);
@@ -514,7 +514,7 @@
             payload.put('file_name', fileName);
             payload.put('file_length', fileLength);
             payload.put('file_type', fileType);
-            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.WhatsApp_App_Id__c+'/uploads';
+            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.MVWB__Application_Id__c+'/uploads';
 
             HttpRequest req = new HttpRequest();
             Http http = new Http();
@@ -650,7 +650,7 @@
         try {
             Template__c wbTempRec = [SELECT Id, Name FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
             
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Whatsapp_Account_ID__c+'/message_templates?name=' + wbTempRec.Name;
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Name;
 
             HttpRequest req = new HttpRequest();         
             req.setEndpoint(endpoint);

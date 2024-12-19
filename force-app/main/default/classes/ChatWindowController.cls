@@ -167,9 +167,9 @@ public with sharing class ChatWindowController {
         Chat__c chat = new Chat__c(Id = chatId);
         try {
             HttpRequest httpReq = new HttpRequest();
-            List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values(); 
-            String accessToken = config[0].Access_token_for_WhatsApp__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].WhatsApp_PhoneNumber_ID__c + '/messages';
+            List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+            String accessToken = config[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
@@ -284,9 +284,9 @@ public with sharing class ChatWindowController {
     public static void updateStatus(List<String> messageIds) {
         List<Chat__c> chats = new List<Chat__c>();
         chats = [SELECT Id, WhatsAppMessageId__c, Message_Status__c FROM Chat__c WHERE Id IN :messageIds WITH SECURITY_ENFORCED];
-        List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values(); 
-        String accessToken = config[0].Access_token_for_WhatsApp__c;
-        String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].WhatsApp_PhoneNumber_ID__c + '/messages';
+        List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+        String accessToken = config[0].MVWB__Access_Token__c;
+        String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
 
         try {
             for (Chat__c chat : chats) {

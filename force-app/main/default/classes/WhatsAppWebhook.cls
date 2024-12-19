@@ -3,7 +3,7 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
- * @Last Modified On : 12-18-2024
+ * @Last Modified On : 12-19-2024
  * @Modification Log :
  *==============================================================================
  * Ver | Date | Author | Modification
@@ -330,8 +330,8 @@ global without sharing class WhatsAppWebhook{
         try{
             String mediaUrl = 'https://graph.facebook.com/v20.0/' + documentId;
             String accessToken = '';
-            List<WhatsAppConfiguration__mdt> config = WhatsAppConfiguration__mdt.getAll().values();
-            accessToken = config[0].Access_token_for_WhatsApp__c;
+            List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values();
+            accessToken = config[0].MVWB__Access_Token__c;
             
             if (accessToken != ''){
                 HttpRequest req = new HttpRequest();
