@@ -15,7 +15,7 @@
         <value xsi:type="xsd:string">23456</value>
     </values>
     <values>
-        <field>Whatsapp_Account_ID__c</field>
+        <field>MVWB__Business_Account_Id__c</field>
         <value xsi:nil="true"/>
     </values>
 </CustomMetadata>
