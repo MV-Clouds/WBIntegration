@@ -12,22 +12,22 @@ public without sharing class WhatsAppConfigurationController {
 
         try {
             
-            List<WhatsAppConfiguration__mdt> configList = [SELECT Id, DeveloperName, MasterLabel, Access_token_for_WhatsApp__c, WhatsApp_App_Id__c, Whatsapp_Account_ID__c, WhatsApp_PhoneNumber_ID__c FROM WhatsAppConfiguration__mdt LIMIT 1];
-            WhatsAppConfiguration__mdt config = new WhatsAppConfiguration__mdt();
+            List<MVWB__WBConnect__mdt> configList = [SELECT Id, DeveloperName, MasterLabel, MVWB__Access_Token__c, MVWB__Application_Id__c, Whatsapp_Account_ID__c, MVWB__Phone_Number_Id__c FROM MVWB__WBConnect__mdt LIMIT 1];
+            MVWB__WBConnect__mdt config = new MVWB__WBConnect__mdt();
             if (!configList.isEmpty()) {
                 config = configList[0];
             }
             Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
-            mdata.fullName = 'MVWB__WhatsAppConfiguration__mdt.' + config.DeveloperName; 
+            mdata.fullName = 'MVWB__WBConnect__mdt.' + config.DeveloperName; 
             mdata.label = config.MasterLabel;
             
             Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
-            instance1.field = 'MVWB__Access_token_for_WhatsApp__c';
+            instance1.field = 'MVWB__Access_Token__c';
             instance1.value = AccessToken;
             mdata.values.add(instance1);
             
             Metadata.CustomMetadataValue instance2 = new Metadata.CustomMetadataValue();
-            instance2.field = 'MVWB__WhatsApp_PhoneNumber_ID__c';
+            instance2.field = 'MVWB__Phone_Number_Id__c';
             instance2.value = PhoneNumberId;
             mdata.values.add(instance2);
             
@@ -37,7 +37,7 @@ public without sharing class WhatsAppConfigurationController {
             mdata.values.add(instance3);
             
             Metadata.CustomMetadataValue instance4 = new Metadata.CustomMetadataValue();
-            instance4.field = 'MVWB__WhatsApp_App_Id__c';
+            instance4.field = 'MVWB__Application_Id__c';
             instance4.value = AppId;
             mdata.values.add(instance4);
 

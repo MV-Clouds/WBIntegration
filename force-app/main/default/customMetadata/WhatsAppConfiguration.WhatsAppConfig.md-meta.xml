@@ -3,15 +3,15 @@
     <label>WhatsAppConfig</label>
     <protected>true</protected>
     <values>
-        <field>Access_token_for_WhatsApp__c</field>
+        <field>MVWB__Access_Token__c</field>
         <value xsi:type="xsd:string">esrdfgfhtrerw3r4</value>
     </values>
     <values>
-        <field>WhatsApp_App_Id__c</field>
+        <field>MVWB__Application_Id__c</field>
         <value xsi:nil="true"/>
     </values>
     <values>
-        <field>WhatsApp_PhoneNumber_ID__c</field>
+        <field>MVWB__Phone_Number_Id__c</field>
         <value xsi:type="xsd:string">23456</value>
     </values>
     <values>
