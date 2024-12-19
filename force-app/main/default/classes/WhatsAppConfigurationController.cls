@@ -48,7 +48,8 @@ public without sharing class WhatsAppConfigurationController {
 
             return 'Success';
         }
-        catch (Exception ex) {
+        catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WhatsAppConfigurationController', 'methodName' => 'saveConfiguration', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return 'Error';
         }
     }
