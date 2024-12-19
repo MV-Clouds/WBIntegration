@@ -34,25 +34,15 @@ export default class TemplatePreview extends LightningElement {
         try {
             getTemplateData({templateId: this.templateId, contactId:this.recordId})
             .then((templateData) => {
-<<<<<<< HEAD
-                this.templateData = templateData;
-                this.isTextHeader = templateData?.MVWB__Header_Type__c === 'Text' ? true : false;
-                this.isImageHeader = templateData?.MVWB__Header_Type__c === 'Image' ? true : false;
-                this.headerBody = templateData?.MVWB__Header_Body__c;
-                this.templateBody = templateData?.MVWB__Template_Body__c;
-                this.footerBody = templateData?.MVWB__Footer_Body__c;
-                this.buttonLabel = templateData?.MVWB__Button_Label__c;
-=======
 
                 this.templateData = templateData.template;
                 
-                this.isTextHeader = this.templateData?.Header_Type__c === 'Text' ? true : false;
-                this.isImageHeader = this.templateData?.Header_Type__c === 'Image' ? true : false;
-                this.headerBody = this.templateData?.Header_Body__c;
-                this.templateBody = this.templateData?.Template_Body__c;
-                this.footerBody = this.templateData?.Footer_Body__c;
-                this.buttonLabel = this.templateData?.Button_Label__c;
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
+                this.isTextHeader = this.templateData?.MVWB__Header_Type__c === 'Text' ? true : false;
+                this.isImageHeader = this.templateData?.MVWB__Header_Type__c === 'Image' ? true : false;
+                this.headerBody = this.templateData?.MVWB__Header_Body__c;
+                this.templateBody = this.templateData?.MVWB__Template_Body__c;
+                this.footerBody = this.templateData?.MVWB__Footer_Body__c;
+                this.buttonLabel = this.templateData?.MVWB__Button_Label__c;
                 this.showSpinner = false;
 
                 if(templateData.headerParams) this.headerParams = templateData.headerParams;
@@ -89,16 +79,11 @@ export default class TemplatePreview extends LightningElement {
                 if(chat){
                     let templatePayload = this.createJSONBody(this.mobileNumber, "template", {
                         templateName: this.templateData.Name,
-<<<<<<< HEAD
                         languageCode: this.templateData.MVWB__Language__c,
-                        parameters: this.templateData.parameters || []
-=======
-                        languageCode: this.templateData.Language__c,
                         headerParameters: this.headerParams,
                         bodyParameters: this.bodyParams,
-                        buttonLabel: this.templateData.Button_Label__c,
-                        buttonType: this.templateData.Button_Type__c
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
+                        buttonLabel: this.templateData.MVWB__Button_Label__c,
+                        buttonType: this.templateData.MVWB__Button_Type__c
                     });
                     console.log('the Payload is :: :', templatePayload);
 

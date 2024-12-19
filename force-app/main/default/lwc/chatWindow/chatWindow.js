@@ -109,17 +109,12 @@ export default class ChatWindow extends LightningElement {
     handleSubscribe() {
         let self = this;
         let messageCallback = function (response) {
-<<<<<<< HEAD
             let receivedChat = JSON.parse(response.data.payload.MVWB__Chat_Data__c);
+            
             let actionType = response.data.payload.MVWB__Type__c;
-=======
-            let receivedChat = JSON.parse(response.data.payload.Chat_Data__c);
             
-            let actionType = response.data.payload.Type__c;
-            
-            if(response.data.payload.ContactId__c !== self.recordId) return;
-            console.log(actionType ,' status :: ', receivedChat.Message_Status__c ,' Chat received is :: ', receivedChat.WhatsAppMessageId__c);
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
+            if(response.data.payload.MVWB__ContactId__c !== self.recordId) return;
+            console.log(actionType ,' status :: ', receivedChat.MVWB__Message_Status__c ,' Chat received is :: ', receivedChat.MVWB__WhatsAppMessageId__c);
 
             let chat = self.chats?.find(ch => ch.Id === receivedChat.Id);
             
@@ -127,13 +122,6 @@ export default class ChatWindow extends LightningElement {
 
                 case 'new':
                     chat = receivedChat;
-<<<<<<< HEAD
-                    chat.isText = chat.MVWB__Message_Type__c == 'Text';
-                    chat.isImage = chat.MVWB__Message_Type__c == 'Image';
-                    chat.isTemplate = chat.MVWB__Message_Type__c == 'Template';
-                    chat.messageBy = chat.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : self.recordData.FirstName;
-=======
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
                     self.chats.push(chat);
                     self.processChats(true);
                     self.sendOnlyTemplate = false;
@@ -196,23 +184,13 @@ export default class ChatWindow extends LightningElement {
 
                 this.allTemplates = combinedData.templates.length > 0 ? combinedData.templates : null;
                 
-<<<<<<< HEAD
-                this.chats = combinedData.chats?.map(ch => {
-                    ch.isText = ch.MVWB__Message_Type__c == 'Text';
-                    ch.isImage = ch.MVWB__Message_Type__c == 'Image';
-                    ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
-                    ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.FirstName;
-                    return ch;
-                });
-=======
                 this.chats = JSON.parse(JSON.stringify(combinedData.chats));
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
                 this.showSpinner = false;
                 this.processChats(true);
                 
                 let chatIdsToSeen = [];
-                this.chats.filter(ch => ch.Type_of_Message__c != 'Outbound Messages').forEach(ch =>{
-                    if(ch.Message_Status__c!='Seen') chatIdsToSeen.push(ch.Id);
+                this.chats.filter(ch => ch.MVWB__Type_of_Message__c != 'Outbound Messages').forEach(ch =>{
+                    if(ch.MVWB__Message_Status__c!='Seen') chatIdsToSeen.push(ch.Id);
                 })
                 updateStatus({messageIds:chatIdsToSeen});
             })
@@ -235,11 +213,11 @@ export default class ChatWindow extends LightningElement {
                 return;
             }
             this.chats = this.chats?.map(ch => {
-                ch.isText = ch.Message_Type__c == 'Text';
-                ch.isImage = ch.Message_Type__c == 'Image';
-                ch.isOther = !['Text', 'Image', 'Template'].includes(ch.Message_Type__c) ;
-                ch.isTemplate = ch.Message_Type__c == 'Template';
-                ch.messageBy = ch.Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
+                ch.isText = ch.MVWB__Message_Type__c == 'Text';
+                ch.isImage = ch.MVWB__Message_Type__c == 'Image';
+                ch.isOther = !['Text', 'Image', 'Template'].includes(ch.MVWB__Message_Type__c) ;
+                ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
+                ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
                 return ch;
             });
 
@@ -256,35 +234,22 @@ export default class ChatWindow extends LightningElement {
             let groupedChats = this.chats?.reduce((acc, ch) => {
                 let createDate = new Date(ch.CreatedDate).toLocaleDateString('en-GB', options);
                 let dateGroup = createDate == today.toLocaleDateString('en-GB', options) ? 'Today' : (createDate == yesterday.toLocaleDateString('en-GB', options) ? 'Yesterday' : createDate);
-<<<<<<< HEAD
-                let yourReaction= ch.MVWB__Reaction__c?.split('<|USER|>')[0]?.split('<|DATA|>')[0];
-                let userReaction= ch.MVWB__Reaction__c?.split('<|USER|>')[1]?.split('<|DATA|>')[0];
+                let yourReaction= ch.MVWB__Reaction__c?.split('<|USER|>')[0];
+                let userReaction= ch.MVWB__Reaction__c?.split('<|USER|>')[1];
                 let chat = {
                     ...ch,
                     className: ch.MVWB__Type_of_Message__c === 'Outbound Messages' ? 'sent-message' : 'received-message',
-                    isSent: ch.MVWB__Message_Status__c === 'Sent',
-                    isDelivered: ch.MVWB__Message_Status__c === 'Delivered',
-                    isSeen: ch.MVWB__Message_Status__c === 'Seen',
+                    // isSent: ch.MVWB__Message_Status__c === 'Sent',
+                    // isDelivered: ch.MVWB__Message_Status__c === 'Delivered',
+                    // isSeen: ch.MVWB__Message_Status__c === 'Seen',
+                    isTick : ['Sent', 'Delivered', 'Seen'].includes(ch.MVWB__Message_Status__c), 
                     isFailed: ch.MVWB__Message_Status__c === 'Failed',
                     isSending: ch.MVWB__Message_Status__c == null,
-=======
-                let yourReaction= ch.Reaction__c?.split('<|USER|>')[0];
-                let userReaction= ch.Reaction__c?.split('<|USER|>')[1];
-                let chat = {
-                    ...ch,
-                    className: ch.Type_of_Message__c === 'Outbound Messages' ? 'sent-message' : 'received-message',
-                    // isSent: ch.Message_Status__c === 'Sent',
-                    // isDelivered: ch.Message_Status__c === 'Delivered',
-                    // isSeen: ch.Message_Status__c === 'Seen',
-                    isTick : ['Sent', 'Delivered', 'Seen'].includes(ch.Message_Status__c), 
-                    isFailed: ch.Message_Status__c === 'Failed',
-                    isSending: ch.Message_Status__c == null,
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
                     dateGroup: dateGroup,
                     yourReaction: yourReaction,
                     userReaction: userReaction,
                     isReaction: yourReaction || userReaction,
-                    replyTo: this.chats?.find( chat => chat.Id === ch.Reply_to__c)
+                    replyTo: this.chats?.find( chat => chat.Id === ch.MVWB__Reply_to__c)
                 };
                 
                 if (!acc[chat.dateGroup]) {
@@ -441,13 +406,8 @@ export default class ChatWindow extends LightningElement {
     handleReactWithEmoji(event){
         try {
             if(this.reactToMessage){
-<<<<<<< HEAD
-                let chat = this.chats?.find( ch => ch.Id === this.reactToMessage);
-                chat.MVWB__Reaction__c = event.target.innerText + (chat.MVWB__Reaction__c ? chat.MVWB__Reaction__c.slice(chat.MVWB__Reaction__c.indexOf('<|DATA|>')) : '<|DATA|><|USER|><|DATA|>');
-=======
                 let chat = this.chats?.find( ch => ch.Id === this.reactToMessage);                
-                chat.Reaction__c = event.target.innerText + (chat.Reaction__c ? chat.Reaction__c.slice(chat.Reaction__c.indexOf('<|USER|>')) : '<|USER|>');
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
+                chat.MVWB__Reaction__c = event.target.innerText + (chat.MVWB__Reaction__c ? chat.MVWB__Reaction__c.slice(chat.MVWB__Reaction__c.indexOf('<|USER|>')) : '<|USER|>');
                 this.reactToMessage = null;
                 this.showReactEmojiPicker = false;
                 this.updateMessageReaction(chat);
@@ -460,11 +420,7 @@ export default class ChatWindow extends LightningElement {
     handleRemoveReaction(event){
         try {
             let chat = this.chats?.find( chat => chat.Id === event.currentTarget.dataset.chat);
-<<<<<<< HEAD
-            chat.MVWB__Reaction__c = chat.MVWB__Reaction__c?.slice(chat.MVWB__Reaction__c.indexOf('<|DATA|>'));
-=======
-            chat.Reaction__c = chat.Reaction__c?.slice(chat.Reaction__c.indexOf('<|USER|>'));
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
+            chat.MVWB__Reaction__c = chat.MVWB__Reaction__c?.slice(chat.MVWB__Reaction__c.indexOf('<|USER|>'));
             this.updateMessageReaction(chat);
         } catch (e) {
             console.log('Error in function handleRemoveReaction:::', e.message);
@@ -655,16 +611,10 @@ export default class ChatWindow extends LightningElement {
                 if(chat){
                     this.chats.push(chat);
                     this.processChats(true);
-<<<<<<< HEAD
-                    let imagePayload = this.createJSONBody(this.recordData.Phone, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
-                        link: chat.MVWB__Message__c,
-                        fileName: event.detail.files[0].title
-=======
                     
-                    let imagePayload = this.createJSONBody(this.recordData.Phone, "document", this.replyToMessage?.WhatsAppMessageId__c || null, {
-                        link: chat.Message__c,
+                    let imagePayload = this.createJSONBody(this.recordData.Phone, "document", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                        link: chat.MVWB__Message__c,
                         fileName: event.detail.files[0].name || 'whatsapp image'
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
                     });
                     sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false})
                     .then(ch => {
@@ -793,15 +743,9 @@ export default class ChatWindow extends LightningElement {
             .then(ch => {
                 this.showSpinner = false;
                 this.processChats();
-<<<<<<< HEAD
                 let reactPayload = this.createJSONBody(this.recordData.Phone, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                     reactToId : chat.MVWB__WhatsAppMessageId__c,
-                    emoji: chat.MVWB__Reaction__c?.split('<|USER|>')[0]?.split('<|DATA|>')[0]
-=======
-                let reactPayload = this.createJSONBody(this.recordData.Phone, "reaction", this.replyToMessage?.WhatsAppMessageId__c || null, {
-                    reactToId : chat.WhatsAppMessageId__c,
-                    emoji: chat.Reaction__c?.split('<|USER|>')[0]
->>>>>>> a8f95d9ef75fe78a55ea803a6132e83f826698f8
+                    emoji: chat.MVWB__Reaction__c?.split('<|USER|>')[0]
                 });
                 console.log('ReactPayload :: ', reactPayload);
                 
