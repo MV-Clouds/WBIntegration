@@ -3,7 +3,7 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
- * @Last Modified On : 12-17-2024
+ * @Last Modified On : 12-18-2024
  * @Modification Log :
  *==============================================================================
  * Ver | Date | Author | Modification
@@ -445,7 +445,7 @@ global without sharing class WhatsAppWebhook{
         try{
             List<CustomNotificationType> cnType = [SELECT Id
                                                    FROM CustomNotificationType
-                                                   WHERE DeveloperName = 'WhatsappNotification'
+                                                   WHERE DeveloperName = 'MVWBWhatsappNotification'
                                                    LIMIT 1];
             System.debug('custom notification===> ' + cnType[0]);
 
