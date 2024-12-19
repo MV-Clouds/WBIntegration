@@ -138,8 +138,8 @@ public with sharing class ChatWindowController {
     public static Boolean updateThemePreference(String theme) {
         Boolean isSuccess = false;
         try {
-            List<UserThemePreference__c> userPreferences = [SELECT Theme__c FROM UserThemePreference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
-            UserThemePreference__c userPreference = new UserThemePreference__c();
+            List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Theme__c FROM MVWB__User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
+            MVWB__User_Theme_Preference__c userPreference = new MVWB__User_Theme_Preference__c();
             if (userPreferences.isEmpty()) {
 
                 userPreference.SetupOwnerId = UserInfo.getUserId();

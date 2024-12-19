@@ -445,7 +445,7 @@ global without sharing class WhatsAppWebhook{
         try{
             List<CustomNotificationType> cnType = [SELECT Id
                                                    FROM CustomNotificationType
-                                                   WHERE DeveloperName = 'MVWBWhatsappNotification'
+                                                   WHERE DeveloperName = 'WBConnectNotification'
                                                    LIMIT 1];
             System.debug('custom notification===> ' + cnType[0]);
 

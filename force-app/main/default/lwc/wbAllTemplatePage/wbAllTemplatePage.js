@@ -85,7 +85,7 @@ export default class WbAllTemplatePage extends LightningElement {
             try {
                 if (data) {
                     this.allRecords = data.map((record, index) => {
-                        const isButtonDisabled = record.Status__c === 'In-Review';
+                        const isButtonDisabled = record.MVWB__Status__c === 'In-Review';
                         console.log('isButtonDisabled ',isButtonDisabled, record.Name);
                         
                         return {
@@ -175,7 +175,7 @@ export default class WbAllTemplatePage extends LightningElement {
             let filtered = [...this.allRecords];
 
             if (this.categoryValue) {
-                filtered = filtered.filter(record => record.Template_Category__c === this.categoryValue);
+                filtered = filtered.filter(record => record.MVWB__Template_Category__c === this.categoryValue);
                 console.log('category filter=> ',filtered);
             }
     
@@ -197,7 +197,7 @@ export default class WbAllTemplatePage extends LightningElement {
             }
     
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
                 console.log('status filter==>',filtered);
             }
     

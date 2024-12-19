@@ -13,12 +13,16 @@ export default class WhatsAppConfiguration extends LightningElement {
     handleInput(event) {
         if(event.target.name == 'WBAccountId'){
             this.wBAccountIdValue = event.target.value;
+            this.wBAccountIdValue = this.wBAccountIdValue.replaceAll(' ','');
         } if(event.target.name == 'AccessToken'){
             this.accessTokenValue = event.target.value;
+            this.accessTokenValue = this.accessTokenValue.replaceAll(' ','');
         } if(event.target.name == 'PhoneNumberId'){
             this.phoneNoIdValue = event.target.value;
+            this.phoneNoIdValue = this.phoneNoIdValue.replaceAll(' ','');
         } if(event.target.name == 'WBAppId'){
             this.appIdValue = event.target.value;
+            this.appIdValue = this.appIdValue.replaceAll(' ','');
         }
     }
 
@@ -32,7 +36,7 @@ export default class WhatsAppConfiguration extends LightningElement {
         }
 
         // Handle saving logic (e.g., API calls, data storage)
-        console.log('Saved values:', this.wBAccountIdValue, this.accessTokenValue, this.phoneNoIdValue);
+        console.log('Saved values:', this.wBAccountIdValue, this.accessTokenValue, this.phoneNoIdValue, this.appIdValue);
         saveWhatsAppConfiguration({WBAccountId : this.wBAccountIdValue, AppId : this.appIdValue , AccessToken : this.accessTokenValue, PhoneNumberId : this.phoneNoIdValue})
         .then(() => {
             this.dispatchEvent(

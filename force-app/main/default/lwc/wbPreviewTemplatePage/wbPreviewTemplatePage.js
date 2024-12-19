@@ -352,22 +352,22 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 if (result) {
                     this.isImgSelected = result.isImgUrl;
                     this.IsHeaderText = !result.isImgUrl;                    
-                    this.originalHeader = result.template.Header_Body__c;
-                    this.originalBody = result.template.Template_Body__c;
+                    this.originalHeader = result.template.MVWB__Header_Body__c;
+                    this.originalBody = result.template.MVWB__Template_Body__c;
                     const variableMappings = result.templateVariables;
 
                     this.tempHeader = this.originalHeader;
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
-                    this.tempFooter = result.template.Footer_Body__c;
+                    this.tempFooter = result.template.MVWB__Footer_Body__c;
 
-                    this.isSendDisabled = result.template.Status__c !== 'Active-Quality Pending';
+                    this.isSendDisabled = result.MVWB__template.Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    const buttonLabels = result.template.Button_Label__c ? result.template.Button_Label__c.split(',') : [];
-                    const buttonTypes = result.template.Button_Type__c ? result.template.Button_Type__c.split(',') : [];
+                    const buttonLabels = result.template.MVWB__Button_Label__c ? result.template.MVWB__Button_Label__c.split(',') : [];
+                    const buttonTypes = result.template.MVWB__Button_Type__c ? result.template.MVWB__Button_Type__c.split(',') : [];
         
                     this.buttonList = buttonLabels.map((label, index) => {
                         const type = buttonTypes[index]?.trim() || 'default';
@@ -476,11 +476,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 if (chat) {
                     const templatePayload = this.createJSONBody(phonenum, "template", {
                         templateName: this.template.Name,
-                        languageCode: this.template.Language__c,
+                        languageCode: this.template.MVWB__Language__c,
                         headerParameters: this.headerParams,
                         bodyParameters: this.bodyParams,
-                        buttonLabel: this.template.Button_Label__c,
-                        buttonType: this.template.Button_Type__c
+                        buttonLabel: this.template.MVWB__Button_Label__c,
+                        buttonType: this.template.MVWB__Button_Type__c
                     });
     
                     return sendWhatsappMessage({ jsonData: templatePayload, chatId: chat.Id, isReaction: false });
