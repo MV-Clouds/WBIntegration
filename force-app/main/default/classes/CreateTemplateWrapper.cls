@@ -281,6 +281,7 @@
                     whatsAppTemplate.Header_Type__c = (String) component.get('format');
                     if ((String) component.get('format') == 'IMAGE') {
                         whatsAppTemplate.Header_Body__c = templateWrapper.tempImgUrl;
+                        whatsAppTemplate.File_Name__c = templateWrapper.tempImgName;
                     } else {
                         whatsAppTemplate.Header_Body__c = (String) component.get('text');
                     }
@@ -572,6 +573,7 @@
         @AuraEnabled public String quickText;
         @AuraEnabled public String copyCode;
         @AuraEnabled public String tempImgUrl;
+        @AuraEnabled public String tempImgName;
     }
 
 }

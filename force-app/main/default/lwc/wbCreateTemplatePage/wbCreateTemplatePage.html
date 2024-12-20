@@ -1,10 +1,3 @@
-<!--
-  @description       : 
-  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
-  @group             : 
-  @last modified on  : 12-18-2024
-  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
--->
 <template>
     <template if:true={iseditTemplatevisible}>
         <div class="main-container">
@@ -39,7 +32,7 @@
                                         <label for="templateName">Name your template</label>
                                         <input class="nameInput" type="text" id="templateName" name="templateName"
                                             value={templateName} maxlength="512" placeholder="Enter template name"
-                                            oninput={handleInputChange} onblur={handleStoredname} />
+                                            onblur={handleInputChange} />
                                         <p class="char-count tempname-count">{templateName.length}/{maxTempNamelength}</p>
                                     </div>
                                     <div class="landiv">
@@ -96,7 +89,7 @@
                                                     <p class="uploadlabel">Image</p>
                                                     <div class="custom-upload-button">
                                                         <label class="upload-label">
-                                                            <img src="/resource/MVWB__uploadImgIcon" alt="Upload Icon"
+                                                            <img src="/resource/uploadImgIcon" alt="Upload Icon"
                                                                 class="upload-icon" />
                                                             <template if:true={NoFileSelected}>
                                                                 <span>Choose JPG or PNG file</span>
@@ -106,18 +99,10 @@
                                                                 <span>{fileName}</span>
                                                             </template>
                                                              <input type="file" accept="image/png, image/jpeg,image/jpg" class="file-input" onchange={handleFileChange} />
-
-                                                            <!-- <lightning-file-upload
-                                                              class="file-input"
-                                                              name="fileUploader"
-                                                              accept={acceptedFormats}
-                                                              record-id={myRecordId}
-                                                              onuploadfinished={handleFileChange}   
-                                                            ></lightning-file-upload> -->
                                                         </label>
                                                     </div>
                                                     <template if:true={isfilename}>
-                                                        <div>
+                                                        <div class="file-remove">
                                                             <lightning-button-icon icon-name="utility:close"
                                                                 alternative-text="Remove" onclick={handleRemoveFile} class="remove-File">
                                                             </lightning-button-icon>
@@ -211,7 +196,7 @@
                                         <div class="inner-rich">
                                             <div class="rich-icon">
                                                 <button class="toolbar-button" onclick={handleEmoji}>
-                                                <img src="/resource/MVWB__wbSmileIcon" class="custom-icon" />
+                                                <img src="/resource/wbSmileIcon" class="custom-icon" />
                                                 </button>
                                                 <template for:each={toolbarButtonsWithClasses} for:item="button">
                                                     <button key={button.title} class={button.classes} title={button.title}
@@ -521,16 +506,26 @@
                                                     <p>{previewHeader}</p>
                                                 </div>
                                             </template>
-                                            <template if:true={isImageFile}>
+                                            <template if:true={isImgSelected}>
                                                 <div class="imagedivWP">
-                                                    <img src="/resource/MVWB__ImageIcon" alt="">
+                                                    <img src="/resource/ImageIcon" alt="">
                                                 </div>
                                             </template>
-                                            <template if:true={isImgSelected}>
+                                            <template if:true={isImageFile}>
                                                 <div>
                                                     <img src={filePreview} alt="File Preview" style="max-width: 100%; height: auto;" />
                                                 </div>
                                             </template>
+                                            <!-- <template lwc:if={isImageFile}>
+                                                <div>
+                                                    <img src={filePreview} alt="File Preview" style="max-width: 100%; height: auto;" />
+                                                </div>
+                                            </template>
+                                            <template lwc:else>
+                                                <div class="imagedivWP">
+                                                    <img src="/resource/ImageIcon" alt="">
+                                                </div>
+                                            </template> -->
                                         
                                             <template if:true={isDefault}>
                                                 <div class="TextBodyWP">

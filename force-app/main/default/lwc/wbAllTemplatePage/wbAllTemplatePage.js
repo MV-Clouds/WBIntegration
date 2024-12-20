@@ -25,7 +25,7 @@ export default class WbAllTemplatePage extends LightningElement {
     @track isCreateTemplate = false;
     @track categoryValue;
     @track timePeriodValue;
-    @track statusValues = [];
+    @track statusValues;
     @track searchInput;
     @track categoryOptions = [];
     @track statusOptions = [];

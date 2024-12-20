@@ -4,7 +4,7 @@
 
 .main {
     padding: 1%;
-    background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-image: url('/resource/wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
     border-radius: 5px;
@@ -20,7 +20,7 @@
     border-radius: 5px;
     /* height: -webkit-fill-available; */
     width: 60rem;
-    background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-image: url('/resource/wbiTemplateBg');
 }
 
 /* Custom scrollbar styles for Webkit browsers */
@@ -255,7 +255,7 @@ textarea {
 
 .rich-button {
     position: relative;
-    margin-top: 0.8rem;
+    margin-top: 0.3rem;
     margin-bottom: 5%;
 }
 
@@ -266,6 +266,12 @@ textarea {
     right: 0;
     /* float: right; */
     width: 100%;
+}
+
+.file-remove{
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .icon {
@@ -498,7 +504,7 @@ textarea {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    background-color: white;
+    background-color: transparent;
     color: #4194f9;
     /* border: 1px solid rgb(27 150 255 / 65%); */
     border: none;
@@ -756,7 +762,7 @@ textarea {
     padding-bottom: 9%;
     padding-right: 5%;
     border-radius: 3px;
-    background-image: url('/resource/MVWB__wbiBg');
+    background-image: url('/resource/wbiBg');
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
