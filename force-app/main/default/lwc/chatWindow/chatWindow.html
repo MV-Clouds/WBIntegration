@@ -2,7 +2,7 @@
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 12-18-2024
+  @last modified on  : 12-20-2024
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
@@ -42,7 +42,7 @@
                                         <img class="message-image" src={chat.replyTo.MVWB__Message__c} alt="Image" />
                                     </div>
                                     <div if:true={chat.replyTo.isOther}>
-                                        <div class="message-other">{chat.replyTo.Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
+                                        <div class="message-other">{chat.replyTo.MVWB__Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
                                     </div>
                                     <div if:true={chat.replyTo.isTemplate}>
                                         <div class="reply-to-template-message-div">{chat.replyTo.Whatsapp_Template__r.Name}</div>
@@ -56,12 +56,12 @@
                                     <img class="message-image" src={chat.MVWB__Message__c} onerror={handleImageError} alt="Photo"/>
                                 </div>
                                 <div class="other-message-div" if:true={chat.isOther}>
-                                    <div class="other-message-text">Shared {chat.Message_Type__c} with you.</div>
+                                    <div class="other-message-text">Shared {chat.MVWB__Message_Type__c} with you.</div>
                                     <div class="other-message-sub-text">You can not view this media due to limitation of your plan.</div>
                                 </div>
                                 <!-- <div class="video-message-div" if:true={chat.isVideo}>
                                     <video controls>
-                                        <source src={chat.Message__c} >
+                                        <source src={chat.MVWB__Message__c} >
                                     </video>
                                 </div> -->
                                 <div class="template-message-div" if:true={chat.isTemplate}>
@@ -80,7 +80,7 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m4.375 7.5 3.125 3.125L13.75 4.375" stroke-width="1.5"></path><path d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125" stroke-width="1.5"></path></svg>
                                     </div> -->
                                     
-                                    <div class="status-icon" data-status={chat.Message_Status__c} if:true={chat.isTick}>
+                                    <div class="status-icon" data-status={chat.MVWB__Message_Status__c} if:true={chat.isTick}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path class="first-tick" stroke="#34B7F1" d="m4.375 7.5 3.125 3.125L13.75 4.375"></path><path class="second-tick" stroke="#34B7F1" d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125"></path></svg>
                                     </div>
                                     <div class="status-icon" if:true={chat.isSending}>
@@ -198,7 +198,7 @@
                         <div class="reply-to-template-message-div">{replyToTemplateId}</div>
                     </div>
                     <div if:true={replyToMessage.isOther}>
-                        <div class="reply-to-other-message-div">{replyToMessage.Message_Type__c} shared by {replyToMessage.messageBy}.</div>
+                        <div class="reply-to-other-message-div">{replyToMessage.MVWB__Message_Type__c} shared by {replyToMessage.messageBy}.</div>
                     </div>
                 </div>
             </div>
