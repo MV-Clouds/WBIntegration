@@ -455,7 +455,7 @@ export default class ChatWindow extends LightningElement {
                         }
                     });
                 },
-                { threshold: 1 }
+                { threshold: 0.1 }
             );
     
             // Start observing the element
