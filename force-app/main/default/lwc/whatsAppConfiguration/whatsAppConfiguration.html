@@ -2,7 +2,7 @@
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 12-19-2024
+  @last modified on  : 12-20-2024
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
@@ -12,19 +12,15 @@
                 <img src={WBConnectLogo} alt="">
             </div>
             <div class="field-container">
-
-                
+              
                 <form action="">
-                    <!-- <div>
-                        <img src={WBConnectLogo} alt="">
-                    </div> -->
 
                     <div class="row">
                         <div class="col-25">
                             <label for="lname">Access Token</label>
                         </div>
                         <div class="col-75">
-                            <input type="text" id="accesstoken" name="AccessToken" placeholder="Your Access Token.." autocomplete="off" onchange={handleInput}>
+                            <input type="text" id="accesstoken" name="AccessToken" placeholder="Your Access Token.." value={accessToken} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
                         </div>
                     </div>
 
@@ -33,7 +29,7 @@
                             <label for="lname">WhatsApp Business Account ID</label>
                         </div>
                         <div class="col-75">
-                            <input type="text" id="wbaccountid" name="WBAccountId" placeholder="Your WhatsApp Business Account ID.." autocomplete="off" onchange={handleInput}>
+                            <input type="text" id="wbaccountid" name="WBAccountId" placeholder="Your WhatsApp Business Account ID.." value={wBAccountId} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
                         </div>
                     </div>
 
@@ -42,7 +38,7 @@
                             <label for="lname">WhatsApp App Id</label>
                         </div>
                         <div class="col-75">
-                            <input type="text" id="appid" name="WBAppId" placeholder="Your WhatsApp App Id.." autocomplete="off" onchange={handleInput}>
+                            <input type="text" id="appid" name="WBAppId" placeholder="Your WhatsApp App Id.." autocomplete="off" value={appId} disabled={isDisabled} onchange={handleInput}>
                         </div>
                     </div>
 
@@ -51,7 +47,7 @@
                             <label for="lname">Phone Number Id</label>
                         </div>
                         <div class="col-75">
-                            <input type="text" id="phoneid" name="PhoneNumberId" placeholder="Your Phone Number Id.." autocomplete="off" onchange={handleInput}>
+                            <input type="text" id="phoneid" name="PhoneNumberId" placeholder="Your Phone Number Id.." autocomplete="off" value={phoneNoId} disabled={isDisabled} onchange={handleInput}>
                         </div>
                     </div>
 
@@ -59,7 +55,15 @@
 
             </div>
 
-            <button class="save-button" onclick={handleSave}>Save</button>
+            <template if:true={isEditing}>
+                <div class="button-container">
+                    <lightning-button variant="brand-outline" class="slds-m-left_x-small" onclick={handleCancel} label="Cancel"></lightning-button>
+                    <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleSave} label="Save"></lightning-button>
+                </div>
+            </template>
+            <template if:false={isEditing}>
+                <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleEdit} label="Edit"></lightning-button>
+            </template>
         </div>
     </div>
 

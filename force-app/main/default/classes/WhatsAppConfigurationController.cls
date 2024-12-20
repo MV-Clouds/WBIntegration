@@ -3,10 +3,24 @@
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
 
- * @last modified on  : 12-19-2024
+ * @last modified on  : 12-20-2024
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public without sharing class WhatsAppConfigurationController {
+
+    @AuraEnabled
+    public static MVWB__WBConnect_Configuration__mdt getConfiguration(){
+
+        MVWB__WBConnect_Configuration__mdt config = new MVWB__WBConnect_Configuration__mdt();
+        try {
+            List<MVWB__WBConnect_Configuration__mdt> Configlist = [SELECT Id, DeveloperName, MasterLabel, MVWB__Access_Token__c, MVWB__Application_Id__c, MVWB__Business_Account_Id__c, MVWB__Phone_Number_Id__c FROM MVWB__WBConnect_Configuration__mdt LIMIT 1];
+            config = Configlist[0];
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WhatsAppConfigurationController', 'methodName' => 'getConfiguration', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+        return config;
+    }
+
     @AuraEnabled
     public static String saveConfiguration(String WBAccountId, String AppId ,String AccessToken, String PhoneNumberId) {
 
