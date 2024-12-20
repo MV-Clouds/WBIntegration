@@ -255,7 +255,7 @@ textarea {
 
 .rich-button {
     position: relative;
-    margin-top: 0.8rem;
+    margin-top: 0.3rem;
     margin-bottom: 5%;
 }
 
@@ -266,6 +266,12 @@ textarea {
     right: 0;
     /* float: right; */
     width: 100%;
+}
+
+.file-remove{
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .icon {
@@ -498,7 +504,7 @@ textarea {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    background-color: white;
+    background-color: transparent;
     color: #4194f9;
     /* border: 1px solid rgb(27 150 255 / 65%); */
     border: none;

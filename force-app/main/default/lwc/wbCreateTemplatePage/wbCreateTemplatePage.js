@@ -18,10 +18,9 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
 import richTextZip from '@salesforce/resourceUrl/richTextZip';
 import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
-import getCountryCodes from '@salesforce/apex/WBTemplateController.getCountryCodes';
-import getLanguages from '@salesforce/apex/WBTemplateController.getLanguages';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
-// import getEmojiData from '@salesforce/apex/EmojiDataController.getEmojiData';
+import CountryJson from '@salesforce/resourceUrl/CountryJson';
+import LanguageJson from '@salesforce/resourceUrl/LanguageJson';
 import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist';
 import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate';
 import editWhatsappTemplate from '@salesforce/apex/WBTemplateController.editWhatsappTemplate';
@@ -245,55 +244,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         }).catch(error => {
             console.error("Error in loading the colors",error)
         })
-        // if(this.isHeaderTypeLoad){
-        //     let headDiv=this.template.querySelector('.contentOption');
-        //     if(headDiv){
-        //         this.template.querySelector('.contentOption').value==this.selectedContentType;
-        //         this.isHeaderTypeLoad=false;
-        //     }
-        // }
-        // if(this.isHeaderVariableLoad){
-        //     let varDiv = this.template.querySelector('.header-field-option');
-        //     if(varDiv){
-        //         for(let i=0;i<this.header_variables.length;i++){
-        //             this.template.querySelectorAll('.header-field-option').forEach(el => {
-        //                 if(el.value==this.header_variables[i].field){
-        //                     el.selected=true;
-        //                 }
-        //             });
-        //         }
-               
-        //         this.isHeaderVariableLoad=false;
-        //     }
-        // }
-        // if(this.isBodyVariableLoad){
-        //     let varDiv = this.template.querySelector('.body-field-option');
-        //     if(varDiv){
-        //         let varDivs = this.template.querySelectorAll('.body-field-option');
-        //         // varDivs.forEach(el => {
-        //             console.log('length is  ',varDivs.length);
-                    
-        //             // for(let i=0;i<this.variables.length;i++){
-        //             //     console.log('this val ',this.variables[i].field);
-        //                 varDivs.forEach(el=> {
-        //                     // if(el.value==this.variables.find(v => v.id == i)){
-        //                     //     el.selected=true;
-        //                     //     return;
-        //                     // }
-        //                     console.log('The Sellected is :: ', el.parentNode.dataset.id);
-        //                     el
-        //                 })
-        //                 // if(varDivs.filter(el => el.value==this.variables[i].field)){
-        //                 //     console.log('el value ', this.variables[i].field);
-        //                 //     el.selected=true;
-        //                 //     break;
-        //                 // }
-        //             // }
-        //         // });
-               
-        //         this.isBodyVariableLoad=false;
-        //     }
-        // }
     }
 
     fetchTemplateData() {
@@ -303,11 +253,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                 const { template, templateVariables } = data;
                 this.templateName = template.Name || '';
                 this.metaTemplateId = template.MVWB__Template_Id__c || '';
-                console.log('meta template id ',this.metaTemplateId);
-                
-                const header = template.MVWB__Header_Body__c || '';
-                this.header = header.trim().replace(/^\*\*|\*\*$/g, '');
-                console.log(this.header);
+                const headerBody = template.MVWB__Header_Body__c || '';
+                const headerType = template.MVWB__Header_Type__c || '';
                 
                 this.footer = template.MVWB__Footer_Body__c || '';
                 this.selectedLanguage = template.MVWB__Language__c;
@@ -383,8 +330,27 @@ export default class WbCreateTemplatePage extends LightningElement {
                     };
                     
                     this.handleMenuSelect({currentTarget:{dataset:{value:template.MVWB__Button_Type__c,buttonData:newButton}}});
+                    // this.handleLanguageChange({ target: { value: template.Language__c } });
                 }
                 this.handleContentType({target:{value:template.MVWB__Header_Type__c}});
+
+                if(headerType.toLowerCase()=='image'){
+                    console.log('enter in images...');
+                    this.isImageFile=true;
+                    this.isfilename=true;
+                    this.isImgSelected=false;
+                    this.fileName=template.MVWB__File_Name__c;
+                    this.filePreview=headerBody;
+                    this.NoFileSelected = false;
+                    console.log('Image Header:', this.filePreview);
+                    console.log(this.isfilename);
+                    console.log(this.isImgSelected);
+                    console.log(this.fileName);
+                }else{
+                    this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
+                    console.log('Text Header:', this.header);
+                }
+             
             })
             .catch((error) => {
                 console.error('Error fetching fields: ', error);
@@ -459,43 +425,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
     }
 
-    fetchCountries() {
-        try {
-            getCountryCodes()
-            .then(result => {
-                this.countryType = result.map(country => {
-                    return { label: `${country.name} (${country.callingCode})`, value: country.callingCode };
-                });
-            })
-            .catch(error => {
-                console.error('Error fetching country data:', error);
-            });
-        } catch (error) {
-            console.error('Something wrong while fetching country data:', error);
-        }
-    }
-    fetchLanguages() {
-        try {
-            getLanguages()
-            .then(result => {
-                this.languageOptions = result.map(lang => {
-                    return { label: `${lang.language}`, value: lang.code, isSelected: lang.code === this.selectedLanguage  };
-                });
-                  if (!this.languageOptions.some(option => option.isSelected)) {
-                    this.selectedLanguage = this.languageOptions[0]?.value || '';
-                    if (this.languageOptions[0]) {
-                        this.languageOptions[0].isSelected = true;
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching language data:', error);
-            });
-        } catch (error) {
-            console.error('Something wrong while fetching language data:', error);
-        }
-    }
-
     handleFileChange(event) {
         try {
             console.log('enter in function');
@@ -544,19 +473,20 @@ export default class WbCreateTemplatePage extends LightningElement {
     handleRemoveFile(){
         this.isfilename=false;
         this.NoFileSelected=true;
-        this.isImgSelected=false;
         this.isVidSelected=false;
         this.isDocSelected=false;
+        this.filePreview = null;
+        this.isImageFile=false;
         if(this.isImageFileUploader==true){
-            this.isImageFile=true;
+            this.isImgSelected=true;
         }
     }
 
     generatePreview(file) {
         if (file.type.startsWith('image/')) {
-            this.isImgSelected = true;
-            this.isImageFile = false;
-    
+            this.isImgSelected = false;
+            this.isImageFile = true;
+
             const reader = new FileReader();
             reader.onload = () => {
                 this.filePreview = reader.result; 
@@ -663,15 +593,11 @@ export default class WbCreateTemplatePage extends LightningElement {
                 this.template.querySelector('.conInput').value=this.selectedContentType;
             }, 1000)
     
-            if (this.selectedContentType == 'Text') {
-                this.IsHeaderText = true;
-            } else {
-                this.IsHeaderText = false;
-            }
+            this.IsHeaderText = this.selectedContentType == 'Text' ? true : false;
             if (this.selectedContentType == 'Image') {
-                    this.isImgSelected = false;
+                    this.isImgSelected = true;
                     this.isImageFileUploader=true;
-                    this.isImageFile = true;
+                    this.isImageFile = false;
                     this.addMedia = true;
             } else {
                 this.isImageFile = false;
@@ -679,6 +605,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                 this.addMedia = false;
                 this.isImgSelected = false;
             }
+
+            console.log('The Selected type is :: ' , this.selectedContentType);
         } catch (error) {
             console.error('Something wrong while selecting content type: ', JSON.stringify(error));
         }
@@ -747,6 +675,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 case 'templateName':
                     this.templateName = value.replace(/\s+/g, '_').toLowerCase();
                     this.checkTemplateExistence();
+                    this.handleStoredname();
                     break;
                 case 'language':
                     this.selectedLanguage = value;
@@ -1413,6 +1342,41 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.log('Error in generateEmojiCategories', e);
         }
     }
+    fetchCountries() {
+        try{
+            fetch(CountryJson)
+            .then((response) => response.json())
+            .then((data) => {
+                this.countryType = data.map(country => {
+                    return { label: `${country.name} (${country.callingCode})`, value: country.callingCode };
+                });
+            })
+            .catch((e) => console.log('Error fetching country data:', e));
+        }catch(e){
+            console.error('Something wrong while fetching country data:', e);
+        }
+    }
+
+    fetchLanguages() {
+        try{
+            fetch(LanguageJson)
+            .then((response) => response.json())
+            .then((data) => {
+                this.languageOptions = data.map(lang => {
+                    return { label: `${lang.language}`, value: lang.code, isSelected: lang.code === this.selectedLanguage  };
+                });
+                  if (!this.languageOptions.some(option => option.isSelected)) {
+                    this.selectedLanguage = this.languageOptions[0]?.value || '';
+                    if (this.languageOptions[0]) {
+                        this.languageOptions[0].isSelected = true;
+                    }
+                }
+            })
+            .catch((e) => console.log('Error fetching language data:', e));
+        }catch(e){
+            console.error('Something wrong while fetching language data:', e);
+        }
+    }
 
     handleEmoji(event) {
         event.stopPropagation();        
@@ -1638,6 +1602,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
                 tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
                 tempImgUrl:this.imageurl ? this.imageurl : null,
+                tempImgName:this.fileName ? this.fileName : null,
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
                 tempHeaderText: this.header ? this.header : '',
                 tempHeaderExample: (this.tempHeaderExample && this.tempHeaderExample.length > 0) ? this.tempHeaderExample : null,

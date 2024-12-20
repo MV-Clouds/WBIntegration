@@ -94,7 +94,7 @@
     padding-top: 6px;
     padding-left: 7px;
     padding-right: 7px;
-    padding-bottom: 7px;
+    padding-bottom: 0;
     max-width: 300px;
     min-width: 150px;
     background-color: white;
@@ -246,7 +246,6 @@ input{
     justify-content: flex-end;
     font-size: smaller;
     /* margin-top: 1%; */
-    margin-bottom: 1%;
     position: relative;
     /* top: 10px; */
 }
@@ -448,7 +447,7 @@ input{
 .phone-container {
     width: 600px;
     height: 700px;
-    background: url(/resource/MVWB__phoneImg) no-repeat center center;
+    background: url('/resource/MVWB__phoneImg') no-repeat center center;
     /* background-size: cover; */
     display: flex;
     justify-content: center;

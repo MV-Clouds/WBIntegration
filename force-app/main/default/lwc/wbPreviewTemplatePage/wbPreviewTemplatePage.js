@@ -20,7 +20,7 @@ import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhats
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
-import getCountryCodes from '@salesforce/apex/WBTemplateController.getCountryCodes';
+import CountryJson from '@salesforce/resourceUrl/CountryJson';
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;
@@ -237,20 +237,18 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     fetchCountries() {
-        try {
-            getCountryCodes()
-            .then(result => {
-                this.countryType = result.map(country => {
-                    return { label: `(${country.callingCode})`, value: country.callingCode, isSelected: country.callingCode === this.selectedCountryType  };
+        try{
+            fetch(CountryJson)
+            .then((response) => response.json())
+            .then((data) => {
+                this.countryType = data.map(country => {
+                    return { label: `(${country.callingCode})`, value: country.callingCode,isSelected: country.callingCode === this.selectedCountryType };
                 });
             })
-            .catch(error => {
-                console.error('Error fetching country data:', error);
-            });
-        } catch (error) {
-            console.error('Something went wrong in fetching country data:', error);
+            .catch((e) => console.log('Error fetching country data:', e));
+        }catch(e){
+            console.error('Something wrong while fetching country data:', e);
         }
-       
     }
 
     fetchContactData() {
@@ -346,7 +344,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     fetchTemplateData() {
         try {
-            this.isLoading = true;            
+            this.isLoading = true;    
+            console.log('in the preview page==> ',this.templateid);
+                    
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
@@ -361,7 +361,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     this.formattedtempHeader = this.originalHeader;
                     this.tempFooter = result.template.MVWB__Footer_Body__c;
 
-                    this.isSendDisabled = result.MVWB__template.Status__c !== 'Active-Quality Pending';
+                    this.isSendDisabled = result.template.MVWB__Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
