@@ -18,7 +18,7 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
 import richTextZip from '@salesforce/resourceUrl/richTextZip';
 import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
-import emojiData from '@salesforce/resourceUrl/emoji_data';
+import emojiData from '@salesforce/resourceUrl/emojis_data';
 import CountryJson from '@salesforce/resourceUrl/CountryJson';
 import LanguageJson from '@salesforce/resourceUrl/LanguageJson';
 import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist';

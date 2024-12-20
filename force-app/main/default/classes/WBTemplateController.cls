@@ -30,7 +30,7 @@
                 LIMIT 1
             ];
             
-            accessToken = SETTINGS.Access_token_for_WhatsApp__c;
+            accessToken = SETTINGS.MVWB__Access_Token__c;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'static', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
