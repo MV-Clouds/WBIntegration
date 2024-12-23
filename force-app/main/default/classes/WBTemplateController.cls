@@ -25,8 +25,7 @@
         try {
             SETTINGS = [
                 SELECT MVWB__Access_Token__c, MVWB__Application_Id__c, MVWB__Phone_Number_Id__c,MVWB__Business_Account_Id__c	
-                FROM MVWB__WBConnect_Configuration__mdt
-                WHERE DeveloperName = 'WhatsAppConfig' WITH SECURITY_ENFORCED
+                FROM MVWB__WBConnect_Configuration__mdt WITH SECURITY_ENFORCED
                 LIMIT 1
             ];
             

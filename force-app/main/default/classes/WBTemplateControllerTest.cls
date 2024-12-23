@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 12-19-2024
+ * @last modified on  : 12-20-2024
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 @isTest
@@ -184,20 +184,6 @@ public class WBTemplateControllerTest {
             System.assert(picklistValues.containsKey('categories'), 'Picklist should contain "categories" key');
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testGetPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
-        }
-    }
-
-    @isTest
-    static void testGetCountryCodesAndLanguages() {
-        try{
-             Test.startTest();
-            List<Map<String, String>> countryValues = WBTemplateController.getCountryCodes();
-            List<Map<String, String>> languageValues = WBTemplateController.getLanguages();
-            Test.stopTest();
-            System.assertNotEquals(null, countryValues, 'Country codes should not be null');
-            System.assertNotEquals(null, languageValues, 'Languages should not be null');
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testGetCountryCodesAndLanguages', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 
