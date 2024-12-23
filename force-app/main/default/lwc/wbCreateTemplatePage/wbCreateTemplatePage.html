@@ -89,7 +89,7 @@
                                                     <p class="uploadlabel">Image</p>
                                                     <div class="custom-upload-button">
                                                         <label class="upload-label">
-                                                            <img src="/resource/MVWB__uploadImgIcon" alt="Upload Icon"
+                                                            <img src="/resource/uploadImgIcon" alt="Upload Icon"
                                                                 class="upload-icon" />
                                                             <template if:true={NoFileSelected}>
                                                                 <span>Choose JPG or PNG file</span>
@@ -196,7 +196,7 @@
                                         <div class="inner-rich">
                                             <div class="rich-icon">
                                                 <button class="toolbar-button" onclick={handleEmoji}>
-                                                <img src="/resource/MVWB__wbSmileIcon" class="custom-icon" />
+                                                <img src="/resource/wbSmileIcon" class="custom-icon" />
                                                 </button>
                                                 <template for:each={toolbarButtonsWithClasses} for:item="button">
                                                     <button key={button.title} class={button.classes} title={button.title}
@@ -494,7 +494,7 @@
                                         <p class="templatetextWP"><b>Template Preview</b></p>
                                         <template if:true={isCustom}>
                                             <button class="refresh-btn" onclick={refreshTempPreview} disabled={isRefreshEnabled}>
-                                                <img src="/resource/MVWB__refreshIcon" class={refreshButtonClass} alt="refresh">
+                                                <img src="/resource/refreshIcon" class={refreshButtonClass} alt="refresh">
                                             </button>
                                         </template>
                                     </div>
@@ -508,7 +508,7 @@
                                             </template>
                                             <template if:true={isImgSelected}>
                                                 <div class="imagedivWP">
-                                                    <img src="/resource/MVWB__ImageIcon" alt="">
+                                                    <img src="/resource/ImageIcon" alt="">
                                                 </div>
                                             </template>
                                             <template if:true={isImageFile}>

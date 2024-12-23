@@ -6,10 +6,10 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 17/12/2024
+ * Last Update Date : 23/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : handleSubmit,fetchTemplateData
- * Change Description : To handle edit functionality for template.
+ * Name of methods changed (Comma separated if more then one) : Beta 10 
+ * Change Description : Beta 10 bug resolved
  ********************************************************************** */
 
 import { LightningElement, track, wire,api } from 'lwc';
@@ -252,17 +252,17 @@ export default class WbCreateTemplatePage extends LightningElement {
             .then((data) => {
                 const { template, templateVariables } = data;
                 this.templateName = template.Name || '';
-                this.metaTemplateId = template.MVWB__Template_Id__c || '';
-                const headerBody = template.MVWB__Header_Body__c || '';
-                const headerType = template.MVWB__Header_Type__c || '';
+                this.metaTemplateId = template.Template_Id__c || '';
+                const headerBody = template.Header_Body__c || '';
+                const headerType = template.Header_Type__c || '';
                 
-                this.footer = template.MVWB__Footer_Body__c || '';
-                this.selectedLanguage = template.MVWB__Language__c;
-                this.tempBody = template.MVWB__Template_Body__c || 'Hello';
+                this.footer = template.Footer_Body__c || '';
+                this.selectedLanguage = template.Language__c;
+                this.tempBody = template.Template_Body__c || 'Hello';
                 this.previewBody= this.formatText(this.tempBody) || 'Hello';
-                this.previewHeader= this.formatText(this.header) ||'';
-                this.selectedContentType=template.MVWB__Header_Type__c || 'None';
-                this.btntext = template.MVWB__Button_Label__c || '';
+                this.previewHeader= this.formatText(headerBody) ||'';
+                this.selectedContentType=template.Header_Type__c || 'None';
+                this.btntext = template.Button_Label__c || '';
                 console.log('selectedContentType ',this.selectedContentType);
                 
                 let tvs =templateVariables.map(tv=>{
@@ -280,6 +280,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 this.variables = tvs.filter(tv=>tv.type=='Body') || [];
                 this.header_variables = tvs.filter(tv=>tv.type=='Header') || [];
+                this.updatePreviewContent(headerBody,'header');
+                this.updatePreviewContent(this.tempBody,'body');
                 console.log('variable length ',this.variables);
                 console.log('header length ',this.header_variables);
                 this.addHeaderVar=this.header_variables?.length>0?true:false;
@@ -311,17 +313,17 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 console.log('CP2');
 
-                if(template.MVWB__Button_Type__c && template.MVWB__Button_Label__c){
+                if(template.Button_Type__c && template.Button_Label__c){
                     let newButton = {
                         id: this.buttonList.length + 1,
-                        selectedActionType: template.MVWB__Button_Type__c,
-                        iconName: this.getButtonIcon(template.MVWB__Button_Type__c),
-                        btntext: template.MVWB__Button_Label__c,
-                        webURL: template.MVWB__Button_Body__c,
-                        phonenum: template.MVWB__Button_Body__c?.split(' ')[1],
-                        offercode: template.MVWB__Button_Body__c,
+                        selectedActionType: template.Button_Type__c,
+                        iconName: this.getButtonIcon(template.Button_Type__c),
+                        btntext: template.Button_Label__c,
+                        webURL: template.Button_Body__c,
+                        phonenum: template.Button_Body__c?.split(' ')[1],
+                        offercode: template.Button_Body__c,
                         selectedUrlType: 'Static',
-                        selectedCountryType: template.MVWB__Button_Body__c?.split(' ')[0],
+                        selectedCountryType: template.Button_Body__c?.split(' ')[0],
                         isCallPhone: false,
                         isVisitSite: false,
                         isOfferCode: false,
@@ -329,18 +331,20 @@ export default class WbCreateTemplatePage extends LightningElement {
                         errorMessage: ''   
                     };
                     
-                    this.handleMenuSelect({currentTarget:{dataset:{value:template.MVWB__Button_Type__c,buttonData:newButton}}});
+                    this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
                     // this.handleLanguageChange({ target: { value: template.Language__c } });
                 }
-                this.handleContentType({target:{value:template.MVWB__Header_Type__c}});
+                this.handleContentType({target:{value:template.Header_Type__c}});
 
                 if(headerType.toLowerCase()=='image'){
                     console.log('enter in images...');
                     this.isImageFile=true;
                     this.isfilename=true;
                     this.isImgSelected=false;
-                    this.fileName=template.MVWB__File_Name__c;
+                    this.fileName=template.File_Name__c;
                     this.filePreview=headerBody;
+                    this.imageurl=template.Header_Body__c;
+                    this.headerHandle=template.Image_Header_Handle__c;
                     this.NoFileSelected = false;
                     console.log('Image Header:', this.filePreview);
                     console.log(this.isfilename);
@@ -431,7 +435,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             
             const fileInput = event.target.files[0];
             if (!fileInput) {
-                throw new Error('No file selected. Please choose a file.');
+                console.log('No file selected. Please choose a file.');
             }
 
             this.file = fileInput;
@@ -765,7 +769,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                     }
                 })
                 .catch(error => {
-                    throw new Error(`Error checking template existence: ${error.message || 'Unknown error'}`);
+                    console.log(`Error checking template existence: ${error.message || 'Unknown error'}`);
                 });
         } catch (error) {
             console.error(error.message);
@@ -1147,11 +1151,12 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     handleAlternateVarChange(event) {
-        const variableId = event.target.dataset.id;
+        const variableId = String(event.target.dataset.id);
+        console.log('variableId ',variableId);
         const alternateText = event.target.value;
         console.log('alternateText for body ',alternateText);
         this.variables = this.variables.map(varItem =>
-            varItem.id === parseInt(variableId)
+            String(varItem.id) === parseInt(variableId)
                 ? { ...varItem, alternateText }
                 : varItem
         );
@@ -1248,6 +1253,16 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
     }
 
+    handleAlternateTextChange(event) {
+        const variableId = String(event.target.dataset.id); 
+        const alternateText = event.target.value;
+        this.header_variables = this.header_variables.map(varItem =>
+            String(varItem.id) === variableId
+                ? { ...varItem, alternateText } 
+                : varItem
+        );
+    }
+
     updatePreviewContent(inputContent, type) {
         try {
             let updatedContent = inputContent;
@@ -1256,6 +1271,8 @@ export default class WbCreateTemplatePage extends LightningElement {
             variables.forEach(varItem => {
                 const replacement = `{{${varItem.object}.${varItem.field}}}`;
                 updatedContent = updatedContent.replace(`{{${varItem.id}}}`, replacement);
+                console.log('updatedContent ',updatedContent);
+                
             });
         
             if (type === 'header') {
@@ -1268,16 +1285,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         } catch (error) {
             console.error('Something wrong while updating preview.',error);   
         }
-    }
-
-    handleAlternateTextChange(event) {
-        const variableId = event.target.dataset.id;
-        const alternateText = event.target.value;
-        this.header_variables = this.header_variables.map(varItem =>
-            varItem.id === parseInt(variableId)
-                ? { ...varItem, alternateText } 
-                : varItem
-        );
     }
 
     handleHeaderVarRemove(event) {
