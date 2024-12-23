@@ -698,7 +698,8 @@ export default class ChatWindow extends LightningElement {
     handleTemplateSent(event){
         try {
             this.showTemplateSelection = false;
-            let chat = event.detail;
+            if(event.detail.errorMessage == 'METADATA_ERROR') this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
+            let chat = event.detail.chat;
             this.chats.push(chat);
             this.handleBackDropClick();
             this.showSpinner = false;
