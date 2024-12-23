@@ -87,7 +87,7 @@ export default class TemplatePreview extends LightningElement {
                     });
                     console.log('the Payload is :: :', templatePayload);
 
-                    sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id, isReaction: false})
+                    sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id, isReaction: false, reaction: null})
                     .then(ch => {
                         this.dispatchEvent(new CustomEvent('message', {
                             detail: ch

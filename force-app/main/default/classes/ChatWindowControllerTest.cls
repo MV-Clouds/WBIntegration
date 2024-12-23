@@ -142,13 +142,13 @@ public class ChatWindowControllerTest {
 
         String jsonData = '{"message": "Hello, this is a test message."}';
 
-        ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, true);
+        ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, true, '<|USER|>');
         test.setMock(HttpCalloutMock.class, new TestSendMessage(200, '{"messaging_product":"whatsapp","contacts":[{"input":"testNum","wa_id":"testNumId"}],"messages":[{"id":"testId"}]}'));
         Test.startTest();
-        Chat__c result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, false);
+        Map<String, Object> result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, false, null);
         Test.stopTest();
 
-        System.assertNotEquals(null, result, 'The result should not be null');
+        System.assertNotEquals(null, result.get('chat'), 'The result should not be null');
     }
 
     @isTest
@@ -158,10 +158,10 @@ public class ChatWindowControllerTest {
         String jsonData = '{"message": "Hello, this is a test message."}';
         test.setMock(HttpCalloutMock.class, new TestSendMessage(404, ''));
         Test.startTest();
-        Chat__c result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, false);
+        Map<String, Object> result = ChatWindowController.sendWhatsappMessage(jsonData, testChat.Id, false, null);
         Test.stopTest();
 
-        System.assertNotEquals(null, result, 'The result should not be null');
+        System.assertNotEquals(null, result.get('chat'), 'The result should not be null');
     }
 
     @isTest
@@ -199,6 +199,7 @@ public class ChatWindowControllerTest {
         insert testVariable2;
 
         Test.startTest();
+        ChatWindowController.getTemplateData(null, testContact.Id);
         Map<String, Object> result = ChatWindowController.getTemplateData(testTemplate.Id, testContact.Id);
         Test.stopTest();
 

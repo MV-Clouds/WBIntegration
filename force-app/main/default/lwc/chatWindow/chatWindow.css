@@ -378,6 +378,7 @@
     gap: 4px;
     align-items: center;
     text-transform: uppercase;
+    font-weight: 200;
 }
 
 .status-icon {

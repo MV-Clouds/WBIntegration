@@ -616,17 +616,25 @@ export default class ChatWindow extends LightningElement {
                         link: chat.MVWB__Message__c,
                         fileName: event.detail.files[0].name || 'whatsapp image'
                     });
-                    sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false})
-                    .then(ch => {
-                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = ch.MVWB__Message_Status__c;
-                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = ch.MVWB__WhatsAppMessageId__c;
+                    sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
+                    .then(result => {
+                        if(result.errorMessage == 'METADATA_ERROR'){
+                            this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
+                        }
+                        let resultChat = result.chat;
+                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = resultChat.MVWB__Message_Status__c;
+                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = resultChat?.MVWB__WhatsAppMessageId__c;
                         this.messageText = '';
                         this.template.querySelector('.message-input').value = '';
                         this.replyToMessage = null;
                         this.showSpinner = false;
                         this.processChats();
-                        this.handleBackDropClick();
                     })
+                    .catch((e) => {
+                        this.showSpinner = false;
+                        console.log('Error in handleUploadFinished > sendWhatsappMessage :: ', e);
+                    })
+                    this.handleBackDropClick();
                 }else{
                     this.showSpinner = false;
                     this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
@@ -749,15 +757,19 @@ export default class ChatWindow extends LightningElement {
                 });
                 console.log('ReactPayload :: ', reactPayload);
                 
-                sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true})
-                    .then(ch => {
-                        console.log('Chat reply is :: ', chat.Id);
-                        console.log('Ch :: ', ch);
-                        
-                        
-                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = ch.MVWB__Message_Status__c;
-                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = ch.MVWB__WhatsAppMessageId__c;
-                        this.processChats();
+                sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true, reaction: chat.MVWB__Reaction__c})
+                .then(result => {
+                    if(result.errorMessage == 'METADATA_ERROR'){
+                        this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
+                    }
+
+                    let resultChat = result.chat;
+                    this.chats.find(ch => ch.Id === chat.Id).MVWB__Reaction__c = resultChat.MVWB__Reaction__c;
+                    this.processChats();
+                })
+                .catch((e) => {
+                    this.showSpinner = false;
+                    console.log('Error in updateMessageReaction > sendWhatsappMessage :: ', e);
                 })
             })
             .catch((e) => {
@@ -809,11 +821,20 @@ export default class ChatWindow extends LightningElement {
                     textareaMessageElement.style.height = 'auto';
                     textareaMessageElement.style.height = `${textareaMessageElement.scrollHeight}px`;
 
-                    sendWhatsappMessage({jsonData: textPayload, chatId: chat.Id, isReaction: false})
-                    .then(ch => {
-                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = ch.MVWB__Message_Status__c;
-                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = ch.MVWB__WhatsAppMessageId__c;
+                    sendWhatsappMessage({jsonData: textPayload, chatId: chat.Id, isReaction: false, reaction: null})
+                    .then(result => {
+                        if(result.errorMessage == 'METADATA_ERROR'){
+                            this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
+                        }
+                        let resultChat = result.chat;
+                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = resultChat.MVWB__Message_Status__c;
+                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = resultChat?.MVWB__WhatsAppMessageId__c;
+                        this.showSpinner = false;
                         this.processChats();
+                    })
+                    .catch((e) => {
+                        this.showSpinner = false;
+                        console.log('Error in handleSendMessage > sendWhatsappMessage :: ', e);
                     })
                 }else{
                     this.showSpinner = false;
