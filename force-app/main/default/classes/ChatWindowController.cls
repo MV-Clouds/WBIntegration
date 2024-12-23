@@ -6,8 +6,8 @@
 * Created By: Kevin Suvagiya
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
-* Last Modified Date: 06 Dec 2024
-* Last Modification Description: updated code for align with react on messages
+* Last Modified Date: 23 Dec 2024
+* Last Modification Description: updated code to handle no metadata record
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
@@ -18,7 +18,19 @@
 * 11 Dec, 2024  - Kevin Suvagiya - Added a method to fetch the full template data with replaced variables
 **/
 public with sharing class ChatWindowController {
-    
+
+    /* Variables to be used generally for the class 
+    *********************************************************
+    @variable wbConfig - {List<WBConnect_Configuration__mdt>} - Custom Metadata containing auth values for whatsapp
+    @variable userPreferences - {List<User_Theme_Preference__c>} - Custom Setting for showing user theme as their preference
+    *********************************************************
+    */
+    /* ---------------- Start ---------------- */
+    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+    public static List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Theme__c FROM MVWB__User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
+    /* ----------------  End  ---------------- */
+
+
     /*
     *********************************************************
     @description     : Method is used to fetch all the chats 
@@ -33,8 +45,7 @@ public with sharing class ChatWindowController {
             List<Chat__c> chats = new List<Chat__c>();
             List<Template__c> templates = new List<Template__c>();
             Contact recordData = new Contact();
-            User_Theme_Preference__c userPreference = User_Theme_Preference__c.getInstance(UserInfo.getUserId());
-
+            User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
             chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
@@ -138,10 +149,8 @@ public with sharing class ChatWindowController {
     public static Boolean updateThemePreference(String theme) {
         Boolean isSuccess = false;
         try {
-            List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Theme__c FROM MVWB__User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
             MVWB__User_Theme_Preference__c userPreference = new MVWB__User_Theme_Preference__c();
             if (userPreferences.isEmpty()) {
-
                 userPreference.SetupOwnerId = UserInfo.getUserId();
             }else{
                 userPreference = userPreferences[0];
@@ -158,18 +167,34 @@ public with sharing class ChatWindowController {
     /*
     *********************************************************
     @description     : Method to send the messages from the chat window
-    @param           : theme - {String} - The new theme preference ('Light' or 'Dark')
-    @return          : isSuccess - {Boolean} - success message for js controller
+    @param           : jsonData - {String} - The JSON Data to send as a request body
+    @param           : chatId - {String} - Id of the related Chat
+    @param           : isReaction - {String} - to specify if the action is for a reaction
+    @param           : reaction - {String} - reaction string if the action is for a reaction
+    @return          : resultMap - {Map<String, Object>} - containing errorMessage and a chat record
     ********************************************************
     */
     @AuraEnabled
-    public static Chat__c sendWhatsappMessage(String jsonData, String chatId, Boolean isReaction) {
+    public static Map<String, Object> sendWhatsappMessage(String jsonData, String chatId, Boolean isReaction, String reaction) {
+        Map<String, Object> resultMap = new Map<String, Object>{};
         Chat__c chat = new Chat__c(Id = chatId);
         try {
             HttpRequest httpReq = new HttpRequest();
-            List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-            String accessToken = config[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
+            resultMap.put('errorMessage', null);
+            // List<WBConnect_Configuration__mdt> wbConfig = WBConnect_Configuration__mdt.getAll().values(); 
+            if(wbConfig==null || wbConfig.isEmpty()){
+                if(!isReaction){
+                    chat.Message_Status__c = 'Failed';
+                }else{
+                    chat.Reaction__c = '<|USER|>' + reaction.substringAfter('<|USER|>');
+                }
+                update as user chat;
+                resultMap.put('errorMessage', 'METADATA_ERROR');
+                resultMap.put('chat', chat);
+                return resultMap;
+            }
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
@@ -200,12 +225,18 @@ public with sharing class ChatWindowController {
 
             update as user chat;
             chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
-            return chat;
+            resultMap.put('chat', chat);
+            return resultMap;
 
         } catch (Exception e) {
+            if(!isReaction){
+                chat.Message_Status__c = 'Failed';
+                update as user chat;
+            }
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => chatId, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
-        return chat;
+        resultMap.put('chat', chat);
+        return resultMap;
     }
 
     /*
@@ -284,9 +315,9 @@ public with sharing class ChatWindowController {
     public static void updateStatus(List<String> messageIds) {
         List<Chat__c> chats = new List<Chat__c>();
         chats = [SELECT Id, WhatsAppMessageId__c, Message_Status__c FROM Chat__c WHERE Id IN :messageIds WITH SECURITY_ENFORCED];
-        List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-        String accessToken = config[0].MVWB__Access_Token__c;
-        String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
+        // List<WBConnect_Configuration__mdt> wbConfig = WBConnect_Configuration__mdt.getAll().values(); 
+        String accessToken = wbConfig[0].MVWB__Access_Token__c;
+        String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
 
         try {
             for (Chat__c chat : chats) {
