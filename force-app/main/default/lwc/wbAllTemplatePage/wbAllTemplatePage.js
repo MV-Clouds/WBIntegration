@@ -6,10 +6,10 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 7/12/2024
+ * Last Update Date : 23/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : 
- * Change Description :Change the UI as per figma design.
+ * Name of methods changed (Comma separated if more then one) : Beta 10 bugs
+ * Change Description :Beta 10 bug resolved
  ********************************************************************** */
 
 import { LightningElement, track, wire,api } from 'lwc';

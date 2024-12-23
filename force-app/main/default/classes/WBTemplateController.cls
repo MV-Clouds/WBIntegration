@@ -28,7 +28,7 @@
                 FROM MVWB__WBConnect_Configuration__mdt WITH SECURITY_ENFORCED
                 LIMIT 1
             ];
-            
+          
             accessToken = SETTINGS.MVWB__Access_Token__c;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'static', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
@@ -45,7 +45,7 @@
   @AuraEnabled(cacheable=false)
     public static List<Template__c> getWhatsAppTemplates() {
         try {
-            List<Template__c> listName = [SELECT Id, Name, Template_Category__c, Language__c,File_Name__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
+            List<Template__c> listName = [SELECT Id, Name, Template_Category__c, Language__c,File_Name__c,Image_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
             FROM Template__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
 
             System.debug('list name==> ' + listName);
@@ -118,7 +118,7 @@
 
         try {
             List<Template__c> templates = [
-                SELECT Id, Name, Button_Body__c, Status__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
+                SELECT Id, Name, Button_Body__c, Status__c,Image_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
                     Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, 
                     Template_Category__c, Template_SubCatagory__c, Template_Type__c
                 FROM Template__c 
@@ -231,7 +231,7 @@
     public static Map<String, Object> getTemplateDataWithReplacement(String templateId, String contactId) {
         try {
             Map<String, Object> templateData = new Map<String, Object>();
-            List<Template__c> templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c, 
+            List<Template__c> templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c,Image_Header_Handle__c, 
                                                 Footer_Body__c, Header_Body__c, Header_Type__c, Language__c,File_Name__c, 
                                                 Template_Body__c, Template_Category__c, Template_SubCatagory__c, 
                                                 Template_Type__c, Template_Variable__c, 
@@ -401,6 +401,12 @@
         Map<String, Object> response = new Map<String, Object>();
 
         try {
+            if (String.isBlank(SETTINGS.MVWB__Business_Account_Id__c)) {
+                response.put('success', false);
+                response.put('errorMessage', 'Business Account ID is not configured in the system.');
+                return response;
+            }
+
             CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
             System.debug('Deserialized TemplateWrapper: ' + templateWrapper);
 
@@ -460,6 +466,9 @@
     @AuraEnabled
     public static String startUploadSession(String fileName, Integer fileLength, String fileType) {
         try {
+            if (String.isBlank(SETTINGS.MVWB__Application_Id__c)) {
+                return 'Application ID is not configured in the system.';
+            }
             Map<String, Object> payload = new Map<String, Object>();
             payload.put('file_name', fileName);
             payload.put('file_length', fileLength);
@@ -598,6 +607,10 @@
     @AuraEnabled
     public static string deleteTemplete(String templateId){
         try {
+            if (String.isBlank(SETTINGS.MVWB__Business_Account_Id__c)) {
+                return 'Business Account ID is not configured in the system.';
+            }
+
             Template__c wbTempRec = [SELECT Id, Name FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
             
             endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Name;

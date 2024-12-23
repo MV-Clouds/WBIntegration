@@ -6,10 +6,10 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 13/12/2024
+ * Last Update Date : 23/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) :  Complete functionality of mapping contact record in input field and preview content
- * Change Description :
+ * Name of methods changed (Comma separated if more then one) : Beta 10
+ * Change Description :Beta 10 bug resolved
  ********************************************************************** */
 
 import { LightningElement,track,api } from 'lwc';
@@ -482,10 +482,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         buttonLabel: this.template.MVWB__Button_Label__c,
                         buttonType: this.template.MVWB__Button_Type__c
                     });
-    
-                    return sendWhatsappMessage({ jsonData: templatePayload, chatId: chat.Id, isReaction: false });
+                    return sendWhatsappMessage({ jsonData: templatePayload, chatId: chat.Id, isReaction: false, reaction:null });
                 } else {
-                    throw new Error('Error creating chat');
+                    console.error('Error creating chat');
                 }
             })
             .then(() => {
