@@ -332,7 +332,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                     };
                     
                     this.handleMenuSelect({currentTarget:{dataset:{value:template.MVWB__Button_Type__c,buttonData:newButton}}});
-                    // this.handleLanguageChange({ target: { value: templaMVWB__te.Language__c } });
                 }
                 this.handleContentType({target:{value:template.MVWB__Header_Type__c}});
 
@@ -1156,7 +1155,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         const alternateText = event.target.value;
         console.log('alternateText for body ',alternateText);
         this.variables = this.variables.map(varItem =>
-            String(varItem.id) === parseInt(variableId)
+            String(varItem.id) === variableId
                 ? { ...varItem, alternateText }
                 : varItem
         );
