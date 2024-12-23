@@ -12,7 +12,7 @@
     padding: 0;
     border-radius: 5px;
     width: 60rem;
-background-image: url('/resource/wbiTemplateBg');
+background-image: url('/resource/MVWB__wbiTemplateBg');
 }
 
 /* Custom scrollbar styles for Webkit browsers */
@@ -131,7 +131,7 @@ background-image: url('/resource/wbiTemplateBg');
 
 .main {
     padding: 1%;
-    background-image: url('/resource/wbiTemplateBg');
+    background-image: url('/resource/MVWB__wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
     border-radius: 5px;

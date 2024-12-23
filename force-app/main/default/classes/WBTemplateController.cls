@@ -19,17 +19,17 @@
     public static String accessToken;
     public static String endpoint;
     public static String uploadEndpoint;
-    public static final WBConnect_Configuration__mdt SETTINGS;
+    public static final MVWB__WBConnect_Configuration__mdt SETTINGS;
 
     static {
         try {
             SETTINGS = [
-                SELECT Access_Token__c, Application_Id__c, Phone_Number_Id__c,Business_Account_Id__c	
-                FROM WBConnect_Configuration__mdt WITH SECURITY_ENFORCED
+                SELECT MVWB__Access_Token__c, MVWB__Application_Id__c, MVWB__Phone_Number_Id__c,MVWB__Business_Account_Id__c	
+                FROM MVWB__WBConnect_Configuration__mdt WITH SECURITY_ENFORCED
                 LIMIT 1
             ];
-            
-            accessToken = SETTINGS.Access_Token__c;
+          
+            accessToken = SETTINGS.MVWB__Access_Token__c;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'static', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
@@ -401,11 +401,17 @@
         Map<String, Object> response = new Map<String, Object>();
 
         try {
+            if (String.isBlank(SETTINGS.MVWB__Business_Account_Id__c)) {
+                response.put('success', false);
+                response.put('errorMessage', 'Business Account ID is not configured in the system.');
+                return response;
+            }
+
             CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
             System.debug('Deserialized TemplateWrapper: ' + templateWrapper);
 
             Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Business_Account_Id__c+'/message_templates';
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates';
             
             HttpRequest req = new HttpRequest();
             req.setEndpoint(endpoint);
@@ -460,11 +466,14 @@
     @AuraEnabled
     public static String startUploadSession(String fileName, Integer fileLength, String fileType) {
         try {
+            if (String.isBlank(SETTINGS.MVWB__Application_Id__c)) {
+                return 'Application ID is not configured in the system.';
+            }
             Map<String, Object> payload = new Map<String, Object>();
             payload.put('file_name', fileName);
             payload.put('file_length', fileLength);
             payload.put('file_type', fileType);
-            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.Application_Id__c+'/uploads';
+            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.MVWB__Application_Id__c+'/uploads';
 
             HttpRequest req = new HttpRequest();
             Http http = new Http();
@@ -598,9 +607,13 @@
     @AuraEnabled
     public static string deleteTemplete(String templateId){
         try {
+            if (String.isBlank(SETTINGS.MVWB__Business_Account_Id__c)) {
+                return 'Business Account ID is not configured in the system.';
+            }
+
             Template__c wbTempRec = [SELECT Id, Name FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
             
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Name;
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Name;
 
             HttpRequest req = new HttpRequest();         
             req.setEndpoint(endpoint);
