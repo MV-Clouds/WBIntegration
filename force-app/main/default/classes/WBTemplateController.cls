@@ -8,10 +8,10 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 17/12/2024
+ * Last Update Date : 24/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : static,getTemplateDataWithReplacement,editWhatsappTemplate
- * Change Description : Update the functionality to replace variable, get credential from metadata and edit template functionality.
+ * Name of methods changed (Comma separated if more then one) : restrictTemplates,sendPreviewTemplate
+ * Change Description : 
  ***********************************************************************/
 
  public without sharing class WBTemplateController {
@@ -54,6 +54,63 @@
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
+    }
+
+        /*
+    *********************************************************
+    @description     : trigger handle to handle limit of 5 records.
+    @param           : 
+    @return          : void
+    ********************************************************
+    */
+    public static void restrictTemplates() {
+        try {
+            Integer totalTemplates = [SELECT COUNT() FROM Template__c WITH SECURITY_ENFORCED];
+            if (totalTemplates >= 5) {
+                System.debug('You cannot create more than 5 Template records.');
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'restrictTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            return null;
+        }
+    }
+
+        /*
+    *********************************************************
+    @description     : Send preview message.
+    @param           : 
+    @return          : errorMessage
+    ********************************************************
+    */
+    @AuraEnabled
+    public static String sendPreviewTemplate(String jsonData) {
+        String errorMessage=null;
+        try {
+            HttpRequest httpReq = new HttpRequest();
+            List<WBConnect_Configuration__mdt> config = WBConnect_Configuration__mdt.getAll().values(); 
+            if(config==null && config.isEmpty()){
+                errorMessage='Metadata records are missing.';
+                return errorMessage;
+            }
+            String accessToken = config[0].Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].Phone_Number_Id__c + '/messages';
+            httpReq.setEndpoint(endpoint);
+            httpReq.setMethod('POST');
+            httpReq.setHeader('Content-Type', 'application/json');
+            httpReq.setHeader('Authorization', 'Bearer ' + accessToken);
+            httpReq.setBody(jsonData);
+            Http http = new Http();
+            HttpResponse response = http.send(httpReq);
+            Integer statusCode = response.getStatusCode();
+            if(statusCode != 200){
+                errorMessage='Failed to send Template';
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => null, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
+            }
+
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+        return errorMessage;
     }
 
      /*

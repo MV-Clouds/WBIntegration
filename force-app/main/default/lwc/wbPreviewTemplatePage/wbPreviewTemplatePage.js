@@ -15,8 +15,7 @@ MODIFICATION LOG*
 import { LightningElement,track,api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getRecordsBySObject from '@salesforce/apex/WBTemplateController.getRecordsBySObject'; 
-import createChat from '@salesforce/apex/ChatWindowController.createChat';
-import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';  
+import sendPreviewTemplate from '@salesforce/apex/WBTemplateController.sendPreviewTemplate';  
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
@@ -447,8 +446,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
     
     }
 
+
     sendTemplatePreview() {
-        this.isLoading = true;
+        this.isLoading = true; 
     
         try {
             let phonenum = this.selectedContactId 
@@ -463,46 +463,37 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 return;
             }
     
-            createChat({
-                chatData: {
-                    message: '',
-                    templateId: this.templateid,
-                    messageType: 'template',
-                    recordId: this.selectedContactId,
-                    replyToChatId: null
-                }
-            })
-            .then(chat => {
-                if (chat) {
-                    const templatePayload = this.createJSONBody(phonenum, "template", {
-                        templateName: this.template.Name,
-                        languageCode: this.template.MVWB__Language__c,
-                        headerParameters: this.headerParams,
-                        bodyParameters: this.bodyParams,
-                        buttonLabel: this.template.MVWB__Button_Label__c,
-                        buttonType: this.template.MVWB__Button_Type__c
-                    });
-                    return sendWhatsappMessage({ jsonData: templatePayload, chatId: chat.Id, isReaction: false, reaction:null });
-                } else {
-                    console.error('Error creating chat');
-                }
-            })
-            .then(() => {
-                this.showToast('Success', 'Template sent successfully', 'success');
-                this.closePreview();
-            })
-            .catch(e => {
-                this.showToast('Error', e.message || 'Failed to send template', 'error');
-            })
-            .finally(() => {
-                this.isLoading = false;
+            const templatePayload = this.createJSONBody(phonenum, "template", {
+                templateName: this.template.Name,
+                languageCode: this.template.MVWB__Language__c,
+                headerParameters: this.headerParams,
+                bodyParameters: this.bodyParams,
+                buttonLabel: this.template.MVWB__Button_Label__c,
+                buttonType: this.template.MVWB__Button_Type__c
             });
     
+            sendPreviewTemplate({ jsonData: templatePayload })
+                .then((result) => {
+                    if (result) {
+                        this.showToast('Error', result, 'error');
+                    } else {
+                        this.showToast('Success', 'Template sent successfully', 'success');
+                        this.closePreview(); 
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error in sending template:', error);
+                    this.showToast('Error', error.body?.message || 'Failed to send template', 'error');
+                })
+                .finally(() => {
+                    this.isLoading = false; 
+                });
+    
         } catch (e) {
-            console.error('Error in function handleSend:::', e.message);
-            this.isLoading = false;
+            console.error('Error in function sendTemplatePreview:', e.message);
+            this.isLoading = false; 
         }
-    }
+    }    
     
 
     createJSONBody(to, type, data){

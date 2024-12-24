@@ -75,6 +75,17 @@ public class WBTemplateControllerTest {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testFetchWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
+    
+      @isTest
+    static void testRestrictTemplate() {
+        try{
+			WBTemplateController.restrictTemplates();
+            Integer totalTemplates = [SELECT COUNT() FROM Template__c];
+        	System.assertEquals(5, totalTemplates, 'There should be exactly 5 Template records.');
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testRestrictTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+    }
 
       @isTest
     static void testGetDynamicObjectData_Success() {
@@ -186,6 +197,30 @@ public class WBTemplateControllerTest {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testGetPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
+
+    @isTest
+    static void testSendPreviewTemplate_Success() {
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
+        
+        String jsonData = '{"templateName": "test_template", "languageCode": "en", "headerParameters": ["Header"], "bodyParameters": ["Body1", "Body2"], "buttonLabel": "Click Me", "buttonType": "url"}';
+        
+        Test.startTest();
+        String result = WBTemplateController.sendPreviewTemplate(jsonData);
+        Test.stopTest();
+        
+    }
+    
+    @isTest
+    static void testSendPreviewTemplate_Failure() {
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(500));  
+        
+        String jsonData = '{"templateName": "test_template", "languageCode": "en", "headerParameters": ["Header"], "bodyParameters": ["Body1", "Body2"], "buttonLabel": "Click Me", "buttonType": "url"}';
+        
+        Test.startTest();
+        String result = WBTemplateController.sendPreviewTemplate(jsonData);
+        Test.stopTest();
+    }
+
 
     @isTest
     static void testCreateWhatsappTemplate_Success() {
