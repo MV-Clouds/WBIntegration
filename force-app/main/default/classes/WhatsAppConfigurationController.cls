@@ -40,9 +40,6 @@ public without sharing class WhatsAppConfigurationController {
             if (!configList.isEmpty()) {
                 config = configList[0];
                 devName = config.DeveloperName;
-                if(!devName.contains('MVWB__')){
-                    devName = 'MVWB__'+devName;
-                }
                 masterLabel = config.MasterLabel;
             }
             Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
