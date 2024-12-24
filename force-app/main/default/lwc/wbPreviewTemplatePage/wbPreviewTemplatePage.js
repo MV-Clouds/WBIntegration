@@ -6,17 +6,16 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 13/12/2024
+ * Last Update Date : 23/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) :  Complete functionality of mapping contact record in input field and preview content
- * Change Description :
+ * Name of methods changed (Comma separated if more then one) : Beta 10
+ * Change Description :Beta 10 bug resolved
  ********************************************************************** */
 
 import { LightningElement,track,api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getRecordsBySObject from '@salesforce/apex/WBTemplateController.getRecordsBySObject'; 
-import createChat from '@salesforce/apex/ChatWindowController.createChat';
-import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';  
+import sendPreviewTemplate from '@salesforce/apex/WBTemplateController.sendPreviewTemplate';  
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
@@ -352,22 +351,22 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 if (result) {
                     this.isImgSelected = result.isImgUrl;
                     this.IsHeaderText = !result.isImgUrl;                    
-                    this.originalHeader = result.template.MVWB__Header_Body__c;
-                    this.originalBody = result.template.MVWB__Template_Body__c;
+                    this.originalHeader = result.template.Header_Body__c;
+                    this.originalBody = result.template.Template_Body__c;
                     const variableMappings = result.templateVariables;
 
                     this.tempHeader = this.originalHeader;
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
-                    this.tempFooter = result.template.MVWB__Footer_Body__c;
+                    this.tempFooter = result.template.Footer_Body__c;
 
-                    this.isSendDisabled = result.template.MVWB__Status__c !== 'Active-Quality Pending';
+                    this.isSendDisabled = result.template.Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    const buttonLabels = result.template.MVWB__Button_Label__c ? result.template.MVWB__Button_Label__c.split(',') : [];
-                    const buttonTypes = result.template.MVWB__Button_Type__c ? result.template.MVWB__Button_Type__c.split(',') : [];
+                    const buttonLabels = result.template.Button_Label__c ? result.template.Button_Label__c.split(',') : [];
+                    const buttonTypes = result.template.Button_Type__c ? result.template.Button_Type__c.split(',') : [];
         
                     this.buttonList = buttonLabels.map((label, index) => {
                         const type = buttonTypes[index]?.trim() || 'default';
@@ -447,8 +446,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
     
     }
 
+
     sendTemplatePreview() {
-        this.isLoading = true;
+        this.isLoading = true; 
     
         try {
             let phonenum = this.selectedContactId 
@@ -463,47 +463,37 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 return;
             }
     
-            createChat({
-                chatData: {
-                    message: '',
-                    templateId: this.templateid,
-                    messageType: 'template',
-                    recordId: this.selectedContactId,
-                    replyToChatId: null
-                }
-            })
-            .then(chat => {
-                if (chat) {
-                    const templatePayload = this.createJSONBody(phonenum, "template", {
-                        templateName: this.template.Name,
-                        languageCode: this.template.MVWB__Language__c,
-                        headerParameters: this.headerParams,
-                        bodyParameters: this.bodyParams,
-                        buttonLabel: this.template.MVWB__Button_Label__c,
-                        buttonType: this.template.MVWB__Button_Type__c
-                    });
-    
-                    return sendWhatsappMessage({ jsonData: templatePayload, chatId: chat.Id, isReaction: false });
-                } else {
-                    throw new Error('Error creating chat');
-                }
-            })
-            .then(() => {
-                this.showToast('Success', 'Template sent successfully', 'success');
-                this.closePreview();
-            })
-            .catch(e => {
-                this.showToast('Error', e.message || 'Failed to send template', 'error');
-            })
-            .finally(() => {
-                this.isLoading = false;
+            const templatePayload = this.createJSONBody(phonenum, "template", {
+                templateName: this.template.Name,
+                languageCode: this.template.Language__c,
+                headerParameters: this.headerParams,
+                bodyParameters: this.bodyParams,
+                buttonLabel: this.template.Button_Label__c,
+                buttonType: this.template.Button_Type__c
             });
     
+            sendPreviewTemplate({ jsonData: templatePayload })
+                .then((result) => {
+                    if (result) {
+                        this.showToast('Error', result, 'error');
+                    } else {
+                        this.showToast('Success', 'Template sent successfully', 'success');
+                        this.closePreview(); 
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error in sending template:', error);
+                    this.showToast('Error', error.body?.message || 'Failed to send template', 'error');
+                })
+                .finally(() => {
+                    this.isLoading = false; 
+                });
+    
         } catch (e) {
-            console.error('Error in function handleSend:::', e.message);
-            this.isLoading = false;
+            console.error('Error in function sendTemplatePreview:', e.message);
+            this.isLoading = false; 
         }
-    }
+    }    
     
 
     createJSONBody(to, type, data){

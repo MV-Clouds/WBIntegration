@@ -12,9 +12,16 @@
     padding: 0;
     border-radius: 5px;
     width: 60rem;
-background-image: url('/resource/MVWB__wbiTemplateBg');
+background-image: url('/resource/wbiTemplateBg');
 }
-
+.create-disabled{
+    background-color: rgb(229 229 229 / 78%);
+    pointer-events: none;
+    color: grey;
+}
+.create-disabled .left-icon{
+    --sds-c-icon-color-foreground-default: grey;
+}
 /* Custom scrollbar styles for Webkit browsers */
 .template-preview::-webkit-scrollbar {
     width: 9px; 
@@ -79,15 +86,17 @@ background-image: url('/resource/MVWB__wbiTemplateBg');
     display: inline-flex;
     width: max-content;
     justify-content: center;
+    height: -webkit-fill-available;
     align-items: center;
-    background-color: white;
-    color: #4194f9;
     border-radius: 0.25rem;
     cursor: pointer;
     padding: 0.23rem;
     padding-right: 0.5rem;
     border: none;
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.18);
+}
+.cus-btns{
+    background-color: white;
 }
 
 .custom-button:hover {
@@ -99,7 +108,6 @@ background-image: url('/resource/MVWB__wbiTemplateBg');
     border-radius: 50%;
     padding: 0.2rem;
     transform: scale(0.6);
-    --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }
 
 .datatable {
@@ -131,7 +139,7 @@ background-image: url('/resource/MVWB__wbiTemplateBg');
 
 .main {
     padding: 1%;
-    background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-image: url('/resource/wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
     border-radius: 5px;
@@ -198,7 +206,11 @@ tr:nth-child(even) {
     justify-content: center;
     gap: 0.5rem;
 }
-
+.btns{
+    background-color: white;
+    color: #4194f9;
+    --sds-c-icon-color-foreground-default: rgb(70 164 245);
+}
 .Actionbtn {
     margin-right: 3%;
 }
@@ -342,5 +354,6 @@ img {
 }
 
 .edit{
+
     padding: 0.2rem;
 }

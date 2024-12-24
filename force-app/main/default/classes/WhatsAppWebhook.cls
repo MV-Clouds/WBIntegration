@@ -296,6 +296,7 @@ global without sharing class WhatsAppWebhook{
             newChatEvent.Type__c = 'new';
             newChatEvent.ContactId__c = whatsappChat.Contact__c;
             EventBus.publish(newChatEvent);
+
             sendNotificationForContact(contact);
 
         } catch (Exception e){
@@ -326,12 +327,11 @@ global without sharing class WhatsAppWebhook{
 
     // @future(callout=true)
     public static Blob handleMediaAttachment(String documentId){
-
         try{
             String mediaUrl = 'https://graph.facebook.com/v20.0/' + documentId;
             String accessToken = '';
-            List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values();
-            accessToken = config[0].MVWB__Access_Token__c;
+            List<WBConnect_Configuration__mdt> config = WBConnect_Configuration__mdt.getAll().values();
+            accessToken = config[0].Access_Token__c;
             
             if (accessToken != ''){
                 HttpRequest req = new HttpRequest();
@@ -576,7 +576,7 @@ global without sharing class WhatsAppWebhook{
                                             waChat.Message_Status__c = 'Delivered';
                                         } else if (status == 'read'){
                                             waChat.Message_Status__c = 'Seen';
-                                        } 
+                                        }
                                         update waChat;
                                         Chat_Message__e statusChangeEvent = new Chat_Message__e();
                                         statusChangeEvent.Chat_Data__c = JSON.serialize(waChat);
@@ -591,10 +591,8 @@ global without sharing class WhatsAppWebhook{
                             if (value.containsKey('event')){
                                 String event = (String) value.get('event');
                                 String templateId = String.valueOf(value.get('message_template_id'));
-
-                                // updateWhatsAppTemplateStatus(templateId, event);
+                                updateWhatsAppTemplateStatus(templateId, event);
                             }
-
                         }
                     }
                 }
@@ -608,32 +606,37 @@ global without sharing class WhatsAppWebhook{
     }
 
     // @future(callout = true)
-    // public static void updateWhatsAppTemplateStatus(String templateId, String event){
-    //     try{
-    //         List<Template__c> templates = [SELECT Id, Status__c
-    //                                                 FROM Template__c
-    //                                                 WHERE Template_Id__c = :templateId
-    //                                                 LIMIT 1];
+    public static void updateWhatsAppTemplateStatus(String templateId, String event){
+        try{
+            List<Template__c> templates = [SELECT Id, Status__c
+                                                    FROM Template__c
+                                                    WHERE Template_Id__c = :templateId
+                                                    LIMIT 1];
 
-    //         if (!templates.isEmpty()){
-    //             Template__c waTemplate = templates[0];
+            if (!templates.isEmpty()){
+                Template__c waTemplate = templates[0];
 
-    //             if (event == 'APPROVED'){
-    //                 waTemplate.Status__c = 'Active-Quality Pending';
-    //             } else if (event == 'PENDING'){
-    //                 waTemplate.Status__c = 'In-Review';
-    //             } else if (event == 'REJECTED'){
-    //                 waTemplate.Status__c = 'Rejected';
-    //             }
+                if (event == 'APPROVED'){
+                    waTemplate.Status__c = 'Active-Quality Pending';
+                } else if (event == 'PENDING'){
+                    waTemplate.Status__c = 'In-Review';
+                } else if (event == 'REJECTED'){
+                    waTemplate.Status__c = 'Rejected';
+                }
+                update waTemplate;
 
-    //             update waTemplate;
-    //         } else{
-    //             System.debug('No WhatsApp Template found for Template Id: ' + templateId);
-    //         }
-    //     } catch (Exception e){
-    //         System.debug('Error in updateWhatsAppTemplateStatus: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
-    //     }
-    // }
+                Template_Update__e templateStatusEvent = new Template_Update__e();
+                templateStatusEvent.Template_Id__c = waTemplate.Id;
+                templateStatusEvent.Template_Status__c = waTemplate.Status__c;
+                EventBus.publish(templateStatusEvent);
+
+            } else{
+                System.debug('No WhatsApp Template found for Template Id: ' + templateId);
+            }
+        } catch (Exception e){
+            System.debug('Error in updateWhatsAppTemplateStatus: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+        }
+    }
 
     @future(callout = true)
     public static void sendEmail(String body){

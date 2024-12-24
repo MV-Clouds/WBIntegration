@@ -19,18 +19,18 @@
     public static String accessToken;
     public static String endpoint;
     public static String uploadEndpoint;
-    public static final MVWB__WBConnect_Configuration__mdt SETTINGS;
+    public static final WBConnect_Configuration__mdt SETTINGS;
 
     static {
         try {
             SETTINGS = [
-                SELECT MVWB__Access_Token__c, MVWB__Application_Id__c, MVWB__Phone_Number_Id__c,MVWB__Business_Account_Id__c	
-                FROM MVWB__WBConnect_Configuration__mdt
+                SELECT Access_Token__c, Application_Id__c, Phone_Number_Id__c,Business_Account_Id__c	
+                FROM WBConnect_Configuration__mdt
                 WHERE DeveloperName = 'WhatsAppConfig' WITH SECURITY_ENFORCED
                 LIMIT 1
             ];
             
-            accessToken = SETTINGS.MVWB__Access_Token__c;
+            accessToken = SETTINGS.Access_Token__c;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'static', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
@@ -55,6 +55,45 @@
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
+    }
+
+    public static void restrictTemplates() {
+        Integer totalTemplates = [SELECT COUNT() FROM Template__c WITH SECURITY_ENFORCED];
+
+        if (totalTemplates >= 5) {
+            System.debug('You cannot create more than 5 Template records.');
+        }
+    }
+
+    @AuraEnabled
+    public static String sendPreviewTemplate(String jsonData) {
+        String errorMessage=null;
+        try {
+            HttpRequest httpReq = new HttpRequest();
+            List<WBConnect_Configuration__mdt> config = WBConnect_Configuration__mdt.getAll().values(); 
+            if(config==null && config.isEmpty()){
+                errorMessage='Metadata records are missing.';
+                return errorMessage;
+            }
+            String accessToken = config[0].Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].Phone_Number_Id__c + '/messages';
+            httpReq.setEndpoint(endpoint);
+            httpReq.setMethod('POST');
+            httpReq.setHeader('Content-Type', 'application/json');
+            httpReq.setHeader('Authorization', 'Bearer ' + accessToken);
+            httpReq.setBody(jsonData);
+            Http http = new Http();
+            HttpResponse response = http.send(httpReq);
+            Integer statusCode = response.getStatusCode();
+            if(statusCode != 200){
+                errorMessage='Failed to send Template';
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => null, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
+            }
+
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+        return errorMessage;
     }
 
      /*
@@ -406,7 +445,7 @@
             System.debug('Deserialized TemplateWrapper: ' + templateWrapper);
 
             Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates';
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Business_Account_Id__c+'/message_templates';
             
             HttpRequest req = new HttpRequest();
             req.setEndpoint(endpoint);
@@ -465,7 +504,7 @@
             payload.put('file_name', fileName);
             payload.put('file_length', fileLength);
             payload.put('file_type', fileType);
-            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.MVWB__Application_Id__c+'/uploads';
+            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.Application_Id__c+'/uploads';
 
             HttpRequest req = new HttpRequest();
             Http http = new Http();
@@ -601,7 +640,7 @@
         try {
             Template__c wbTempRec = [SELECT Id, Name FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
             
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Name;
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Name;
 
             HttpRequest req = new HttpRequest();         
             req.setEndpoint(endpoint);

@@ -6,10 +6,10 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 7/12/2024
+ * Last Update Date : 23/12/2024
  * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : 
- * Change Description :Change the UI as per figma design.
+ * Name of methods changed (Comma separated if more then one) : Beta 10
+ * Change Description :Beta 10 bug resolved
  ********************************************************************** */
 
 import { LightningElement, track, wire,api } from 'lwc';
@@ -19,6 +19,7 @@ import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import {loadStyle} from 'lightning/platformResourceLoader';
 import wbPreviewTemplateStyle from '@salesforce/resourceUrl/wbPreviewTemplateStyle';
+import { subscribe, unsubscribe, onError } from 'lightning/empApi';
 
 export default class WbAllTemplatePage extends LightningElement {
     @track isTemplateVisible = true;
@@ -36,6 +37,9 @@ export default class WbAllTemplatePage extends LightningElement {
     @track showPopup = false; 
     @track isFilterVisible = false;
     @track editTemplateId='';
+    subscription = null;
+    channelName = '/event/Template_Update__e';
+
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {
@@ -49,6 +53,10 @@ export default class WbAllTemplatePage extends LightningElement {
         } catch (err) {
             console.error('Unexpected error in wiredCategoryAndStatus: ', err);
         }
+    }
+
+    get actionButtonClass(){
+        return this.allRecords?.length >= 5 ? 'custom-button create-disabled' : 'custom-button cus-btns' ;
     }
 
     get timePeriodOptions() {
@@ -67,6 +75,7 @@ export default class WbAllTemplatePage extends LightningElement {
 
     connectedCallback(){
         this.fetchAllTemplate();
+        this.registerPlatformEventListener();
         console.log('default option selected==> '+ this.selectedOption);
     }
 
@@ -78,6 +87,54 @@ export default class WbAllTemplatePage extends LightningElement {
         })
     }
 
+    disconnectedCallback() {
+        this.unregisterPlatformEventListener(); 
+    }
+
+    registerPlatformEventListener() {
+        const messageCallback = (event) => {
+            const payload = event.data.payload;
+            console.log('payload ',payload);
+            
+            this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
+        };
+
+        subscribe(this.channelName, -1, messageCallback)
+            .then((response) => {
+                this.subscription = response;
+                console.log('Subscribed to platform event:', response.channel);
+            })
+            .catch((error) => {
+                console.error('Error subscribing to platform event:', error);
+            });
+
+        onError((error) => {
+            console.error('Streaming API error:', error);
+        });
+    }
+
+    unregisterPlatformEventListener() {
+        if (this.subscription) {
+            unsubscribe(this.subscription, (response) => {
+                console.log('Unsubscribed from platform event:', response);
+            });
+        }
+    }
+
+    updateRecord(templateId, newStatus) {
+        console.log('enter into update record');
+        
+        const recordIndex = this.allRecords.findIndex((record) => record.Id === templateId);
+        if (recordIndex !== -1) {
+            const updatedRecord = { ...this.allRecords[recordIndex], Status__c: newStatus };
+            updatedRecord.isButtonDisabled = newStatus === 'In-Review';
+            updatedRecord.cssClass = updatedRecord.isButtonDisabled ? 'action edit disabled' : 'action edit';
+
+            this.allRecords[recordIndex] = updatedRecord;
+            this.filteredRecords = [...this.allRecords]; 
+        }
+    }
+
     fetchAllTemplate(){
         this.isLoading=true;
         getWhatsAppTemplates()
@@ -85,7 +142,7 @@ export default class WbAllTemplatePage extends LightningElement {
             try {
                 if (data) {
                     this.allRecords = data.map((record, index) => {
-                        const isButtonDisabled = record.MVWB__Status__c === 'In-Review';
+                        const isButtonDisabled = record.Status__c === 'In-Review';
                         console.log('isButtonDisabled ',isButtonDisabled, record.Name);
                         
                         return {
@@ -96,7 +153,7 @@ export default class WbAllTemplatePage extends LightningElement {
                             isButtonDisabled,
                             cssClass: isButtonDisabled ? 'action edit disabled' : 'action edit'
                         };
-                    });
+                    });                    
                     this.filteredRecords = [...this.allRecords];
                     this.isLoading=false;
                 } else if (error) {
@@ -175,7 +232,7 @@ export default class WbAllTemplatePage extends LightningElement {
             let filtered = [...this.allRecords];
 
             if (this.categoryValue) {
-                filtered = filtered.filter(record => record.MVWB__Template_Category__c === this.categoryValue);
+                filtered = filtered.filter(record => record.Template_Category__c === this.categoryValue);
                 console.log('category filter=> ',filtered);
             }
     
@@ -197,7 +254,7 @@ export default class WbAllTemplatePage extends LightningElement {
             }
     
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
                 console.log('status filter==>',filtered);
             }
     
