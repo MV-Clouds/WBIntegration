@@ -38,7 +38,7 @@
                                         <div class="message-other">{chat.replyTo.MVWB__Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
                                     </div>
                                     <div if:true={chat.replyTo.isTemplate}>
-                                        <div class="reply-to-template-message-div">{chat.replyTo.Whatsapp_Template__r.Name}</div>
+                                        <div class="reply-to-template-message-div">{chat.replyTo.MVWB__Whatsapp_Template__r.Name}</div>
                                     </div>
                                 </div>
                                 <div class="text-message-div" if:true={chat.isText}>
