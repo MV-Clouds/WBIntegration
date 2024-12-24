@@ -16,6 +16,7 @@ export default class WhatsAppConfiguration extends LightningElement {
     @track WBConnectLogo = WBConnectLogo;
     @track isEditing = false;
     @track isDisabled = true;
+    @track isFirstTime = false;
 
     connectedCallback(){
         getWhatsAppConfiguration()
@@ -29,8 +30,15 @@ export default class WhatsAppConfiguration extends LightningElement {
                 this.accessToken = '*'.repeat(this.accessTokenValue.length);
                 this.phoneNoId = '*'.repeat(this.phoneNoIdValue.length);
                 this.appId = '*'.repeat(this.appIdValue.length);
-                this.isDisabled = true;
-                this.isEditing = false;
+                if(this.wBAccountIdValue != '' && this.accessTokenValue != '' && this.phoneNoIdValue != '' && this.appIdValue != ''){
+                    this.isDisabled = true;
+                    this.isEditing = false;
+                } else {
+                    this.isDisabled = false;
+                    this.isFirstTime = true;
+                    this.isEditing = false;
+                }
+                    
                 console.log('result values:- ',this.wBAccountIdValue, this.accessTokenValue, this.phoneNoIdValue, this.appIdValue);
             }
         }).catch(error => {

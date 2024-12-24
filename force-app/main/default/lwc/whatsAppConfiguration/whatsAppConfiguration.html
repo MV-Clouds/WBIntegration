@@ -2,7 +2,7 @@
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 12-20-2024
+  @last modified on  : 12-24-2024
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
@@ -61,8 +61,13 @@
                     <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleSave} label="Save"></lightning-button>
                 </div>
             </template>
+            <template if:true={isFirstTime}>
+                <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleSave} label="Save"></lightning-button>
+            </template>
             <template if:false={isEditing}>
-                <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleEdit} label="Edit"></lightning-button>
+                <template if:false={isFirstTime}>
+                    <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleEdit} label="Edit"></lightning-button>
+                </template>
             </template>
         </div>
     </div>
