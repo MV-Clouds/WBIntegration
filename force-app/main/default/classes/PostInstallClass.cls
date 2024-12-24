@@ -6,8 +6,8 @@
  * Created By: Kevin Suvagiya
  *--------------------------------------------------------------------------------
  * Last Modified By: Kevin Suvagiya
- * Last Modified Date: 18 Dec, 2024
- * Last Modification Description: Created a method to send an email with organization and user info
+ * Last Modified Date: 23 Dec, 2024
+ * Last Modification Description: updated the static emails with the custom label
  *--------------------------------------------------------------------------------
  * Modification History:
  * Date Modified - Developer Name - Description
@@ -31,7 +31,9 @@ global class PostInstallClass implements InstallHandler {
         String userTimeZone = UserInfo.getTimeZone().toString();
 
         Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
-        string[] to = new string[] {'newdownloadinfo@7-1d3i0w155b05ohat60e37zn4s5htkt6z0e27dmhfveudieqraz.9i-1qqmhuaw.ind6s.apex.sandbox.salesforce.com'};
+        String emailsLabelName = 'postInstallEmail';
+        List<String> emails = System.Label.get('',emailsLabelName,'').split(',');
+        string[] to = emails;
         
         email.setToAddresses(to);
         email.setSubject('WBConnects New Download - ' + orgId);

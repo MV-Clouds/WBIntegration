@@ -282,8 +282,10 @@
                     if ((String) component.get('format') == 'IMAGE') {
                         whatsAppTemplate.Header_Body__c = templateWrapper.tempImgUrl;
                         whatsAppTemplate.File_Name__c = templateWrapper.tempImgName;
+                        whatsAppTemplate.Image_Header_Handle__c	 = templateWrapper.tempHeaderHandle;
                     } else {
                         whatsAppTemplate.Header_Body__c = (String) component.get('text');
+                        
                     }
                     if (example != null && example.containsKey('header_text') && example.get('header_text') instanceof List<Object>) {
                         List<Object> headerExampleObj = (List<Object>) example.get('header_text');
