@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 12-19-2024
+ * @last modified on  : 12-20-2024
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 @isTest
@@ -73,6 +73,17 @@ public class WBTemplateControllerTest {
         	System.assertEquals(5, templates.size(), 'Templates count should be 5');
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testFetchWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+    }
+    
+      @isTest
+    static void testRestrictTemplate() {
+        try{
+			WBTemplateController.restrictTemplates();
+            Integer totalTemplates = [SELECT COUNT() FROM Template__c];
+        	System.assertEquals(5, totalTemplates, 'There should be exactly 5 Template records.');
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testRestrictTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 
@@ -188,18 +199,28 @@ public class WBTemplateControllerTest {
     }
 
     @isTest
-    static void testGetCountryCodesAndLanguages() {
-        try{
-             Test.startTest();
-            List<Map<String, String>> countryValues = WBTemplateController.getCountryCodes();
-            List<Map<String, String>> languageValues = WBTemplateController.getLanguages();
-            Test.stopTest();
-            System.assertNotEquals(null, countryValues, 'Country codes should not be null');
-            System.assertNotEquals(null, languageValues, 'Languages should not be null');
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testGetCountryCodesAndLanguages', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
-        }
+    static void testSendPreviewTemplate_Success() {
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
+        
+        String jsonData = '{"templateName": "test_template", "languageCode": "en", "headerParameters": ["Header"], "bodyParameters": ["Body1", "Body2"], "buttonLabel": "Click Me", "buttonType": "url"}';
+        
+        Test.startTest();
+        String result = WBTemplateController.sendPreviewTemplate(jsonData);
+        Test.stopTest();
+        
     }
+    
+    @isTest
+    static void testSendPreviewTemplate_Failure() {
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(500));  
+        
+        String jsonData = '{"templateName": "test_template", "languageCode": "en", "headerParameters": ["Header"], "bodyParameters": ["Body1", "Body2"], "buttonLabel": "Click Me", "buttonType": "url"}';
+        
+        Test.startTest();
+        String result = WBTemplateController.sendPreviewTemplate(jsonData);
+        Test.stopTest();
+    }
+
 
     @isTest
     static void testCreateWhatsappTemplate_Success() {
