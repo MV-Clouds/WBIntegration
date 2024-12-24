@@ -133,6 +133,7 @@ export default class ChatWindow extends LightningElement {
 
                 case 'react':
                     chat.MVWB__Reaction__c = receivedChat.MVWB__Reaction__c;
+                    chat.MVWB__Last_Interaction_Date__c = receivedChat.MVWB__Last_Interaction_Date__c;
                     break;
 
                 case 'update':
@@ -147,7 +148,7 @@ export default class ChatWindow extends LightningElement {
                     break;
             }
             
-            self.processChats();
+            if(actionType!='new') self.processChats();
         };
  
         subscribe(this.channelName, -1, messageCallback).then(response => {
@@ -276,19 +277,24 @@ export default class ChatWindow extends LightningElement {
     checkLastMessage(){
         this.showSpinner = true;
         try {
-            let inboundMessages = this.chats.filter(msg => msg.MVWB__Type_of_Message__c === 'Inbound Messages');
-            let latestInboundMessage = inboundMessages.sort((a, b) => new Date(b.MVWB__Last_Interaction_Date__c) - new Date(a.MVWB__Last_Interaction_Date__c))[0];
+            let interactionMessages = this.chats.filter(msg => msg.MVWB__Last_Interaction_Date__c);            
+            let lastInteraction = interactionMessages?.sort((a, b) => new Date(b.MVWB__Last_Interaction_Date__c) - new Date(a.MVWB__Last_Interaction_Date__c))[0];
 
-            if (latestInboundMessage) {
+            if (lastInteraction) {
                 let currentTime = new Date();
-                let messageTime = new Date(latestInboundMessage.MVWB__Last_Interaction_Date__c);
+                let messageTime = new Date(lastInteraction.MVWB__Last_Interaction_Date__c);
                 let timeDifferenceInMilliseconds = currentTime - messageTime;
                 let hoursDifference = timeDifferenceInMilliseconds / (1000 * 60 * 60);
 
                 if (hoursDifference > 24){
                     this.sendOnlyTemplate = true;
                     this.noteText = "Only template can be sent as no messages were received from this contact in last 24 hours.";
+                }else{
+                    this.sendOnlyTemplate = false;
                 }
+            }else{
+                this.sendOnlyTemplate = true;
+                this.noteText = "Only template can be sent as no messages were received from this contact in last 24 hours.";
             }
             this.showSpinner = false;
         } catch (e) {
