@@ -330,8 +330,8 @@ global without sharing class WhatsAppWebhook{
         try{
             String mediaUrl = 'https://graph.facebook.com/v20.0/' + documentId;
             String accessToken = '';
-            List<WBConnect_Configuration__mdt> config = WBConnect_Configuration__mdt.getAll().values();
-            accessToken = config[0].Access_Token__c;
+            List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values();
+            accessToken = config[0].MVWB__Access_Token__c;
             
             if (accessToken != ''){
                 HttpRequest req = new HttpRequest();
