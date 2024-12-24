@@ -89,7 +89,13 @@ export default class WhatsAppConfiguration extends LightningElement {
     handleSave() {
         // Basic validation (add more as needed)
         if (!this.wBAccountId || !this.accessToken || !this.phoneNoId|| !this.appId) {
-            alert('Please fill in all fields');
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Success',
+                    message: 'Please Enter value for all the Fields',
+                    variant: 'Error'
+                })
+            );
             return;
         }
 
