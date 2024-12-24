@@ -23,12 +23,20 @@ global class PostInstallClass implements InstallHandler {
     ********************************************************
     */
     global void onInstall(InstallContext context) {
+        String stringToSend = '';
         String orgId = UserInfo.getOrganizationId();
         String orgName = UserInfo.getOrganizationName();
-        String userNameRunningAs = UserInfo.getName();
-        String userIdRunningAs = UserInfo.getUserId();
-        String emailRunningAs = UserInfo.getUserEmail();
-        String userTimeZone = UserInfo.getTimeZone().toString();
+        stringToSend += '\nOrganization Id: ' + orgId;
+        stringToSend += ',\nOrganization Name: ' + orgName ;
+        
+        List<Organization> orgs = [SELECT Id, Name, Address, TimeZoneSidKey, OrganizationType, InstanceName, FiscalYearStartMonth, LanguageLocaleKey, DefaultLocaleSidKey, PrimaryContact, Phone, PostalCode, IsSandbox, SystemModstamp, ComplianceBccEmail, Latitude, Longitude, NamespacePrefix, CreatedById FROM Organization WHERE Id=:orgId];
+        if (orgs.size() > 0) {
+            stringToSend += ',\nOrg Data:' + JSON.serialize(orgs[0]);
+            List<User> users = [SELECT Id,Address,Username,MobilePhone,Phone,TimeZoneSidKey,Alias,CommunityNickname,CompanyName,Email,LanguageLocaleKey,LocaleSidKey FROM User WHERE Id =: orgs[0].CreatedById];    
+            if (users!=null && users.size() > 0) {
+                stringToSend += ',\nUser Info.:' + JSON.serialize(users[0]);
+            }
+        }
 
         Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
         String emailsLabelName = 'postInstallEmail';
@@ -37,7 +45,8 @@ global class PostInstallClass implements InstallHandler {
         
         email.setToAddresses(to);
         email.setSubject('WBConnects New Download - ' + orgId);
-        email.setHtmlBody('<p style="font-family:Verdana;">Greeting WBConnect Team,<br></br><br></br>The WBConnect app has been downloaded in an Organization, following are some information:<br></br>Organization Name: ' + orgName + '<br></br>Organization Id: ' + orgId + '<br></br>User Name: ' + userNameRunningAs + '<br></br>User Id: ' + userIdRunningAs + '<br></br>User Email: ' + emailRunningAs + '<br></br>User TimeZone: ' + userTimeZone + '</p>');
+        // email.setHtmlBody('<p style="font-family:Verdana;">Greeting WBConnect Team,<br></br><br></br>The WBConnect app has been downloaded in an Organization, following are some information:<br></br>Organization Name: ' + orgName + '<br></br>Organization Id: ' + orgId + '<br></br>User Name: ' + userNameRunningAs + '<br></br>User Id: ' + userIdRunningAs + '<br></br>User Email: ' + emailRunningAs + '<br></br>User TimeZone: ' + userTimeZone + '</p>');
+        email.setHtmlBody('<p style="font-family:Verdana;">Greeting WBConnect Team,<br></br><br></br>The WBConnect app has been downloaded in an Organization, following are some information:<br></br>' + stringToSend+ '</p>');
         Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
     }
 }

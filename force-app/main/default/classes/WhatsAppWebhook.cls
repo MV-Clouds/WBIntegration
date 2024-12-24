@@ -191,6 +191,7 @@ global without sharing class WhatsAppWebhook{
                     if(reactToChat.size() > 0){
                         reactToChat[0].Reaction__c = reactToChat[0].Reaction__c!=null ? reactToChat[0].Reaction__c : '<|USER|>';
                         reactToChat[0].Reaction__c = reactToChat[0].Reaction__c.split('<|USER|>')[0] + '<|USER|>' + (reactedEmoji!=null ? reactedEmoji : '');
+                        reactToChat[0].Last_Interaction_Date__c = System.now();
                         whatsappChat = reactToChat[0];
                         update whatsappChat;
                         Chat_Message__e reactEvent = new Chat_Message__e();
