@@ -67,7 +67,7 @@
         try {
             Integer totalTemplates = [SELECT COUNT() FROM Template__c WITH SECURITY_ENFORCED];
             if (totalTemplates >= 5) {
-                throw new throw new AuraHandledException('You cannot create more than 5 Template records.');
+                throw new AuraHandledException('You cannot create more than 5 Template records.');
             }
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'restrictTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
