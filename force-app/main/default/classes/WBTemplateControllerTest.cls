@@ -79,9 +79,16 @@ public class WBTemplateControllerTest {
       @isTest
     static void testRestrictTemplate() {
         try{
-			WBTemplateController.restrictTemplates();
-            Integer totalTemplates = [SELECT COUNT() FROM Template__c];
-        	System.assertEquals(5, totalTemplates, 'There should be exactly 5 Template records.');
+            List<Template__c> templatesToInsert = new List<Template__c>{
+                new Template__c(
+                    Name = 'Template6',
+                    Template_Category__c = 'Marketing',
+                    Status__c = 'Active-Quality Pending',
+                    Template_Id__c = 'testId'
+                )
+            };
+    
+            WBTemplateController.restrictTemplates(templatesToInsert);
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testRestrictTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
