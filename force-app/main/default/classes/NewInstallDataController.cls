@@ -3,7 +3,7 @@
  * Test Class: -
  * @description: Used to handle the emails and store the org data
  * ****************************************************************
- * @Note: This class isn not to be added to the package, it's for the handler org only
+ * @Note: This class is not to be added to the package, it's for the handler org only
  * ****************************************************************
  * Created Date: 18 Dec, 2024
  * Created By: Kevin Suvagiya
