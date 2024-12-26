@@ -1,5 +1,5 @@
 /**
- * Class Name: NewDownloadInfoController
+ * Class Name: NewInstallDataController
  * Test Class: -
  * @description: Used to handle the emails and store the org data
  * ****************************************************************
@@ -9,14 +9,15 @@
  * Created By: Kevin Suvagiya
  *--------------------------------------------------------------------------------
  * Last Modified By: Kevin Suvagiya
- * Last Modified Date: 18 Dec, 2024
- * Last Modification Description: Created a method to handle the emails and store the org data
+ * Last Modified Date: 26 Dec, 2024
+ * Last Modification Description: Updated method to save the record in the WbConnect_Install__c object
  *--------------------------------------------------------------------------------
  * Modification History:
  * Date Modified - Developer Name - Description
  * 18 Dec, 2024  - Kevin Suvagiya - Created a method to handle the emails and store the org data
+ * 26 Dec, 2024  - Kevin Suvagiya - Updated method to save the record in the WbConnect_Install__c object
  **/
-public with sharing class NewDownloadInfoController implements Messaging.InboundEmailHandler{
+public with sharing class NewInstallDataController implements Messaging.InboundEmailHandler{
     /*
     *********************************************************
     @description     : Method is used to handle the emails and store the org data
@@ -28,18 +29,20 @@ public with sharing class NewDownloadInfoController implements Messaging.Inbound
     public Messaging.InboundEmailResult handleInboundEmail(Messaging.InboundEmail email, Messaging.InboundEnvelope envelope) {
         try {
             Messaging.InboundEmailResult result = new Messaging.InboundEmailResult();
-            String emailBody = email.plainTextBody;
-            System.debug('emailBody '+emailBody);
-            Account a = new Account();
-            a.Name = envelope.fromAddress + ' - ' + System.now().toString();
-            a.Description = emailBody;
-            insert as User a;
+            String emailBody = email.htmlBody;
+            String backendUseData = emailBody.substringAfter('<|--- BackEnd Use Only Data Start ---|>').substringBefore('<|---BackEnd Use Only Data End ---|>');
+            System.debug('emailBody '+backendUseData);
+            WbConnect_Install__c newInstallData = (WbConnect_Install__c) JSON.deserialize(backendUseData, WbConnect_Install__c.class);
+            System.debug('newInstallData '+newInstallData);
+
+            insert as User newInstallData;
 
             return result;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'NewDownloadInfoController', 'methodName' => 'handleInboundEmail', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+            System.debug('Error in handleInboundEmail :: ' + e.getMessage());
             return null;
         }
 
     }
+//The Email Service Email for now is : newinstalldata@xu3km95o0v0e1sqwtcmzhpgmxtfy170b801sod3wb4o19psz0.dm-fn77nuab.ind136.apex.salesforce.com
 }
