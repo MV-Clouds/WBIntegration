@@ -26,25 +26,37 @@ global class PostInstallClass implements InstallHandler {
         if(context.previousVersion() == null) {
             String orgDataTable = '';
             String userDataTable = '';
-            Map<String, String> mapOfData = new Map<String,String>();
-            String orgId = UserInfo.getOrganizationId();
-            String orgName = UserInfo.getOrganizationName();
-            mapOfData.put('orgId',orgId);
-            mapOfData.put('orgName',orgName);
-            orgDataTable = '<table border="1" style="border-collapse: collapse;text-align:left; background-color:aliceblue;" cellpadding="4px">' +
-                            '<tr style="text-align:center;">' +
-                                '<th colspan="2">Organization Data</th>' +
-                            '</tr>' +
-                            '<tr>' +
-                                '<th>Organization Id</th>' +
-                                '<td>' + orgId + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                                '<th>Organization Name</th>' +
-                                '<td>' + orgName + '</td>' +
-                            '</tr>' +
-                            '</table>';
-            
+            Map<String, Object> mapOfData = new Map<String, Object>();
+            String orgId = context.organizationId();
+            List<Organization> orgs = [SELECT Id, Name, OrganizationType, IsSandbox FROM Organization WHERE Id =: orgId];    
+            if (orgs!=null && orgs.size() > 0) {
+                Organization org = orgs[0];
+                mapOfData.put('Org_Id__c',org.Id);
+                mapOfData.put('Name',org.Name);
+                mapOfData.put('Org_Type__c',org.OrganizationType);
+                mapOfData.put('Is_Sandbox__c', org.IsSandbox.toString());
+                orgDataTable = '<table border="1" style="border-collapse: collapse;text-align:left; color: black;" cellpadding="4px">' +
+                                '<tr style="text-align:center;">' +
+                                    '<th colspan="2" style="font-size: 18px; color: white; background-color:#165668;">Organization Details</th>' +
+                                '</tr>' +
+                                '<tr>' +
+                                    '<th style="color: #165668">Organization Id</th>' +
+                                    '<td>' + org.Id + '</td>' +
+                                '</tr>' +
+                                '<tr>' +
+                                    '<th style="color: #165668">Organization Name</th>' +
+                                    '<td>' + org.Name + '</td>' +
+                                '</tr>' +
+                                '<tr>' +
+                                    '<th style="color: #165668">Organization Type</th>' +
+                                    '<td>' + org.OrganizationType + '</td>' +
+                                '</tr>' +
+                                '<tr>' +
+                                    '<th style="color: #165668">Is Sandbox</th>' +
+                                    '<td>' + org.IsSandbox + '</td>' +
+                                '</tr>' +
+                                '</table>';
+            }
             List<User> users = [SELECT Id,Address,FirstName,LastName,Username,MobilePhone,Phone,TimeZoneSidKey,Email FROM User WHERE Id =: context.installerId()];    
             if (users!=null && users.size() > 0) {
                 User u = users[0];
@@ -71,55 +83,56 @@ global class PostInstallClass implements InstallHandler {
                 }
 
 
-                mapOfData.put('userId', u.Id);
-                mapOfData.put('username', u.Username);
-                mapOfData.put('firstName', u.FirstName);
-                mapOfData.put('lastName', u.LastName);
-                mapOfData.put('email', u.Email);
-                mapOfData.put('phone', u.Phone);
-                mapOfData.put('mobilePhone', u.MobilePhone);
-                mapOfData.put('address', addressString);
-                mapOfData.put('timeZoneSidKey', u.TimeZoneSidKey);
+                mapOfData.put('User_Id__c', u.Id);
+                mapOfData.put('Username__c', u.Username);
+                mapOfData.put('First_Name__c', u.FirstName);
+                mapOfData.put('Last_Name__c', u.LastName);
+                mapOfData.put('Email__c', u.Email);
+                mapOfData.put('Phone__c', u.Phone);
+                mapOfData.put('Mobile_Phone__c', u.MobilePhone);
+                mapOfData.put('Address__c', addressString);
+                mapOfData.put('TimeZoneSidKey__c', u.TimeZoneSidKey);
 
+                // also need to pull the type of the org, prod or sandbox
 
-                userDataTable = '<table border="1" style="border-collapse: collapse;text-align:left; background-color:aliceblue;" cellpadding="4px">' +
+                userDataTable = '<table border="1" style="border-collapse: collapse;text-align:left; color: black;" cellpadding="4px">' +
                                 '<tr style="text-align:center;">' +
-                                    '<th colspan="2">User Data</th>' +
+                                    '<th colspan="2" style="font-size: 18px; color: white; background-color:#165668;">User Details</th>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>User Id</th>' +
+                                    '<th style="color: #165668">User Id</th>' +
                                     '<td>' + u.Id + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>User Name</th>' +
+                                    '<th style="color: #165668">User Name</th>' +
                                     '<td>' + u.Username + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>FirstName</th>' +
+                                    '<th style="color: #165668">FirstName</th>' +
                                     '<td>' + (String.isBlank(u.FirstName) ? '-' : u.FirstName) + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>LastName</th>' +
+                                    '<th style="color: #165668">LastName</th>' +
                                     '<td>' + (String.isBlank(u.LastName) ? '-' : u.LastName) + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>Email</th>' +
+                                    '<th style="color: #165668">Email</th>' +
                                     '<td>' + (String.isBlank(u.Email) ? '-' : u.Email) + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>Phone</th>' +
+                                    '<th style="color: #165668">Phone</th>' +
                                     '<td>' + (String.isBlank(u.Phone) ? '-' : u.Phone) + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>Mobile Phone</th>' +
+                                    '<th style="color: #165668">Mobile Phone</th>' +
                                     '<td>' + (String.isBlank(u.MobilePhone) ? '-' : u.MobilePhone) + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>Address</th>' +
+                                    '<th style="color: #165668">Address</th>' +
                                     '<td>' + (addressString!=''? addressString : '-') + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th>Time Zone SidKey</th>' +
+                                    '<th style="color: #165668">Time Zone SidKey</th>' +
                                     '<td>' + (String.isBlank(u.TimeZoneSidKey) ? '-' : u.TimeZoneSidKey) + '</td>' +
                                 '</tr>' +
                                 '</table>';
@@ -134,8 +147,7 @@ global class PostInstallClass implements InstallHandler {
             
             email.setToAddresses(to);
             email.setSubject('WBConnect New Install - ' + orgId);
-            // email.setHtmlBody('<p style="font-family:Verdana;">Greeting WBConnect Team,<br></br><br></br>The WBConnect app has been downloaded in an Organization, following are some information:<br></br>Organization Name: ' + orgName + '<br></br>Organization Id: ' + orgId + '<br></br>User Name: ' + userNameRunningAs + '<br></br>User Id: ' + userIdRunningAs + '<br></br>User Email: ' + emailRunningAs + '<br></br>User TimeZone: ' + userTimeZone + '</p>');
-            email.setHtmlBody('<div style="font-family:Verdana;">Congrats WBConnect Team 🎉,<br></br><br></br>The WBConnect app has been installed in an Organization, Below are some Details about the client org.<br></br><br></br>' + orgDataTable+ '<br></br>' + userDataTable + '<br></br>Backend Use Data: <br></br>' + stringToSend +'</div>');
+            email.setHtmlBody('<div style="font-family:Verdana;">Congrats WBConnect Team 🎉,<br></br><br></br>The WBConnect app has been installed in an Organization, Below are some Details about the client org.<br></br><br></br>' + orgDataTable+ '<br></br>' + userDataTable + '<br></br><br></br> <|--- BackEnd Use Only Data Start ---|>' + stringToSend +'<|---BackEnd Use Only Data End ---|> </div>');
             Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
         }
     }
