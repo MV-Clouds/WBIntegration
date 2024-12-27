@@ -6,6 +6,5 @@
 		<target>lightningCommunity__Page</target>
 		<target>lightningCommunity__Default</target>
 		<target>lightningCommunity__Page_Layout</target>
-        <target>lightning__Tab</target>
 	</targets>
 </LightningComponentBundle>
