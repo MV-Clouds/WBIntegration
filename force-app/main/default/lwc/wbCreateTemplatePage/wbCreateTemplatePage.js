@@ -21,7 +21,6 @@ import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
 import CountryJson from '@salesforce/resourceUrl/CountryJson';
 import LanguageJson from '@salesforce/resourceUrl/LanguageJson';
-import doesTemplateExist from '@salesforce/apex/WBTemplateController.doesTemplateExist';
 import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate';
 import editWhatsappTemplate from '@salesforce/apex/WBTemplateController.editWhatsappTemplate';
 import startUploadSession from '@salesforce/apex/WBTemplateController.startUploadSession';
@@ -72,7 +71,6 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isCheckboxChecked=true;   
     @track showDefaultBtn=true;
     @track templateName = '';
-    @track storedTemplateName = 'your_template_name';
     @track header = '';
     @track footer = '';
     @track tempBody = 'Hello';
@@ -126,9 +124,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track emojiCategories=[];
     @track templateId='';
     @track metaTemplateId='';
-    isHeaderTypeLoad=false;
-    // isHeaderVariableLoad=false;
-    // isBodyVariableLoad=false;
+    @track allTemplates=[];
 
     @api
     get edittemplateid() {
@@ -236,6 +232,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.fetchLanguages();
         this.fetchFields();
         this.generateEmojiCategories();
+        this.fetchUpdatedTemplates(false);
     }
     
     renderedCallback() {
@@ -251,18 +248,22 @@ export default class WbCreateTemplatePage extends LightningElement {
             getDynamicObjectData({templateId:this.edittemplateid})
             .then((data) => {
                 const { template, templateVariables } = data;
-                this.templateName = template.Name || '';
-                this.metaTemplateId = template.MVWB__Template_Id__c || '';
-                const headerBody = template.MVWB__Header_Body__c || '';
-                const headerType = template.MVWB__Header_Type__c || '';
+                this.templateName = template.Template_Name__c || '';
+                this.metaTemplateId = template.Template_Id__c || '';
+                const headerBody = template.Header_Body__c || '';
+                const headerType = template.Header_Type__c || '';
                 
-                this.footer = template.MVWB__Footer_Body__c || '';
-                this.selectedLanguage = template.MVWB__Language__c;
-                this.tempBody = template.MVWB__Template_Body__c || 'Hello';
-                this.previewBody= this.formatText(this.tempBody) || 'Hello';
+                this.footer = template.Footer_Body__c || '';
+                this.selectedLanguage = template.Language__c;
+                this.tempBody = template.Template_Body__c || 'Hello';
+                console.log(template.Template_Body__c);
+                console.log(this.tempBody);
+                
+                this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
+                console.log('Formatted previewBody:', this.previewBody);
                 this.previewHeader= this.formatText(headerBody) ||'';
-                this.selectedContentType=template.MVWB__Header_Type__c || 'None';
-                this.btntext = template.MVWB__Button_Label__c || '';
+                this.selectedContentType=template.Header_Type__c || 'None';
+                this.btntext = template.Button_Label__c || '';
                 console.log('selectedContentType ',this.selectedContentType);
                 
                 let tvs =templateVariables.map(tv=>{
@@ -280,8 +281,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 this.variables = tvs.filter(tv=>tv.type=='Body') || [];
                 this.header_variables = tvs.filter(tv=>tv.type=='Header') || [];
-                this.updatePreviewContent(headerBody,'header');
-                this.updatePreviewContent(this.tempBody,'body');
+                this.updatePreviewContent(this.previewHeader,'header');
+                this.updatePreviewContent(this.previewBody,'body');
                 console.log('variable length ',this.variables);
                 console.log('header length ',this.header_variables);
                 this.addHeaderVar=this.header_variables?.length>0?true:false;
@@ -313,17 +314,17 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 console.log('CP2');
 
-                if(template.MVWB__Button_Type__c && template.MVWB__Button_Label__c){
+                if(template.Button_Type__c && template.Button_Label__c){
                     let newButton = {
                         id: this.buttonList.length + 1,
-                        selectedActionType: template.MVWB__Button_Type__c,
-                        iconName: this.getButtonIcon(template.MVWB__Button_Type__c),
-                        btntext: template.MVWB__Button_Label__c,
-                        webURL: template.MVWB__Button_Body__c,
-                        phonenum: template.MVWB__Button_Body__c?.split(' ')[1],
-                        offercode: template.MVWB__Button_Body__c,
+                        selectedActionType: template.Button_Type__c,
+                        iconName: this.getButtonIcon(template.Button_Type__c),
+                        btntext: template.Button_Label__c,
+                        webURL: template.Button_Body__c,
+                        phonenum: template.Button_Body__c?.split(' ')[1],
+                        offercode: template.Button_Body__c,
                         selectedUrlType: 'Static',
-                        selectedCountryType: template.MVWB__Button_Body__c?.split(' ')[0],
+                        selectedCountryType: template.Button_Body__c?.split(' ')[0],
                         isCallPhone: false,
                         isVisitSite: false,
                         isOfferCode: false,
@@ -331,19 +332,19 @@ export default class WbCreateTemplatePage extends LightningElement {
                         errorMessage: ''   
                     };
                     
-                    this.handleMenuSelect({currentTarget:{dataset:{value:template.MVWB__Button_Type__c,buttonData:newButton}}});
+                    this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
                 }
-                this.handleContentType({target:{value:template.MVWB__Header_Type__c}});
+                this.handleContentType({target:{value:template.Header_Type__c}});
 
                 if(headerType.toLowerCase()=='image'){
                     console.log('enter in images...');
                     this.isImageFile=true;
                     this.isfilename=true;
                     this.isImgSelected=false;
-                    this.fileName=template.MVWB__File_Name__c;
+                    this.fileName=template.File_Name__c;
                     this.filePreview=headerBody;
-                    this.imageurl=template.MVWB__Header_Body__c;
-                    this.headerHandle=template.MVWB__Image_Header_Handle__c;
+                    this.imageurl=template.Header_Body__c;
+                    this.headerHandle=template.Image_Header_Handle__c;
                     this.NoFileSelected = false;
                     console.log('Image Header:', this.filePreview);
                     console.log(this.isfilename);
@@ -480,6 +481,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.isDocSelected=false;
         this.filePreview = null;
         this.isImageFile=false;
+        this.headerHandle='';
         if(this.isImageFileUploader==true){
             this.isImgSelected=true;
         }
@@ -564,6 +566,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                                     uploadNextChunk(); 
                                 } else {
                                     console.log('File upload completed.');
+                                    this.showToastSuccess('File upload successfully.');
                                 }
                             } else {
                                 console.error('Failed to upload file chunk.');
@@ -591,7 +594,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.NoFileSelected=true;
             this.isfilename=false;
             this.selectedContentType = event.target.value;
-            // this.isHeaderTypeLoad=true;
             setTimeout(() => {
                 this.template.querySelector('.conInput').value=this.selectedContentType;
             }, 1000)
@@ -629,7 +631,6 @@ export default class WbCreateTemplatePage extends LightningElement {
     clearEditTemplateData() {
         this.templateName = ''; 
         this.selectedContentType = 'None';
-        this.storedTemplateName = 'your_template_name';
         this.header = ''; 
         this.addHeaderVar = false; 
         this.content = ''; 
@@ -678,7 +679,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                 case 'templateName':
                     this.templateName = value.replace(/\s+/g, '_').toLowerCase();
                     this.checkTemplateExistence();
-                    this.handleStoredname();
                     break;
                 case 'language':
                     this.selectedLanguage = value;
@@ -758,29 +758,18 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     checkTemplateExistence() {
         try {
-            doesTemplateExist({ templateName: this.templateName })
-                .then(result => {
-                    this.templateExists = result;
-                    if (this.templateExists) {
-                        console.log('Template already exists.');
-                    } else {
-                        console.log('Template does not exist. Proceed with creation.');
-                    }
-                })
-                .catch(error => {
-                    console.log(`Error checking template existence: ${error.message || 'Unknown error'}`);
-                });
+            this.templateExists = this.allTemplates.some(
+                template => template.Template_Name__c.toLowerCase() === this.templateName.toLowerCase()
+            );
+    
+            if (this.templateExists) {
+                console.log('Template already exists.');
+            } else {
+                console.log('Template does not exist. Proceed with creation.');
+            }
         } catch (error) {
             console.error(error.message);
             this.showToastError(error.message || 'An error occurred while checking template existence.');
-        }
-    }
-
-    handleStoredname() {
-        if (this.templateName == '') {
-            this.storedTemplateName = 'your_template_name';
-        } else {
-            this.storedTemplateName = this.templateName;
         }
     }
 
@@ -1116,7 +1105,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             };
             this.variables = [...this.variables, newVariable];
             this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
-            this.formatedTempBody=this.tempBody;
+            this.formatedTempBody=this.formatText(this.tempBody);
             console.log('this.tempBody after adding variable:', this.tempBody);
             this.updateTextarea();
             this.updatePreviewContent(this.formatedTempBody, 'body');
@@ -1711,18 +1700,21 @@ export default class WbCreateTemplatePage extends LightningElement {
         }       
     }
 
-    fetchUpdatedTemplates() {
+    fetchUpdatedTemplates(dispatchEvent = true) {
         getWhatsAppTemplates()
             .then(data => {
-                const event = new CustomEvent('templateupdate', { detail: data });
-                this.dispatchEvent(event);
+                this.allTemplates = data; 
+                if (dispatchEvent) {
+                    const event = new CustomEvent('templateupdate', { detail: data });
+                    this.dispatchEvent(event);
+                }
             })
             .catch(error => {
                 console.error('Error fetching templates:', error);
                 this.showToastError('Failed to fetch updated templates.');
             });
     }
-
+    
     showToastError(message) {
         const toastEvent = new ShowToastEvent({
             title: 'Error',

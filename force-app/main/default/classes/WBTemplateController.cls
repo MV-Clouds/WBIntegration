@@ -19,17 +19,17 @@
     public static String accessToken;
     public static String endpoint;
     public static String uploadEndpoint;
-    public static final MVWB__WBConnect_Configuration__mdt SETTINGS;
+    public static final WBConnect_Configuration__mdt SETTINGS;
 
     static {
         try {
             SETTINGS = [
-                SELECT MVWB__Access_Token__c, MVWB__Application_Id__c, MVWB__Phone_Number_Id__c,MVWB__Business_Account_Id__c	
-                FROM MVWB__WBConnect_Configuration__mdt WITH SECURITY_ENFORCED
+                SELECT Access_Token__c, Application_Id__c, Phone_Number_Id__c,Business_Account_Id__c	
+                FROM WBConnect_Configuration__mdt WITH SECURITY_ENFORCED
                 LIMIT 1
             ];
           
-            accessToken = SETTINGS.MVWB__Access_Token__c;
+            accessToken = SETTINGS.Access_Token__c;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'static', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
@@ -45,7 +45,7 @@
   @AuraEnabled(cacheable=false)
     public static List<Template__c> getWhatsAppTemplates() {
         try {
-            List<Template__c> listName = [SELECT Id, Name, Template_Category__c, Language__c,File_Name__c,Image_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
+            List<Template__c> listName = [SELECT Id, Name,Template_Name__c, Template_Category__c, Language__c,File_Name__c,Image_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
             FROM Template__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
 
             System.debug('list name==> ' + listName);
@@ -154,7 +154,7 @@
         List<sObject> records = new List<sObject>();
         
         try {
-            String query = 'SELECT Id, Name FROM ' + sObjectName + ' LIMIT 100';             
+            String query = 'SELECT Id, Name FROM ' + sObjectName + ' LIMIT 200';             
             records = Database.query(query);
             System.debug('records '+records);
         } catch (Exception e) {
@@ -179,7 +179,7 @@
 
         try {
             List<Template__c> templates = [
-                SELECT Id, Name, Button_Body__c, Status__c,Image_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
+                SELECT Id, Name,Template_Name__c, Button_Body__c, Status__c,Image_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
                     Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, 
                     Template_Category__c, Template_SubCatagory__c, Template_Type__c
                 FROM Template__c 
@@ -292,7 +292,7 @@
     public static Map<String, Object> getTemplateDataWithReplacement(String templateId, String contactId) {
         try {
             Map<String, Object> templateData = new Map<String, Object>();
-            List<Template__c> templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c,Image_Header_Handle__c, 
+            List<Template__c> templates = [SELECT Id, Name,Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c,Image_Header_Handle__c, 
                                                 Footer_Body__c, Header_Body__c, Header_Type__c, Language__c,File_Name__c, 
                                                 Template_Body__c, Template_Category__c, Template_SubCatagory__c, 
                                                 Template_Type__c, Template_Variable__c, 
@@ -392,25 +392,6 @@
         }
         return null;
     }
-
-
-      /*
-    *********************************************************
-    @description     : Check if same template already exist.
-    @param           : templateName
-    @return          : 
-    ********************************************************
-    */
-    @AuraEnabled(cacheable=true)
-    public static Boolean doesTemplateExist(String templateName) {
-        try {
-            Integer count = [SELECT COUNT() FROM Template__c WHERE Name = :templateName WITH SECURITY_ENFORCED];
-            return count > 0;
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'doesTemplateExist', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-            return false;
-        }
-    }
     
        /*
     *********************************************************
@@ -462,7 +443,7 @@
         Map<String, Object> response = new Map<String, Object>();
 
         try {
-            if (String.isBlank(SETTINGS.MVWB__Business_Account_Id__c)) {
+            if (String.isBlank(SETTINGS.Business_Account_Id__c)) {
                 response.put('success', false);
                 response.put('errorMessage', 'Business Account ID is not configured in the system.');
                 return response;
@@ -472,7 +453,7 @@
             System.debug('Deserialized TemplateWrapper: ' + templateWrapper);
 
             Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates';
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Business_Account_Id__c+'/message_templates';
             
             HttpRequest req = new HttpRequest();
             req.setEndpoint(endpoint);
@@ -527,14 +508,14 @@
     @AuraEnabled
     public static String startUploadSession(String fileName, Integer fileLength, String fileType) {
         try {
-            if (String.isBlank(SETTINGS.MVWB__Application_Id__c)) {
+            if (String.isBlank(SETTINGS.Application_Id__c)) {
                 return 'Application ID is not configured in the system.';
             }
             Map<String, Object> payload = new Map<String, Object>();
             payload.put('file_name', fileName);
             payload.put('file_length', fileLength);
             payload.put('file_type', fileType);
-            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.MVWB__Application_Id__c+'/uploads';
+            uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS.Application_Id__c+'/uploads';
 
             HttpRequest req = new HttpRequest();
             Http http = new Http();
@@ -668,13 +649,13 @@
     @AuraEnabled
     public static string deleteTemplete(String templateId){
         try {
-            if (String.isBlank(SETTINGS.MVWB__Business_Account_Id__c)) {
+            if (String.isBlank(SETTINGS.Business_Account_Id__c)) {
                 return 'Business Account ID is not configured in the system.';
             }
 
-            Template__c wbTempRec = [SELECT Id, Name FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
+            Template__c wbTempRec = [SELECT Id, Name,Template_Name__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
             
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Name;
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Template_Name__c;
 
             HttpRequest req = new HttpRequest();         
             req.setEndpoint(endpoint);

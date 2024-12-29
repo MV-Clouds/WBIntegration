@@ -81,12 +81,15 @@
     padding-bottom: 25%;
     padding-right: 5%;
     border-radius: 3px;
-    background-image: url('/resource/MVWB__wbiBg');
+    background-image: url('/resource/wbiBg');
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
 }
-
+.custom-lookup{
+    margin-top: 0.4rem;
+    width: 100%;
+}
 
 .chatWP-bubble {
     border: 1px solid white;
@@ -447,7 +450,7 @@ input{
 .phone-container {
     width: 600px;
     height: 700px;
-    background: url('/resource/MVWB__phoneImg') no-repeat center center;
+    background: url('/resource/phoneImg') no-repeat center center;
     /* background-size: cover; */
     display: flex;
     justify-content: center;

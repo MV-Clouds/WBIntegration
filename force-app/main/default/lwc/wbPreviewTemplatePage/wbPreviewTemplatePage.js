@@ -42,7 +42,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track options = [
         { label: 'Contact', value: 'Contact', isSelected: true }
     ];
-    @track records = [];
     @track contactDetails=[];
     @track inputValues = {};
     @track groupedVariables=[];
@@ -50,7 +49,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track selectedCountryType = '+91';  
     @track countryType=[];
     @track filteredTableData = []; 
-    searchTerm = 'None';
     @track isDropdownVisible = false;
     @track variableMapping = { header: {}, body: {} };
     @track isFieldDisabled=false;
@@ -98,7 +96,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     connectedCallback() {
-        this.fetchRecords();
         this.fetchCountries();
         this.fetchReplaceVariableTemplate(this.templateid,null);
     }
@@ -118,54 +115,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
         }
     }
 
-    fetchRecords() {
-        try {
-            getRecordsBySObject()
-            .then(data => {
-                // this.records = data;
-                this.records = [{ Id: '', Name: 'None' }, ...data]; 
-                this.filteredRecordData = [...this.records];                
-            })
-            .catch(error => {
-                console.error('Error fetching records: ', error);
-            });
-        } catch (error) {
-            console.error('Error fetching objects records: ', error);
-        }
-    }
-
-    search(event) {
-        try {
-            this.searchTerm = event.target.value.toLowerCase();
-            console.log('searchTerm ',this.searchTerm);
-            
-            this.filteredRecordData = this.records.filter((record) => {
-                const isSelected = this.selectedContactId.some(contact => contact.id === record.id);
-                return !isSelected && record.name.toLowerCase().includes(this.searchTerm);
-            });
-        } catch (error) {
-            console.error('Unexpected error in search:', error);
-            this.showToast('Error', 'An unexpected error occurred while searching', 'error');
-        }
-    }
-
-    handleFocus(event) {
-        this.isDropdownVisible = true;
-    }
- 
-    handleBlur() {
-        setTimeout(() => {
-            this.isDropdownVisible = false;
-        }, 200);
-    }
-
-    search(event) {
-        this.searchTerm = event.target.value.toLowerCase();
-        this.filteredRecordData = this.records.filter(record =>
-            record.Name.toLowerCase().includes(this.searchTerm)
-        );
-    }
-
     handleCountryChange(event){
         this.selectedCountryType = event.target.value;
         console.log(this.selectedCountryType);
@@ -173,8 +122,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     handleRecordSelection(event) {
         try {
-            const contactItem = event.target.closest('.contact-item');
-            const selectedId = contactItem ? contactItem.dataset.id : null;
+            event.stopPropagation();        
+            const selectedId = event.detail.selectedRecord;
             console.log('selectedId ',selectedId);
 
             if(!selectedId){
@@ -186,7 +135,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 console.log('this.tempBody ',this.tempBody);
                 console.log('this.formatedTempBody ',this.formatedTempBody);
                 
-                this.searchTerm='None';
                 this.groupedVariables = this.groupedVariables.map(group => {
                     return {
                         ...group,
@@ -210,19 +158,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
             }
            
             const hasVariables = this.tempBody.includes('{{') || this.tempHeader.includes('{{');
-            const selectedRecord = this.filteredRecordData.find(record => record.Id === selectedId);
 
             if (!hasVariables) {
                 console.warn('No variables found in the template. Please check the template structure.');
                 this.showToast('Warning!', 'No variables found in the template to replace.', 'warning');
                 return; 
-            }
-
-            if (selectedRecord) {
-                this.searchTerm = selectedRecord.Name;
-            } else {
-                console.warn('Selected record not found in filteredRecordData.');
-                this.searchTerm = '';
             }
 
             this.selectedContactId = selectedId;
@@ -258,8 +198,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 recordId: this.selectedContactId
             })
             .then(result => {
+                console.log('fetched result ',result);
+                
                 if (result.queriedData) {
                     this.contactDetails = result.queriedData;
+                   console.log('contactDetails ',this.contactDetails);
                    
                     this.groupedVariables = this.groupedVariables.map(group => {
                         return {
@@ -351,22 +294,22 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 if (result) {
                     this.isImgSelected = result.isImgUrl;
                     this.IsHeaderText = !result.isImgUrl;                    
-                    this.originalHeader = result.template.MVWB__Header_Body__c;
-                    this.originalBody = result.template.MVWB__Template_Body__c;
+                    this.originalHeader = result.template.Header_Body__c;
+                    this.originalBody = result.template.Template_Body__c;
                     const variableMappings = result.templateVariables;
 
                     this.tempHeader = this.originalHeader;
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
-                    this.tempFooter = result.template.MVWB__Footer_Body__c;
+                    this.tempFooter = result.template.Footer_Body__c;
 
-                    this.isSendDisabled = result.template.MVWB__Status__c !== 'Active-Quality Pending';
+                    this.isSendDisabled = result.template.Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    const buttonLabels = result.template.MVWB__Button_Label__c ? result.template.MVWB__Button_Label__c.split(',') : [];
-                    const buttonTypes = result.template.MVWB__Button_Type__c ? result.template.MVWB__Button_Type__c.split(',') : [];
+                    const buttonLabels = result.template.Button_Label__c ? result.template.Button_Label__c.split(',') : [];
+                    const buttonTypes = result.template.Button_Type__c ? result.template.Button_Type__c.split(',') : [];
         
                     this.buttonList = buttonLabels.map((label, index) => {
                         const type = buttonTypes[index]?.trim() || 'default';
@@ -404,6 +347,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
                     this.objectNames = result.objectNames;
                     this.fieldNames = result.fieldNames;
+                    console.log('this.objectNames ',this.objectNames);
+                    console.log('this.fieldNames ',this.fieldNames);
 
                     this.formatedTempBody = this.formatText(this.tempBody);
                     this.isLoading = false;
@@ -464,12 +409,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
             }
     
             const templatePayload = this.createJSONBody(phonenum, "template", {
-                templateName: this.template.Name,
-                languageCode: this.template.MVWB__Language__c,
+                templateName: this.template.Template_Name__c,
+                languageCode: this.template.Language__c,
                 headerParameters: this.headerParams,
                 bodyParameters: this.bodyParams,
-                buttonLabel: this.template.MVWB__Button_Label__c,
-                buttonType: this.template.MVWB__Button_Type__c
+                buttonLabel: this.template.Button_Label__c,
+                buttonType: this.template.Button_Type__c
             });
     
             sendPreviewTemplate({ jsonData: templatePayload })

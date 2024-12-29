@@ -25,8 +25,7 @@
                                                 </template>
                                             </select>
                                         </div>
-                                        <template if:true={records}>
-                                            <!-- Search Bar -->
+                                        <!-- <template if:true={records}>
                                             <div class="search-bar">
                                                 <lightning-input
                                                     variant="label-hidden"
@@ -61,7 +60,13 @@
                                                     </div>
                                                 </template>
                                             </template>
-                                        </template>
+                                        </template> -->
+                                        
+                                        <c-custom-lookup-lwc icon-name="standard:contact"
+                                        s-object-api-name="Contact"
+                                        onlookupupdate={handleRecordSelection}
+                                        class="custom-lookup"
+                                        placeholder="Search contacts here..."></c-custom-lookup-lwc>
                                     </div>
 
                                     <template if:true={noContact}>

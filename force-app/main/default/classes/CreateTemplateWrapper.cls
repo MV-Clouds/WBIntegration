@@ -231,13 +231,27 @@
             String templatename = (String) payloadMap.get('name');
             Template__c whatsAppTemplate;
 
-            List<Template__c> whatsAppTemplateList = [
-                SELECT Id,Name, Template_Id__c 
-                FROM Template__c 
-                WHERE Name = :(String) payloadMap.get('name') WITH SECURITY_ENFORCED
-                LIMIT 1
+            // List<Template__c> whatsAppTemplateList = [
+            //     SELECT Id,Name,Template_Name__c, Template_Id__c 
+            //     FROM Template__c 
+            //     WHERE Template_Name__c = :(String) payloadMap.get('name') WITH SECURITY_ENFORCED
+            //     LIMIT 1
+            // ];
+
+            List<Template__c> allTemplates = [
+                SELECT Id, Name, Template_Name__c, Template_Id__c 
+                FROM Template__c
+                WITH SECURITY_ENFORCED
             ];
+            List<Template__c> whatsAppTemplateList = new List<Template__c>();
+            for (Template__c template : allTemplates) {
+                if (template.Template_Name__c == (String) payloadMap.get('name')) {
+                    whatsAppTemplateList.add(template);
+                }
+            }
+
             System.debug(whatsAppTemplateList);
+
             if (whatsAppTemplateList.isEmpty()) {
                 whatsAppTemplate = new Template__c();
             } else {
@@ -253,7 +267,7 @@
             whatsAppTemplate.Status__c = (status == null || status == '') ? 'In-Review' : (status == 'PENDING') ? 'In-Review' : 
                                          (status == 'REJECTED') ? 'Rejected' : 
                                          (status == 'APPROVED') ? 'Active-Quality Pending' : '';
-            whatsAppTemplate.Name = (String) payloadMap.get('name');
+            whatsAppTemplate.Template_Name__c = (String) payloadMap.get('name');
             whatsAppTemplate.Template_Category__c = (String) payloadMap.get('category');
             whatsAppTemplate.Language__c = (String) payloadMap.get('language');
             whatsAppTemplate.Template_SubCatagory__c = templateWrapper.templateType;
@@ -507,7 +521,8 @@
                         String buttonValue = '';
     
                         if (buttonType == 'COPY_CODE') {
-                            buttonValue = (String) button.get('example'); 
+                            buttonValue = (String) button.get('example');
+                            buttonText = 'Copy offer code';
                         } else if(buttonType == 'URL'){
                             buttonValue = (String) button.get('url'); 
                         } else if(buttonType == 'PHONE_NUMBER'){
