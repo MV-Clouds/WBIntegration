@@ -12,7 +12,7 @@
     padding: 0;
     border-radius: 5px;
     width: 60rem;
-background-image: url('/resource/MVWB__wbiTemplateBg');
+background-image: url('/resource/wbiTemplateBg');
 }
 .create-disabled{
     background-color: rgb(229 229 229 / 78%);
@@ -139,7 +139,7 @@ background-image: url('/resource/MVWB__wbiTemplateBg');
 
 .main {
     padding: 1%;
-    background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-image: url('/resource/wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
     border-radius: 5px;
@@ -188,6 +188,18 @@ tr{
     padding: 10px;
     font-size: 15px;
     text-align: center;
+    /* max-width: 200px; */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.truncate-name{
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 tr:nth-child(odd) {

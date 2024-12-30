@@ -108,6 +108,7 @@
             Integer statusCode = response.getStatusCode();
             if(statusCode != 200){
                 errorMessage='Failed to send Template';
+                System.debug(JSON.serialize(response.getBody()));
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => null, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
 
@@ -362,9 +363,11 @@
                                 template.Header_Body__c = template.Header_Body__c.replace(tv.Name, 
                                                             tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
                             } else if (tv.Type__c == 'Body') {
-                                bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                                // bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                                bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : tv.Name);
                                 template.Template_Body__c = template.Template_Body__c.replace(tv.Name, 
-                                                            tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                                                            tv.Alternate_Text__c != null ? tv.Alternate_Text__c : tv.Name);
+                                                            // tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
                             }
                         }
                     }
@@ -584,6 +587,7 @@
             System.debug('File chunk upload response: ' + res.getBody());
 
             if (res.getStatusCode() == 200) {
+                System.debug(JSON.deserializeUntyped(res.getBody()));
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                 String headerHandle = (String) responseMap.get('h');                
                 String imageurl = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
@@ -619,25 +623,35 @@
     @return          : 
     ********************************************************
     */
+    
     public static String createContentVersionAndDocument(String fileName, Blob fileBlob) {
         try {
             ContentVersion contentVersion = new ContentVersion();
             contentVersion.Title = fileName;
             contentVersion.PathOnClient = fileName;
             contentVersion.VersionData = fileBlob;
-            contentVersion.Origin = 'H'; 
-
+            contentVersion.Origin = 'H';
+    
             if (Schema.sObjectType.ContentVersion.isCreateable()) {
                 insert contentVersion;
-            }            
+            }
+    
             String imageUrl = '/sfc/servlet.shepherd/version/download/' + contentVersion.Id;
             return imageUrl;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createContentVersionAndDocument', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'WBTemplateController',
+                'methodName' => 'createContentVersionAndDocument',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
-        
-    }
+    }    
 
     /*
     *********************************************************

@@ -125,6 +125,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track templateId='';
     @track metaTemplateId='';
     @track allTemplates=[];
+    @track headerError='';
 
     @api
     get edittemplateid() {
@@ -237,9 +238,9 @@ export default class WbCreateTemplatePage extends LightningElement {
     
     renderedCallback() {
         loadStyle(this, wbCreateTempStyle).then(() => {
-            console.log("Loaded Successfully")
+            console.log("Loaded Successfully");
         }).catch(error => {
-            console.error("Error in loading the colors",error)
+            console.error("Error in loading the colors",error);
         })
     }
 
@@ -251,7 +252,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 this.templateName = template.Template_Name__c || '';
                 this.metaTemplateId = template.Template_Id__c || '';
                 const headerBody = template.Header_Body__c || '';
-                const headerType = template.Header_Type__c || '';
+                const headerType = template.Header_Type__c || 'None';
                 
                 this.footer = template.Footer_Body__c || '';
                 this.selectedLanguage = template.Language__c;
@@ -334,7 +335,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                     
                     this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
                 }
-                this.handleContentType({target:{value:template.Header_Type__c}});
+                this.handleContentType({target:{value:template.Header_Type__c ||'None'}});
 
                 if(headerType.toLowerCase()=='image'){
                     console.log('enter in images...');
@@ -460,7 +461,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.uploadFile();
         } catch (error) {
             console.error('Error handling file change:', error);
-            this.showToastError(error.message || 'An error occurred while processing the file.');
+            // this.showToastError(error.message || 'An error occurred while processing the file.');
             this.handleRemoveFile(); 
         }
     }
@@ -501,11 +502,11 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
     
     uploadFile() {
+        this.isLoading=true;
         if (!this.file) {
             alert('Please select a file to upload.');
             return;
         }
-
         try {
            startUploadSession({
                 fileName: this.fileName,
@@ -521,14 +522,16 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.uploadChunks();
                 } else {
                     console.error('Failed to start upload session.');
+                    this.isLoading=false;
                 }
             })
             .catch(error=>{
                 console.error('Failed upload session.', error.body);
-
+                this.isLoading=false;
             })
         } catch (error) {
             console.error('Error starting upload session: ', error);
+            this.isLoading=false;
         }
     }
 
@@ -566,17 +569,20 @@ export default class WbCreateTemplatePage extends LightningElement {
                                     uploadNextChunk(); 
                                 } else {
                                     console.log('File upload completed.');
+                                    this.isLoading=false;
                                     this.showToastSuccess('File upload successfully.');
                                 }
                             } else {
                                 console.error('Failed to upload file chunk.');
+                                this.isLoading=false;
+                                this.showToastError('Failed to upload file chunk.');
                             }
                         })
                         .catch(error=>{
                             console.error('Failed upload session.', error);
+                            this.isLoading=false;
                             this.showToastError(error.body.message || 'An error occurred while uploading image.');
                         })
-                
                 };
 
                 reader.readAsDataURL(chunk); 
@@ -584,10 +590,10 @@ export default class WbCreateTemplatePage extends LightningElement {
 
             uploadNextChunk();
         } catch (error) {
+            this.isLoading=false;
             console.error('Error uploading file chunk: ', error);
         }
     }
-
 
     handleContentType(event) {
         try {
@@ -706,9 +712,10 @@ export default class WbCreateTemplatePage extends LightningElement {
                     break;
                 case 'webURL':
                     this.updateButtonProperty(index, 'webURL', value);
-                    if (!this.validateUrl(value)) {
-                        this.showToastError('URL should be properly formatted (e.g., https://example.com)');
-                    }
+                    // if (!this.validateUrl(value)) {
+
+                    //     this.showToastError('URL should be properly formatted (e.g., https://example.com)');
+                    // }
                     break;
                 case 'selectedCountryType':
                     this.updateButtonProperty(index, 'selectedCountryType', value);
@@ -725,8 +732,15 @@ export default class WbCreateTemplatePage extends LightningElement {
                     break;
                 case 'header':
                     this.header = value;
-                    // this.previewHeader=value;
-                    this.updatePreviewContent(this.header,'header');
+                    const variableMatches = (value.match(/\{\{\d+\}\}/g) || []).length;
+                    if (variableMatches > 1) {
+                        this.headerError = 'Only one variable is allowed in the header.';
+                    } else {
+                        this.headerError = '';
+                        this.updatePreviewContent(this.header, 'header');
+                    }
+                
+                    // this.updatePreviewContent(this.header,'header');
                     break;
                 default:
                     break;
@@ -825,14 +839,16 @@ export default class WbCreateTemplatePage extends LightningElement {
             switch (selectedValue) {
                 case 'QUICK_REPLY':
                     this.isCustom = true;
-                    this.createCustomButton('QUICK_REPLY', 'Quick reply');
+                    const quickReplyText = buttonData && buttonData.btntext ? buttonData.btntext : 'Quick reply';
+                    this.createCustomButton('QUICK_REPLY', quickReplyText);
                     this.isStopMarketing = false;
                     break;
                 case 'Marketing opt-out':
                     if (this.marketingOpt < 1) {
                         this.isCustom = true;
                         this.isStopMarketing = true;
-                        this.createCustomButton('Marketing opt-out', 'Stop promotions');
+                        const stopPromoText = buttonData && buttonData.btntext ? buttonData.btntext : 'Stop promotions';
+                        this.createCustomButton('Marketing opt-out', stopPromoText);
                         this.marketingOpt++;
                     }
                     break;
@@ -1096,6 +1112,8 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.nextIndex = maxId + 1;
 
             const defaultField = this.fields[0].value; 
+            console.log('defaultField ',defaultField);
+            
             const newVariable = {
                 id: this.nextIndex,
                 object: this.selectedObject,
@@ -1104,9 +1122,12 @@ export default class WbCreateTemplatePage extends LightningElement {
                 index: `{{${this.nextIndex}}}`,        
             };
             this.variables = [...this.variables, newVariable];
+            console.log('this.variables ',this.variables);
+            
             this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
             this.formatedTempBody=this.formatText(this.tempBody);
             console.log('this.tempBody after adding variable:', this.tempBody);
+            console.log('this.formatedTempBody ', this.formatedTempBody);
             this.updateTextarea();
             this.updatePreviewContent(this.formatedTempBody, 'body');
             this.nextIndex++;
@@ -1117,22 +1138,24 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     handleVarFieldChange(event) {
         try {
-            // const variableId = event.target.dataset.id;
-            const variableId = String(event.target.dataset.id); 
+            // const variableId = String(event.target.dataset.id); 
+            const variableindex = String(event.target.dataset.index); 
             const fieldName = event.target.value;
-            console.log('variableId ',variableId,' fieldName ',fieldName);
+            console.log('variableId ',variableindex,' fieldName ',fieldName);
             
             this.variables = this.variables.map(varItem =>
                 // varItem.id === parseInt(variableId)
-                String(varItem.id) === variableId 
+                String(varItem.index) === variableindex 
                     ? {
                           ...varItem,
                           field: fieldName,
                       }
                     : varItem
             );
-            console.log('Updated variables:', JSON.stringify(this.variables));            
-            this.updatePreviewContent(this.formatedTempBody, 'body');
+            console.log('Updated variables:', JSON.stringify(this.variables));      
+            console.log('this.tempbody ',this.tempBody);
+                  
+            this.updatePreviewContent(this.tempBody, 'body');
         } catch (error) {
             console.error('Something wrong while variable input.',error);
         }
@@ -1163,29 +1186,35 @@ export default class WbCreateTemplatePage extends LightningElement {
             const index = event.currentTarget.dataset.index;
             const varIndexToRemove = parseInt(index, 10) + 1;
             const variableToRemove = `{{${varIndexToRemove}}}`;
-            // console.log('Removing variable:', variableToRemove);
+            console.log('Removing variable:', variableToRemove);
             let updatedTempBody = this.tempBody.replace(variableToRemove, '');
-            // console.log('updatedTempBody after removing variable:', updatedTempBody);
+            console.log('updatedTempBody after removing variable:', updatedTempBody);
             this.variables = this.variables.filter((_, i) => i !== parseInt(index));
             this.variables = this.variables.map((varItem, idx) => {
                 const newIndex = idx + 1;
                 return {
                     ...varItem,
                     id: newIndex,
-                    index: `{{${newIndex}}}`,
-                    placeholder: `Enter content for {{${newIndex}}}`
+                    index: `{{${newIndex}}}`
                 };
             });
+            console.log(' this.variables ', this.variables);
+            
             let placeholders = updatedTempBody.match(/\{\{\d+\}\}/g) || [];
+            console.log('placeholders ',placeholders);
+            
             placeholders.forEach((placeholder, idx) => {
                 const newIndex = `{{${idx + 1}}}`;
                 updatedTempBody = updatedTempBody.replace(placeholder, newIndex);
             });
-            // console.log('newTempBody after re-indexing:', updatedTempBody);
+            console.log('newTempBody after re-indexing:', updatedTempBody);
             this.tempBody = updatedTempBody.trim();
             this.originalTempBody = this.tempBody;
             this.formatedTempBody=this.originalTempBody;
-            this.updatePreviewContent(this.formatedTempBody, 'body');
+            console.log(' this.originalTempBody ', this.originalTempBody);
+            console.log('this.formatedTempBody ',this.formatedTempBody);
+
+            this.updatePreviewContent(this.tempBody, 'body');
             // console.log('this.tempBody after re-indexing:', this.tempBody);
             this.nextIndex = this.variables.length + 1;
             if (this.variables.length === 0) {
@@ -1195,7 +1224,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.updateTextarea();
         } catch (error) {
             console.error('Something wrong while removing the variable.',error);
-            
         }
     }
 
@@ -1254,13 +1282,24 @@ export default class WbCreateTemplatePage extends LightningElement {
     updatePreviewContent(inputContent, type) {
         try {
             let updatedContent = inputContent;
+            console.log('updatedContent ',updatedContent);
+            
             const variables = type === 'header' ? this.header_variables : this.variables;
-        
+            console.log('variables ',variables);
+            
+            // variables.forEach(varItem => {
+            //     const replacement = `{{${varItem.object}.${varItem.field}}}`;
+            //     updatedContent = updatedContent.replace(`${varItem.index}`, replacement);
+            // });
             variables.forEach(varItem => {
-                const replacement = `{{${varItem.object}.${varItem.field}}}`;
-                updatedContent = updatedContent.replace(`{{${varItem.id}}}`, replacement);
-                console.log('updatedContent ',updatedContent);
-                
+                const variablePlaceholder = varItem.index; 
+                const replacementValue = `{{${varItem.object}.${varItem.field}}}`;
+    
+                let index = updatedContent.indexOf(variablePlaceholder);
+                while (index !== -1) {
+                    updatedContent = updatedContent.slice(0, index) + replacementValue + updatedContent.slice(index + variablePlaceholder.length);
+                    index = updatedContent.indexOf(variablePlaceholder, index + replacementValue.length); 
+                }
             });
         
             if (type === 'header') {
@@ -1496,7 +1535,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 if (button.isVisitSite) {
                     console.log('Validating URL:', button.webURL);
                     if (!button.selectedUrlType || !button.webURL || !this.validateUrl(button.webURL)) {
-                        this.showToastError('Please provide a valid URL and URL type for the "Visit Website" button');
+                        this.showToastError('Please provide a valid URL that should be properly formatted (e.g., https://example.com)');
                         return false;
                     }
                 } else if (button.isCallPhone) {
@@ -1504,9 +1543,10 @@ export default class WbCreateTemplatePage extends LightningElement {
                         this.showToastError('Please provide a valid country and phone number for the "Call Phone Number" button');
                         return false;
                     }
-                } else if (button.isOfferCode) {
-                    if (!button.offercode || button.offercode.trim() === '') {
-                        this.showToastError('Please provide an offer code for the "Copy Offer Code" button');
+                } else if (button.isOfferCode) {            
+                    const alphanumericPattern = /^[a-zA-Z0-9]+$/;
+                    if (!alphanumericPattern.test(button.offercode.trim())) {
+                        this.showToastError('Offer code must only contain alphanumeric characters (letters and numbers)');
                         return false;
                     }
                 }
@@ -1525,14 +1565,16 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
        
     }
-    
-   validateUrl(value) {
-        const urlPattern = new RegExp('^(https?:\\/\\/)?(www\\.)?([a-zA-Z0-9\\-]+\\.)+[a-zA-Z]{2,}.*$');
+   
+    validateUrl(value) {
+        const urlPattern = new RegExp(
+            '^(https?:\\/\\/)?(www\\.)?([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}($|\\/.*)$'
+        );
         const isValid = urlPattern.test(value);
         console.log('Is valid URL:', isValid);
         return isValid;
-    }   
-    
+    }    
+
     validatePhoneNumber(value) {
         const phonePattern = /^[0-9]{10,}$/;
         return phonePattern.test(value);
@@ -1558,11 +1600,12 @@ export default class WbCreateTemplatePage extends LightningElement {
 
         const hasCustomButtonError = this.customButtonList.some(button => button.hasError);
         const hasButtonListError = this.buttonList.some(button => button.hasError);
-    
+        const headerImageNotSelected = this.selectedContentType === 'Image' && !this.headerHandle;
+
         const result = (() => {
         switch (currentTemplate) {
             case 'Marketing':
-                return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError);    
+                return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerImageNotSelected);    
             default:
                 return true; 
         }
@@ -1616,7 +1659,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 .then(result => {
                     if (result && result.success) { 
                         console.log('Template edit successfully', result);
-                        this.showToastSuccess('Template successfully created');
+                        this.showToastSuccess('Template successfully edited.');
                         this.isAllTemplate=true;
                         this.iseditTemplatevisible=false;
                         this.isLoading=false;
@@ -1627,7 +1670,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                         const errorResponse = JSON.parse(result.errorMessage); 
                         const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
             
-                        this.showToastError('Template creation failed, reason - '+errorMsg);
+                        this.showToastError('Template updation failed, reason - '+errorMsg);
                         this.isLoading = false; 
                     }
                 })

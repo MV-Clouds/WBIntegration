@@ -25,47 +25,12 @@
                                                 </template>
                                             </select>
                                         </div>
-                                        <!-- <template if:true={records}>
-                                            <div class="search-bar">
-                                                <lightning-input
-                                                    variant="label-hidden"
-                                                    type="search"
-                                                    placeholder="Search..."
-                                                    onchange={search}
-                                                    value={searchTerm}
-                                                    icon-name="standard:contact"
-                                                    onblur={handleBlur}
-                                                    onfocus={handleFocus}
-                                                    disabled={isDisabled}
-                                                >
-                                                </lightning-input>
-                                            </div>
-                                           
-                                            <template if:true={isDropdownVisible}>
-                                                <template if:true={filteredRecordData.length}>
-                                                    <div class="dropdown-list">
-                                                        <template for:each={filteredRecordData} for:item="record">
-                                                            <div key={record.Id} class="contact-item" data-id={record.Id} onclick={handleRecordSelection}>
-                                                                <lightning-icon icon-name="standard:contact" size="small" alternative-text="Contact" class="contact-icon"></lightning-icon>
-                                                                <div class="slds-truncate" title={record.Name}>
-                                                                    <p>{record.Name}</p>
-                                                                </div>
-                                                            </div>
-                                                        </template>
-                                                    </div>
-                                                </template>
-                                                <template if:false={filteredRecordData.length}>
-                                                    <div class="dropdown-list empty">
-                                                        <p>No results found </p> 
-                                                    </div>
-                                                </template>
-                                            </template>
-                                        </template> -->
-                                        
+                                      
                                         <c-custom-lookup-lwc icon-name="standard:contact"
                                         s-object-api-name="Contact"
                                         onlookupupdate={handleRecordSelection}
                                         class="custom-lookup"
+                                         disabled={isDisabled}
                                         placeholder="Search contacts here..."></c-custom-lookup-lwc>
                                     </div>
 

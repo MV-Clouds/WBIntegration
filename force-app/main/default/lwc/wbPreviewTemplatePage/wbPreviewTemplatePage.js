@@ -49,7 +49,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track selectedCountryType = '+91';  
     @track countryType=[];
     @track filteredTableData = []; 
-    @track isDropdownVisible = false;
     @track variableMapping = { header: {}, body: {} };
     @track isFieldDisabled=false;
     @track isSendDisabled=false;
@@ -123,8 +122,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
     handleRecordSelection(event) {
         try {
             event.stopPropagation();        
-            const selectedId = event.detail.selectedRecord;
-            console.log('selectedId ',selectedId);
+            const selectedRecord = event.detail.selectedRecord || {};
+            const selectedId = selectedRecord.Id || null;
+            console.log('selectedId', selectedId);
 
             if(!selectedId){
                 console.log('enter to if');

@@ -127,6 +127,11 @@
                                                     <span class="addvar-span">Add variable</span>
                                                 </button>
                                             </div>
+                                            <template if:true={headerError}>
+                                                <div class="slds-text-color_error slds-m-top_small" style="margin-top: 0;">
+                                                    {headerError}
+                                                </div>
+                                            </template>
                 
                                             <template if:true={addHeaderVar}>
                                                 <div class="add-variable">
@@ -150,7 +155,7 @@
                                                                 <!-- Dynamic Field Selection -->
                                                                 <select class="field-dropdown field-header-dd dropdown" data-id={varItem.id} onchange={handleFieldChange}>
                                                                     <template for:each={fields} for:item="field">
-                                                                        <option key={field.value} class="header-field-option" value={field.value} selected={varItem.field}>
+                                                                        <option key={field.value} class="header-field-option" value={field.value}>
                                                                             {field.label}
                                                                         </option>
                                                                     </template>
@@ -238,12 +243,13 @@
                                                         </select>
                                         
                                                         <!-- Dynamic Field Selection -->
-                                                        <select class="field-dropdown field-body-dd dropdown" data-id={varItem.id} onchange={handleVarFieldChange}>
+                                                        <select class="field-dropdown field-body-dd dropdown" data-id={varItem.id} data-index={varItem.index} onchange={handleVarFieldChange}>
                                                             <template for:each={fields} for:item="field">
-                                                                <option key={field.value} class="body-field-option" value={field.value} selected={varItem.field}>
+                                                                <option key={field.value} class="body-field-option" value={field.value}>
                                                                     {field.label}
                                                                 </option>
                                                             </template>
+                                                           
                                                         </select>
         
                                                         <!-- Alternate Text Input -->
