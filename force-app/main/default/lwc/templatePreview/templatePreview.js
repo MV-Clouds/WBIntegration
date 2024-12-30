@@ -50,8 +50,8 @@ export default class TemplatePreview extends LightningElement {
 
                 let headerText = this.template.querySelector('.header-text');
                 let bodyText = this.template.querySelector('.body-text');
-                if(headerText) headerText.innerHTML = this.templateBody.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-                if(bodyText) bodyText.innerHTML = this.templateBody.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+                if(headerText) headerText.innerHTML = this.templateBody?.replaceAll(/\*(.+?)\*/g, '<b>$1</b>')?.replaceAll(/\_(.+?)\_/g, '<i>$1</i>')?.replaceAll(/\~(.+?)\~/g, '<s>$1</s>')?.replaceAll(/\```(.+?)\```/g, '<code>$1</code>');
+                if(bodyText) bodyText.innerHTML = this.templateBody?.replaceAll(/\*(.+?)\*/g, '<b>$1</b>')?.replaceAll(/\_(.+?)\_/g, '<i>$1</i>')?.replaceAll(/\~(.+?)\~/g, '<s>$1</s>')?.replaceAll(/\```(.+?)\```/g, '<code>$1</code>');
             })
             .catch(e => {
                 this.showSpinner = false;
