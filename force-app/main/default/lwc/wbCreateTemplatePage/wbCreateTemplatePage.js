@@ -539,6 +539,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.uploadChunks();
                 } else {
                     console.error('Failed to start upload session.');
+                    this.showToastError('Failed to start upload session.');
                     this.isLoading=false;
                 }
             })
@@ -1620,6 +1621,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         const result = (() => {
         switch (currentTemplate) {
             case 'Marketing':
+                // return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError);    
                 return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerImageNotSelected);    
             default:
                 return true; 
