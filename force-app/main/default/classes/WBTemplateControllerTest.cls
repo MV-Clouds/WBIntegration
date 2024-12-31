@@ -76,7 +76,7 @@ public class WBTemplateControllerTest {
         }
     }
     
-      @isTest
+    @isTest
     static void testRestrictTemplate() {
         try{
             List<Template__c> templatesToInsert = new List<Template__c>{

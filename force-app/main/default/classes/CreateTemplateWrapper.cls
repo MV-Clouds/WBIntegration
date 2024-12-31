@@ -14,7 +14,6 @@
  ***********************************************************************/
 
  public without sharing class CreateTemplateWrapper {
-    
     /*
     *********************************************************
     @description     : Main method to build overall payload to pass in create template

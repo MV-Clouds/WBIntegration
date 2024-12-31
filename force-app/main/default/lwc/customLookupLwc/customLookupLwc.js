@@ -52,6 +52,7 @@ export default class CustomLookupLwc extends LightningElement {
         }
     }
 
+    
     handelSelectedRecord(event) {
         if (this.disabled) return;
         event.stopPropagation();        

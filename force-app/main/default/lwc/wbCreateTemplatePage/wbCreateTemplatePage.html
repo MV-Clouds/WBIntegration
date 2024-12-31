@@ -89,7 +89,7 @@
                                                     <p class="uploadlabel">Image</p>
                                                     <div class="custom-upload-button">
                                                         <label class="upload-label">
-                                                            <img src="/resource/uploadImgIcon" alt="Upload Icon"
+                                                            <img src="/resource/MVWB__uploadImgIcon" alt="Upload Icon"
                                                                 class="upload-icon" />
                                                             <template if:true={NoFileSelected}>
                                                                 <span>Choose JPG or PNG file</span>
@@ -201,7 +201,7 @@
                                         <div class="inner-rich">
                                             <div class="rich-icon">
                                                 <button class="toolbar-button" onclick={handleEmoji}>
-                                                <img src="/resource/wbSmileIcon" class="custom-icon" />
+                                                <img src="/resource/MVWB__wbSmileIcon" class="custom-icon" />
                                                 </button>
                                                 <template for:each={toolbarButtonsWithClasses} for:item="button">
                                                     <button key={button.title} class={button.classes} title={button.title}
@@ -426,7 +426,7 @@
                                                             </template>
                                                             <!-- <div class="remove-btn">
                                                                 <div class="img">
-                                                                    <img src="/resource/trashIcon" alt="remove" onclick={handleRemove} data-index={index} style="width: 9rem;">
+                                                                    <img src="/resource/MVWB__trashIcon" alt="remove" onclick={handleRemove} data-index={index} style="width: 9rem;">
                                                                 </div>
                                                             </div> -->
                                                             <div class="remove-btn">
@@ -508,7 +508,7 @@
                                         <p class="templatetextWP"><b>Template Preview</b></p>
                                         <template if:true={isCustom}>
                                             <button class="refresh-btn" onclick={refreshTempPreview} disabled={isRefreshEnabled}>
-                                                <img src="/resource/refreshIcon" class={refreshButtonClass} alt="refresh">
+                                                <img src="/resource/MVWB__refreshIcon" class={refreshButtonClass} alt="refresh">
                                             </button>
                                         </template>
                                     </div>
@@ -522,7 +522,7 @@
                                             </template>
                                             <template if:true={isImgSelected}>
                                                 <div class="imagedivWP">
-                                                    <img src="/resource/ImageIcon" alt="">
+                                                    <img src="/resource/MVWB__ImageIcon" alt="">
                                                 </div>
                                             </template>
                                             <template if:true={isImageFile}>
@@ -537,7 +537,7 @@
                                             </template>
                                             <template lwc:else>
                                                 <div class="imagedivWP">
-                                                    <img src="/resource/ImageIcon" alt="">
+                                                    <img src="/resource/MVWB__ImageIcon" alt="">
                                                 </div>
                                             </template> -->
                                         
