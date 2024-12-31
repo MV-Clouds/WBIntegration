@@ -92,7 +92,7 @@ export default class WbAllTemplatePage extends LightningElement {
     registerPlatformEventListener() {
         const messageCallback = (event) => {
             const payload = event.data.payload;
-            this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
+            this.updateRecord(payload.MVWB__Template_Id__c, payload.MVWB__Template_Status__c);
         };
 
         subscribe(this.channelName, -1, messageCallback)
