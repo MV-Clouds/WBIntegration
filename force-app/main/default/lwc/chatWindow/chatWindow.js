@@ -344,9 +344,7 @@ export default class ChatWindow extends LightningElement {
             this.template.host.setAttribute("data-theme", theme);
             updateThemePreference({theme: theme})
             .then((isSuccess) => {
-                if(isSuccess){
-                    this.showToast('Success!',`Your theme preference has been updated to ${theme}.`, 'success');
-                }else{
+                if(!isSuccess){
                     this.showToast('Error!','Failed to save preference, you can continue using theme for this session.', 'error');
                 }
                 console.log('Update theme completed');
