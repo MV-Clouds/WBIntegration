@@ -18,12 +18,16 @@ export default class TemplatePreview extends LightningElement {
     @track buttonLabel;
     @track headerParams;
     @track bodyParams;
+    @track isTemplateDeleted;
 
     @track showSpinner = false;
 
     connectedCallback(){
         try{
             this.fetchInitialData();
+            if(!this.showButtons){
+                this.template.host.style.setProperty('--max-height-of-the-preview-div', 'fit-content');
+            }
         }catch(e){
             console.log('Error in connectedCallback:::', e.message);
         }
@@ -34,12 +38,20 @@ export default class TemplatePreview extends LightningElement {
         try {
             getTemplateData({templateId: this.templateId, contactId:this.recordId})
             .then((templateData) => {
-
+                if(!templateData){
+                    this.isTemplateDeleted = true;
+                    this.showSpinner = false;
+                    return;
+                }
+                
                 this.templateData = templateData.template;
                 
                 this.isTextHeader = this.templateData?.MVWB__Header_Type__c === 'Text' ? true : false;
                 this.isImageHeader = this.templateData?.MVWB__Header_Type__c === 'Image' ? true : false;
-                this.headerBody = this.templateData?.MVWB__Header_Body__c;
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(this.templateData?.MVWB__Header_Body__c, "text/html");
+                this.headerBody = doc.documentElement.textContent;
+                
                 this.templateBody = this.templateData?.MVWB__Template_Body__c;
                 this.footerBody = this.templateData?.MVWB__Footer_Body__c;
                 this.buttonLabel = this.templateData?.MVWB__Button_Label__c;
@@ -83,9 +95,11 @@ export default class TemplatePreview extends LightningElement {
                         headerParameters: this.headerParams,
                         bodyParameters: this.bodyParams,
                         buttonLabel: this.templateData.MVWB__Button_Label__c,
-                        buttonType: this.templateData.MVWB__Button_Type__c
+                        buttonType: this.templateData.MVWB__Button_Type__c,
+                        isHeaderImage: this.isImageHeader,
+                        headerImageURL: this.headerBody
                     });
-                    console.log('the Payload is :: :', templatePayload);
+                    // console.log('the Payload is :: :', templatePayload);
 
                     sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id, isReaction: false, reaction: null})
                     .then(result => {
@@ -124,6 +138,12 @@ export default class TemplatePreview extends LightningElement {
                         "parameters": [ ${headerParams} ] 
                     }`);
                 }
+                if(data.isHeaderImage && data.headerImageURL){
+                    components.push(`{ 
+                        "type": "header", 
+                        "parameters": [ { "type": "image", "image": { "link":"${data.headerImageURL}" } } ] 
+                    }`);
+                }
                 if (data.bodyParameters && data.bodyParameters.length > 0) {
                     let bodyParams = data.bodyParameters.map(
                         (param) => `{ "type": "text", "text": "${param}" }`
@@ -133,17 +153,17 @@ export default class TemplatePreview extends LightningElement {
                         "parameters": [ ${bodyParams} ] 
                     }`);
                 }
-                if (data.buttonLabel && data.buttonType) {
-                    components.push(`{ 
-                        "type": "button", 
-                        "sub_type": "${data.buttonType}", 
-                        "index": 0, 
-                        "parameters": [{ 
-                            "type": "text", 
-                            "text": "${data.buttonLabel}" 
-                        }] 
-                    }`);
-                }
+                // if (data.buttonLabel && data.buttonType) {
+                //     components.push(`{ 
+                //         "type": "button", 
+                //         "sub_type": "${data.buttonType}", 
+                //         "index": 0, 
+                //         "parameters": [{ 
+                //             "type": "text", 
+                //             "text": "${data.buttonLabel}" 
+                //         }] 
+                //     }`);
+                // }
                 if (components.length > 0) {
                     payload += `, "components": [ ${components.join(", ")} ]`;
                 }

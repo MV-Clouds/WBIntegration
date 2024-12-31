@@ -92,8 +92,13 @@ public with sharing class ChatWindowController {
             chat.Reply_To__c = replyToChatId;
 
             if(messageType == 'Image'){
-                List<ContentVersion> cv = [SELECT Id, Title FROM ContentVersion WHERE Id =: message WITH SECURITY_ENFORCED];
+                List<ContentVersion> cv = [SELECT Id, ContentSize, Title, ContentDocumentId FROM ContentVersion WHERE Id =: message WITH SECURITY_ENFORCED];
                 if(cv.size() < 1) {return null;}
+                if(cv[0].ContentSize > 5000000){
+                    ContentDocument cd = new ContentDocument(Id = cv[0].ContentDocumentId);
+                    delete as user cd;
+                    throw new AuraHandledException('FILE_SIZE_EXCEEDED');
+                }
                 ContentDistribution cd = new ContentDistribution();
                 cd.Name = cv[0].Title;
                 cd.ContentVersionId = message;
@@ -110,6 +115,9 @@ public with sharing class ChatWindowController {
             chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
         } catch (Exception e) {
+            if(e.getMessage().contains('STORAGE_LIMIT_EXCEEDED')){
+                throw new AuraHandledException('STORAGE_LIMIT_EXCEEDED');
+            }
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
             return null;
         }
@@ -282,11 +290,11 @@ public with sharing class ChatWindowController {
                             valueToReplace = contactRecord.getSObject(tv.Object_Name__c)!=null ? contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
                         }
                         if (tv.Type__c == 'Header') {
-                            headerVariables.add(valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c);
-                            template.Header_Body__c = template.Header_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
+                            headerVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
+                            template.Header_Body__c = template.Header_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
                         }else if(tv.Type__c == 'Body'){
-                            bodyVariables.add(valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c);
-                            template.Template_Body__c = template.Template_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
+                            bodyVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
+                            template.Template_Body__c = template.Template_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
                         }
                     }
                 }
