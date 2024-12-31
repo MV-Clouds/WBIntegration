@@ -38,8 +38,8 @@
                                         <div class="message-other">{chat.replyTo.MVWB__Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
                                     </div>
                                     <div if:true={chat.replyTo.isTemplate}>
-                                        <div class="reply-to-template-message-div" if:true={chat.replyTo.Whatsapp_Template__r}>{chat.replyTo.Whatsapp_Template__r.Name}</div>
-                                        <div class="reply-to-template-message-div" if:false={chat.replyTo.Whatsapp_Template__r}> Deleted Template! </div>
+                                        <div class="reply-to-template-message-div" if:true={chat.replyTo.MVWB__Whatsapp_Template__r}>{chat.replyTo.MVWB__Whatsapp_Template__r.Name}</div>
+                                        <div class="reply-to-template-message-div" if:false={chat.replyTo.MVWB__Whatsapp_Template__r}> Deleted Template! </div>
                                     </div>
                                 </div>
                                 <div class="text-message-div" if:true={chat.isText}>
