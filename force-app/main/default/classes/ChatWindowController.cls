@@ -6,8 +6,8 @@
 * Created By: Kevin Suvagiya
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
-* Last Modified Date: 23 Dec 2024
-* Last Modification Description: updated code to handle no metadata record
+* Last Modified Date: 31 Dec 2024
+* Last Modification Description: Implemented logic to delete content document if image size is more than 5 MB
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
