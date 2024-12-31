@@ -591,6 +591,7 @@
         @AuraEnabled public String copyCode;
         @AuraEnabled public String tempImgUrl;
         @AuraEnabled public String tempImgName;
+        @AuraEnabled public String tempImgId;
     }
 
 }

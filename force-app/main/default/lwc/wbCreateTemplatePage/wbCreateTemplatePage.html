@@ -234,28 +234,35 @@
                                             <div class="body-label">
                                                 <p>Body</p>
                                             </div>
-                                            <template for:each={variables} for:item="varItem" for:index="index">
+
+                                            <template for:each={computedVariables} for:item="varItem" for:index="index">
                                                 <div key={varItem.id} class="true-div">
-                                                        <p class="var">{varItem.index}</p>
-                                         
-                                                        <select class="object-dropdown dropdown" disabled>
-                                                            <option value={varItem.object} selected>{varItem.object}</option>
-                                                        </select>
-                                        
-                                                        <!-- Dynamic Field Selection -->
-                                                        <select class="field-dropdown field-body-dd dropdown" data-id={varItem.id} data-index={varItem.index} onchange={handleVarFieldChange}>
-                                                            <template for:each={fields} for:item="field">
-                                                                <option key={field.value} class="body-field-option" value={field.value}>
-                                                                    {field.label}
-                                                                </option>
-                                                            </template>
-                                                           
-                                                        </select>
-        
-                                                        <!-- Alternate Text Input -->
-                                                        <input type="text" class="alternate-text dropdown" placeholder="Alternate Text"
-                                                        value={varItem.alternateText} data-id={varItem.id} onchange={handleAlternateVarChange} />
-        
+                                                    <p class="var">{varItem.index}</p>
+                                                    
+                                                    <select class="object-dropdown dropdown" disabled>
+                                                        <option value={varItem.object} selected>{varItem.object}</option>
+                                                    </select>
+
+                                                    <select 
+                                                        class="field-dropdown field-body-dd dropdown" 
+                                                        data-id={varItem.id} 
+                                                        data-index={varItem.index} 
+                                                        onchange={handleVarFieldChange}>
+                                                        <template for:each={varItem.options} for:item="option">
+                                                            <option 
+                                                                key={option.value} 
+                                                                class="body-field-option" 
+                                                                value={option.value} 
+                                                                selected={option.isSelected}>
+                                                                {option.label}
+                                                            </option>
+                                                        </template>
+                                                    </select>
+
+                                                      <!-- Alternate Text Input -->
+                                                      <input type="text" class="alternate-text dropdown" placeholder="Alternate Text"
+                                                      value={varItem.alternateText} data-id={varItem.id} data-index={varItem.index} onchange={handleAlternateVarChange} />
+      
                                                     <div>
                                                         <lightning-button-icon icon-name="utility:close" alternative-text="Remove"
                                                             onclick={handleVarRemove} data-index={index} class="remove-icon">
@@ -263,6 +270,7 @@
                                                     </div>
                                                 </div>
                                             </template>
+                                            
                                         </div>
                                     </template>
 

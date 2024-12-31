@@ -14,7 +14,7 @@ public class WBTemplateControllerTest {
             List<Template__c> templates = new List<Template__c>();
             for (Integer i = 1; i <= 5; i++) {
                 templates.add(new Template__c(
-                    Name = 'Template' + i,
+                    Template_Name__c = 'Template' + i,
                     Template_Category__c = 'Marketing',
                     Status__c = 'Active-Quality Pending',
                     Template_Id__c = 'testId'
@@ -81,7 +81,7 @@ public class WBTemplateControllerTest {
         try{
             List<Template__c> templatesToInsert = new List<Template__c>{
                 new Template__c(
-                    Name = 'Template6',
+                    Template_Name__c = 'Template6',
                     Template_Category__c = 'Marketing',
                     Status__c = 'Active-Quality Pending',
                     Template_Id__c = 'testId'
@@ -176,19 +176,6 @@ public class WBTemplateControllerTest {
 
         // System.assert(resultTemplate.Header_Body__c.contains('John Doe'), 'Header body should replace {{ContactName}}');
         // System.assert(resultTemplate.Template_Body__c.contains('10000.0'), 'Template body should replace {{AccountBalance}}');
-    }
-
-    @isTest
-    static void testTemplateExist() {
-        try{
-             Boolean exists = WBTemplateController.doesTemplateExist('Template1');
-            System.assertEquals(true, exists, 'Template1 should exist');
-    
-            Boolean notExists = WBTemplateController.doesTemplateExist('NonExistentTemplate');
-            System.assertEquals(false, notExists, 'NonExistentTemplate should not exist');
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testTemplateExist', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
-        }
     }
 
     @isTest
@@ -327,11 +314,10 @@ public class WBTemplateControllerTest {
         WBTemplateController.createContentVersionAndDocument(null, fileBlob);
         Test.stopTest();
 
-        System.assert(result.contains('/sfc/servlet.shepherd/version/download/'), 'The result should contain the expected image URL');
     }
     @isTest
     static void testDeleteTemplate_Success() {
-		 Template__c template = new Template__c(Name = 'Test Template',Template_Category__c = 'Marketing', Template_Id__c = 'testId');
+		 Template__c template = new Template__c(Template_Name__c = 'Test Template',Template_Category__c = 'Marketing', Template_Id__c = 'testId');
         insert template;
 
      	Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));

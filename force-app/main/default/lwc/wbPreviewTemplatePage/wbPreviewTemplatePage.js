@@ -411,6 +411,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
             const templatePayload = this.createJSONBody(phonenum, "template", {
                 templateName: this.template.Template_Name__c,
                 languageCode: this.template.Language__c,
+                headerImageURL: this.template.Header_Body__c,
+                headerType:this.template.Header_Type__c,
                 headerParameters: this.headerParams,
                 bodyParameters: this.bodyParams,
                 buttonLabel: this.template.Button_Label__c,
@@ -457,6 +459,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         "parameters": [ ${headerParams} ] 
                     }`);
                 }
+                if(data.headerType=='Image' && data.headerImageURL){
+                    components.push(`{ 
+                        "type": "header", 
+                        "parameters": [ { "type": "image", "image": { "link":"${data.headerImageURL}" } } ] 
+                    }`);
+                }
                 if (data.bodyParameters && data.bodyParameters.length > 0) {
                     let bodyParams = data.bodyParameters.map(
                         (param) => `{ "type": "text", "text": "${param}" }`
@@ -466,17 +474,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         "parameters": [ ${bodyParams} ] 
                     }`);
                 }
-                if (data.buttonLabel && data.buttonType) {
-                    components.push(`{ 
-                        "type": "button", 
-                        "sub_type": "${data.buttonType}", 
-                        "index": 0, 
-                        "parameters": [{ 
-                            "type": "text", 
-                            "text": "${data.buttonLabel}" 
-                        }] 
-                    }`);
-                }
+                // if (data.buttonLabel && data.buttonType) {
+                //     components.push(`{ 
+                //         "type": "button", 
+                //         "sub_type": "${data.buttonType}", 
+                //         "index": 0, 
+                //         "parameters": [{ 
+                //             "type": "text", 
+                //             "text": "${data.buttonLabel}" 
+                //         }] 
+                //     }`);
+                // }
                 if (components.length > 0) {
                     payload += `, "components": [ ${components.join(", ")} ]`;
                 }

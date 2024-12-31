@@ -481,6 +481,13 @@
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
+                if (String.isNotBlank(templateWrapper.tempImgId)) {
+                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete contentDoc;
+                    }
+                }
+
                 ExceptionHandler.logException(new Map<String, Object>{
                     'className' => 'WBTemplateController',
                     'methodName' => 'createWhatsappTemplate',
@@ -590,11 +597,15 @@
                 System.debug(JSON.deserializeUntyped(res.getBody()));
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                 String headerHandle = (String) responseMap.get('h');                
-                String imageurl = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
-
+                // String imageurl = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
+                Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
+                String imageurl = fileUrls.get('ContentDownloadUrl');
+                String contentDocumentId = fileUrls.get('ContentDocumentId');
+                
                 return JSON.serialize(new Map<String, String>{
                     'headerHandle' => headerHandle,
-                    'imageurl' => imageurl
+                    'imageurl' => imageurl,
+                    'contentDocumentId' => contentDocumentId
                 });
                 // return headerHandle; 
             } else {
@@ -623,21 +634,42 @@
     @return          : 
     ********************************************************
     */
-    
-    public static String createContentVersionAndDocument(String fileName, Blob fileBlob) {
+      
+    public static Map<String, String> createContentVersionAndDocument(String fileName, Blob fileBlob) {
         try {
             ContentVersion contentVersion = new ContentVersion();
             contentVersion.Title = fileName;
             contentVersion.PathOnClient = fileName;
             contentVersion.VersionData = fileBlob;
             contentVersion.Origin = 'H';
-    
+        
             if (Schema.sObjectType.ContentVersion.isCreateable()) {
                 insert contentVersion;
             }
     
-            String imageUrl = '/sfc/servlet.shepherd/version/download/' + contentVersion.Id;
-            return imageUrl;
+            ContentDistribution contentDistribution = new ContentDistribution();
+            contentDistribution.ContentVersionId = contentVersion.Id;
+            contentDistribution.Name = fileName;
+            contentDistribution.PreferencesAllowOriginalDownload = true;
+            if (Schema.sObjectType.ContentDistribution.isCreateable()) {
+                insert contentDistribution;
+            }
+    
+            ContentDistribution createdContentDistribution = [
+                SELECT Id, ContentDocumentId, ContentDownloadUrl 
+                FROM ContentDistribution 
+                WHERE Id = :contentDistribution.Id 
+                WITH SECURITY_ENFORCED
+            ];
+    
+            String contentDownloadUrl = createdContentDistribution.ContentDownloadUrl;
+            String contentDocumentId = createdContentDistribution.ContentDocumentId;
+    
+            Map<String, String> result = new Map<String, String>();
+            result.put('ContentDownloadUrl', contentDownloadUrl);
+            result.put('ContentDocumentId', contentDocumentId);
+    
+            return result;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'WBTemplateController',
@@ -652,7 +684,8 @@
             return null;
         }
     }    
-
+   
+    
     /*
     *********************************************************
     @description     : Method used to delete template from meta as well as from record page.
@@ -746,6 +779,12 @@
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
+                if (String.isNotBlank(templateWrapper.tempImgId)) {
+                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete contentDoc;
+                    }
+                }
                 ExceptionHandler.logException(new Map<String, Object>{
                     'className' => 'WBTemplateController',
                     'methodName' => 'editWhatsappTemplate',

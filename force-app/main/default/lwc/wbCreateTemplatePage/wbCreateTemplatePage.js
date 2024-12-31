@@ -126,6 +126,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track metaTemplateId='';
     @track allTemplates=[];
     @track headerError='';
+    @track imageurl='';
+    @track contentDocumentId='';
 
     @api
     get edittemplateid() {
@@ -227,6 +229,20 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.isRefreshEnabled ? 'refresh-icon refresh-disabled' : 'refresh-icon';
     }
 
+    get computedVariables() {
+        return this.variables.map((varItem) => {
+            return {
+                ...varItem,
+                options: this.fields.map((field) => {
+                    return {
+                        ...field,
+                        isSelected: field.value === varItem.field 
+                    };
+                })
+            };
+        });
+    }
+
     connectedCallback() {
         console.log('default option selected==> ' + this.selectedOption);       
         this.fetchCountries();
@@ -252,6 +268,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 this.templateName = template.Template_Name__c || '';
                 this.metaTemplateId = template.Template_Id__c || '';
                 const headerBody = template.Header_Body__c || '';
+                
                 const headerType = template.Header_Type__c || 'None';
                 
                 this.footer = template.Footer_Body__c || '';
@@ -561,6 +578,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                                 let serializeResult = JSON.parse(result); 
                                 this.headerHandle = serializeResult.headerHandle;
                                 this.imageurl = serializeResult.imageurl;
+                                this.contentDocumentId =serializeResult.contentDocumentId
                                 console.log('headerHandle ',this.headerHandle);
                                 console.log('imageurl ',this.imageurl);
 
@@ -1138,36 +1156,33 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     handleVarFieldChange(event) {
         try {
-            // const variableId = String(event.target.dataset.id); 
-            const variableindex = String(event.target.dataset.index); 
-            const fieldName = event.target.value;
-            console.log('variableId ',variableindex,' fieldName ',fieldName);
+            const variableIndex = String(event.target.dataset.index);
+            const fieldName = event.target.value; 
+            console.log('variableIndex:', variableIndex, 'fieldName:', fieldName);
             
-            this.variables = this.variables.map(varItem =>
-                // varItem.id === parseInt(variableId)
-                String(varItem.index) === variableindex 
+            this.variables = this.variables.map((varItem) =>                
+                String(varItem.index) === variableIndex
                     ? {
                           ...varItem,
-                          field: fieldName,
+                          field: fieldName, 
                       }
                     : varItem
             );
-            console.log('Updated variables:', JSON.stringify(this.variables));      
-            console.log('this.tempbody ',this.tempBody);
-                  
+
+            console.log('Updated tempBody:', this.tempBody);    
             this.updatePreviewContent(this.tempBody, 'body');
         } catch (error) {
-            console.error('Something wrong while variable input.',error);
+            console.error('Something went wrong while updating variable field.', error);
         }
-    }
+    }    
 
     handleAlternateVarChange(event) {
-        const variableId = String(event.target.dataset.id);
-        console.log('variableId ',variableId);
+        const variableIndex = String(event.target.dataset.index);
+        console.log('variable ',variableIndex);
         const alternateText = event.target.value;
         console.log('alternateText for body ',alternateText);
         this.variables = this.variables.map(varItem =>
-            String(varItem.id) === variableId
+            String(varItem.index) === variableIndex
                 ? { ...varItem, alternateText }
                 : varItem
         );
@@ -1226,7 +1241,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.error('Something wrong while removing the variable.',error);
         }
     }
-
+  
     // Header variable add-remove functionality start here
     addheadervariable() {
         try {
@@ -1640,6 +1655,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
                 tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
                 tempImgUrl:this.imageurl ? this.imageurl : null,
+                tempImgId:this.contentDocumentId ? this.contentDocumentId : null,
                 tempImgName:this.fileName ? this.fileName : null,
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
                 tempHeaderText: this.header ? this.header : '',
@@ -1709,7 +1725,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                         // this.clearWrapper();
                     } else {
                         const errorResponse = JSON.parse(result.errorMessage); 
-                        const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
+                        console.log('errorResponse ',errorResponse);
+                        
+                        const errorMsg = errorResponse.error.error_user_msg || errorResponse.error.message || 'Due to unknown error'; 
             
                         this.showToastError('Template creation failed, reason - '+errorMsg);
                         this.isLoading = false; 
