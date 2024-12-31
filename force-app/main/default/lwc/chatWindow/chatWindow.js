@@ -347,8 +347,6 @@ export default class ChatWindow extends LightningElement {
                 if(!isSuccess){
                     this.showToast('Error!','Failed to save preference, you can continue using theme for this session.', 'error');
                 }
-                console.log('Update theme completed');
-                
             })
             .catch((e) => {
                 console.log('Failed to update theme preference!.', e.message);
