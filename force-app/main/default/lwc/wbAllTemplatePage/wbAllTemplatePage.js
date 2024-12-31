@@ -75,7 +75,6 @@ export default class WbAllTemplatePage extends LightningElement {
     connectedCallback(){
         this.fetchAllTemplate();
         this.registerPlatformEventListener();
-        console.log('default option selected==> '+ this.selectedOption);
     }
 
     renderedCallback() {
@@ -93,15 +92,12 @@ export default class WbAllTemplatePage extends LightningElement {
     registerPlatformEventListener() {
         const messageCallback = (event) => {
             const payload = event.data.payload;
-            console.log('payload ',payload);
-            
             this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
         };
 
         subscribe(this.channelName, -1, messageCallback)
             .then((response) => {
                 this.subscription = response;
-                console.log('Subscribed to platform event:', response.channel);
             })
             .catch((error) => {
                 console.error('Error subscribing to platform event:', error);
@@ -121,8 +117,6 @@ export default class WbAllTemplatePage extends LightningElement {
     }
 
     updateRecord(templateId, newStatus) {
-        console.log('enter into update record');
-        
         const recordIndex = this.allRecords.findIndex((record) => record.Id === templateId);
         if (recordIndex !== -1) {
             const updatedRecord = { ...this.allRecords[recordIndex], MVWB__Status__c: newStatus };
@@ -142,8 +136,6 @@ export default class WbAllTemplatePage extends LightningElement {
                 if (data) {
                     this.allRecords = data.map((record, index) => {
                         const isButtonDisabled = record.MVWB__Status__c === 'In-Review';
-                        console.log('isButtonDisabled ',isButtonDisabled, record.Name);
-                        
                         return {
                             ...record,
                             id: record.Id,
@@ -173,7 +165,6 @@ export default class WbAllTemplatePage extends LightningElement {
     handleTemplateUpdate(event) {
         this.allRecords = event.detail; 
         this.filteredRecords = [...this.allRecords];
-        console.log('Updated templates:', this.allrecord);
     }
 
     // Toggle visibility
@@ -213,7 +204,6 @@ export default class WbAllTemplatePage extends LightningElement {
                     console.warn(`Unhandled field: ${fieldName}`);
                     break;
             }
-            console.log(`${fieldName}: ${value}`);
             this.filterRecords();
         } catch (error) {
             console.error('Error while handling changes in the filter.',error);
@@ -232,7 +222,6 @@ export default class WbAllTemplatePage extends LightningElement {
 
             if (this.categoryValue) {
                 filtered = filtered.filter(record => record.MVWB__Template_Category__c === this.categoryValue);
-                console.log('category filter=> ',filtered);
             }
     
             if (this.timePeriodValue) {
@@ -240,21 +229,16 @@ export default class WbAllTemplatePage extends LightningElement {
                 let fromDate;
                 if (this.timePeriodValue === 'last7days') {
                     fromDate = new Date(today.setDate(today.getDate() - 8));
-                    console.log('from date 7 days==>',fromDate);
                 } else if (this.timePeriodValue === 'last30days') {
                     fromDate = new Date(today.setDate(today.getDate() - 30));
-                    console.log('from date 30 days==>',fromDate);
                 } else if (this.timePeriodValue === 'last90days') {
                     fromDate = new Date(today.setDate(today.getDate() - 90));
-                    console.log('from date 90 days==>',fromDate);
                 }
                 filtered = filtered.filter(record => new Date(record.CreatedDate) >= fromDate);
-                console.log('date filter==>',filtered);
             }
     
             if (this.statusValues.length > 0) {
                 filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
-                console.log('status filter==>',filtered);
             }
     
             if (this.searchInput) {
@@ -264,7 +248,6 @@ export default class WbAllTemplatePage extends LightningElement {
             this.filteredRecords = filtered;
 
         } catch (error) {
-            console.error('Error in filterRecords:', error);
             this.showToastError('An error occurred while filtering the records.');
         }
        
@@ -278,7 +261,6 @@ export default class WbAllTemplatePage extends LightningElement {
                 deleteTemplete({templateId: recordId})
                 .then(data => {
                     if(data == 'Template deleted successfully'){
-                        console.log('Template deleted successfully');
                         this.showToastSuccess('Template deleted successfully');
                         this.allRecords = this.allRecords.filter(record => record.Id !== recordId); 
                         this.allRecords = this.allRecords.map((record, index) => ({
@@ -288,7 +270,6 @@ export default class WbAllTemplatePage extends LightningElement {
                         this.filteredRecords = [...this.allRecords];                    
                         this.isLoading=false;
                     }else{
-                        console.log(data);
                         this.showToastError('Error in deleting template');
                         this.isLoading=false;
                     }
@@ -299,14 +280,12 @@ export default class WbAllTemplatePage extends LightningElement {
                     this.isLoading=false;
                 });
             } else{
-                console.log('recordId undifined');
                 this.showToastError('Template not found');
                 this.isLoading=false;
             }
 
         } catch (error) {
-            console.error('Error in deleteTemplate:', error);
-            this.showToastError('An unexpected error occurred while deleting the template');
+            this.showToastError('Error in deleteTemplate:', error);
             this.isLoading = false;
         }
         

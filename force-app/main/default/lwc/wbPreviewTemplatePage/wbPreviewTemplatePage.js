@@ -83,7 +83,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     set templateid(value) {
-        console.log('Template ID set:', value);
         this._templateid = value;
         if (this._templateid) {
             this.fetchTemplateData();
@@ -116,7 +115,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     handleCountryChange(event){
         this.selectedCountryType = event.target.value;
-        console.log(this.selectedCountryType);
     }
 
     handleRecordSelection(event) {
@@ -124,17 +122,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
             event.stopPropagation();        
             const selectedRecord = event.detail.selectedRecord || {};
             const selectedId = selectedRecord.Id || null;
-            console.log('selectedId', selectedId);
-
             if(!selectedId){
-                console.log('enter to if');
-                
                 this.tempHeader = this.originalHeader;
                 this.tempBody = this.originalBody;
                 this.formatedTempBody = this.formatText(this.tempBody);
-                console.log('this.tempBody ',this.tempBody);
-                console.log('this.formatedTempBody ',this.formatedTempBody);
-                
+
                 this.groupedVariables = this.groupedVariables.map(group => {
                     return {
                         ...group,
@@ -151,23 +143,18 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     body: {}
                 };
                 this.isFieldDisabled=false;
-                console.log('Reset to original template');
                 return;
             }else{
                 this.isFieldDisabled=true;
             }
-           
             const hasVariables = this.tempBody.includes('{{') || this.tempHeader.includes('{{');
 
             if (!hasVariables) {
-                console.warn('No variables found in the template. Please check the template structure.');
                 this.showToast('Warning!', 'No variables found in the template to replace.', 'warning');
                 return; 
             }
 
             this.selectedContactId = selectedId;
-
-            console.log('Selected Record ID:', this.selectedContactId);    
             this.fetchContactData();
         
         } catch (err) {
@@ -184,7 +171,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     return { label: `(${country.callingCode})`, value: country.callingCode,isSelected: country.callingCode === this.selectedCountryType };
                 });
             })
-            .catch((e) => console.log('Error fetching country data:', e));
+            .catch((e) => console.error('Error fetching country data:', e));
         }catch(e){
             console.error('Something wrong while fetching country data:', e);
         }
@@ -198,11 +185,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 recordId: this.selectedContactId
             })
             .then(result => {
-                console.log('fetched result ',result);
-                
                 if (result.queriedData) {
                     this.contactDetails = result.queriedData;
-                   console.log('contactDetails ',this.contactDetails);
                    
                     this.groupedVariables = this.groupedVariables.map(group => {
                         return {
@@ -287,8 +271,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     fetchTemplateData() {
         try {
             this.isLoading = true;    
-            console.log('in the preview page==> ',this.templateid);
-                    
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
@@ -338,18 +320,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         return acc;
                     }, []);                
             
-                    this.groupedVariables = grouped;
-                    console.log('mapping variable ',JSON.stringify(this.groupedVariables));
-                    
+                    this.groupedVariables = grouped;                    
                     if(this.groupedVariables.length == 0){
                         this.noContact=false;
                     }
 
                     this.objectNames = result.objectNames;
                     this.fieldNames = result.fieldNames;
-                    console.log('this.objectNames ',this.objectNames);
-                    console.log('this.fieldNames ',this.fieldNames);
-
                     this.formatedTempBody = this.formatText(this.tempBody);
                     this.isLoading = false;
                 }
@@ -365,8 +342,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     handlePhoneChange(event){
         this.phoneNumber=event.target.value;
-        console.log(this.phoneNumber);
-        
     }
 
     fetchReplaceVariableTemplate(templateid,contactid){
@@ -382,13 +357,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
             })
             .catch(e => {
                 this.isLoading = false;
-                console.log('Error in fetchInitialData > getTemplateData ::: ', e.message);
+                console.error('Error in fetchInitialData > getTemplateData ::: ', e.message);
             })
         } catch (e) {
             this.isLoading = false;
-            console.log('Error in function fetchInitialData:::', e.message);
+            console.error('Error in function fetchInitialData:::', e.message);
         }
-    
     }
 
 
@@ -402,7 +376,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     ? `${this.selectedCountryType}${this.phoneNumber}`
                     : null;
     
-            if (!phonenum) {
+            if (!phonenum || isNaN(Number(phonenum))) {
                 this.showToast('Warning', 'Invalid country code or phone number', 'warning');
                 this.isLoading = false;
                 return;
@@ -429,7 +403,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     }
                 })
                 .catch((error) => {
-                    console.error('Error in sending template:', error);
                     this.showToast('Error', error.body?.message || 'Failed to send template', 'error');
                 })
                 .finally(() => {
@@ -474,17 +447,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         "parameters": [ ${bodyParams} ] 
                     }`);
                 }
-                // if (data.buttonLabel && data.buttonType) {
-                //     components.push(`{ 
-                //         "type": "button", 
-                //         "sub_type": "${data.buttonType}", 
-                //         "index": 0, 
-                //         "parameters": [{ 
-                //             "type": "text", 
-                //             "text": "${data.buttonLabel}" 
-                //         }] 
-                //     }`);
-                // }
                 if (components.length > 0) {
                     payload += `, "components": [ ${components.join(", ")} ]`;
                 }

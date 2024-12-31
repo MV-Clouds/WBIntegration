@@ -25,8 +25,6 @@ export default class CustomLookupLwc extends LightningElement {
                     this.allRecords = [{ Id: '', Name: 'None' }, ...data]; 
                     this.lstResult =  this.allRecords;
                     this.hasRecords = data.length > 0;
-                    console.log(' this.lstResult ', this.lstResult);
-                    
                 }
             })
             .catch((error) => {
