@@ -114,7 +114,7 @@ export default class ChatWindow extends LightningElement {
             let actionType = response.data.payload.MVWB__Type__c;
             
             if(response.data.payload.MVWB__ContactId__c !== self.recordId) return;
-            console.log(actionType ,' status :: ', receivedChat.MVWB__Message_Status__c ,' Chat received is :: ', receivedChat.MVWB__WhatsAppMessageId__c);
+            // console.log(actionType ,' status :: ', receivedChat.MVWB__Message_Status__c ,' Chat received is :: ', receivedChat.MVWB__WhatsAppMessageId__c);
 
             let chat = self.chats?.find(ch => ch.Id === receivedChat.Id);
             
@@ -344,13 +344,9 @@ export default class ChatWindow extends LightningElement {
             this.template.host.setAttribute("data-theme", theme);
             updateThemePreference({theme: theme})
             .then((isSuccess) => {
-                if(isSuccess){
-                    this.showToast('Success!',`Your theme preference has been updated to ${theme}.`, 'success');
-                }else{
+                if(!isSuccess){
                     this.showToast('Error!','Failed to save preference, you can continue using theme for this session.', 'error');
                 }
-                console.log('Update theme completed');
-                
             })
             .catch((e) => {
                 console.log('Failed to update theme preference!.', e.message);
@@ -379,7 +375,7 @@ export default class ChatWindow extends LightningElement {
 
     handleHideActions(event){
         try {
-            event.currentTarget.classList.remove('show-options');
+            event.currentTarget?.querySelector('.action-options-btn')?.classList.remove('show-options');
         } catch (e) {
             console.log('Error in function handleHideActions:::', e.message);
         }
@@ -507,8 +503,7 @@ export default class ChatWindow extends LightningElement {
                         return acc;
                     }, {})
                 );
-        
-                this.emojiCategories = groupedEmojis; // Assign the grouped data to this.emojis
+                this.emojiCategories = groupedEmojis;
             })
             .catch((e) => console.log('There was an error fetching the emoji.', e));
         }catch(e){
@@ -609,6 +604,7 @@ export default class ChatWindow extends LightningElement {
         this.showSpinner = true;
         try {
             if(!(event.detail.files.length > 0)){
+                this.handleBackDropClick();
                 this.showSpinner = false;
                 return;
             }
@@ -618,7 +614,7 @@ export default class ChatWindow extends LightningElement {
                     this.chats.push(chat);
                     this.processChats(true);
                     
-                    let imagePayload = this.createJSONBody(this.recordData.Phone, "document", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    let imagePayload = this.createJSONBody(this.recordData.Phone, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         link: chat.MVWB__Message__c,
                         fileName: event.detail.files[0].name || 'whatsapp image'
                     });
@@ -643,7 +639,7 @@ export default class ChatWindow extends LightningElement {
                     this.handleBackDropClick();
                 }else{
                     this.showSpinner = false;
-                    this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
+                    this.showToast('Something went wrong!', 'The photo is not sent, please make sure image size does not exceed 5MB.', 'error');
                     console.log('there was some error sending the message!');
                 }
             })
@@ -724,8 +720,10 @@ export default class ChatWindow extends LightningElement {
             
                 if (type === "text") {
                     payload += `, "text": { "body": "${data.textBody.replace(/\n/g, "\\n")}" }`;
-                } else if (type === "document") {
-                    payload += `, "document": { "link": "${data.link}", "filename": "${data.fileName}"}`;
+                } else if (type === "image") {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.link, "text/html");
+                    payload += `, "image": { "link": "${doc.documentElement.textContent}" } `;
                 } else if (type === "reaction"){
                     payload += `, "reaction": { 
                         "message_id": "${data.reactToId}",
@@ -734,6 +732,8 @@ export default class ChatWindow extends LightningElement {
                 }
                 payload += ` }`;
             
+                // console.log('The Payload is ::: ', payload);
+                
                 return payload;
         } catch (e) {
             console.log('Error in function createJSONBody:::', e.message);
@@ -752,11 +752,11 @@ export default class ChatWindow extends LightningElement {
     // }
 
     updateMessageReaction(chat){
-        this.showSpinner = true;
+        // this.showSpinner = true;
         try {
             updateReaction({chatId: chat.Id, reaction:chat.MVWB__Reaction__c})
             .then(ch => {
-                this.showSpinner = false;
+                // this.showSpinner = false;
                 this.processChats();
                 let reactPayload = this.createJSONBody(this.recordData.Phone, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                     reactToId : chat.MVWB__WhatsAppMessageId__c,
@@ -775,17 +775,17 @@ export default class ChatWindow extends LightningElement {
                     this.processChats();
                 })
                 .catch((e) => {
-                    this.showSpinner = false;
+                    // this.showSpinner = false;
                     console.log('Error in updateMessageReaction > sendWhatsappMessage :: ', e);
                 })
             })
             .catch((e) => {
-                this.showSpinner = false;
+                // this.showSpinner = false;
                 this.showToast('Something went wrong!', 'The reaction could not be updated, please try again.', 'error');
                 console.log('Error in updateMessageReaction > updateReaction :: ', e);
             })
         } catch (e) {
-            this.showSpinner = false;
+            // this.showSpinner = false;
             this.showToast('Something went wrong!', 'The reaction could not be updated, please try again.', 'error');
             console.log('Error in function updateMessageReaction:::', e.message);
         }
@@ -850,8 +850,8 @@ export default class ChatWindow extends LightningElement {
                 }
             })
             .catch((e) => {
+                this.showToast('Something went wrong!', (e.body.message == 'STORAGE_LIMIT_EXCEEDED' ? 'Storage Limit Exceeded, please free up space and try again.' : 'Message could not be sent, please try again.'), 'error');
                 this.showSpinner = false;
-                this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
                 console.log('Error in handleSendMessage > createChat :: ', e);
             })
         } catch (e) {
