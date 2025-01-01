@@ -45,7 +45,7 @@
   @AuraEnabled(cacheable=false)
     public static List<Template__c> getWhatsAppTemplates() {
         try {
-            List<Template__c> listName = [SELECT Id, Name, Template_Category__c, Language__c,File_Name__c,Image_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
+            List<Template__c> listName = [SELECT Id, Name,Template_Name__c, Template_Category__c, Language__c,File_Name__c,Image_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
             FROM Template__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
 
             System.debug('list name==> ' + listName);
@@ -91,13 +91,13 @@
         String errorMessage=null;
         try {
             HttpRequest httpReq = new HttpRequest();
-            List<WBConnect_Configuration__mdt> config = WBConnect_Configuration__mdt.getAll().values(); 
+            List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
             if(config==null && config.isEmpty()){
                 errorMessage='Metadata records are missing.';
                 return errorMessage;
             }
-            String accessToken = config[0].Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].Phone_Number_Id__c + '/messages';
+            String accessToken = config[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
@@ -108,6 +108,7 @@
             Integer statusCode = response.getStatusCode();
             if(statusCode != 200){
                 errorMessage='Failed to send Template';
+                System.debug(JSON.serialize(response.getBody()));
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => null, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
 
@@ -154,7 +155,7 @@
         List<sObject> records = new List<sObject>();
         
         try {
-            String query = 'SELECT Id, Name FROM ' + sObjectName + ' LIMIT 100';             
+            String query = 'SELECT Id, Name FROM ' + sObjectName + ' LIMIT 200';             
             records = Database.query(query);
             System.debug('records '+records);
         } catch (Exception e) {
@@ -179,7 +180,7 @@
 
         try {
             List<Template__c> templates = [
-                SELECT Id, Name, Button_Body__c, Status__c,Image_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
+                SELECT Id, Name,Template_Name__c, Button_Body__c, Status__c,Image_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
                     Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, 
                     Template_Category__c, Template_SubCatagory__c, Template_Type__c
                 FROM Template__c 
@@ -292,7 +293,7 @@
     public static Map<String, Object> getTemplateDataWithReplacement(String templateId, String contactId) {
         try {
             Map<String, Object> templateData = new Map<String, Object>();
-            List<Template__c> templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c,Image_Header_Handle__c, 
+            List<Template__c> templates = [SELECT Id, Name,Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c,Image_Header_Handle__c, 
                                                 Footer_Body__c, Header_Body__c, Header_Type__c, Language__c,File_Name__c, 
                                                 Template_Body__c, Template_Category__c, Template_SubCatagory__c, 
                                                 Template_Type__c, Template_Variable__c, 
@@ -362,9 +363,11 @@
                                 template.Header_Body__c = template.Header_Body__c.replace(tv.Name, 
                                                             tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
                             } else if (tv.Type__c == 'Body') {
-                                bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                                // bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                                bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : tv.Name);
                                 template.Template_Body__c = template.Template_Body__c.replace(tv.Name, 
-                                                            tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                                                            tv.Alternate_Text__c != null ? tv.Alternate_Text__c : tv.Name);
+                                                            // tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
                             }
                         }
                     }
@@ -391,25 +394,6 @@
             });
         }
         return null;
-    }
-
-
-      /*
-    *********************************************************
-    @description     : Check if same template already exist.
-    @param           : templateName
-    @return          : 
-    ********************************************************
-    */
-    @AuraEnabled(cacheable=true)
-    public static Boolean doesTemplateExist(String templateName) {
-        try {
-            Integer count = [SELECT COUNT() FROM Template__c WHERE Name = :templateName WITH SECURITY_ENFORCED];
-            return count > 0;
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'doesTemplateExist', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-            return false;
-        }
     }
     
        /*
@@ -497,6 +481,13 @@
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
+                if (String.isNotBlank(templateWrapper.tempImgId)) {
+                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete contentDoc;
+                    }
+                }
+
                 ExceptionHandler.logException(new Map<String, Object>{
                     'className' => 'WBTemplateController',
                     'methodName' => 'createWhatsappTemplate',
@@ -603,13 +594,18 @@
             System.debug('File chunk upload response: ' + res.getBody());
 
             if (res.getStatusCode() == 200) {
+                System.debug(JSON.deserializeUntyped(res.getBody()));
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                 String headerHandle = (String) responseMap.get('h');                
-                String imageurl = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
-
+                // String imageurl = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
+                Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
+                String imageurl = fileUrls.get('ContentDownloadUrl');
+                String contentDocumentId = fileUrls.get('ContentDocumentId');
+                
                 return JSON.serialize(new Map<String, String>{
                     'headerHandle' => headerHandle,
-                    'imageurl' => imageurl
+                    'imageurl' => imageurl,
+                    'contentDocumentId' => contentDocumentId
                 });
                 // return headerHandle; 
             } else {
@@ -638,26 +634,58 @@
     @return          : 
     ********************************************************
     */
-    public static String createContentVersionAndDocument(String fileName, Blob fileBlob) {
+      
+    public static Map<String, String> createContentVersionAndDocument(String fileName, Blob fileBlob) {
         try {
             ContentVersion contentVersion = new ContentVersion();
             contentVersion.Title = fileName;
             contentVersion.PathOnClient = fileName;
             contentVersion.VersionData = fileBlob;
-            contentVersion.Origin = 'H'; 
-
+            contentVersion.Origin = 'H';
+        
             if (Schema.sObjectType.ContentVersion.isCreateable()) {
                 insert contentVersion;
-            }            
-            String imageUrl = '/sfc/servlet.shepherd/version/download/' + contentVersion.Id;
-            return imageUrl;
+            }
+    
+            ContentDistribution contentDistribution = new ContentDistribution();
+            contentDistribution.ContentVersionId = contentVersion.Id;
+            contentDistribution.Name = fileName;
+            contentDistribution.PreferencesAllowOriginalDownload = true;
+            if (Schema.sObjectType.ContentDistribution.isCreateable()) {
+                insert contentDistribution;
+            }
+    
+            ContentDistribution createdContentDistribution = [
+                SELECT Id, ContentDocumentId, ContentDownloadUrl 
+                FROM ContentDistribution 
+                WHERE Id = :contentDistribution.Id 
+                WITH SECURITY_ENFORCED
+            ];
+    
+            String contentDownloadUrl = createdContentDistribution.ContentDownloadUrl;
+            String contentDocumentId = createdContentDistribution.ContentDocumentId;
+    
+            Map<String, String> result = new Map<String, String>();
+            result.put('ContentDownloadUrl', contentDownloadUrl);
+            result.put('ContentDocumentId', contentDocumentId);
+    
+            return result;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createContentVersionAndDocument', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'WBTemplateController',
+                'methodName' => 'createContentVersionAndDocument',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
-        
-    }
-
+    }    
+   
+    
     /*
     *********************************************************
     @description     : Method used to delete template from meta as well as from record page.
@@ -672,9 +700,9 @@
                 return 'Business Account ID is not configured in the system.';
             }
 
-            Template__c wbTempRec = [SELECT Id, Name FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
+            Template__c wbTempRec = [SELECT Id, Name,Template_Name__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
             
-            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Name;
+            endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Template_Name__c;
 
             HttpRequest req = new HttpRequest();         
             req.setEndpoint(endpoint);
@@ -751,6 +779,12 @@
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
+                if (String.isNotBlank(templateWrapper.tempImgId)) {
+                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete contentDoc;
+                    }
+                }
                 ExceptionHandler.logException(new Map<String, Object>{
                     'className' => 'WBTemplateController',
                     'methodName' => 'editWhatsappTemplate',

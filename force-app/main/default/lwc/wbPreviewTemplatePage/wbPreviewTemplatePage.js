@@ -42,7 +42,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track options = [
         { label: 'Contact', value: 'Contact', isSelected: true }
     ];
-    @track records = [];
     @track contactDetails=[];
     @track inputValues = {};
     @track groupedVariables=[];
@@ -50,8 +49,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track selectedCountryType = '+91';  
     @track countryType=[];
     @track filteredTableData = []; 
-    searchTerm = 'None';
-    @track isDropdownVisible = false;
     @track variableMapping = { header: {}, body: {} };
     @track isFieldDisabled=false;
     @track isSendDisabled=false;
@@ -86,7 +83,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     set templateid(value) {
-        console.log('Template ID set:', value);
         this._templateid = value;
         if (this._templateid) {
             this.fetchTemplateData();
@@ -98,7 +94,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     connectedCallback() {
-        this.fetchRecords();
         this.fetchCountries();
         this.fetchReplaceVariableTemplate(this.templateid,null);
     }
@@ -118,75 +113,20 @@ export default class WbPreviewTemplatePage extends LightningElement {
         }
     }
 
-    fetchRecords() {
-        try {
-            getRecordsBySObject()
-            .then(data => {
-                // this.records = data;
-                this.records = [{ Id: '', Name: 'None' }, ...data]; 
-                this.filteredRecordData = [...this.records];                
-            })
-            .catch(error => {
-                console.error('Error fetching records: ', error);
-            });
-        } catch (error) {
-            console.error('Error fetching objects records: ', error);
-        }
-    }
-
-    search(event) {
-        try {
-            this.searchTerm = event.target.value.toLowerCase();
-            console.log('searchTerm ',this.searchTerm);
-            
-            this.filteredRecordData = this.records.filter((record) => {
-                const isSelected = this.selectedContactId.some(contact => contact.id === record.id);
-                return !isSelected && record.name.toLowerCase().includes(this.searchTerm);
-            });
-        } catch (error) {
-            console.error('Unexpected error in search:', error);
-            this.showToast('Error', 'An unexpected error occurred while searching', 'error');
-        }
-    }
-
-    handleFocus(event) {
-        this.isDropdownVisible = true;
-    }
- 
-    handleBlur() {
-        setTimeout(() => {
-            this.isDropdownVisible = false;
-        }, 200);
-    }
-
-    search(event) {
-        this.searchTerm = event.target.value.toLowerCase();
-        this.filteredRecordData = this.records.filter(record =>
-            record.Name.toLowerCase().includes(this.searchTerm)
-        );
-    }
-
     handleCountryChange(event){
         this.selectedCountryType = event.target.value;
-        console.log(this.selectedCountryType);
     }
 
     handleRecordSelection(event) {
         try {
-            const contactItem = event.target.closest('.contact-item');
-            const selectedId = contactItem ? contactItem.dataset.id : null;
-            console.log('selectedId ',selectedId);
-
+            event.stopPropagation();        
+            const selectedRecord = event.detail.selectedRecord || {};
+            const selectedId = selectedRecord.Id || null;
             if(!selectedId){
-                console.log('enter to if');
-                
                 this.tempHeader = this.originalHeader;
                 this.tempBody = this.originalBody;
                 this.formatedTempBody = this.formatText(this.tempBody);
-                console.log('this.tempBody ',this.tempBody);
-                console.log('this.formatedTempBody ',this.formatedTempBody);
-                
-                this.searchTerm='None';
+
                 this.groupedVariables = this.groupedVariables.map(group => {
                     return {
                         ...group,
@@ -203,31 +143,18 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     body: {}
                 };
                 this.isFieldDisabled=false;
-                console.log('Reset to original template');
                 return;
             }else{
                 this.isFieldDisabled=true;
             }
-           
             const hasVariables = this.tempBody.includes('{{') || this.tempHeader.includes('{{');
-            const selectedRecord = this.filteredRecordData.find(record => record.Id === selectedId);
 
             if (!hasVariables) {
-                console.warn('No variables found in the template. Please check the template structure.');
                 this.showToast('Warning!', 'No variables found in the template to replace.', 'warning');
                 return; 
             }
 
-            if (selectedRecord) {
-                this.searchTerm = selectedRecord.Name;
-            } else {
-                console.warn('Selected record not found in filteredRecordData.');
-                this.searchTerm = '';
-            }
-
             this.selectedContactId = selectedId;
-
-            console.log('Selected Record ID:', this.selectedContactId);    
             this.fetchContactData();
         
         } catch (err) {
@@ -244,7 +171,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     return { label: `(${country.callingCode})`, value: country.callingCode,isSelected: country.callingCode === this.selectedCountryType };
                 });
             })
-            .catch((e) => console.log('Error fetching country data:', e));
+            .catch((e) => console.error('Error fetching country data:', e));
         }catch(e){
             console.error('Something wrong while fetching country data:', e);
         }
@@ -344,8 +271,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     fetchTemplateData() {
         try {
             this.isLoading = true;    
-            console.log('in the preview page==> ',this.templateid);
-                    
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
@@ -395,16 +320,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         return acc;
                     }, []);                
             
-                    this.groupedVariables = grouped;
-                    console.log('mapping variable ',JSON.stringify(this.groupedVariables));
-                    
+                    this.groupedVariables = grouped;                    
                     if(this.groupedVariables.length == 0){
                         this.noContact=false;
                     }
 
                     this.objectNames = result.objectNames;
                     this.fieldNames = result.fieldNames;
-
                     this.formatedTempBody = this.formatText(this.tempBody);
                     this.isLoading = false;
                 }
@@ -420,8 +342,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
     handlePhoneChange(event){
         this.phoneNumber=event.target.value;
-        console.log(this.phoneNumber);
-        
     }
 
     fetchReplaceVariableTemplate(templateid,contactid){
@@ -437,13 +357,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
             })
             .catch(e => {
                 this.isLoading = false;
-                console.log('Error in fetchInitialData > getTemplateData ::: ', e.message);
+                console.error('Error in fetchInitialData > getTemplateData ::: ', e.message);
             })
         } catch (e) {
             this.isLoading = false;
-            console.log('Error in function fetchInitialData:::', e.message);
+            console.error('Error in function fetchInitialData:::', e.message);
         }
-    
     }
 
 
@@ -457,15 +376,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     ? `${this.selectedCountryType}${this.phoneNumber}`
                     : null;
     
-            if (!phonenum) {
+            if (!phonenum || isNaN(Number(phonenum))) {
                 this.showToast('Warning', 'Invalid country code or phone number', 'warning');
                 this.isLoading = false;
                 return;
             }
     
             const templatePayload = this.createJSONBody(phonenum, "template", {
-                templateName: this.template.Name,
+                templateName: this.template.MVWB__Template_Name__c,
                 languageCode: this.template.MVWB__Language__c,
+                headerImageURL: this.template.MVWB__Header_Body__c,
+                headerType:this.template.MVWB__Header_Type__c,
                 headerParameters: this.headerParams,
                 bodyParameters: this.bodyParams,
                 buttonLabel: this.template.MVWB__Button_Label__c,
@@ -482,7 +403,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     }
                 })
                 .catch((error) => {
-                    console.error('Error in sending template:', error);
                     this.showToast('Error', error.body?.message || 'Failed to send template', 'error');
                 })
                 .finally(() => {
@@ -512,6 +432,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         "parameters": [ ${headerParams} ] 
                     }`);
                 }
+                if(data.headerType=='Image' && data.headerImageURL){
+                    components.push(`{ 
+                        "type": "header", 
+                        "parameters": [ { "type": "image", "image": { "link":"${data.headerImageURL}" } } ] 
+                    }`);
+                }
                 if (data.bodyParameters && data.bodyParameters.length > 0) {
                     let bodyParams = data.bodyParameters.map(
                         (param) => `{ "type": "text", "text": "${param}" }`
@@ -519,17 +445,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     components.push(`{ 
                         "type": "body", 
                         "parameters": [ ${bodyParams} ] 
-                    }`);
-                }
-                if (data.buttonLabel && data.buttonType) {
-                    components.push(`{ 
-                        "type": "button", 
-                        "sub_type": "${data.buttonType}", 
-                        "index": 0, 
-                        "parameters": [{ 
-                            "type": "text", 
-                            "text": "${data.buttonLabel}" 
-                        }] 
                     }`);
                 }
                 if (components.length > 0) {

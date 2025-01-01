@@ -86,7 +86,10 @@
     background-size: cover;
     background-position: center;
 }
-
+.custom-lookup{
+    margin-top: 0.4rem;
+    width: 100%;
+}
 
 .chatWP-bubble {
     border: 1px solid white;

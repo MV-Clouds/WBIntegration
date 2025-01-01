@@ -31,8 +31,8 @@
                                     <div class="namediv">
                                         <label for="templateName">Name your template</label>
                                         <input class="nameInput" type="text" id="templateName" name="templateName"
-                                            value={templateName} maxlength="512" placeholder="Enter template name"
-                                            onblur={handleInputChange} />
+                                            value={templateName} maxlength="512" placeholder="Enter template name" disabled={isEditTemplate}
+                                            oninput={handleInputChange} />
                                         <p class="char-count tempname-count">{templateName.length}/{maxTempNamelength}</p>
                                     </div>
                                     <div class="landiv">
@@ -127,6 +127,11 @@
                                                     <span class="addvar-span">Add variable</span>
                                                 </button>
                                             </div>
+                                            <template if:true={headerError}>
+                                                <div class="slds-text-color_error slds-m-top_small" style="margin-top: 0;">
+                                                    {headerError}
+                                                </div>
+                                            </template>
                 
                                             <template if:true={addHeaderVar}>
                                                 <div class="add-variable">
@@ -150,7 +155,7 @@
                                                                 <!-- Dynamic Field Selection -->
                                                                 <select class="field-dropdown field-header-dd dropdown" data-id={varItem.id} onchange={handleFieldChange}>
                                                                     <template for:each={fields} for:item="field">
-                                                                        <option key={field.value} class="header-field-option" value={field.value} selected={varItem.field}>
+                                                                        <option key={field.value} class="header-field-option" value={field.value}>
                                                                             {field.label}
                                                                         </option>
                                                                     </template>
@@ -229,27 +234,35 @@
                                             <div class="body-label">
                                                 <p>Body</p>
                                             </div>
-                                            <template for:each={variables} for:item="varItem" for:index="index">
+
+                                            <template for:each={computedVariables} for:item="varItem" for:index="index">
                                                 <div key={varItem.id} class="true-div">
-                                                        <p class="var">{varItem.index}</p>
-                                         
-                                                        <select class="object-dropdown dropdown" disabled>
-                                                            <option value={varItem.object} selected>{varItem.object}</option>
-                                                        </select>
-                                        
-                                                        <!-- Dynamic Field Selection -->
-                                                        <select class="field-dropdown field-body-dd dropdown" data-id={varItem.id} onchange={handleVarFieldChange}>
-                                                            <template for:each={fields} for:item="field">
-                                                                <option key={field.value} class="body-field-option" value={field.value} selected={varItem.field}>
-                                                                    {field.label}
-                                                                </option>
-                                                            </template>
-                                                        </select>
-        
-                                                        <!-- Alternate Text Input -->
-                                                        <input type="text" class="alternate-text dropdown" placeholder="Alternate Text"
-                                                        value={varItem.alternateText} data-id={varItem.id} onchange={handleAlternateVarChange} />
-        
+                                                    <p class="var">{varItem.index}</p>
+                                                    
+                                                    <select class="object-dropdown dropdown" disabled>
+                                                        <option value={varItem.object} selected>{varItem.object}</option>
+                                                    </select>
+
+                                                    <select 
+                                                        class="field-dropdown field-body-dd dropdown" 
+                                                        data-id={varItem.id} 
+                                                        data-index={varItem.index} 
+                                                        onchange={handleVarFieldChange}>
+                                                        <template for:each={varItem.options} for:item="option">
+                                                            <option 
+                                                                key={option.value} 
+                                                                class="body-field-option" 
+                                                                value={option.value} 
+                                                                selected={option.isSelected}>
+                                                                {option.label}
+                                                            </option>
+                                                        </template>
+                                                    </select>
+
+                                                      <!-- Alternate Text Input -->
+                                                      <input type="text" class="alternate-text dropdown" placeholder="Alternate Text"
+                                                      value={varItem.alternateText} data-id={varItem.id} data-index={varItem.index} onchange={handleAlternateVarChange} />
+      
                                                     <div>
                                                         <lightning-button-icon icon-name="utility:close" alternative-text="Remove"
                                                             onclick={handleVarRemove} data-index={index} class="remove-icon">
@@ -257,6 +270,7 @@
                                                     </div>
                                                 </div>
                                             </template>
+                                            
                                         </div>
                                     </template>
 
@@ -412,7 +426,7 @@
                                                             </template>
                                                             <!-- <div class="remove-btn">
                                                                 <div class="img">
-                                                                    <img src="/resource/MVWB__MVWB__trashIcon" alt="remove" onclick={handleRemove} data-index={index} style="width: 9rem;">
+                                                                    <img src="/resource/MVWB__trashIcon" alt="remove" onclick={handleRemove} data-index={index} style="width: 9rem;">
                                                                 </div>
                                                             </div> -->
                                                             <div class="remove-btn">
@@ -630,14 +644,5 @@
     <template if:true={isAllTemplate}>
         <c-wb-all-template-page ontemplateupdate={handleTemplateUpdate}></c-wb-all-template-page>
     </template>
-    <!-- <template if:true={isPreviewTemplate}>
-        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
-            <div class="slds-modal__container preview-container">
-                <div class="slds-modal__content slds-p-around_medium template-preview" id="modal-content-id-2">
-                    <c-wb-preview-template-page templateid={templateId} onclosepopup={closePreview}></c-wb-preview-template-page>
-                </div>
-            </div>
-        </section>
-        <div class="slds-backdrop slds-backdrop_open"></div>
-    </template> -->
+  
 </template>
