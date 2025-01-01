@@ -270,6 +270,11 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 this.footer = template.MVWB__Footer_Body__c || '';
                 this.selectedLanguage = template.MVWB__Language__c;
+                this.languageOptions = this.languageOptions.map(option => ({
+                    ...option,
+                    isSelected: option.value === this.selectedLanguage
+                }));
+                
                 this.tempBody = template.MVWB__Template_Body__c || 'Hello';
                 
                 this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
