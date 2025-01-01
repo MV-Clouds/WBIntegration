@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 12-20-2024
+ * @last modified on  : 01-01-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 @isTest
@@ -310,7 +310,7 @@ public class WBTemplateControllerTest {
         String fileName = 'testFile.txt';
 
         Test.startTest();
-        String result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
+        Map<String,String> result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
         WBTemplateController.createContentVersionAndDocument(null, fileBlob);
         Test.stopTest();
 

@@ -1,3 +1,10 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 01-01-2025
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 @isTest
 public class ChatWindowControllerTest {
 
@@ -169,7 +176,7 @@ public class ChatWindowControllerTest {
         Contact testContact = [SELECT Id FROM Contact LIMIT 1];
 
         Template__c testTemplate = new Template__c(
-            Name = 'Test Template',
+            Template_Name__c = 'Test Template',
             Header_Type__c = 'Text',
             Header_Body__c = 'Hello {{1}}',
             Template_Body__c = 'Hello {{1}}',
