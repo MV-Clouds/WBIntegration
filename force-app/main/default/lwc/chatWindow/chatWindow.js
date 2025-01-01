@@ -69,7 +69,7 @@ export default class ChatWindow extends LightningElement {
     }
 
     get filteredTemplate(){
-        let searchedResult = (this.allTemplates?.filter(template => template.Name.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
+        let searchedResult = (this.allTemplates?.filter(template => template.MVWB__Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
         return this.templateSearchKey ? (searchedResult.length > 0 ? searchedResult : null) : this.allTemplates;
     }
 
@@ -78,7 +78,7 @@ export default class ChatWindow extends LightningElement {
     }
 
     get replyToTemplateId(){
-        return this.allTemplates.find(t => t.Id == this.replyToMessage.MVWB__Whatsapp_Template__c)?.Name || null;
+        return this.allTemplates.find(t => t.Id == this.replyToMessage.MVWB__Whatsapp_Template__c)?.MVWB__Template_Name__c || null;
     }
 
     connectedCallback(){

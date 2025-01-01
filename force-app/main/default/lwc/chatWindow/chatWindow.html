@@ -38,7 +38,7 @@
                                         <div class="message-other">{chat.replyTo.MVWB__Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
                                     </div>
                                     <div if:true={chat.replyTo.isTemplate}>
-                                        <div class="reply-to-template-message-div" if:true={chat.replyTo.MVWB__Whatsapp_Template__r}>{chat.replyTo.MVWB__Whatsapp_Template__r.Name}</div>
+                                        <div class="reply-to-template-message-div" if:true={chat.replyTo.MVWB__Whatsapp_Template__r}>{chat.replyTo.MVWB__Whatsapp_Template__r.MVWB__Template_Name__c}</div>
                                         <div class="reply-to-template-message-div" if:false={chat.replyTo.MVWB__Whatsapp_Template__r}> Deleted Template! </div>
                                     </div>
                                 </div>
@@ -162,7 +162,7 @@
                         <template for:each={filteredTemplate} for:item="template"> 
                             <div key={template.Id} class="template-div" data-id={template.Id} onclick={handleShowTemplatePreview}>
                                 <div class="template-title-div">
-                                    {template.Name}
+                                    {template.MVWB__Template_Name__c}
                                 </div>
                             </div>
                         </template>
