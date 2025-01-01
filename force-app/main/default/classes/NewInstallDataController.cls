@@ -32,17 +32,25 @@ public with sharing class NewInstallDataController implements Messaging.InboundE
             String emailBody = email.htmlBody;
             String backendUseData = emailBody.substringAfter('<|--- BackEnd Use Only Data Start ---|>').substringBefore('<|--- BackEnd Use Only Data End ---|>');
             System.debug('emailBody '+backendUseData);
-            WbConnect_Install__c newInstallData = (WbConnect_Install__c) JSON.deserialize(backendUseData, WbConnect_Install__c.class);
+            Product_Subscriber__c newInstallData = (Product_Subscriber__c) JSON.deserialize(backendUseData, WbConnect_Install__c.class);
+            String productId = [SELECT Id FROM Product__c WHERE Name = newInstallData.Installed_Product__c LIMIT 1].Id;
+            newInstallData.Product__c = productId;
             System.debug('newInstallData '+newInstallData);
-
             insert as User newInstallData;
+
+            Task newTask = new Task();
+            newTask.ActivityDate = Date.today();
+            newTask.Subject = email.subject;
+            newTask.description = emailBody;
+            newTask.WhatId = newInstallData.Id;
+            newTask.Status = 'Completed';
+            insert as User newTask;
 
             return result;
         } catch (Exception e) {
             System.debug('Error in handleInboundEmail :: ' + e.getMessage());
             return null;
         }
-
     }
 //The Email Service Email for now is : newinstalldata@xu3km95o0v0e1sqwtcmzhpgmxtfy170b801sod3wb4o19psz0.dm-fn77nuab.ind136.apex.salesforce.com
 }

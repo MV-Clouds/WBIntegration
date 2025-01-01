@@ -34,10 +34,11 @@ global class PostInstallClass implements InstallHandler {
                 Organization org = orgs[0];
                 String environment = Boolean.valueOf(org.IsSandbox) ? 'Sandbox' : 'Production';
                 mapOfData.put('Org_Id__c',org.Id);
-                mapOfData.put('Name',org.Name);
+                mapOfData.put('Org_Name__c',org.Name);
                 mapOfData.put('Org_Type__c',org.OrganizationType);
                 mapOfData.put('Environment__c', environment);
                 mapOfData.put('Domain__c', orgDomain);
+                mapOfData.put('Installed_Product__c', 'WBConnect');
                 orgDataTable = '<table border="1" style="border-collapse: collapse;text-align:left; color: black;" cellpadding="4px">' +
                                 '<tr style="text-align:center;">' +
                                     '<th colspan="2" style="font-size: 18px; color: white; background-color:#165668;">Organization Details</th>' +
@@ -146,8 +147,7 @@ global class PostInstallClass implements InstallHandler {
             }
     
             Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
-            String emailsLabelName = 'postInstallEmail';
-            List<String> emails = System.Label.get('',emailsLabelName,'').split(',');
+            List<String> emails = new List<String>{'productinstallationemail@v-xj3w6mezt66tmgyi1ybx4giimvh488ktt05mihoa2mya7we9f.5g-7qhe9eaa.ap59.apex.salesforce.com', 'wbconnect-support@mvclouds.com'};
             string[] to = emails;
 
             String stringToSend = JSON.serialize(mapOfData);
