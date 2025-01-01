@@ -30,7 +30,7 @@ public with sharing class NewInstallDataController implements Messaging.InboundE
         try {
             Messaging.InboundEmailResult result = new Messaging.InboundEmailResult();
             String emailBody = email.htmlBody;
-            String backendUseData = emailBody.substringAfter('<|--- BackEnd Use Only Data Start ---|>').substringBefore('<|---BackEnd Use Only Data End ---|>');
+            String backendUseData = emailBody.substringAfter('<|--- BackEnd Use Only Data Start ---|>').substringBefore('<|--- BackEnd Use Only Data End ---|>');
             System.debug('emailBody '+backendUseData);
             WbConnect_Install__c newInstallData = (WbConnect_Install__c) JSON.deserialize(backendUseData, WbConnect_Install__c.class);
             System.debug('newInstallData '+newInstallData);

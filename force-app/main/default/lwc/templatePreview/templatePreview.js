@@ -90,7 +90,7 @@ export default class TemplatePreview extends LightningElement {
             .then(chat => {
                 if(chat){
                     let templatePayload = this.createJSONBody(this.mobileNumber, "template", {
-                        templateName: this.templateData.Name,
+                        templateName: this.templateData.MVWB__Template_Name__c,
                         languageCode: this.templateData.MVWB__Language__c,
                         headerParameters: this.headerParams,
                         bodyParameters: this.bodyParams,
