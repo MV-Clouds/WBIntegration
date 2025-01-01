@@ -76,7 +76,7 @@ public class WBTemplateControllerTest {
         }
     }
     
-    @isTest
+      @isTest
     static void testRestrictTemplate() {
         try{
             List<Template__c> templatesToInsert = new List<Template__c>{
@@ -310,7 +310,7 @@ public class WBTemplateControllerTest {
         String fileName = 'testFile.txt';
 
         Test.startTest();
-        String result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
+        Map<String, String> result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
         WBTemplateController.createContentVersionAndDocument(null, fileBlob);
         Test.stopTest();
 
