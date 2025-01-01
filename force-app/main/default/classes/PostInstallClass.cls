@@ -28,13 +28,16 @@ global class PostInstallClass implements InstallHandler {
             String userDataTable = '';
             Map<String, Object> mapOfData = new Map<String, Object>();
             String orgId = context.organizationId();
+            String orgDomain = URL.getOrgDomainURL().toExternalForm();
             List<Organization> orgs = [SELECT Id, Name, OrganizationType, IsSandbox FROM Organization WHERE Id =: orgId];    
             if (orgs!=null && orgs.size() > 0) {
                 Organization org = orgs[0];
+                String environment = Boolean.valueOf(org.IsSandbox) ? 'Sandbox' : 'Production';
                 mapOfData.put('Org_Id__c',org.Id);
                 mapOfData.put('Name',org.Name);
                 mapOfData.put('Org_Type__c',org.OrganizationType);
-                mapOfData.put('Is_Sandbox__c', org.IsSandbox.toString());
+                mapOfData.put('Environment__c', environment);
+                mapOfData.put('Domain__c', orgDomain);
                 orgDataTable = '<table border="1" style="border-collapse: collapse;text-align:left; color: black;" cellpadding="4px">' +
                                 '<tr style="text-align:center;">' +
                                     '<th colspan="2" style="font-size: 18px; color: white; background-color:#165668;">Organization Details</th>' +
@@ -52,8 +55,12 @@ global class PostInstallClass implements InstallHandler {
                                     '<td>' + org.OrganizationType + '</td>' +
                                 '</tr>' +
                                 '<tr>' +
-                                    '<th style="color: #165668">Is Sandbox</th>' +
-                                    '<td>' + org.IsSandbox + '</td>' +
+                                    '<th style="color: #165668">Environment</th>' +
+                                    '<td>' + environment + '</td>' +
+                                '</tr>' +
+                                '<tr>' +
+                                    '<th style="color: #165668">Domain</th>' +
+                                    '<td>' + orgDomain + '</td>' +
                                 '</tr>' +
                                 '</table>';
             }
@@ -147,7 +154,7 @@ global class PostInstallClass implements InstallHandler {
             
             email.setToAddresses(to);
             email.setSubject('WBConnect New Install - ' + orgId);
-            email.setHtmlBody('<div style="font-family:Verdana;">Congrats WBConnect Team 🎉,<br></br><br></br>The WBConnect app has been installed in an Organization, Below are some Details about the client org.<br></br><br></br>' + orgDataTable+ '<br></br>' + userDataTable + '<br></br><br></br> <|--- BackEnd Use Only Data Start ---|>' + stringToSend +'<|---BackEnd Use Only Data End ---|> </div>');
+            email.setHtmlBody('<div style="font-family:Verdana;">Congrats WBConnect Team 🎉,<br></br><br></br>The WBConnect app has been installed in an Organization, Below are some Details about the client org.<br></br><br></br>' + orgDataTable+ '<br></br>' + userDataTable + '<br></br><br></br> <|--- BackEnd Use Only Data Start ---|>' + stringToSend +'<|--- BackEnd Use Only Data End ---|> </div>');
             Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
         }
     }
