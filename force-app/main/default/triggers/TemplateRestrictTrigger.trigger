@@ -1,3 +1,4 @@
-trigger TemplateRestrictTrigger on Template__c (before insert, before update) {
+trigger TemplateRestrictTrigger on Template__c (before insert) {
     WBTemplateController.restrictTemplates(Trigger.new);
 }
+

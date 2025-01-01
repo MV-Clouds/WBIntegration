@@ -6,8 +6,8 @@
 * Created By: Kevin Suvagiya
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
-* Last Modified Date: 23 Dec 2024
-* Last Modification Description: updated code to handle no metadata record
+* Last Modified Date: 31 Dec 2024
+* Last Modification Description: Implemented logic to delete content document if image size is more than 5 MB
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
@@ -48,9 +48,9 @@ public with sharing class ChatWindowController {
             User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
-            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
+            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
             recordData = [SELECT Id, Name, Phone FROM Contact WHERE Id=:contactId WITH SECURITY_ENFORCED LIMIT 1];
-            templates = [SELECT Id, Name FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
+            templates = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
 
             combinedData.put('chats', chats);
             combinedData.put('theme', theme);
@@ -92,8 +92,13 @@ public with sharing class ChatWindowController {
             chat.Reply_To__c = replyToChatId;
 
             if(messageType == 'Image'){
-                List<ContentVersion> cv = [SELECT Id, Title FROM ContentVersion WHERE Id =: message WITH SECURITY_ENFORCED];
+                List<ContentVersion> cv = [SELECT Id, ContentSize, Title, ContentDocumentId FROM ContentVersion WHERE Id =: message WITH SECURITY_ENFORCED];
                 if(cv.size() < 1) {return null;}
+                if(cv[0].ContentSize > 5000000){
+                    ContentDocument cd = new ContentDocument(Id = cv[0].ContentDocumentId);
+                    delete as user cd;
+                    throw new AuraHandledException('FILE_SIZE_EXCEEDED');
+                }
                 ContentDistribution cd = new ContentDistribution();
                 cd.Name = cv[0].Title;
                 cd.ContentVersionId = message;
@@ -107,9 +112,12 @@ public with sharing class ChatWindowController {
                 chat.Message__c = [SELECT ContentDownloadUrl FROM ContentDistribution WHERE Id=:cd.Id].ContentDownloadUrl;
             }
             insert as user chat;
-            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
         } catch (Exception e) {
+            if(e.getMessage().contains('STORAGE_LIMIT_EXCEEDED')){
+                throw new AuraHandledException('STORAGE_LIMIT_EXCEEDED');
+            }
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
             return null;
         }
@@ -224,7 +232,7 @@ public with sharing class ChatWindowController {
             }
 
             update as user chat;
-            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             resultMap.put('chat', chat);
             return resultMap;
 
@@ -252,7 +260,7 @@ public with sharing class ChatWindowController {
         try {
             Map<String, Object> templateData = new Map<String, Object>();
             List<Template__c> templates = new List<Template__c>();
-            templates = [SELECT Id, Name, Button_Body__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name asc) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
+            templates = [SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name asc) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
             if(templates.size() > 0 && templates[0].Template_Variable__c>0){
                 Template__c template= templates[0];
                 Set<String> fieldSelectionCause = new Set<String>();
@@ -282,11 +290,11 @@ public with sharing class ChatWindowController {
                             valueToReplace = contactRecord.getSObject(tv.Object_Name__c)!=null ? contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
                         }
                         if (tv.Type__c == 'Header') {
-                            headerVariables.add(valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c);
-                            template.Header_Body__c = template.Header_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
+                            headerVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
+                            template.Header_Body__c = template.Header_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
                         }else if(tv.Type__c == 'Body'){
-                            bodyVariables.add(valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c);
-                            template.Template_Body__c = template.Template_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : tv.Alternate_Text__c );
+                            bodyVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
+                            template.Template_Body__c = template.Template_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
                         }
                     }
                 }

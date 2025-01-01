@@ -46,6 +46,7 @@
     public static List<Template__c> getWhatsAppTemplates() {
         try {
             List<Template__c> listName = [SELECT Id, Name,Template_Name__c, Template_Category__c, toLabel(Language__c) LanguageLabel,File_Name__c,Image_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
+
             FROM Template__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
 
             System.debug('list name==> ' + listName);

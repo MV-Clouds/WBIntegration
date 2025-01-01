@@ -717,8 +717,8 @@
 .popup-div {
     max-height: 86%;
     height: fit-content;
-    overflow-y: scroll;
     background-color: var(--composer-bg-color, white);
+    overflow: hidden;
     color: var(--composer-text-color, black);
     border-radius: 6px;
     font-size: 14px;
@@ -802,6 +802,9 @@
     flex-grow: 1;
     text-align: left;
     padding-left: 4px;
+    width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .no-templates-div{

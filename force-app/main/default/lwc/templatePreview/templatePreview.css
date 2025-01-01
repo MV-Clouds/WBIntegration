@@ -1,14 +1,17 @@
 :host {
     text-align: center;
+    --max-height-of-the-preview-div : 20rem;
 }
 
 .main-template-preview-div{
     display: flex;
     align-items: start;
     justify-content: center;
-    height: 100%;
+    max-height: var(--max-height-of-the-preview-div , 20rem);
     width: 100%;
+    overflow-y: scroll;
     flex-direction: column;
+    overflow-wrap: break-word;
 }
 
 .template-section-div {
@@ -59,4 +62,20 @@
     border-radius: 4px;
     color: black;
     cursor: pointer;
+}
+
+.quick-action-btn-div{
+    max-width: 100%;
+}
+
+.quick-action-btn{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.deleted-template-div {
+    font-size: 11px;
+    color: darkgray;
+    font-weight: 200;
 }
