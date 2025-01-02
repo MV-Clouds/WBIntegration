@@ -105,7 +105,7 @@ public class WBTemplateControllerTest {
         System.assertEquals(template.Id, result.template.Id, 'Template Id should match');
     }
     
-      @isTest
+    @isTest
     static void testGetRecordsBySObject() {
         Test.startTest();        
         List<sObject> records = WBTemplateController.getRecordsBySObject();
