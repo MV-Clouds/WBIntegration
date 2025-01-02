@@ -587,7 +587,7 @@ export default class ChatWindow extends LightningElement {
                     break;
                 case 'Image':
                     this.showFileUploader = true;
-                    this.acceptedFormats = ['.jpg', '.png', '.jpeg'];
+                    this.acceptedFormats = ['.jpg', '.png', '.jpeg', '.jpe'];
                     this.uploadFileType = 'Image';
                     break;
                 default:
