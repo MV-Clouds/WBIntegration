@@ -14,7 +14,6 @@ MODIFICATION LOG*
 
 import { LightningElement,track,api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import getRecordsBySObject from '@salesforce/apex/WBTemplateController.getRecordsBySObject'; 
 import sendPreviewTemplate from '@salesforce/apex/WBTemplateController.sendPreviewTemplate';  
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
@@ -276,14 +275,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 if (result) {
                     this.isImgSelected = result.isImgUrl;
                     this.IsHeaderText = !result.isImgUrl;                    
-                    this.originalHeader = result.template.MVWB__Header_Body__c;
-                    this.originalBody = result.template.MVWB__Template_Body__c;
+                    this.originalHeader = result.template.MVWB__WBHeader_Body__c;
+                    this.originalBody = result.template.MVWB__WBTemplate_Body__c;
                     const variableMappings = result.templateVariables;
 
-                    this.tempHeader = this.originalHeader;
+                    // this.tempHeader = this.originalHeader;
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(this.originalHeader, "text/html");
+                    this.tempHeader = doc.documentElement.textContent;
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
-                    this.tempFooter = result.template.MVWB__Footer_Body__c;
+                    this.tempFooter = result.template.MVWB__WBFooter_Body__c;
 
                     this.isSendDisabled = result.template.MVWB__Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
@@ -385,7 +387,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
             const templatePayload = this.createJSONBody(phonenum, "template", {
                 templateName: this.template.MVWB__Template_Name__c,
                 languageCode: this.template.MVWB__Language__c,
-                headerImageURL: this.template.MVWB__Header_Body__c,
+                headerImageURL: this.template.MVWB__WBHeader_Body__c,
                 headerType:this.template.MVWB__Header_Type__c,
                 headerParameters: this.headerParams,
                 bodyParameters: this.bodyParams,

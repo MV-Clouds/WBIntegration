@@ -136,6 +136,7 @@ export default class WbAllTemplatePage extends LightningElement {
                 if (data) {
                     this.allRecords = data.map((record, index) => {
                         const isButtonDisabled = record.MVWB__Status__c === 'In-Review';
+                        
                         return {
                             ...record,
                             id: record.Id,
