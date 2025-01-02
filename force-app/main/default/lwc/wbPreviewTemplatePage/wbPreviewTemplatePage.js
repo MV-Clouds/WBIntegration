@@ -279,10 +279,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     this.originalBody = result.template.MVWB__WBTemplate_Body__c;
                     const variableMappings = result.templateVariables;
 
-                    // this.tempHeader = this.originalHeader;
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(this.originalHeader, "text/html");
-                    this.tempHeader = doc.documentElement.textContent;
+                    if(result.template.MVWB__Header_Type__c=='Image'){
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(this.originalHeader, "text/html");
+                        this.tempHeader = doc.documentElement.textContent || "";
+                    }else{
+                        this.tempHeader = this.originalHeader ||'';
+                    }
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
                     this.tempFooter = result.template.MVWB__WBFooter_Body__c;

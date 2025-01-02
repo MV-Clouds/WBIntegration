@@ -278,9 +278,16 @@ export default class WbCreateTemplatePage extends LightningElement {
                 this.tempBody = template.MVWB__WBTemplate_Body__c || 'Hello';
                 
                 this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
-                this.previewHeader = doc.documentElement.textContent;
+                // const parser = new DOMParser();
+                // const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
+                // this.previewHeader = doc.documentElement.textContent;
+                if(template.MVWB__Header_Type__c=='Image'){
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
+                    this.previewHeader = doc.documentElement.textContent||"";
+                }else{
+                    this.previewHeader= this.formatText(headerBody) ||'';
+                }
                 // this.previewHeader= this.formatText(headerBody) ||'';
                 this.selectedContentType=template.MVWB__Header_Type__c || 'None';
                 this.btntext = template.MVWB__Button_Label__c || '';
@@ -355,7 +362,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.fileName=template.MVWB__File_Name__c;
                     this.filePreview=headerBody;
                     this.imageurl=template.MVWB__WBHeader_Body__c;
-                    this.headerHandle=template.MVWB__Image_Header_Handle__c;
+                    this.headerHandle=template.MVWB__WBImage_Header_Handle__c;
                     this.NoFileSelected = false;
                 }else{
                     this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
@@ -594,6 +601,8 @@ export default class WbCreateTemplatePage extends LightningElement {
         try {
             this.NoFileSelected=true;
             this.isfilename=false;
+            this.previewHeader = ''; 
+            this.header='';
             this.selectedContentType = event.target.value;
             setTimeout(() => {
                 this.template.querySelector('.conInput').value=this.selectedContentType;

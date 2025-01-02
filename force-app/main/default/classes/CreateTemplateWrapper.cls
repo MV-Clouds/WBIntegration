@@ -296,7 +296,7 @@
                     if ((String) component.get('format') == 'IMAGE') {
                         whatsAppTemplate.WBHeader_Body__c = templateWrapper.tempImgUrl;
                         whatsAppTemplate.File_Name__c = templateWrapper.tempImgName;
-                        whatsAppTemplate.Image_Header_Handle__c	 = templateWrapper.tempHeaderHandle;
+                        whatsAppTemplate.WBImage_Header_Handle__c = templateWrapper.tempHeaderHandle;
                     } else {
                         whatsAppTemplate.WBHeader_Body__c = (String) component.get('text');
                         
