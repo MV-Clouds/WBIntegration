@@ -6,8 +6,8 @@
 * Created By: Kevin Suvagiya
 *--------------------------------------------------------------------------------
 * Last Modified By: Kevin Suvagiya
-* Last Modified Date: 31 Dec 2024
-* Last Modification Description: Implemented logic to delete content document if image size is more than 5 MB
+* Last Modified Date: 03 Jan 2025
+* Last Modification Description: Updated the field api name for template header, body and footer
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
@@ -260,7 +260,7 @@ public with sharing class ChatWindowController {
         try {
             Map<String, Object> templateData = new Map<String, Object>();
             List<Template__c> templates = new List<Template__c>();
-            templates = [SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name asc) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
+            templates = [SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name asc) FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED];
             if(templates.size() > 0 && templates[0].Template_Variable__c>0){
                 Template__c template= templates[0];
                 Set<String> fieldSelectionCause = new Set<String>();
@@ -291,10 +291,10 @@ public with sharing class ChatWindowController {
                         }
                         if (tv.Type__c == 'Header') {
                             headerVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
-                            template.Header_Body__c = template.Header_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
+                            template.WBHeader_Body__c = template.WBHeader_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
                         }else if(tv.Type__c == 'Body'){
                             bodyVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
-                            template.Template_Body__c = template.Template_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
+                            template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
                         }
                     }
                 }
