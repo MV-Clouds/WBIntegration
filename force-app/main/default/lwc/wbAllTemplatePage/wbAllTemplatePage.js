@@ -237,7 +237,6 @@ export default class WbAllTemplatePage extends LightningElement {
                 }
                 filtered = filtered.filter(record => new Date(record.CreatedDate) >= fromDate);
             }
-    
             if (this.statusValues.length > 0) {
                 filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
             }

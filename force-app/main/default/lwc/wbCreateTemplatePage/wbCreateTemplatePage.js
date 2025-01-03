@@ -128,6 +128,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track headerError='';
     @track imageurl='';
     @track contentDocumentId='';
+    @track isRendered=false;
 
     @api
     get edittemplateid() {
@@ -255,6 +256,24 @@ export default class WbCreateTemplatePage extends LightningElement {
         }).catch(error => {
             console.error("Error in loading the colors",error);
         })
+        if (this.isRendered) return;
+        this.isRendered = true;
+        let headerEls = this.template.querySelectorAll('.field-header-dd');
+        if(headerEls!=null && this.addHeaderVar) {
+            for(let i=0; i< this.header_variables.length; i++){
+                this.header_variables.forEach((hv, i) => {
+                    headerEls[i].value = hv.field;
+                })
+            }
+            this.addHeaderVar=false;
+        }
+        let bodyEls = this.template.querySelectorAll('.field-body-dd');
+        if(bodyEls !=null && this.addVar) {
+            this.variables.forEach((bv, i) => {
+                bodyEls[i].value = bv.field;
+            })
+            this.addVar=false;
+        }
     }
 
     fetchTemplateData() {
@@ -279,7 +298,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
                 // const parser = new DOMParser();
-                // const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
+                // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
                 // this.previewHeader = doc.documentElement.textContent;
                 if(template.MVWB__Header_Type__c=='Image'){
                     const parser = new DOMParser();
@@ -315,23 +334,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.buttonDisabled = true;
                 }                
                 // if(this.addVar) this.isBodyVariableLoad=true;
-
-                setTimeout(() => {
-                    if(this.addHeaderVar) {
-                        let headerEls = this.template.querySelectorAll('.field-header-dd');
-                        for(let i=0; i< this.header_variables.length; i++){
-                            this.header_variables.forEach((hv, i) => {
-                                headerEls[i].value = hv.field;
-                            })
-                        }
-                    }
-                    if(this.addVar) {
-                        let bodyEls = this.template.querySelectorAll('.field-body-dd');
-                        this.variables.forEach((bv, i) => {
-                            bodyEls[i].value = bv.field;
-                        })
-                    }
-                }, 2000);
                 
                 if(template.MVWB__Button_Type__c && template.MVWB__Button_Label__c){
                     let newButton = {
@@ -1120,7 +1122,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                       }
                     : varItem
             );
-            this.updatePreviewContent(this.tempBody, 'body');
+            this.formatedTempBody = this.formatText(this.tempBody);
+            this.updatePreviewContent(this.formatedTempBody, 'body');
         } catch (error) {
             console.error('Something went wrong while updating variable field.', error);
         }
