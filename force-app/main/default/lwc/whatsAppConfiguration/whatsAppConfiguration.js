@@ -116,6 +116,7 @@ export default class WhatsAppConfiguration extends LightningElement {
             this.appId = '*'.repeat(this.appIdValue.length);
             this.isDisabled = true;
             this.isEditing = false;
+            this.isFirstTime = false;
         }).catch(error => {
             this.dispatchEvent(
                 new ShowToastEvent({
