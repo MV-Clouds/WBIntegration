@@ -6,7 +6,6 @@
 .main-template-preview-div{
     display: flex;
     align-items: start;
-    justify-content: center;
     max-height: var(--max-height-of-the-preview-div , 20rem);
     width: 100%;
     overflow-y: scroll;
@@ -49,11 +48,15 @@
     width: 100%;
     display: flex;
     align-items: center;
-    justify-content: end;
+    justify-content: space-around;
     gap: 12px;
     margin-top: 6px;
     border-top: 1px solid gray;
     padding: 4px 6px;
+    position: sticky;
+    bottom: 0;
+    border-radius: 0 0 4px 4px;
+    backdrop-filter: blur(10px);
 }
 
 .bottom-btn{
@@ -63,10 +66,14 @@
     gap: 4px;
     padding-inline: 8px;
     height: 26px;
-    background-color: #68ceff;
+    background-color: #25D366;
     border-radius: 4px;
-    color: black;
+    color: white;
     cursor: pointer;
+}
+
+.bottom-btn svg{
+    fill: white;
 }
 
 .quick-action-btn-div{

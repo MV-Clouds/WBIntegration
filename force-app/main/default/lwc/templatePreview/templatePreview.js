@@ -19,6 +19,7 @@ export default class TemplatePreview extends LightningElement {
     @track headerParams;
     @track bodyParams;
     @track isTemplateDeleted;
+    @track isUpdateBody;
 
     @track showSpinner = false;
 
@@ -30,6 +31,18 @@ export default class TemplatePreview extends LightningElement {
             }
         }catch(e){
             console.log('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    renderedCallback(){
+        try {
+            let bodyText = this.template.querySelector('.body-text');
+            if(bodyText && this.isUpdateBody){
+                bodyText.innerHTML = this.templateBody?.replaceAll(/\*(.+?)\*/g, '<b>$1</b>')?.replaceAll(/\_(.+?)\_/g, '<i>$1</i>')?.replaceAll(/\~(.+?)\~/g, '<s>$1</s>')?.replaceAll(/\```(.+?)\```/g, '<code>$1</code>');
+                this.isUpdateBody = false;
+            }
+        } catch (e) {
+            console.log('Error in function renderedCallback:::', e.message);
         }
     }
 
@@ -60,10 +73,7 @@ export default class TemplatePreview extends LightningElement {
                 if(templateData.headerParams) this.headerParams = templateData.headerParams;
                 if(templateData.bodyParams) this.bodyParams = templateData.bodyParams;
 
-                let headerText = this.template.querySelector('.header-text');
-                let bodyText = this.template.querySelector('.body-text');
-                if(headerText) headerText.innerHTML = this.templateBody?.replaceAll(/\*(.+?)\*/g, '<b>$1</b>')?.replaceAll(/\_(.+?)\_/g, '<i>$1</i>')?.replaceAll(/\~(.+?)\~/g, '<s>$1</s>')?.replaceAll(/\```(.+?)\```/g, '<code>$1</code>');
-                if(bodyText) bodyText.innerHTML = this.templateBody?.replaceAll(/\*(.+?)\*/g, '<b>$1</b>')?.replaceAll(/\_(.+?)\_/g, '<i>$1</i>')?.replaceAll(/\~(.+?)\~/g, '<s>$1</s>')?.replaceAll(/\```(.+?)\```/g, '<code>$1</code>');
+                this.isUpdateBody = true;
             })
             .catch(e => {
                 this.showSpinner = false;
