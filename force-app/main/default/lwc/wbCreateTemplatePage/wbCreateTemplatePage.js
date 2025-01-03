@@ -264,21 +264,31 @@ export default class WbCreateTemplatePage extends LightningElement {
                 const { template, templateVariables } = data;
                 this.templateName = template.MVWB__Template_Name__c || '';
                 this.metaTemplateId = template.MVWB__Template_Id__c || '';
-                const headerBody = template.MVWB__Header_Body__c || '';
+                const headerBody = template.MVWB__WBHeader_Body__c || '';
                 
                 const headerType = template.MVWB__Header_Type__c || 'None';
                 
-                this.footer = template.MVWB__Footer_Body__c || '';
+                this.footer = template.MVWB__WBFooter_Body__c || '';
                 this.selectedLanguage = template.MVWB__Language__c;
                 this.languageOptions = this.languageOptions.map(option => ({
                     ...option,
                     isSelected: option.value === this.selectedLanguage
                 }));
                 
-                this.tempBody = template.MVWB__Template_Body__c || 'Hello';
+                this.tempBody = template.MVWB__WBTemplate_Body__c || 'Hello';
                 
                 this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
-                this.previewHeader= this.formatText(headerBody) ||'';
+                // const parser = new DOMParser();
+                // const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
+                // this.previewHeader = doc.documentElement.textContent;
+                if(template.MVWB__Header_Type__c=='Image'){
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
+                    this.previewHeader = doc.documentElement.textContent||"";
+                }else{
+                    this.previewHeader= this.formatText(headerBody) ||'';
+                }
+                // this.previewHeader= this.formatText(headerBody) ||'';
                 this.selectedContentType=template.MVWB__Header_Type__c || 'None';
                 this.btntext = template.MVWB__Button_Label__c || '';
                 
@@ -351,8 +361,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.isImgSelected=false;
                     this.fileName=template.MVWB__File_Name__c;
                     this.filePreview=headerBody;
-                    this.imageurl=template.MVWB__Header_Body__c;
-                    this.headerHandle=template.MVWB__Image_Header_Handle__c;
+                    this.imageurl=template.MVWB__WBHeader_Body__c;
+                    this.headerHandle=template.MVWB__WBImage_Header_Handle__c;
                     this.NoFileSelected = false;
                 }else{
                     this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
@@ -591,6 +601,8 @@ export default class WbCreateTemplatePage extends LightningElement {
         try {
             this.NoFileSelected=true;
             this.isfilename=false;
+            this.previewHeader = ''; 
+            this.header='';
             this.selectedContentType = event.target.value;
             setTimeout(() => {
                 this.template.querySelector('.conInput').value=this.selectedContentType;
@@ -1527,12 +1539,13 @@ export default class WbCreateTemplatePage extends LightningElement {
         const hasCustomButtonError = this.customButtonList.some(button => button.hasError);
         const hasButtonListError = this.buttonList.some(button => button.hasError);
         const headerImageNotSelected = this.selectedContentType === 'Image' && !this.headerHandle;
+        const headerTextNotSelected = this.selectedContentType === 'Text' && !this.header;
+        const hasHeaderError = !!this.headerError;
 
         const result = (() => {
         switch (currentTemplate) {
             case 'Marketing':
-                // return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError);    
-                return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerImageNotSelected);    
+                return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerImageNotSelected && !hasHeaderError && !headerTextNotSelected);    
             default:
                 return true; 
         }

@@ -12,8 +12,9 @@
     padding: 0;
     border-radius: 5px;
     width: 60rem;
-background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-image: url('/resource/MVWB__wbiTemplateBg');
 }
+
 .create-disabled{
     background-color: rgb(229 229 229 / 78%);
     pointer-events: none;
@@ -68,9 +69,17 @@ background-image: url('/resource/MVWB__wbiTemplateBg');
 
 .filter {
     width: 11rem;
+    height: -webkit-fill-available;
+    border: none;
+    border-radius: 5px;
 }
-
-
+.custom-select{
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.18);
+    border-radius: 5px;
+}
+.filter-dropdown{
+    padding-left: 0.5rem;
+}
 .filterparent {
     display: flex;
     justify-content: space-between;

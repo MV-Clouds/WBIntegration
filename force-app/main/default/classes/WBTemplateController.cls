@@ -45,7 +45,7 @@
   @AuraEnabled(cacheable=false)
     public static List<Template__c> getWhatsAppTemplates() {
         try {
-            List<Template__c> listName = [SELECT Id, Name,Template_Name__c, Template_Category__c, toLabel(Language__c) LanguageLabel,File_Name__c,Image_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
+            List<Template__c> listName = [SELECT Id, Name,Template_Name__c, Template_Category__c, toLabel(Language__c) LanguageLabel,File_Name__c,WBImage_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
 
             FROM Template__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
 
@@ -156,7 +156,7 @@
         List<sObject> records = new List<sObject>();
         
         try {
-            String query = 'SELECT Id, Name FROM ' + sObjectName + ' LIMIT 200';             
+            String query = 'SELECT Id, Name, Phone FROM ' + sObjectName + ' WHERE Phone != null LIMIT 200';           
             records = Database.query(query);
             System.debug('records '+records);
         } catch (Exception e) {
@@ -181,8 +181,8 @@
 
         try {
             List<Template__c> templates = [
-                SELECT Id, Name,Template_Name__c, Button_Body__c, Status__c,Image_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
-                    Footer_Body__c, Header_Body__c, Header_Type__c, Language__c, Template_Body__c, 
+                SELECT Id, Name,Template_Name__c, Button_Body__c, Status__c,WBImage_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
+                    WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, 
                     Template_Category__c, Template_SubCatagory__c, Template_Type__c
                 FROM Template__c 
                 WHERE Id = :templateId WITH SECURITY_ENFORCED
@@ -294,9 +294,9 @@
     public static Map<String, Object> getTemplateDataWithReplacement(String templateId, String contactId) {
         try {
             Map<String, Object> templateData = new Map<String, Object>();
-            List<Template__c> templates = [SELECT Id, Name,Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c,Image_Header_Handle__c, 
-                                                Footer_Body__c, Header_Body__c, Header_Type__c, Language__c,File_Name__c, 
-                                                Template_Body__c, Template_Category__c, Template_SubCatagory__c, 
+            List<Template__c> templates = [SELECT Id, Name,Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c,WBImage_Header_Handle__c, 
+                                                WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c,File_Name__c, 
+                                                WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, 
                                                 Template_Type__c, Template_Variable__c, 
                                                 (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c 
                                                     FROM WB_Template_Variables__r ORDER BY Name ASC) 
@@ -343,13 +343,13 @@
                                                               (tv.Alternate_Text__c != null ? tv.Alternate_Text__c : ''));
                                     
                                         headerVariables.add(replacement);
-                                        template.Header_Body__c = template.Header_Body__c.replace(tv.Name, replacement);
+                                        template.WBHeader_Body__c = template.WBHeader_Body__c.replace(tv.Name, replacement);
                                     } else if (tv.Type__c == 'Body') {
                                         String replacement = (valueToReplace != null ? valueToReplace.toString() : 
                                                               (tv.Alternate_Text__c != null ? tv.Alternate_Text__c : ''));
                                     
                                         bodyVariables.add(replacement);
-                                        template.Template_Body__c = template.Template_Body__c.replace(tv.Name, replacement);
+                                        template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(tv.Name, replacement);
                                     }
                                     
                                 }
@@ -361,12 +361,12 @@
                         for (Template_Variable__c tv : template.WB_Template_Variables__r) {
                             if (tv.Type__c == 'Header') {
                                 headerVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
-                                template.Header_Body__c = template.Header_Body__c.replace(tv.Name, 
+                                template.WBHeader_Body__c = template.WBHeader_Body__c.replace(tv.Name, 
                                                             tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
                             } else if (tv.Type__c == 'Body') {
                                 // bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
                                 bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : tv.Name);
-                                template.Template_Body__c = template.Template_Body__c.replace(tv.Name, 
+                                template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(tv.Name, 
                                                             tv.Alternate_Text__c != null ? tv.Alternate_Text__c : tv.Name);
                                                             // tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
                             }

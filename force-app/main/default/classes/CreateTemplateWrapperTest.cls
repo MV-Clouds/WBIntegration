@@ -95,8 +95,6 @@ public class CreateTemplateWrapperTest{
                 }
             }
         });
-
-
         Map<String, Object> response = new Map<String, Object>();
         response.put('success', 'true');
         response.put('is', 'someId');

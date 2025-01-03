@@ -269,6 +269,7 @@
             whatsAppTemplate.Template_Name__c = (String) payloadMap.get('name');
             whatsAppTemplate.Template_Category__c = (String) payloadMap.get('category');
             whatsAppTemplate.Language__c = (String) payloadMap.get('language');
+            whatsAppTemplate.Template_Type__c = templateWrapper.templateType;
             whatsAppTemplate.Template_SubCatagory__c = templateWrapper.templateType;
 
             // Initialize variables for components
@@ -293,11 +294,11 @@
                 if (type == 'HEADER') {
                     whatsAppTemplate.Header_Type__c = (String) component.get('format');
                     if ((String) component.get('format') == 'IMAGE') {
-                        whatsAppTemplate.Header_Body__c = templateWrapper.tempImgUrl;
+                        whatsAppTemplate.WBHeader_Body__c = templateWrapper.tempImgUrl;
                         whatsAppTemplate.File_Name__c = templateWrapper.tempImgName;
-                        whatsAppTemplate.Image_Header_Handle__c	 = templateWrapper.tempHeaderHandle;
+                        whatsAppTemplate.WBImage_Header_Handle__c = templateWrapper.tempHeaderHandle;
                     } else {
-                        whatsAppTemplate.Header_Body__c = (String) component.get('text');
+                        whatsAppTemplate.WBHeader_Body__c = (String) component.get('text');
                         
                     }
                     if (example != null && example.containsKey('header_text') && example.get('header_text') instanceof List<Object>) {
@@ -347,7 +348,7 @@
                 else if (type == 'BODY') {
                     Map<String, Object> result = handleBodyComponent(whatsAppTemplate.Template_Category__c, component, example);
                     System.debug(((String) result.get('bodyText')));
-                    whatsAppTemplate.Template_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
+                    whatsAppTemplate.WBTemplate_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
 
                     List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
                     String bodyMergeText = (String) result.get('bodyMergeText');
@@ -392,7 +393,7 @@
                 }
                 // FOOTER Component
                 else if (type == 'FOOTER') {
-                    whatsAppTemplate.Footer_Body__c = (String) component.get('text');
+                    whatsAppTemplate.WBFooter_Body__c = (String) component.get('text');
                 }
                 // BUTTONS Component
                 else if (type == 'BUTTONS') {
