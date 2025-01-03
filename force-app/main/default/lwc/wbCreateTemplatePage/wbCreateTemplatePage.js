@@ -298,7 +298,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 
                 this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
                 // const parser = new DOMParser();
-                // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
+                // const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
                 // this.previewHeader = doc.documentElement.textContent;
                 if(template.MVWB__Header_Type__c=='Image'){
                     const parser = new DOMParser();
