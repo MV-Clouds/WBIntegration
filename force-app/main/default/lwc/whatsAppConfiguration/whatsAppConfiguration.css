@@ -89,13 +89,13 @@
   background-position: center;
   background-size: contain;
   background-repeat: no-repeat;
-  background-image: url('/resource/UserGuideImage');
+  background-image: url('/resource/MVWB__UserGuideImage');
 }
 .buttonCSS-bg-faqs {
   background-position: center;
   background-size: contain;
   background-repeat: no-repeat;
-  background-image: url('/resource/FAQsImages');
+  background-image: url('/resource/MVWB__FAQsImages');
 }
 
 .nav-container {
