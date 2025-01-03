@@ -72,10 +72,6 @@
     cursor: pointer;
 }
 
-.bottom-btn svg{
-    fill: white;
-}
-
 .quick-action-btn-div{
     max-width: 100%;
 }
