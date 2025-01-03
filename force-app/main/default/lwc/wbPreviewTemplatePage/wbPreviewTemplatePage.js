@@ -386,7 +386,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 this.isLoading = false;
                 return;
             }
-    
             const templatePayload = this.createJSONBody(phonenum, "template", {
                 templateName: this.template.MVWB__Template_Name__c,
                 languageCode: this.template.MVWB__Language__c,
