@@ -178,8 +178,8 @@ public class ChatWindowControllerTest {
         Template__c testTemplate = new Template__c(
             Template_Name__c = 'Test Template',
             Header_Type__c = 'Text',
-            Header_Body__c = 'Hello {{1}}',
-            Template_Body__c = 'Hello {{1}}',
+            WBHeader_Body__c = 'Hello {{1}}',
+            WBTemplate_Body__c = 'Hello {{1}}',
             Template_Id__c = 'testId'
         );
         
