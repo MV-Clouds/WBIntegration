@@ -10,7 +10,7 @@
             }
             .main-control-center-div {
                 height: 100%;
-                background-image: url('/resource/ControlCenterBG');
+                background-image: url('/resource/MVWB__ControlCenterBG');
                 background-size: cover;
                 background-repeat: no-repeat;
                 display: flex;
@@ -279,7 +279,7 @@
         <div class="main-control-center-div">
             <!-- Logo -->
             <div class="logo-div">
-                <img class="logo-image" src="/resource/1739427067000/MVWB__WBConnectLogo" alt="WBConnect Logo"></img>
+                <img class="logo-image" src="/resource/MVWB__WBConnectLogo" alt="WBConnect Logo"></img>
             </div>
             <!-- Containers -->
             <div class="config-component-div">
@@ -297,7 +297,7 @@
                         <p class="error-message-text" id="error-message"></p>
                     </div>
                     <div class="user-details" id="user-details-div">
-                        <img class="user-image" src="/resource/1739427067000/MVWB__WBConnectLogo" alt="User"></img>
+                        <img class="user-image" src="/resource/MVWB__WBConnectLogo" alt="User"></img>
                         <div class="waba-id-container">
                             <h5>WhatsApp Business Account Id</h5>
                             <h2 id="waba-id"></h2>
