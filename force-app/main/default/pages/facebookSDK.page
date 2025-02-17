@@ -338,18 +338,11 @@
                     </div>
                 </div>
             </div>
-            <!-- <div id="fb-root"></div>
-            <button onclick="launchWhatsAppSignup()" style="background-color: #1877f2; border: 0; border-radius: 4px; color: #fff; cursor: pointer; font-family: Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; height: 40px; padding: 0 24px;">Login with Facebook</button> -->
-            <!-- <p>Session info response:</p>
-            <pre id="session-info-response"></pre>
-            <p>SDK response:</p>
-            <pre id="sdk-response"></pre> -->
         </div>
         <script crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js" async="true" defer="true"></script>
         <script>
         let phoneNumberId = '';
         let wabaId = '{!whatsappBusinessAppId}';
-        console.log('WABA ID::', wabaId);
         if(wabaId){
             document.getElementById("input-container-div").style.display = "none";
             document.getElementById("user-details-div").style.display = "flex";
@@ -368,24 +361,19 @@
                 const {phone_number_id, waba_id} = data.data;
                 phoneNumberId = phone_number_id;
                 wabaId = waba_id;
-                console.log("Phone number ID ", phoneNumberId, " WhatsApp business account ID ", wabaId);
                 // if user cancels the Embedded Signup flow
                 } else if (data.event === 'CANCEL') {
                     const {current_step} = data.data;
-                    console.warn("Cancel at ", current_step);
                     document.getElementById("error-message").textContent = "Please complete all the steps.";
                     // if user reports an error during the Embedded Signup flow
                 } else if (data.event === 'ERROR') {
                     const {error_message} = data.data;
-                    console.error("error ", error_message);
                     document.getElementById("error-message").textContent = "There was some error logging you in.";
                 }
             }
-            console.log('the data is ::', data);
             
             // document.getElementById("session-info-response").textContent = JSON.stringify(data, null, 2);
             } catch {
-                console.log('Non JSON Responses', event.data);
                 if(event.data.includes('error=')) document.getElementById("error-message").textContent = "Could not log you in, try again...";
             }
         });
@@ -395,10 +383,8 @@
         let appName = null;
         let accessToken = '';
         const fbLoginCallback = (response) => {
-            console.log('response is :: ', response);
             if(response.status === 'connected'){
                 FB.getLoginStatus(function(response) {
-                    console.log('Status result : ', response);
                     
                     if (response.status === 'connected') {
                         accessToken = response.authResponse.accessToken;
@@ -416,16 +402,11 @@
             fetch("https://graph.facebook.com/v22.0/" + appId + "?access_token="+ accessToken)
             .then(response => response.json())
             .then(result => {
-                console.log(result);
                 if(result.error){
-                    console.log('Correct your App Id');
                     document.getElementById("error-message").textContent = "The Application Id is incorrect! Please Validate it.";
                     document.getElementById("validate-button").style.display = 'block';
                     document.getElementById("login-button").style.display = 'none';
                 }else{
-                    console.log(' the access token is at get time :: ', accessToken);  
-                    console.log("Phone number ID ", phoneNumberId, " WhatsApp business account ID ", wabaId);
-                    console.log(" Application ID ", appId);
                     if(!phoneNumberId.length || !wabaId.length || !appId.length || !accessToken.length){
                         document.getElementById("error-message").textContent = "Could not log you in, please try again...";
                         return;
@@ -437,30 +418,36 @@
                             function(result, event){
                             //We can access the records through the parameter result
                             //event.status determines if there is error or not 
-                            if(event.status){
-                                console.log("Apex result ==> ", result);
+                            if(event.status && result){
                                 document.getElementById("input-container-div").style.display = "none";
                                 document.getElementById("user-details-div").style.display = "flex";
                                 document.getElementById('waba-id').textContent = result;
+                            }else{
+                                document.getElementById("error-message").textContent = "There was some error, please try again...";
                             }
                         },
                     {escape: true}
                     );
                 }
             })
-            .catch(error => console.log('error', error));
+            .catch(error => {
+                document.getElementById("error-message").textContent = "Could not validate Application Id! Please try again.";
+            });
         }
     
         const launchWhatsAppSignup = () => {
 
             appId = document.getElementById("app-id-input").value;
-            console.log('Application Id is :: ', appId);
+            if(!'{!clientId}'){
+                document.getElementById("error-message").textContent = "Could not fetch the configuration data.";
+                return;
+            }
             if(appId){
                 // if(appName){
                     document.getElementById("error-message").textContent = "";
                     // Launch Facebook login
                     FB.login(fbLoginCallback, {
-                      config_id: '8971126402921271', // configuration ID goes here
+                      config_id: '{!configurationId}', // configuration ID goes here
                       response_type: 'code', // must be set to 'code' for System User access token
                       override_default_response_type: true, // when true, any response types passed in the "response_type" will take precedence over the default types
                       extras: {
@@ -476,7 +463,6 @@
         }
 
         function logoutFacebook(){
-            console.log('Logging facebook out!');
             Visualforce.remoting.Manager.invokeAction(
                 //Invoking controller action getcon
                 '{!$RemoteAction.WhatsappConfigController.unlinkAccount}',
@@ -484,7 +470,6 @@
                     //We can access the records through the parameter result
                     //event.status determines if there is error or not 
                     if(event.status){
-                        console.log("Apex result ==> ", result);
                         if(result){
                             document.getElementById("input-container-div").style.display = "block";
                             document.getElementById("user-details-div").style.display = "none";
@@ -503,7 +488,7 @@
       <script>
         window.fbAsyncInit = function() {
           FB.init({
-            appId            : '514916280628381',
+            appId            : '{!clientId}',
             autoLogAppEvents : true,
             xfbml            : true,
             version          : 'v21.0'
