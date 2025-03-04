@@ -1,4 +1,5 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
+import { CurrentPageReference } from 'lightning/navigation';
 import getTemplateData from '@salesforce/apex/ChatWindowController.getTemplateData';
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
@@ -21,6 +22,9 @@ export default class TemplatePreview extends LightningElement {
     @track isTemplateDeleted;
     @track isUpdateBody;
 
+    @wire(CurrentPageReference) pageRef;
+    @track objectApiName;
+
     @track showSpinner = false;
 
     connectedCallback(){
@@ -36,6 +40,9 @@ export default class TemplatePreview extends LightningElement {
 
     renderedCallback(){
         try {
+            if(this.pageRef){
+                this.objectApiName = this.pageRef.attributes.objectApiName;
+            }
             let bodyText = this.template.querySelector('.body-text');
             if(bodyText && this.isUpdateBody){
                 bodyText.innerHTML = this.templateBody?.replaceAll(/\*(.+?)\*/g, '<b>$1</b>')?.replaceAll(/\_(.+?)\_/g, '<i>$1</i>')?.replaceAll(/\~(.+?)\~/g, '<s>$1</s>')?.replaceAll(/\```(.+?)\```/g, '<code>$1</code>');
@@ -49,7 +56,7 @@ export default class TemplatePreview extends LightningElement {
     fetchInitialData(){
         this.showSpinner = true;
         try {
-            getTemplateData({templateId: this.templateId, contactId:this.recordId})
+            getTemplateData({templateId: this.templateId, contactId:this.recordId, objectApiName : this.objectApiName})
             .then((templateData) => {
                 if(!templateData){
                     this.isTemplateDeleted = true;
@@ -59,15 +66,15 @@ export default class TemplatePreview extends LightningElement {
                 
                 this.templateData = templateData.template;
                 
-                this.isTextHeader = this.templateData?.MVWB__Header_Type__c === 'Text' ? true : false;
-                this.isImageHeader = this.templateData?.MVWB__Header_Type__c === 'Image' ? true : false;
+                this.isTextHeader = this.templateData?.Header_Type__c === 'Text' ? true : false;
+                this.isImageHeader = this.templateData?.Header_Type__c === 'Image' ? true : false;
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(this.templateData?.MVWB__WBHeader_Body__c, "text/html");
+                const doc = parser.parseFromString(this.templateData?.WBHeader_Body__c, "text/html");
                 this.headerBody = doc.documentElement.textContent;
                 
-                this.templateBody = this.templateData?.MVWB__WBTemplate_Body__c;
-                this.footerBody = this.templateData?.MVWB__WBFooter_Body__c;
-                this.buttonLabel = this.templateData?.MVWB__Button_Label__c;
+                this.templateBody = this.templateData?.WBTemplate_Body__c;
+                this.footerBody = this.templateData?.WBFooter_Body__c;
+                this.buttonLabel = this.templateData?.Button_Label__c;
                 this.showSpinner = false;
 
                 if(templateData.headerParams) this.headerParams = templateData.headerParams;
@@ -96,16 +103,16 @@ export default class TemplatePreview extends LightningElement {
     handleSend(){
         this.showSpinner = true;
         try {
-            createChat({chatData: {message: '', templateId: this.templateId, messageType: 'template', recordId: this.recordId, replyToChatId: null}})
+            createChat({chatData: {message: '', templateId: this.templateId, messageType: 'template', recordId: this.recordId, replyToChatId: null, phoneNumber: this.mobileNumber}})
             .then(chat => {
                 if(chat){
                     let templatePayload = this.createJSONBody(this.mobileNumber, "template", {
-                        templateName: this.templateData.MVWB__Template_Name__c,
-                        languageCode: this.templateData.MVWB__Language__c,
+                        templateName: this.templateData.Template_Name__c,
+                        languageCode: this.templateData.Language__c,
                         headerParameters: this.headerParams,
                         bodyParameters: this.bodyParams,
-                        buttonLabel: this.templateData.MVWB__Button_Label__c,
-                        buttonType: this.templateData.MVWB__Button_Type__c,
+                        buttonLabel: this.templateData.Button_Label__c,
+                        buttonType: this.templateData.Button_Type__c,
                         isHeaderImage: this.isImageHeader,
                         headerImageURL: this.headerBody
                     });

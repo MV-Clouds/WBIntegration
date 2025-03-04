@@ -9,6 +9,8 @@
         <targetConfig targets="lightning__RecordPage">
             <objects>
                 <object>Contact</object>
+                <object>Lead</object>
+                <object>Account</object>
             </objects>
             <property label="Height(px)" name="height" type="Integer" />
             <supportedFormFactors>
