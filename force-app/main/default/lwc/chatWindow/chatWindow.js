@@ -171,7 +171,7 @@ export default class ChatWindow extends LightningElement {
     getInitialData(){
         this.showSpinner = true;
         try {
-            getCombinedData({ contactId: this.recordId })
+            getCombinedData({ contactId: this.recordId, objectApiName: this.objectApiName })
             .then(combinedData => {
 
                 if(combinedData.theme){
