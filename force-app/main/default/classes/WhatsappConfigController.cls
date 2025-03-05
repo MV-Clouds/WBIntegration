@@ -1,4 +1,4 @@
-global class WhatsappConfigController {
+public class WhatsappConfigController {
 
     public static String whatsappBusinessAppId {get; set;}
     public static String clientId {get; set;}
@@ -25,7 +25,7 @@ global class WhatsappConfigController {
     }
 
     @RemoteAction
-    global static String saveFBLoginDetails(String sAccessToken, String phoneId, String wabaId, String appId){
+    public static String saveFBLoginDetails(String sAccessToken, String phoneId, String wabaId, String appId){
         try{
 
             List<EmbeddedSignUpConfig__c> embeddedConfig = [SELECT Id, Config_Id__c, Client_Secret__c, Client_Id__c FROM EmbeddedSignUpConfig__c WITH SECURITY_ENFORCED];
@@ -58,7 +58,7 @@ global class WhatsappConfigController {
     }
 
     @RemoteAction
-    global static Boolean unlinkAccount(){
+    public static Boolean unlinkAccount(){
         try{
             Boolean isSuccess = saveMetaData('', '', '', '');
             if(isSuccess){
