@@ -52,7 +52,7 @@ export default class ChatWindow extends LightningElement {
     replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
 
     subscription = {};
-    channelName = '/event/Chat_Message__e';
+    channelName = '/event/MVWB__Chat_Message__e';
 
     //Get Variables
     get sunClass() {
@@ -74,7 +74,7 @@ export default class ChatWindow extends LightningElement {
     }
 
     get filteredTemplate(){
-        let searchedResult = (this.allTemplates?.filter(template => template.Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
+        let searchedResult = (this.allTemplates?.filter(template => template.MVWB__Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
         return this.templateSearchKey ? (searchedResult.length > 0 ? searchedResult : null) : this.allTemplates;
     }
 
@@ -84,7 +84,7 @@ export default class ChatWindow extends LightningElement {
     }
 
     get replyToTemplateId(){
-        return this.allTemplates.find(t => t.Id == this.replyToMessage.Whatsapp_Template__c)?.Template_Name__c || null;
+        return this.allTemplates.find(t => t.Id == this.replyToMessage.MVWB__Whatsapp_Template__c)?.MVWB__Template_Name__c || null;
     }
 
     connectedCallback(){
@@ -119,12 +119,12 @@ export default class ChatWindow extends LightningElement {
     handleSubscribe() {
         let self = this;
         let messageCallback = function (response) {
-            let receivedChat = JSON.parse(response.data.payload.Chat_Data__c);
+            let receivedChat = JSON.parse(response.data.payload.MVWB__Chat_Data__c);
             
-            let actionType = response.data.payload.Type__c;
+            let actionType = response.data.payload.MVWB__Type__c;
             
-            if(response.data.payload.ContactId__c !== self.phoneNumber) return;
-            // console.log(actionType ,' status :: ', receivedChat.Message_Status__c ,' Chat received is :: ', receivedChat.WhatsAppMessageId__c);
+            if(response.data.payload.MVWB__ContactId__c !== self.phoneNumber) return;
+            // console.log(actionType ,' status :: ', receivedChat.MVWB__Message_Status__c ,' Chat received is :: ', receivedChat.MVWB__WhatsAppMessageId__c);
 
             let chat = self.chats?.find(ch => ch.Id === receivedChat.Id);
             
@@ -138,16 +138,16 @@ export default class ChatWindow extends LightningElement {
                     break;
 
                 case 'status':
-                    chat.Message_Status__c = receivedChat.Message_Status__c;
+                    chat.MVWB__Message_Status__c = receivedChat.MVWB__Message_Status__c;
                     break;
 
                 case 'react':
-                    chat.Reaction__c = receivedChat.Reaction__c;
-                    chat.Last_Interaction_Date__c = receivedChat.Last_Interaction_Date__c;
+                    chat.MVWB__Reaction__c = receivedChat.MVWB__Reaction__c;
+                    chat.MVWB__Last_Interaction_Date__c = receivedChat.MVWB__Last_Interaction_Date__c;
                     break;
 
                 case 'update':
-                    chat.Message__c = receivedChat.Message__c;
+                    chat.MVWB__Message__c = receivedChat.MVWB__Message__c;
                     break;
 
                 case 'delete':
@@ -171,7 +171,7 @@ export default class ChatWindow extends LightningElement {
     getInitialData(){
         this.showSpinner = true;
         try {
-            getCombinedData({ contactId: this.recordId, objectApiName: this.objectApiName })
+            getCombinedData({ contactId: this.recordId })
             .then(combinedData => {
 
                 if(combinedData.theme){
@@ -201,8 +201,8 @@ export default class ChatWindow extends LightningElement {
                 this.processChats(true);
                 
                 let chatIdsToSeen = [];
-                this.chats.filter(ch => ch.Type_of_Message__c != 'Outbound Messages').forEach(ch =>{
-                    if(ch.Message_Status__c!='Seen') chatIdsToSeen.push(ch.Id);
+                this.chats.filter(ch => ch.MVWB__Type_of_Message__c != 'Outbound Messages').forEach(ch =>{
+                    if(ch.MVWB__Message_Status__c!='Seen') chatIdsToSeen.push(ch.Id);
                 })
                 updateStatus({messageIds:chatIdsToSeen});
             })
@@ -225,11 +225,11 @@ export default class ChatWindow extends LightningElement {
                 return;
             }
             this.chats = this.chats?.map(ch => {
-                ch.isText = ch.Message_Type__c == 'Text';
-                ch.isImage = ch.Message_Type__c == 'Image';
-                ch.isOther = !['Text', 'Image', 'Template'].includes(ch.Message_Type__c) ;
-                ch.isTemplate = ch.Message_Type__c == 'Template';
-                ch.messageBy = ch.Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
+                ch.isText = ch.MVWB__Message_Type__c == 'Text';
+                ch.isImage = ch.MVWB__Message_Type__c == 'Image';
+                ch.isOther = !['Text', 'Image', 'Template'].includes(ch.MVWB__Message_Type__c) ;
+                ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
+                ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
                 return ch;
             });
 
@@ -246,22 +246,22 @@ export default class ChatWindow extends LightningElement {
             let groupedChats = this.chats?.reduce((acc, ch) => {
                 let createDate = new Date(ch.CreatedDate).toLocaleDateString('en-GB', options);
                 let dateGroup = createDate == today.toLocaleDateString('en-GB', options) ? 'Today' : (createDate == yesterday.toLocaleDateString('en-GB', options) ? 'Yesterday' : createDate);
-                let yourReaction= ch.Reaction__c?.split('<|USER|>')[0];
-                let userReaction= ch.Reaction__c?.split('<|USER|>')[1];
+                let yourReaction= ch.MVWB__Reaction__c?.split('<|USER|>')[0];
+                let userReaction= ch.MVWB__Reaction__c?.split('<|USER|>')[1];
                 let chat = {
                     ...ch,
-                    className: ch.Type_of_Message__c === 'Outbound Messages' ? 'sent-message' : 'received-message',
-                    // isSent: ch.Message_Status__c === 'Sent',
-                    // isDelivered: ch.Message_Status__c === 'Delivered',
-                    // isSeen: ch.Message_Status__c === 'Seen',
-                    isTick : ['Sent', 'Delivered', 'Seen'].includes(ch.Message_Status__c), 
-                    isFailed: ch.Message_Status__c === 'Failed',
-                    isSending: ch.Message_Status__c == null,
+                    className: ch.MVWB__Type_of_Message__c === 'Outbound Messages' ? 'sent-message' : 'received-message',
+                    // isSent: ch.MVWB__Message_Status__c === 'Sent',
+                    // isDelivered: ch.MVWB__Message_Status__c === 'Delivered',
+                    // isSeen: ch.MVWB__Message_Status__c === 'Seen',
+                    isTick : ['Sent', 'Delivered', 'Seen'].includes(ch.MVWB__Message_Status__c), 
+                    isFailed: ch.MVWB__Message_Status__c === 'Failed',
+                    isSending: ch.MVWB__Message_Status__c == null,
                     dateGroup: dateGroup,
                     yourReaction: yourReaction,
                     userReaction: userReaction,
                     isReaction: yourReaction || userReaction,
-                    replyTo: this.chats?.find( chat => chat.Id === ch.Reply_to__c)
+                    replyTo: this.chats?.find( chat => chat.Id === ch.MVWB__Reply_to__c)
                 };
                 
                 if (!acc[chat.dateGroup]) {
@@ -275,7 +275,6 @@ export default class ChatWindow extends LightningElement {
                 date,
                 messages
             }));
-            console.log(this.groupedChats);
             
             this.showSpinner = false;
             if(needToScroll) this.scrollBottom = true;
@@ -289,12 +288,12 @@ export default class ChatWindow extends LightningElement {
     checkLastMessage(){
         this.showSpinner = true;
         try {
-            let interactionMessages = this.chats.filter(msg => msg.Last_Interaction_Date__c);            
-            let lastInteraction = interactionMessages?.sort((a, b) => new Date(b.Last_Interaction_Date__c) - new Date(a.Last_Interaction_Date__c))[0];
+            let interactionMessages = this.chats.filter(msg => msg.MVWB__Last_Interaction_Date__c);            
+            let lastInteraction = interactionMessages?.sort((a, b) => new Date(b.MVWB__Last_Interaction_Date__c) - new Date(a.MVWB__Last_Interaction_Date__c))[0];
 
             if (lastInteraction) {
                 let currentTime = new Date();
-                let messageTime = new Date(lastInteraction.Last_Interaction_Date__c);
+                let messageTime = new Date(lastInteraction.MVWB__Last_Interaction_Date__c);
                 let timeDifferenceInMilliseconds = currentTime - messageTime;
                 let hoursDifference = timeDifferenceInMilliseconds / (1000 * 60 * 60);
 
@@ -421,7 +420,7 @@ export default class ChatWindow extends LightningElement {
         try {
             if(this.reactToMessage){
                 let chat = this.chats?.find( ch => ch.Id === this.reactToMessage);                
-                chat.Reaction__c = event.target.innerText + (chat.Reaction__c ? chat.Reaction__c.slice(chat.Reaction__c.indexOf('<|USER|>')) : '<|USER|>');
+                chat.MVWB__Reaction__c = event.target.innerText + (chat.MVWB__Reaction__c ? chat.MVWB__Reaction__c.slice(chat.MVWB__Reaction__c.indexOf('<|USER|>')) : '<|USER|>');
                 this.reactToMessage = null;
                 this.showReactEmojiPicker = false;
                 this.updateMessageReaction(chat);
@@ -434,7 +433,7 @@ export default class ChatWindow extends LightningElement {
     handleRemoveReaction(event){
         try {
             let chat = this.chats?.find( chat => chat.Id === event.currentTarget.dataset.chat);
-            chat.Reaction__c = chat.Reaction__c?.slice(chat.Reaction__c.indexOf('<|USER|>'));
+            chat.MVWB__Reaction__c = chat.MVWB__Reaction__c?.slice(chat.MVWB__Reaction__c.indexOf('<|USER|>'));
             this.updateMessageReaction(chat);
         } catch (e) {
             console.log('Error in function handleRemoveReaction:::', e.message);
@@ -626,8 +625,8 @@ export default class ChatWindow extends LightningElement {
                     this.chats.push(chat);
                     this.processChats(true);
                     
-                    let imagePayload = this.createJSONBody(this.recordData.Phone, "image", this.replyToMessage?.WhatsAppMessageId__c || null, {
-                        link: chat.Message__c,
+                    let imagePayload = this.createJSONBody(this.recordData.Phone, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                        link: chat.MVWB__Message__c,
                         fileName: event.detail.files[0].name || 'whatsapp image'
                     });
                     sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
@@ -636,8 +635,8 @@ export default class ChatWindow extends LightningElement {
                             this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
                         }
                         let resultChat = result.chat;
-                        this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = resultChat.Message_Status__c;
-                        this.chats.find(ch => ch.Id === chat.Id).WhatsAppMessageId__c = resultChat?.WhatsAppMessageId__c;
+                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = resultChat.MVWB__Message_Status__c;
+                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = resultChat?.MVWB__WhatsAppMessageId__c;
                         this.messageText = '';
                         this.template.querySelector('.message-input').value = '';
                         this.replyToMessage = null;
@@ -672,7 +671,7 @@ export default class ChatWindow extends LightningElement {
     
     handleImageError(event){
         try {
-            event.currentTarget.src = "/resource/Alt_Image";
+            event.currentTarget.src = "/resource/MVWB__Alt_Image";
             event.currentTarget.parentNode.classList.add('not-loaded-image');
         } catch (e) {
             console.log('Error in function handleImageError:::', e.message);
@@ -766,24 +765,24 @@ export default class ChatWindow extends LightningElement {
     updateMessageReaction(chat){
         // this.showSpinner = true;
         try {
-            updateReaction({chatId: chat.Id, reaction:chat.Reaction__c})
+            updateReaction({chatId: chat.Id, reaction:chat.MVWB__Reaction__c})
             .then(ch => {
                 // this.showSpinner = false;
                 this.processChats();
-                let reactPayload = this.createJSONBody(this.recordData.Phone, "reaction", this.replyToMessage?.WhatsAppMessageId__c || null, {
-                    reactToId : chat.WhatsAppMessageId__c,
-                    emoji: chat.Reaction__c?.split('<|USER|>')[0]
+                let reactPayload = this.createJSONBody(this.recordData.Phone, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    reactToId : chat.MVWB__WhatsAppMessageId__c,
+                    emoji: chat.MVWB__Reaction__c?.split('<|USER|>')[0]
                 });
                 console.log('ReactPayload :: ', reactPayload);
                 
-                sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true, reaction: chat.Reaction__c})
+                sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true, reaction: chat.MVWB__Reaction__c})
                 .then(result => {
                     if(result.errorMessage == 'METADATA_ERROR'){
                         this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
                     }
 
                     let resultChat = result.chat;
-                    this.chats.find(ch => ch.Id === chat.Id).Reaction__c = resultChat.Reaction__c;
+                    this.chats.find(ch => ch.Id === chat.Id).MVWB__Reaction__c = resultChat.MVWB__Reaction__c;
                     this.processChats();
                 })
                 .catch((e) => {
@@ -827,7 +826,7 @@ export default class ChatWindow extends LightningElement {
             createChat({chatData: {message: this.messageText, templateId: this.selectedTemplate, messageType: 'text', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
-                    let textPayload = this.createJSONBody(this.recordData.Phone, "text", this.replyToMessage?.WhatsAppMessageId__c || null, {
+                    let textPayload = this.createJSONBody(this.recordData.Phone, "text", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         textBody: this.messageText
                     });
                     let textareaMessageElement = this.template.querySelector('.message-input');
@@ -846,8 +845,8 @@ export default class ChatWindow extends LightningElement {
                             this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
                         }
                         let resultChat = result.chat;
-                        this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = resultChat.Message_Status__c;
-                        this.chats.find(ch => ch.Id === chat.Id).WhatsAppMessageId__c = resultChat?.WhatsAppMessageId__c;
+                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = resultChat.MVWB__Message_Status__c;
+                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = resultChat?.MVWB__WhatsAppMessageId__c;
                         this.showSpinner = false;
                         this.processChats();
                     })

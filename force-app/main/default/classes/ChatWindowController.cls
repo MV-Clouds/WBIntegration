@@ -44,7 +44,7 @@ public with sharing class ChatWindowController {
         try {
             List<Chat__c> chats = new List<Chat__c>();
             List<Template__c> templates = new List<Template__c>();
-            // sObject recordData = new sObject();
+            // Contact recordData = new Contact();
             User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
@@ -89,7 +89,6 @@ public with sharing class ChatWindowController {
             chat.Message__c = message;
             chat.Whatsapp_Template__c = templateId;
             // chat.Contact__c = recordId;
-            chat.Related_Record_Id__c = recordId;
             chat.Phone__c = phoneNumber;
             chat.Type_of_Message__c	= 'OutBound Messages';
             chat.Message_Status__c = null;
@@ -164,7 +163,7 @@ public with sharing class ChatWindowController {
     public static Boolean updateThemePreference(String theme) {
         Boolean isSuccess = false;
         try {
-            User_Theme_Preference__c userPreference = new User_Theme_Preference__c();
+            MVWB__User_Theme_Preference__c userPreference = new MVWB__User_Theme_Preference__c();
             if (userPreferences.isEmpty()) {
                 userPreference.SetupOwnerId = UserInfo.getUserId();
             }else{
@@ -284,17 +283,17 @@ public with sharing class ChatWindowController {
                 }
 
                 String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM ' + objectApiName + ' WHERE Id =:contactId';
-                List<sObject> contacts = Database.query(String.escapeSingleQuotes(query));
+                List<sObject> records = Database.query(String.escapeSingleQuotes(query));
                 List<Object> headerVariables = new List<Object>();
                 List<Object> bodyVariables = new List<Object>();
-                if(contacts.size() > 0){
-                    sObject contactRecord = contacts[0];
+                if(records.size() > 0){
+                    sObject record = records[0];
                     for (Template_Variable__c tv: template.WB_Template_Variables__r) {
                         Object valueToReplace = '';
                         if(tv.Object_Name__c == 'Contact'){
-                            valueToReplace = contactRecord.get(tv.Field_Name__c);
+                            valueToReplace = record.get(tv.Field_Name__c);
                         }else{
-                            valueToReplace = contactRecord.getSObject(tv.Object_Name__c)!=null ? contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
+                            valueToReplace = record.getSObject(tv.Object_Name__c)!=null ? record.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
                         }
                         if (tv.Type__c == 'Header') {
                             headerVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));

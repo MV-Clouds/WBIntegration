@@ -156,8 +156,6 @@ global without sharing class WhatsAppWebhook{
 
             List<Lead> contacts = new List<Lead>();
             System.debug('Sender Id => ' + senderId);
-            System.debug('Contacts:- '+ [SELECT Id, Name, Phone, MobilePhone, OwnerId
-                                      FROM Contact]);
             
             contacts = [SELECT Id, Name, Phone, MobilePhone, OwnerId
                                       FROM Lead
@@ -189,7 +187,7 @@ global without sharing class WhatsAppWebhook{
             if (existingChatRecords.isEmpty()){
 
                 if(messageType.equalsIgnoreCase('reaction')){
-                    List<Chat__c> reactToChat = [SELECT Id, Reaction__c, Contact__c, Phone__c, Related_Record_Id__c FROM Chat__c WHERE WhatsAppMessageId__c =:reactToMessageId];
+                    List<Chat__c> reactToChat = [SELECT Id, Reaction__c, Contact__c, Phone__c FROM Chat__c WHERE WhatsAppMessageId__c =:reactToMessageId];
                     if(reactToChat.size() > 0){
                         reactToChat[0].Reaction__c = reactToChat[0].Reaction__c!=null ? reactToChat[0].Reaction__c : '<|USER|>';
                         reactToChat[0].Reaction__c = reactToChat[0].Reaction__c.split('<|USER|>')[0] + '<|USER|>' + (reactedEmoji!=null ? reactedEmoji : '');
@@ -207,7 +205,6 @@ global without sharing class WhatsAppWebhook{
                 }
 
                 // whatsappChat.Contact__c = contact.Id;
-                whatsappChat.Related_Record_Id__c = contact.Id;
                 whatsappChat.Phone__c = contact.Phone;
                 whatsappChat.Type_of_Message__c = 'Inbound Messages';
                 whatsappChat.Message_Type__c = messageType;
@@ -297,7 +294,7 @@ global without sharing class WhatsAppWebhook{
             insert whatsappChat;
             // System.debug('Chat__c record created: ' + whatsappChat);
             Chat_Message__e newChatEvent = new Chat_Message__e();
-            Chat__c chatToSend = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c, Contact__c, Related_Record_Id__c, Phone__c FROM Chat__c WHERE Id =:whatsappChat.Id LIMIT 1];
+            Chat__c chatToSend = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c, Contact__c, Phone__c FROM Chat__c WHERE Id =:whatsappChat.Id LIMIT 1];
             newChatEvent.Chat_Data__c = JSON.serialize(chatToSend);
             newChatEvent.Type__c = 'new';
             // newChatEvent.ContactId__c = whatsappChat.Contact__c;

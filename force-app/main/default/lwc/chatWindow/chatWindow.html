@@ -24,41 +24,41 @@
                     <template for:each={group.messages} for:item="chat">
                         <div key={chat.Id} data-id={chat.Id} class="message-full-length-div" data-type={chat.className} onmouseleave={handleHideActions}>
                             <div class="message" >
-                                <!-- <pre>{chat.Message__c}</pre> -->
+                                <!-- <pre>{chat.MVWB__Message__c}</pre> -->
                                 <div class="message-preview-div" data-by={chat.replyTo.messageBy} data-reply-to={chat.replyTo.Id} onclick={handleReplyMessageClick} if:true={chat.replyTo}>
                                     <div class="message-by">{chat.replyTo.messageBy}</div>
                                     <div class="text-message-div" if:true={chat.replyTo.isText}>
-                                        <div class="message-div reply-to-text-message-div">{chat.replyTo.Message__c}</div>
+                                        <div class="message-div reply-to-text-message-div">{chat.replyTo.MVWB__Message__c}</div>
                                     </div>
                                     <div if:true={chat.replyTo.isImage}>
-                                        <img class="message-image" src={chat.replyTo.Message__c} alt="Image" />
+                                        <img class="message-image" src={chat.replyTo.MVWB__Message__c} alt="Image" />
                                     </div>
                                     <div if:true={chat.replyTo.isOther}>
-                                        <div class="message-other">{chat.replyTo.Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
+                                        <div class="message-other">{chat.replyTo.MVWB__Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
                                     </div>
                                     <div if:true={chat.replyTo.isTemplate}>
-                                        <div class="reply-to-template-message-div" if:true={chat.replyTo.Whatsapp_Template__r}>{chat.replyTo.Whatsapp_Template__r.Template_Name__c}</div>
-                                        <div class="reply-to-template-message-div" if:false={chat.replyTo.Whatsapp_Template__r}> Deleted Template! </div>
+                                        <div class="reply-to-template-message-div" if:true={chat.replyTo.MVWB__Whatsapp_Template__r}>{chat.replyTo.MVWB__Whatsapp_Template__r.MVWB__Template_Name__c}</div>
+                                        <div class="reply-to-template-message-div" if:false={chat.replyTo.MVWB__Whatsapp_Template__r}> Deleted Template! </div>
                                     </div>
                                 </div>
                                 <div class="text-message-div" if:true={chat.isText}>
-                                    <div>{chat.Message__c}</div>
+                                    <div>{chat.MVWB__Message__c}</div>
                                 </div>
                                 <div class="image-message-div" if:true={chat.isImage} data-action="open" onclick={handleToggleImagePreview}>
                                     <svg class="image-preview-close" data-action="close" onclick={handleToggleImagePreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="30" width="30"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
-                                    <img class="message-image" src={chat.Message__c} onerror={handleImageError} alt="Photo"/>
+                                    <img class="message-image" src={chat.MVWB__Message__c} onerror={handleImageError} alt="Photo"/>
                                 </div>
                                 <div class="other-message-div" if:true={chat.isOther}>
-                                    <div class="other-message-text">Shared {chat.Message_Type__c} With You.</div>
+                                    <div class="other-message-text">Shared {chat.MVWB__Message_Type__c} With You.</div>
                                     <div class="other-message-sub-text">You can not view this media due to limitation of your plan.</div>
                                 </div>
                                 <!-- <div class="video-message-div" if:true={chat.isVideo}>
                                     <video controls>
-                                        <source src={chat.Message__c} >
+                                        <source src={chat.MVWB__Message__c} >
                                     </video>
                                 </div> -->
                                 <div class="template-message-div" if:true={chat.isTemplate}>
-                                    <c-template-preview template-id={chat.Whatsapp_Template__c} record-id={recordId}></c-template-preview>
+                                    <c-template-preview template-id={chat.MVWB__Whatsapp_Template__c} record-id={recordId}></c-template-preview>
                                 </div>
                                 <div class="timestamp">
                                     <lightning-formatted-date-time 
@@ -73,7 +73,7 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m4.375 7.5 3.125 3.125L13.75 4.375" stroke-width="1.5"></path><path d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125" stroke-width="1.5"></path></svg>
                                     </div> -->
                                     
-                                    <div class="status-icon" data-status={chat.Message_Status__c} if:true={chat.isTick}>
+                                    <div class="status-icon" data-status={chat.MVWB__Message_Status__c} if:true={chat.isTick}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path class="first-tick" stroke="#34B7F1" d="m4.375 7.5 3.125 3.125L13.75 4.375"></path><path class="second-tick" stroke="#34B7F1" d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125"></path></svg>
                                     </div>
                                     <div class="status-icon" if:true={chat.isSending}>
@@ -98,13 +98,13 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="16" width="16" fill="#f5c400"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM164.1 325.5C182 346.2 212.6 368 256 368s74-21.8 91.9-42.5c5.8-6.7 15.9-7.4 22.6-1.6s7.4 15.9 1.6 22.6C349.8 372.1 311.1 400 256 400s-93.8-27.9-116.1-53.5c-5.8-6.7-5.1-16.8 1.6-22.6s16.8-5.1 22.6 1.6zM144.4 208a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm192-32a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>
                                         <div class="action-command">React</div>
                                     </div>
-                                    <div class="action-option" data-action="copy" data-message={chat.Message__c} onclick={handleChatAction} if:true={chat.isText}>
+                                    <div class="action-option" data-action="copy" data-message={chat.MVWB__Message__c} onclick={handleChatAction} if:true={chat.isText}>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="16" width="16" fill="skyblue"><path d="M192 0c-41.8 0-77.4 26.7-90.5 64L64 64C28.7 64 0 92.7 0 128L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64l-37.5 0C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM112 192l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/></svg>
                                         <div class="action-command">Copy</div>
                                     </div>
                                 </div>
                                 <div class="action-options-div" if:true={chat.isFailed}>
-                                    <div class="action-option" data-action="copy" data-message={chat.Message__c} onclick={handleChatAction} if:true={chat.isText}>
+                                    <div class="action-option" data-action="copy" data-message={chat.MVWB__Message__c} onclick={handleChatAction} if:true={chat.isText}>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="16" width="16" fill="skyblue"><path d="M192 0c-41.8 0-77.4 26.7-90.5 64L64 64C28.7 64 0 92.7 0 128L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64l-37.5 0C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM112 192l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/></svg>
                                         <div class="action-command">Copy</div>
                                     </div>
@@ -161,7 +161,7 @@
                         <template for:each={filteredTemplate} for:item="template"> 
                             <div key={template.Id} class="template-div" data-id={template.Id} onclick={handleShowTemplatePreview}>
                                 <div class="template-title-div">
-                                    {template.Template_Name__c}
+                                    {template.MVWB__Template_Name__c}
                                 </div>
                             </div>
                         </template>
@@ -188,16 +188,16 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48" height="12" width="12" data-action="cancel-reply" onclick={handleChatAction}><path fill="gray" d="M23.9999 0.48C11.0312 0.48 0.48 11.0312 0.48 23.9999 0.48 36.9688 11.0312 47.52 23.9999 47.52c12.9689 0 23.5201 -10.5512 23.5201 -23.5201C47.52 11.0312 36.9688 0.48 23.9999 0.48Zm8.516 29.4781c0.175 0.1663 0.3149 0.3659 0.4116 0.5872 0.0966 0.2214 0.1481 0.4597 0.1512 0.7012 0.0032 0.2415 -0.0421 0.4811 -0.1331 0.7049 -0.0911 0.2236 -0.2259 0.4268 -0.3967 0.5975 -0.1707 0.1708 -0.3739 0.3057 -0.5975 0.3967 -0.2238 0.091 -0.4634 0.1363 -0.7049 0.1331 -0.2415 -0.0031 -0.4798 -0.0546 -0.7012 -0.1512 -0.2213 -0.0967 -0.4209 -0.2366 -0.5873 -0.4116l-5.9581 -5.9569 -5.958 5.9569c-0.342 0.3249 -0.7975 0.5033 -1.2692 0.4974 -0.4717 -0.006 -0.9226 -0.1963 -1.2562 -0.5299 -0.3335 -0.3335 -0.5238 -0.7844 -0.5298 -1.2561 -0.006 -0.4717 0.1725 -0.9273 0.4974 -1.2692L21.441 24l-5.9569 -5.958c-0.3249 -0.3421 -0.5034 -0.7976 -0.4974 -1.2693 0.006 -0.4717 0.1963 -0.9226 0.5298 -1.2562 0.3336 -0.3335 0.7845 -0.5237 1.2562 -0.5298 0.4717 -0.006 0.9272 0.1725 1.2692 0.4975l5.958 5.9569 5.9581 -5.9569c0.342 -0.325 0.7976 -0.5035 1.2693 -0.4975 0.4717 0.0061 0.9226 0.1963 1.2561 0.5298 0.3336 0.3336 0.5238 0.7845 0.5299 1.2562 0.0059 0.4717 -0.1725 0.9272 -0.4975 1.2693L26.5589 24l5.9569 5.9581Z" stroke-width="1"></path></svg>
                     <div class="message-by">{replyToMessage.messageBy}</div>
                     <div class="text-message-div" if:true={replyToMessage.isText}>
-                        <div class="reply-to-text-message-div">{replyToMessage.Message__c}</div>
+                        <div class="reply-to-text-message-div">{replyToMessage.MVWB__Message__c}</div>
                     </div>
                     <div class="image-reply-to" if:true={replyToMessage.isImage}>
-                        <img class="message-image-for-reply" src={replyToMessage.Message__c} alt="Image" />
+                        <img class="message-image-for-reply" src={replyToMessage.MVWB__Message__c} alt="Image" />
                     </div>
                     <div class="template-reply-to" if:true={replyToMessage.isTemplate}>
                         <div class="reply-to-template-message-div">{replyToTemplateId}</div>
                     </div>
                     <div if:true={replyToMessage.isOther}>
-                        <div class="reply-to-other-message-div">{replyToMessage.Message_Type__c} shared by {replyToMessage.messageBy}.</div>
+                        <div class="reply-to-other-message-div">{replyToMessage.MVWB__Message_Type__c} shared by {replyToMessage.messageBy}.</div>
                     </div>
                 </div>
             </div>

@@ -66,15 +66,15 @@ export default class TemplatePreview extends LightningElement {
                 
                 this.templateData = templateData.template;
                 
-                this.isTextHeader = this.templateData?.Header_Type__c === 'Text' ? true : false;
-                this.isImageHeader = this.templateData?.Header_Type__c === 'Image' ? true : false;
+                this.isTextHeader = this.templateData?.MVWB__Header_Type__c === 'Text' ? true : false;
+                this.isImageHeader = this.templateData?.MVWB__Header_Type__c === 'Image' ? true : false;
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(this.templateData?.WBHeader_Body__c, "text/html");
+                const doc = parser.parseFromString(this.templateData?.MVWB__WBHeader_Body__c, "text/html");
                 this.headerBody = doc.documentElement.textContent;
                 
-                this.templateBody = this.templateData?.WBTemplate_Body__c;
-                this.footerBody = this.templateData?.WBFooter_Body__c;
-                this.buttonLabel = this.templateData?.Button_Label__c;
+                this.templateBody = this.templateData?.MVWB__WBTemplate_Body__c;
+                this.footerBody = this.templateData?.MVWB__WBFooter_Body__c;
+                this.buttonLabel = this.templateData?.MVWB__Button_Label__c;
                 this.showSpinner = false;
 
                 if(templateData.headerParams) this.headerParams = templateData.headerParams;
@@ -107,12 +107,12 @@ export default class TemplatePreview extends LightningElement {
             .then(chat => {
                 if(chat){
                     let templatePayload = this.createJSONBody(this.mobileNumber, "template", {
-                        templateName: this.templateData.Template_Name__c,
-                        languageCode: this.templateData.Language__c,
+                        templateName: this.templateData.MVWB__Template_Name__c,
+                        languageCode: this.templateData.MVWB__Language__c,
                         headerParameters: this.headerParams,
                         bodyParameters: this.bodyParams,
-                        buttonLabel: this.templateData.Button_Label__c,
-                        buttonType: this.templateData.Button_Type__c,
+                        buttonLabel: this.templateData.MVWB__Button_Label__c,
+                        buttonType: this.templateData.MVWB__Button_Type__c,
                         isHeaderImage: this.isImageHeader,
                         headerImageURL: this.headerBody
                     });
