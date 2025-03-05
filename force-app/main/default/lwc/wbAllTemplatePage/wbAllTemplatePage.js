@@ -6,9 +6,9 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 23/12/2024
- * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : Beta 10 bugs
+ * Last Update Date : 05/03/2025
+ * Updated By : Mitrajsinh Gohil
+ * Removed the limitation for only 5 templates : Beta 12 changes
  * Change Description :Beta 10 bug resolved
  ********************************************************************** */
 
@@ -54,8 +54,11 @@ export default class WbAllTemplatePage extends LightningElement {
         }
     }
 
+    // get actionButtonClass(){
+    //     return this.allRecords?.length >= 5 ? 'custom-button create-disabled' : 'custom-button cus-btns' ;
+    // }
     get actionButtonClass(){
-        return this.allRecords?.length >= 5 ? 'custom-button create-disabled' : 'custom-button cus-btns' ;
+        return 'custom-button cus-btns' ;
     }
 
     get timePeriodOptions() {
