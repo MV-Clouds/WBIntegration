@@ -23,6 +23,25 @@ global class PostInstallClass implements InstallHandler {
     ********************************************************
     */
     global void onInstall(InstallContext context) {
+        List<EmbeddedSignUpConfig__c> embeddedSignUpConfigRecord = new List<EmbeddedSignUpConfig__c>();
+        List<Profile> systemAdminProfile = [SELECT Id, Name FROM Profile WHERE Name = 'System Administrator'];
+        embeddedSignUpConfigRecord = [SELECT Id, Client_Id__c, Client_Secret__c, Config_Id__c, SetupOwnerId FROM EmbeddedSignUpConfig__c LIMIT 1];
+        if(embeddedSignUpConfigRecord.size() > 0){
+            EmbeddedSignUpConfig__c configRec = embeddedSignUpConfigRecord[0];
+            configRec.Client_Id__c = '514916280628381';
+            configRec.Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
+            configRec.Config_Id__c = '8971126402921271';
+            configRec.SetupOwnerId = systemAdminProfile[0].Id;
+            update configRec;
+        } else {
+            EmbeddedSignUpConfig__c config = new EmbeddedSignUpConfig__c(
+                Client_Id__c = '514916280628381',
+                Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b',
+                Config_Id__c = '8971126402921271',
+                SetupOwnerId = systemAdminProfile[0].Id;
+            );
+            insert config;
+        }
         if(context.previousVersion() == null) {
             String orgDataTable = '';
             String userDataTable = '';
