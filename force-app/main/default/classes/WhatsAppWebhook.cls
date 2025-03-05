@@ -154,25 +154,25 @@ global without sharing class WhatsAppWebhook{
             }
             String formattedNumber = senderId.substring(0, 3) + senderId.substring(3);
 
-            List<Contact> contacts = new List<Contact>();
+            List<Lead> contacts = new List<Lead>();
             System.debug('Sender Id => ' + senderId);
-            System.debug('Contacts:- '+ [SELECT Id, Name, Phone, MobilePhone, OwnerId
-                                      FROM Contact]);
             
             contacts = [SELECT Id, Name, Phone, MobilePhone, OwnerId
-                                      FROM Contact
+                                      FROM Lead
                                       WHERE Phone = :formattedNumber
                                       LIMIT 1];
             System.debug('formattedNumber Id => ' + formattedNumber);
-            Contact contact;
+            Lead contact;
             if (!contacts.isEmpty()){
 
                 contact = contacts[0];
             } else{
-                Contact Con = new Contact();
+                Lead Con = new Lead();
                 Map<String, Object> profile = (Map<String,Object>) sender.get('profile');
                 Con.LastName = (String) profile.get('name');
                 Con.Phone = (String) senderId;
+                Con.Status = 'Open - Not Contacted';
+                Con.Company = (String) profile.get('name');
                 insert Con;
                 contact = Con;
             }
@@ -187,7 +187,7 @@ global without sharing class WhatsAppWebhook{
             if (existingChatRecords.isEmpty()){
 
                 if(messageType.equalsIgnoreCase('reaction')){
-                    List<Chat__c> reactToChat = [SELECT Id, Reaction__c, Contact__c FROM Chat__c WHERE WhatsAppMessageId__c =:reactToMessageId];
+                    List<Chat__c> reactToChat = [SELECT Id, Reaction__c, Contact__c, Phone__c FROM Chat__c WHERE WhatsAppMessageId__c =:reactToMessageId];
                     if(reactToChat.size() > 0){
                         reactToChat[0].Reaction__c = reactToChat[0].Reaction__c!=null ? reactToChat[0].Reaction__c : '<|USER|>';
                         reactToChat[0].Reaction__c = reactToChat[0].Reaction__c.split('<|USER|>')[0] + '<|USER|>' + (reactedEmoji!=null ? reactedEmoji : '');
@@ -197,13 +197,15 @@ global without sharing class WhatsAppWebhook{
                         Chat_Message__e reactEvent = new Chat_Message__e();
                         reactEvent.Chat_Data__c = JSON.serialize(whatsappChat);
                         reactEvent.Type__c = 'react';
-                        reactEvent.ContactId__c = whatsappChat.Contact__c;
+                        // reactEvent.ContactId__c = whatsappChat.Contact__c;
+                        reactEvent.ContactId__c = whatsappChat.Phone__c;
                         EventBus.publish(reactEvent);
                     }
                     return;
                 }
 
-                whatsappChat.Contact__c = contact.Id;
+                // whatsappChat.Contact__c = contact.Id;
+                whatsappChat.Phone__c = contact.Phone;
                 whatsappChat.Type_of_Message__c = 'Inbound Messages';
                 whatsappChat.Message_Type__c = messageType;
                 whatsappChat.WhatsAppMessageId__c = whatsAppMessageID;
@@ -292,10 +294,11 @@ global without sharing class WhatsAppWebhook{
             insert whatsappChat;
             // System.debug('Chat__c record created: ' + whatsappChat);
             Chat_Message__e newChatEvent = new Chat_Message__e();
-            Chat__c chatToSend = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c, Contact__c FROM Chat__c WHERE Id =:whatsappChat.Id LIMIT 1];
+            Chat__c chatToSend = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c, Contact__c, Phone__c FROM Chat__c WHERE Id =:whatsappChat.Id LIMIT 1];
             newChatEvent.Chat_Data__c = JSON.serialize(chatToSend);
             newChatEvent.Type__c = 'new';
-            newChatEvent.ContactId__c = whatsappChat.Contact__c;
+            // newChatEvent.ContactId__c = whatsappChat.Contact__c;
+            newChatEvent.ContactId__c = whatsappChat.Phone__c;
             EventBus.publish(newChatEvent);
 
             sendNotificationForContact(contact);
@@ -401,8 +404,8 @@ global without sharing class WhatsAppWebhook{
     public static Map<String, Object> saveMediaToSalesforce(Blob mediaBlob, String filename, String mimeType, Id parentRecordId){
         Map<String, Object> fileData = new Map<String, Object>();
         try{
-            Contact contact = [SELECT Id, Name, OwnerId
-                               FROM Contact
+            Lead contact = [SELECT Id, Name, OwnerId
+                               FROM Lead
                                WHERE Id = :parentRecordId
                                LIMIT 1];
 
@@ -442,7 +445,7 @@ global without sharing class WhatsAppWebhook{
         return filedata;
     }
 
-    public static void sendNotificationForContact(Contact con){
+    public static void sendNotificationForContact(Lead con){
         try{
             List<CustomNotificationType> cnType = [SELECT Id
                                                    FROM CustomNotificationType
@@ -565,7 +568,7 @@ global without sharing class WhatsAppWebhook{
                                     String status = (String) statusMap.get('status');
                                     String waid = statusMap!= null ? (String) statusMap.get('id') : null;
 
-                                    List<Chat__c> waChats = [SELECT Id, Message_Status__c, WhatsAppMessageId__c, Contact__c
+                                    List<Chat__c> waChats = [SELECT Id, Message_Status__c, WhatsAppMessageId__c, Phone__c
                                                                FROM Chat__c
                                                                WHERE WhatsAppMessageId__c = :waid
                                                                LIMIT 1];
@@ -581,7 +584,8 @@ global without sharing class WhatsAppWebhook{
                                         update waChat;
                                         Chat_Message__e statusChangeEvent = new Chat_Message__e();
                                         statusChangeEvent.Chat_Data__c = JSON.serialize(waChat);
-                                        statusChangeEvent.ContactId__c = waChat.Contact__c;
+                                        // statusChangeEvent.ContactId__c = waChat.Contact__c;
+                                        statusChangeEvent.ContactId__c = waChat.Phone__c;
                                         statusChangeEvent.Type__c = 'status';
                                         EventBus.publish(statusChangeEvent);
                                     }
@@ -626,9 +630,9 @@ global without sharing class WhatsAppWebhook{
                 }
                 update waTemplate;
 
-                Template_Update__e templateStatusEvent = new Template_Update__e();
-                templateStatusEvent.Template_Id__c = waTemplate.Id;
-                templateStatusEvent.Template_Status__c = waTemplate.Status__c;
+                MVWB__Template_Update__e templateStatusEvent = new MVWB__Template_Update__e();
+                templateStatusEvent.MVWB__Template_Id__c = waTemplate.Id;
+                templateStatusEvent.MVWB__Template_Status__c = waTemplate.Status__c;
                 EventBus.publish(templateStatusEvent);
 
             } else{

@@ -27,7 +27,7 @@ public with sharing class ChatWindowController {
     */
     /* ---------------- Start ---------------- */
     public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-    public static List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Theme__c FROM MVWB__User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
+    public static List<User_Theme_Preference__c> userPreferences = [SELECT Theme__c FROM User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
     /* ----------------  End  ---------------- */
 
 
@@ -39,23 +39,27 @@ public with sharing class ChatWindowController {
     ********************************************************
     */
     @AuraEnabled
-    public static Map<String, Object> getCombinedData(String contactId){
+    public static Map<String, Object> getCombinedData(String contactId, String objectApiName){
         Map<String, Object> combinedData = new Map<String, Object>();
         try {
             List<Chat__c> chats = new List<Chat__c>();
             List<Template__c> templates = new List<Template__c>();
-            Contact recordData = new Contact();
+            // Contact recordData = new Contact();
             User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
-            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Contact__c =:contactId WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
-            recordData = [SELECT Id, Name, Phone FROM Contact WHERE Id=:contactId WITH SECURITY_ENFORCED LIMIT 1];
+            // recordData = [SELECT Id, Name, Phone FROM Contact WHERE Phone =:contactId WITH SECURITY_ENFORCED LIMIT 1];
+            String query = 'SELECT Id, Name, Phone FROM ' + objectApiName + ' WHERE Id =: contactId LIMIT 1';
+            sObject recordData = Database.query(query);
+            String phoneNumber = (String) recordData.get('Phone');
+            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, Phone__c FROM Chat__c WHERE Phone__c =:phoneNumber WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
             templates = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
 
             combinedData.put('chats', chats);
             combinedData.put('theme', theme);
             combinedData.put('templates', templates);
             combinedData.put('record', recordData);
+            combinedData.put('phoneNumber', phoneNumber);
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'fetchAllChats', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
@@ -78,12 +82,14 @@ public with sharing class ChatWindowController {
             String messageType = chatData.get('messageType');
             String recordId = chatData.get('recordId');
             String replyToChatId = chatData.get('replyToChatId');
+            String phoneNumber = chatData.get('phoneNumber');
 
             Chat__c chat = new Chat__c();
             // DateTime now = DateTime.now();
             chat.Message__c = message;
             chat.Whatsapp_Template__c = templateId;
-            chat.Contact__c = recordId;
+            // chat.Contact__c = recordId;
+            chat.Phone__c = phoneNumber;
             chat.Type_of_Message__c	= 'OutBound Messages';
             chat.Message_Status__c = null;
             // chat.Time_of_Message__c	= now.hour()+':'+now.minute();
@@ -256,7 +262,7 @@ public with sharing class ChatWindowController {
     ********************************************************
     */
     @AuraEnabled
-    public static Map<String, object> getTemplateData(String templateId, String contactId){
+    public static Map<String, object> getTemplateData(String templateId, String contactId, String objectApiName){
         try {
             Map<String, Object> templateData = new Map<String, Object>();
             List<Template__c> templates = new List<Template__c>();
@@ -276,18 +282,18 @@ public with sharing class ChatWindowController {
                     return templateData;
                 }
 
-                String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM Contact WHERE Id =:contactId';
-                List<Contact> contacts = Database.query(String.escapeSingleQuotes(query));
+                String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM ' + objectApiName + ' WHERE Id =:contactId';
+                List<sObject> records = Database.query(String.escapeSingleQuotes(query));
                 List<Object> headerVariables = new List<Object>();
                 List<Object> bodyVariables = new List<Object>();
-                if(contacts.size() > 0){
-                    Contact contactRecord = contacts[0];
+                if(records.size() > 0){
+                    sObject record = records[0];
                     for (Template_Variable__c tv: template.WB_Template_Variables__r) {
                         Object valueToReplace = '';
                         if(tv.Object_Name__c == 'Contact'){
-                            valueToReplace = contactRecord.get(tv.Field_Name__c);
+                            valueToReplace = record.get(tv.Field_Name__c);
                         }else{
-                            valueToReplace = contactRecord.getSObject(tv.Object_Name__c)!=null ? contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
+                            valueToReplace = record.getSObject(tv.Object_Name__c)!=null ? record.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
                         }
                         if (tv.Type__c == 'Header') {
                             headerVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));

@@ -1,4 +1,5 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
+import { CurrentPageReference } from 'lightning/navigation';
 import getTemplateData from '@salesforce/apex/ChatWindowController.getTemplateData';
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
@@ -21,6 +22,9 @@ export default class TemplatePreview extends LightningElement {
     @track isTemplateDeleted;
     @track isUpdateBody;
 
+    @wire(CurrentPageReference) pageRef;
+    @track objectApiName;
+
     @track showSpinner = false;
 
     connectedCallback(){
@@ -36,6 +40,9 @@ export default class TemplatePreview extends LightningElement {
 
     renderedCallback(){
         try {
+            if(this.pageRef){
+                this.objectApiName = this.pageRef.attributes.objectApiName;
+            }
             let bodyText = this.template.querySelector('.body-text');
             if(bodyText && this.isUpdateBody){
                 bodyText.innerHTML = this.templateBody?.replaceAll(/\*(.+?)\*/g, '<b>$1</b>')?.replaceAll(/\_(.+?)\_/g, '<i>$1</i>')?.replaceAll(/\~(.+?)\~/g, '<s>$1</s>')?.replaceAll(/\```(.+?)\```/g, '<code>$1</code>');
@@ -49,7 +56,7 @@ export default class TemplatePreview extends LightningElement {
     fetchInitialData(){
         this.showSpinner = true;
         try {
-            getTemplateData({templateId: this.templateId, contactId:this.recordId})
+            getTemplateData({templateId: this.templateId, contactId:this.recordId, objectApiName : this.objectApiName})
             .then((templateData) => {
                 if(!templateData){
                     this.isTemplateDeleted = true;
@@ -96,7 +103,7 @@ export default class TemplatePreview extends LightningElement {
     handleSend(){
         this.showSpinner = true;
         try {
-            createChat({chatData: {message: '', templateId: this.templateId, messageType: 'template', recordId: this.recordId, replyToChatId: null}})
+            createChat({chatData: {message: '', templateId: this.templateId, messageType: 'template', recordId: this.recordId, replyToChatId: null, phoneNumber: this.mobileNumber}})
             .then(chat => {
                 if(chat){
                     let templatePayload = this.createJSONBody(this.mobileNumber, "template", {

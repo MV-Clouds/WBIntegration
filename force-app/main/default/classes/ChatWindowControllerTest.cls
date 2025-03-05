@@ -17,7 +17,8 @@ public class ChatWindowControllerTest {
 
             Contact testContact = new Contact(
                 LastName = 'Test Contact', 
-                AccountId = a.Id
+                AccountId = a.Id,
+                Phone = '911234567890'
             );
             insert testContact;
 
@@ -28,7 +29,8 @@ public class ChatWindowControllerTest {
                 Message_Status__c = 'Sent',
                 Time_of_Message__c = '12:00',
                 Date_of_Message__c = Date.today(),
-                Message_Type__c = 'Text'
+                Message_Type__c = 'Text',
+                Phone__c = '+911234567890'
             );
             insert testChat;
         } catch (Exception e) {
@@ -42,7 +44,7 @@ public class ChatWindowControllerTest {
             Contact testContact = [SELECT Id FROM Contact LIMIT 1];
 
             Test.startTest();
-            Map<String, Object> combinedData = ChatWindowController.getCombinedData(testContact.Id);
+            Map<String, Object> combinedData = ChatWindowController.getCombinedData(testContact.Id, 'Contact');
             Test.stopTest();
 
             list<Chat__c> chats = (list<Chat__c>) combinedData.get('chats');
@@ -56,14 +58,15 @@ public class ChatWindowControllerTest {
     @isTest
     static void testCreateChat() {
         try {
-            Contact testContact = [SELECT Id FROM Contact LIMIT 1];
+            Contact testContact = [SELECT Id, Phone FROM Contact LIMIT 1];
 
             Map<String, String> chatData = new Map<String, String>{
                 'message' => 'Hello!',
                 'templateId' => null,
                 'messageType' => 'Text',
                 'recordId' => testContact.Id,
-                'replyToChatId' => null
+                'replyToChatId' => null,
+                'phoneNumber' => testContact.Phone
             };
 
             Test.startTest();
@@ -83,7 +86,7 @@ public class ChatWindowControllerTest {
     @isTest
     static void testCreateChatWithImage() {
         try {
-            Contact testContact = [SELECT Id FROM Contact LIMIT 1];
+            Contact testContact = [SELECT Id, Phone FROM Contact LIMIT 1];
 
             ContentVersion contentVersion = new ContentVersion(
                 Title = 'Test Image',
@@ -98,7 +101,8 @@ public class ChatWindowControllerTest {
                 'templateId' => null,
                 'messageType' => 'Image',
                 'recordId' => testContact.Id,
-                'replyToChatId' => null
+                'replyToChatId' => null,
+                'phoneNumber' => testContact.Phone
             };
 
             Test.startTest();
@@ -206,8 +210,8 @@ public class ChatWindowControllerTest {
         insert testVariable2;
 
         Test.startTest();
-        ChatWindowController.getTemplateData(null, testContact.Id);
-        Map<String, Object> result = ChatWindowController.getTemplateData(testTemplate.Id, testContact.Id);
+        ChatWindowController.getTemplateData(null, testContact.Id, 'Contact');
+        Map<String, Object> result = ChatWindowController.getTemplateData(testTemplate.Id, testContact.Id, 'Contact');
         Test.stopTest();
 
         System.assertNotEquals(null, result.get('template'), 'The result should not be null');
