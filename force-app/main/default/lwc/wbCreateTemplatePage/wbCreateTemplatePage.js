@@ -113,7 +113,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track filePreview='';
     @track languageOptions=[];
     @track countryType=[];
-    @track selectedObject = 'Contact';
+    @track selectedObject = 'Lead';
     @track fields = [];
     @track chatMessages = [];
     @track richTextZip = richTextZip;
@@ -432,7 +432,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     //fetch object related fields
     fetchFields() {
         try {
-            getObjectFields({objectName:'Contact'})
+            getObjectFields({objectName:'Lead'})
             .then((result) => {
                 this.fields = result.map((field) => ({ label: field, value: field }));
             })
