@@ -154,13 +154,18 @@
                                                         <div key={varItem.id} class="true-div">
                                                             <p class="var">{varItem.index}</p>
 
-                                                                <select class="object-dropdown dropdown" disabled>
-                                                                    <option value={varItem.object} selected>{varItem.object}</option>
+                                                                <select class="object-dropdown dropdown" data-id={varItem.Id} onchange={handleObjectChange}>
+                                                                    <!-- <option value={varItem.object} selected>{varItem.object}</option> -->
+                                                                    <template for:each={varItem.objectOptions} for:item="obj">
+                                                                        <option key={obj.value} value={obj.value} class="body-field-option">
+                                                                            {obj.label}
+                                                                        </option>
+                                                                    </template>
                                                                 </select>
                                                 
                                                                 <!-- Dynamic Field Selection -->
                                                                 <select class="field-dropdown field-header-dd dropdown" data-id={varItem.id} onchange={handleFieldChange}>
-                                                                    <template for:each={fields} for:item="field">
+                                                                    <template for:each={varItem.fields} for:item="field">
                                                                         <option key={field.value} class="header-field-option" value={field.value}>
                                                                             {field.label}
                                                                         </option>
@@ -245,8 +250,13 @@
                                                 <div key={varItem.id} class="true-div">
                                                     <p class="var">{varItem.index}</p>
                                                     
-                                                    <select class="object-dropdown dropdown">
-                                                        <option value={varItem.object} selected>{varItem.object}</option>
+                                                    <select class="object-dropdown dropdown" data-id={varItem.Id} data-index={varItem.index} onchange={handleVarObjectChange}>
+                                                        <!-- <option value={varItem.object} selected>{varItem.object}</option> -->
+                                                        <template for:each={varItem.objectOptions} for:item="obj">
+                                                            <option key={obj.value} value={obj.value} class="body-field-option">
+                                                                {obj.label}
+                                                            </option>
+                                                        </template>
                                                     </select>
 
                                                     <select 
@@ -648,7 +658,7 @@
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
     <template if:true={isAllTemplate}>
-        <c-wb-all-template-page ontemplateupdate={handleTemplateUpdate}></c-wb-all-template-page>
+        <!-- <c-wb-all-template-page ontemplateupdate={handleTemplateUpdate}></c-wb-all-template-page> -->
     </template>
   
 </template>
