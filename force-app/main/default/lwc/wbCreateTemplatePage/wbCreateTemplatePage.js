@@ -237,11 +237,10 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.variables.map((varItem) => {
             return {
                 ...varItem,
-                options: varItem.fields ? varItem.fields.map((field) => ({
+                options: this.fields ? this.fields.map((field) => ({
                     ...field,
                     isSelected: field.value === varItem.field
-                })) : [],
-                objectOptions: this.availableObjects
+                })) : []
             };
         });
     }
@@ -249,7 +248,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     connectedCallback() {
         this.fetchCountries();
         this.fetchLanguages();
-        // this.fetchFields('Lead');
+        this.fetchFields('Lead');
         this.generateEmojiCategories();
         this.fetchUpdatedTemplates(false);
     }
@@ -435,17 +434,17 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     //fetch object related fields
     fetchFields(objectName) {
-        // try {
-        //     getObjectFields({objectName: objectName})
-        //     .then((result) => {
-        //         this.fields = result.map((field) => ({ label: field, value: field }));
-        //     })
-        //     .catch((error) => {
-        //         console.error('Error fetching fields: ', error);
-        //     });
-        // } catch (error) {
-        //     console.error('Error fetching objects fields: ', error);
-        // }
+        try {
+            getObjectFields({objectName: objectName})
+            .then((result) => {
+                this.fields = result.map((field) => ({ label: field, value: field }));
+            })
+            .catch((error) => {
+                console.error('Error fetching fields: ', error);
+            });
+        } catch (error) {
+            console.error('Error fetching objects fields: ', error);
+        }
     }
 
     handleFileChange(event) {
@@ -1093,44 +1092,21 @@ export default class WbCreateTemplatePage extends LightningElement {
             }, 0); 
             
             this.nextIndex = maxId + 1;
-            const newIndex = this.nextIndex;
-            // const defaultField = this.fields[0].value; 
+            const defaultField = this.fields[0].value; 
             
             const newVariable = {
-                id: newIndex,
+                id: this.nextIndex,
                 object: this.selectedObject,
-                field: '',
-                fields: [],
+                field: defaultField,
                 alternateText: '',
-                index: `{{${newIndex}}}`,        
+                index: `{{${this.nextIndex}}}`,        
             };
             this.variables = [...this.variables, newVariable];
 
-            getObjectFields({ objectName: 'Lead' })
-                .then((result) => {
-                    let updatedVariables = [...this.variables];
-
-                    updatedVariables = updatedVariables.map((varItem) =>
-                        varItem.id === newIndex
-                            ? {
-                                ...varItem,
-                                fields: result.map((field) => ({ label: field, value: field })),
-                                field: result.length > 0 ? result[0] : ''
-                            }
-                            : varItem
-                    );
-
-                    this.variables = updatedVariables;
-                    this.updatePreviewContent(this.formatedTempBody, 'body');
-                })
-                .catch((error) => {
-                    console.error('Error fetching default fields: ', error);
-                });
-
-            this.tempBody = `${this.tempBody} {{${newIndex}}} `;
+            this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
             this.formatedTempBody=this.formatText(this.tempBody);
             this.updateTextarea();
-            // this.updatePreviewContent(this.formatedTempBody, 'body');
+            this.updatePreviewContent(this.formatedTempBody, 'body');
             this.nextIndex++;
         } catch (error) {
             console.error('Error in adding variables.',error); 
@@ -1156,51 +1132,43 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
     }    
 
-    handleVarObjectChange(event){
+    handleObjectChange(event){
         try {
-            const variableIndex = String(event.target.dataset.index);
             const selectedObject = event.target.value;
+            this.selectedObject = selectedObject;
 
-            // Clone the variables array
-            let updatedVariables = [...this.variables];
-            updatedVariables = updatedVariables.map((varItem) =>
-                String(varItem.index) === variableIndex
-                    ? {
-                        ...varItem,
-                        object: selectedObject,
-                        field: '',
-                        fields: []
-                    }
-                    : varItem
-            );
-            this.variables = updatedVariables;
+            this.template.querySelectorAll('[data-name="objectPicklist"]').forEach((dropdown) => {
+                dropdown.value = selectedObject;
+            });
 
             getObjectFields({ objectName: selectedObject })
                 .then((result) => {
-                    if (result && result.length > 0) {
-                        let updatedVariablesAfterFetch = [...this.variables];
+                    this.fields = result.map((field) => ({ label: field, value: field }));
 
-                        updatedVariablesAfterFetch = updatedVariablesAfterFetch.map((varItem) =>
-                            String(varItem.index) === variableIndex
-                                ? {
-                                    ...varItem,
-                                    fields: result.map((field) => ({ label: field, value: field })),
-                                    field: result[0]
-                                }
-                                : varItem
-                        );
-
-                        this.variables = updatedVariablesAfterFetch;
-                        this.updatePreviewContent(this.formatedTempBody, 'body');
-                    } else {
-                        console.error(`No fields returned for ${selectedObject}`);
-                    }
+                    this.variables = this.variables.map(varItem => {
+                        return {
+                            ...varItem,
+                            object: selectedObject,
+                            field: this.fields[0].value
+                        };
+                    });
+        
+                    this.header_variables = this.header_variables.map(varItem => {
+                        return {
+                            ...varItem,
+                            object: selectedObject,
+                            field: this.fields[0].value
+                        };
+                    });
+        
+                    this.formatedTempBody = this.formatText(this.tempBody);
+                    this.updateTextarea();
+                    this.updatePreviewContent(this.header, 'header');
+                    this.updatePreviewContent(this.formatedTempBody, 'body');
                 })
                 .catch((error) => {
                     console.error('Error fetching fields: ', error);
                 });
-            this.formatedTempBody = this.formatText(this.tempBody);
-            // this.updatePreviewContent(this.formatedTempBody, 'body');
         } catch (error) {
             console.error('Something went wrong while updating variable object.', error);
         }
@@ -1264,33 +1232,19 @@ export default class WbCreateTemplatePage extends LightningElement {
     addheadervariable() {
         try {
             this.addHeaderVar = true;
+            const defaultField = this.fields[0].value;
             const newVariable = {
                 id: this.headIndex,
-                object: 'Lead',
-                objectOptions: this.availableObjects,
-                field: '',
-                fields: [],
+                object: this.selectedObject,
+                field: defaultField,
                 alternateText: '',
                 index: `{{${this.headIndex}}}`,        
             };
-            
-            getObjectFields({ objectName: 'Lead' })
-                .then((result) => {
-                    if (result && result.length > 0) {
-                        newVariable.fields = result.map((field) => ({ label: field, value: field }));
-                        newVariable.field = newVariable.fields[0].value;
-                        this.header_variables = [newVariable];
-                        this.updatePreviewContent(this.header, 'header');
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error fetching default fields: ', error);
-                });
 
-            // this.header_variables = [...this.header_variables, newVariable];
+            this.header_variables = [...this.header_variables, newVariable];
             this.originalHeader = (this.originalHeader || this.header || '') + ` {{${this.headIndex}}}`;
             this.header = this.originalHeader;
-            // this.updatePreviewContent(this.header, 'header');
+            this.updatePreviewContent(this.header, 'header');
             this.headIndex++;
             this.buttonDisabled = true;
         } catch (error) {
@@ -1315,31 +1269,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         } catch (error) {
             console.error('Something wrong while header variable input.',error);
         }
-    }
-
-    handleObjectChange(event) {
-        const selectedObject = event.target.value;
-    
-        // Clone the existing header variable to trigger reactivity
-        const updatedVariable = { ...this.header_variables[0] };
-        updatedVariable.object = selectedObject;
-        updatedVariable.field = '';
-        updatedVariable.fields = [];
-    
-        getObjectFields({ objectName: selectedObject })
-            .then((result) => {
-                if (result && result.length > 0) {
-                    updatedVariable.fields = result.map((field) => ({ label: field, value: field }));
-                    updatedVariable.field = updatedVariable.fields[0].value;
-                    
-                    this.header_variables = [updatedVariable];
-        
-                    this.updatePreviewContent(this.header, 'header');
-                }
-            })
-            .catch((error) => {
-                console.error('Error fetching fields: ', error);
-            });
     }
 
     handleAlternateTextChange(event) {
