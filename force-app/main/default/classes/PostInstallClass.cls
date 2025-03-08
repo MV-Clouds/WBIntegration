@@ -38,7 +38,7 @@ global class PostInstallClass implements InstallHandler {
                 Client_Id__c = '514916280628381',
                 Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b',
                 Config_Id__c = '8971126402921271',
-                SetupOwnerId = systemAdminProfile[0].Id;
+                SetupOwnerId = systemAdminProfile[0].Id
             );
             insert config;
         }

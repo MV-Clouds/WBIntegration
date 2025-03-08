@@ -8,6 +8,7 @@ import emojiData from '@salesforce/resourceUrl/emojis_data';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import updateThemePreference from '@salesforce/apex/ChatWindowController.updateThemePreference';
 import updateStatus from '@salesforce/apex/ChatWindowController.updateStatus';
+import checkLicenseUsablility from '@salesforce/apex/LicenseChecker.checkLicenseUsablility';
 import { subscribe} from 'lightning/empApi';
 
 export default class ChatWindow extends LightningElement {
@@ -48,6 +49,7 @@ export default class ChatWindow extends LightningElement {
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
     @track phoneNumber;
+    @track showLicenseError = false;
 
     replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
 
@@ -87,8 +89,13 @@ export default class ChatWindow extends LightningElement {
         return this.allTemplates.find(t => t.Id == this.replyToMessage.MVWB__Whatsapp_Template__c)?.MVWB__Template_Name__c || null;
     }
 
-    connectedCallback(){
+    async connectedCallback(){
         try {
+            this.showSpinner = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
             if(this.pageRef){
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
@@ -166,6 +173,19 @@ export default class ChatWindow extends LightningElement {
         });
     }
 
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+            this.showLicenseError = true; // Assume expired if there's an error
+        } finally {
+            this.showSpinner = false;
+        }
+    }
 
 // Fetch Initial Data
     getInitialData(){
