@@ -189,6 +189,7 @@ global class PostInstallClass implements InstallHandler {
                 + '<b>Stack Trace:</b> <pre>' + e.getStackTraceString() + '</pre>';
 
                 email.setToAddresses(to);
+                email.setSubject('WBConnect Package Install Failed Exception Email');
                 email.setHtmlBody(
                     '<div style="font-family:Verdana;">'
                     + '<b>Error Details:</b><br>' + errorDetails
