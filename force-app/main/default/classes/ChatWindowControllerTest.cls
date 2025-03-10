@@ -18,7 +18,7 @@ public class ChatWindowControllerTest {
             Contact testContact = new Contact(
                 LastName = 'Test Contact', 
                 AccountId = a.Id,
-                Phone = '911234567890'
+                Phone = '+911234567890'
             );
             insert testContact;
 
