@@ -989,6 +989,10 @@ textarea {
     padding: 0.4rem;
 }
 
+.field-dropdown{
+    width: 170px;
+}
+
 /* .footer{
     text-align: center;
     margin-bottom: 1rem;

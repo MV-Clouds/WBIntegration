@@ -113,6 +113,11 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track filePreview='';
     @track languageOptions=[];
     @track countryType=[];
+    @track availableObjects = [
+        { label: 'Lead', value: 'Lead' },
+        { label: 'Contact', value: 'Contact' },
+        { label: 'Account', value: 'Account' }
+    ];
     @track selectedObject = 'Lead';
     @track fields = [];
     @track chatMessages = [];
@@ -232,12 +237,10 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.variables.map((varItem) => {
             return {
                 ...varItem,
-                options: this.fields.map((field) => {
-                    return {
-                        ...field,
-                        isSelected: field.value === varItem.field 
-                    };
-                })
+                options: this.fields ? this.fields.map((field) => ({
+                    ...field,
+                    isSelected: field.value === varItem.field
+                })) : []
             };
         });
     }
@@ -245,7 +248,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     connectedCallback() {
         this.fetchCountries();
         this.fetchLanguages();
-        this.fetchFields();
+        this.fetchFields('Lead');
         this.generateEmojiCategories();
         this.fetchUpdatedTemplates(false);
     }
@@ -430,9 +433,9 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     //fetch object related fields
-    fetchFields() {
+    fetchFields(objectName) {
         try {
-            getObjectFields({objectName:'Lead'})
+            getObjectFields({objectName: objectName})
             .then((result) => {
                 this.fields = result.map((field) => ({ label: field, value: field }));
             })
@@ -1089,7 +1092,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             }, 0); 
             
             this.nextIndex = maxId + 1;
-
             const defaultField = this.fields[0].value; 
             
             const newVariable = {
@@ -1100,6 +1102,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 index: `{{${this.nextIndex}}}`,        
             };
             this.variables = [...this.variables, newVariable];
+
             this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
             this.formatedTempBody=this.formatText(this.tempBody);
             this.updateTextarea();
@@ -1128,6 +1131,48 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.error('Something went wrong while updating variable field.', error);
         }
     }    
+
+    handleObjectChange(event){
+        try {
+            const selectedObject = event.target.value;
+            this.selectedObject = selectedObject;
+
+            this.template.querySelectorAll('[data-name="objectPicklist"]').forEach((dropdown) => {
+                dropdown.value = selectedObject;
+            });
+
+            getObjectFields({ objectName: selectedObject })
+                .then((result) => {
+                    this.fields = result.map((field) => ({ label: field, value: field }));
+
+                    this.variables = this.variables.map(varItem => {
+                        return {
+                            ...varItem,
+                            object: selectedObject,
+                            field: this.fields[0].value
+                        };
+                    });
+        
+                    this.header_variables = this.header_variables.map(varItem => {
+                        return {
+                            ...varItem,
+                            object: selectedObject,
+                            field: this.fields[0].value
+                        };
+                    });
+        
+                    this.formatedTempBody = this.formatText(this.tempBody);
+                    this.updateTextarea();
+                    this.updatePreviewContent(this.header, 'header');
+                    this.updatePreviewContent(this.formatedTempBody, 'body');
+                })
+                .catch((error) => {
+                    console.error('Error fetching fields: ', error);
+                });
+        } catch (error) {
+            console.error('Something went wrong while updating variable object.', error);
+        }
+    }
 
     handleAlternateVarChange(event) {
         const variableIndex = String(event.target.dataset.index);
@@ -1187,7 +1232,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     addheadervariable() {
         try {
             this.addHeaderVar = true;
-            const defaultField = this.fields[0].value; 
+            const defaultField = this.fields[0].value;
             const newVariable = {
                 id: this.headIndex,
                 object: this.selectedObject,
@@ -1195,6 +1240,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 alternateText: '',
                 index: `{{${this.headIndex}}}`,        
             };
+
             this.header_variables = [...this.header_variables, newVariable];
             this.originalHeader = (this.originalHeader || this.header || '') + ` {{${this.headIndex}}}`;
             this.header = this.originalHeader;

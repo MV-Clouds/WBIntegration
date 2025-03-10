@@ -327,7 +327,7 @@
                                     if (headerIndex < headAlternateTexts.size()) {
                                         Template_Variable__c headerVariable = new Template_Variable__c(
                                             Name = placeholder,
-                                            Object_Name__c = 'Contact',
+                                            Object_Name__c = parts[0],
                                             Field_Name__c = parts[1],
                                             Type__c = 'Header',
                                             Alternate_Text__c = headAlternateTexts[headerIndex]
@@ -377,7 +377,7 @@
                             if (variableIndex < varAlternateTexts.size()) {
                                 Template_Variable__c bodyVariable = new Template_Variable__c(
                                     Name = placeholder,
-                                    Object_Name__c = 'Contact',
+                                    Object_Name__c = parsedFields[variableIndex].get('objectName'),
                                     Field_Name__c = parsedFields[variableIndex].get('fieldName'), 
                                     Type__c = 'Body',
                                     Alternate_Text__c = varAlternateTexts[variableIndex]

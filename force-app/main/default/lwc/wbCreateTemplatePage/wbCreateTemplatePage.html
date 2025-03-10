@@ -154,8 +154,13 @@
                                                         <div key={varItem.id} class="true-div">
                                                             <p class="var">{varItem.index}</p>
 
-                                                                <select class="object-dropdown dropdown" disabled>
-                                                                    <option value={varItem.object} selected>{varItem.object}</option>
+                                                                <select class="object-dropdown dropdown" data-name="objectPicklist" data-id={varItem.Id} onchange={handleObjectChange} value={selectedObject}>
+                                                                    <!-- <option value={varItem.object} selected>{varItem.object}</option> -->
+                                                                    <template for:each={availableObjects} for:item="obj">
+                                                                        <option key={obj.value} value={obj.value} class="body-field-option">
+                                                                            {obj.label}
+                                                                        </option>
+                                                                    </template>
                                                                 </select>
                                                 
                                                                 <!-- Dynamic Field Selection -->
@@ -240,15 +245,23 @@
                                             <div class="body-label">
                                                 <p>Body</p>
                                             </div>
+                                            
+                                            <div class="true-div">
+                                                <p class="var">Select Object for merge fields :</p>
+                                                <select class="object-dropdown dropdown" data-name="objectPicklist" onchange={handleObjectChange} value={selectedObject}>
+                                                    <!-- <option value={varItem.object} selected>{varItem.object}</option> -->
+                                                    <template for:each={availableObjects} for:item="obj">
+                                                        <option key={obj.value} value={obj.value} class="body-field-option">
+                                                            {obj.label}
+                                                        </option>
+                                                    </template>
+                                                </select>
+                                            </div>
 
                                             <template for:each={computedVariables} for:item="varItem" for:index="index">
                                                 <div key={varItem.id} class="true-div">
                                                     <p class="var">{varItem.index}</p>
                                                     
-                                                    <select class="object-dropdown dropdown">
-                                                        <option value={varItem.object} selected>{varItem.object}</option>
-                                                    </select>
-
                                                     <select 
                                                         class="field-dropdown field-body-dd dropdown" 
                                                         data-id={varItem.id} 
