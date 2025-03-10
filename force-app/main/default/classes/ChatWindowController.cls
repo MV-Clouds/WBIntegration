@@ -270,19 +270,26 @@ public with sharing class ChatWindowController {
             if(templates.size() > 0 && templates[0].Template_Variable__c>0){
                 Template__c template= templates[0];
                 Set<String> fieldSelectionCause = new Set<String>();
-                for(Template_Variable__c tv: template.WB_Template_Variables__r){
-                    if(tv.Object_Name__c == 'Contact'){
+                for (Template_Variable__c tv : template.WB_Template_Variables__r) {
+                    if (tv.Object_Name__c == objectApiName) {
+                        // If the object matches the queried object, add only the field name
                         fieldSelectionCause.add(tv.Field_Name__c);
-                    }else{
-                        fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
+                    } else {
+                        try {
+                            // Check if the object supports relationships before adding related fields
+                            fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
+                        } catch (Exception ex) {
+                            System.debug('Invalid relationship: ' + tv.Object_Name__c + ' for ' + objectApiName);
+                        }
                     }
                 }
+                
                 if(fieldSelectionCause.size() < 1){
                     templateData.put('template', templates[0]);
                     return templateData;
                 }
 
-                String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM ' + objectApiName + ' WHERE Id =:contactId';
+                String query = 'SELECT ' + String.join(fieldSelectionCause, ', ') + ' FROM ' + objectApiName + ' WHERE Id =:contactId';
                 List<sObject> records = Database.query(String.escapeSingleQuotes(query));
                 List<Object> headerVariables = new List<Object>();
                 List<Object> bodyVariables = new List<Object>();
@@ -290,10 +297,18 @@ public with sharing class ChatWindowController {
                     sObject record = records[0];
                     for (Template_Variable__c tv: template.WB_Template_Variables__r) {
                         Object valueToReplace = '';
-                        if(tv.Object_Name__c == 'Contact'){
-                            valueToReplace = record.get(tv.Field_Name__c);
-                        }else{
-                            valueToReplace = record.getSObject(tv.Object_Name__c)!=null ? record.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
+                        if (tv.Object_Name__c == objectApiName) {  
+                            // If the object matches the queried object (Lead, Contact, etc.), get the field directly  
+                            valueToReplace = record.get(tv.Field_Name__c);  
+                        } else {  
+                            // Check if the object supports relationships before querying related fields  
+                            try {  
+                                SObject relatedRecord = record.getSObject(tv.Object_Name__c);  
+                                valueToReplace = (relatedRecord != null) ? relatedRecord.get(tv.Field_Name__c) : null;  
+                            } catch (Exception ex) {  
+                                System.debug('Invalid relationship: ' + tv.Object_Name__c + ' for ' + objectApiName);  
+                                valueToReplace = null;  
+                            }  
                         }
                         if (tv.Type__c == 'Header') {
                             headerVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
