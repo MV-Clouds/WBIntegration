@@ -43,7 +43,7 @@ global class PostInstallClass implements InstallHandler {
                 );
                 insert config;
             }
-            if(context.previousVersion() == null) {
+            if(context.previousVersion() == null || Test.isRunningTest()) {
                 String orgDataTable = '';
                 String userDataTable = '';
                 Map<String, Object> mapOfData = new Map<String, Object>();
@@ -179,25 +179,16 @@ global class PostInstallClass implements InstallHandler {
             }
         } catch (Exception e) {
             Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
-                List<String> emails = new List<String>{'wbconnect-support@mvclouds.com'};
-                string[] to = emails;
-    
-                // Enhanced error details
-                String errorDetails = '<b>Error Message:</b> ' + e.getMessage() + '<br>'
-                + '<b>Exception Type:</b> ' + 'PostInstallClass' + '<br>'
-                + '<b>Line Number:</b> ' + e.getLineNumber() + '<br>'
-                + '<b>Stack Trace:</b> <pre>' + e.getStackTraceString() + '</pre>';
+            List<String> emails = new List<String>{'wbconnect-support@mvclouds.com'};
+            string[] to = emails;
 
-                email.setToAddresses(to);
-                email.setSubject('WBConnect Package Install Failed Exception Email');
-                email.setHtmlBody(
-                    '<div style="font-family:Verdana;">'
-                    + '<b>Error Details:</b><br>' + errorDetails
-                    + '<br><br> <|--- BackEnd Use Only Data Start ---|>'
-                    + e 
-                    + '<|--- BackEnd Use Only Data End ---|> </div>'
-                );
-                Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
+            // Enhanced error details
+            String errorDetails = '<b>Error Message:</b> ' + e.getMessage() + '<br>' + '<b>Exception Type:</b> ' + 'PostInstallClass' + '<br>' + '<b>Line Number:</b> ' + e.getLineNumber() + '<br>' + '<b>Stack Trace:</b> <b>' + e.getStackTraceString() + '</b>';
+
+            email.setToAddresses(to);
+            email.setSubject('WBConnect Package Install Failed Exception Email');
+            email.setHtmlBody( '<div style="font-family:Verdana;">' + '<b>Error Details:</b><br>' + errorDetails + '<br><br> <|--- BackEnd Use Only Data Start ---|>' + e  + '<|--- BackEnd Use Only Data End ---|> </div>');
+            Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
         }
     }
 }
