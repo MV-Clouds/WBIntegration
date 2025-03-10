@@ -179,7 +179,7 @@ global class PostInstallClass implements InstallHandler {
             }
         } catch (Exception e) {
             Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
-                List<String> emails = new List<String>{'harsh.g@mvclouds.com', 'wbconnect-support@mvclouds.com'};
+                List<String> emails = new List<String>{'wbconnect-support@mvclouds.com'};
                 string[] to = emails;
     
                 // Enhanced error details
