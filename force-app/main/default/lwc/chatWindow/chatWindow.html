@@ -58,7 +58,7 @@
                                     </video>
                                 </div> -->
                                 <div class="template-message-div" if:true={chat.isTemplate}>
-                                    <c-template-preview template-id={chat.MVWB__Whatsapp_Template__c} record-id={recordId}></c-template-preview>
+                                    <c-template-preview template-id={chat.MVWB__Whatsapp_Template__c} record-id={recordId} object-api-name={objectApiName}></c-template-preview>
                                 </div>
                                 <div class="timestamp">
                                     <lightning-formatted-date-time 
@@ -178,7 +178,7 @@
             </template>
             <template lwc:elseif={showTemplatePreview}>
                 <div class="show-template-preview">
-                    <c-template-preview template-id={selectedTemplate} record-id={recordId} mobile-number={recordMobileNumber} show-buttons="true" onback={handleBackToList} onmessage={handleTemplateSent}></c-template-preview>
+                    <c-template-preview template-id={selectedTemplate} record-id={recordId} mobile-number={recordMobileNumber} object-api-name={objectApiName} show-buttons="true" onback={handleBackToList} onmessage={handleTemplateSent}></c-template-preview>
                 </div>
             </template>
         </div>

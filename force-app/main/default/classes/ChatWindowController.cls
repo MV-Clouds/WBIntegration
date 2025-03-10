@@ -53,7 +53,25 @@ public with sharing class ChatWindowController {
             sObject recordData = Database.query(query);
             String phoneNumber = (String) recordData.get('Phone');
             chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, Phone__c FROM Chat__c WHERE Phone__c =:phoneNumber WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
-            templates = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
+            //templates = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
+            // Step 1: Get template IDs with matching child variables
+            Set<Id> matchingTemplateIds = new Set<Id>();
+            for (Template_Variable__c tv : [SELECT Template__c FROM Template_Variable__c WHERE Object_Name__c = :objectApiName]) {
+                matchingTemplateIds.add(tv.Template__c);
+            }
+
+            // Step 2: Fetch templates with matching child variables
+            if (!matchingTemplateIds.isEmpty()) {
+                templates.addAll(
+                    [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' AND Id IN :matchingTemplateIds WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC
+                ]);
+            }
+
+            // Step 3: Fetch templates that have **no** child variables
+            List<Template__c> templatesWithoutVariables = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' AND Id NOT IN (SELECT Template__c FROM Template_Variable__c) WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
+
+            // Step 4: Combine results
+            templates.addAll(templatesWithoutVariables);
 
             combinedData.put('chats', chats);
             combinedData.put('theme', theme);
@@ -266,23 +284,52 @@ public with sharing class ChatWindowController {
         try {
             Map<String, Object> templateData = new Map<String, Object>();
             List<Template__c> templates = new List<Template__c>();
-            templates = [SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name asc) FROM Template__c WHERE Id =: templateId AND Id IN (SELECT Template__c FROM Template_Variable__c WHERE Object_Name__c = :objectApiName) WITH SECURITY_ENFORCED];
+            //templates = [SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name asc) FROM Template__c WHERE Id =: templateId AND Id IN (SELECT Template__c FROM Template_Variable__c WHERE Object_Name__c = :objectApiName) WITH SECURITY_ENFORCED];
+            
+            // Fetch templates with matching child variables
+            Set<Id> matchingTemplateIds = new Set<Id>();
+            for (Template_Variable__c tv : [SELECT Template__c FROM Template_Variable__c WHERE Object_Name__c = :objectApiName]) {
+                matchingTemplateIds.add(tv.Template__c);
+            }
+
+            // Fetch template details
+            if (!matchingTemplateIds.isEmpty()) {
+                templates.addAll([
+                    SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
+                        (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId AND Id IN :matchingTemplateIds WITH SECURITY_ENFORCED
+                ]);
+            }
+
+            // Fetch templates without child variables
+            List<Template__c> templatesWithoutVariables = [
+                SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
+                    (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED
+            ];
+            templates.addAll(templatesWithoutVariables);
+
             if(templates.size() > 0 && templates[0].Template_Variable__c>0){
                 Template__c template= templates[0];
                 Set<String> fieldSelectionCause = new Set<String>();
-                for(Template_Variable__c tv: template.WB_Template_Variables__r){
-                    if(tv.Object_Name__c == 'Contact'){
+                for (Template_Variable__c tv : template.WB_Template_Variables__r) {
+                    if (tv.Object_Name__c == objectApiName) {
+                        // If the object matches the queried object, add only the field name
                         fieldSelectionCause.add(tv.Field_Name__c);
-                    }else{
-                        fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
+                    } else {
+                        try {
+                            // Check if the object supports relationships before adding related fields
+                            fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
+                        } catch (Exception ex) {
+                            System.debug('Invalid relationship: ' + tv.Object_Name__c + ' for ' + objectApiName);
+                        }
                     }
                 }
+                
                 if(fieldSelectionCause.size() < 1){
                     templateData.put('template', templates[0]);
                     return templateData;
                 }
 
-                String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM ' + objectApiName + ' WHERE Id =:contactId';
+                String query = 'SELECT ' + String.join(fieldSelectionCause, ', ') + ' FROM ' + objectApiName + ' WHERE Id =:contactId';
                 List<sObject> records = Database.query(String.escapeSingleQuotes(query));
                 List<Object> headerVariables = new List<Object>();
                 List<Object> bodyVariables = new List<Object>();
@@ -290,10 +337,18 @@ public with sharing class ChatWindowController {
                     sObject record = records[0];
                     for (Template_Variable__c tv: template.WB_Template_Variables__r) {
                         Object valueToReplace = '';
-                        if(tv.Object_Name__c == 'Contact'){
-                            valueToReplace = record.get(tv.Field_Name__c);
-                        }else{
-                            valueToReplace = record.getSObject(tv.Object_Name__c)!=null ? record.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
+                        if (tv.Object_Name__c == objectApiName) {  
+                            // If the object matches the queried object (Lead, Contact, etc.), get the field directly  
+                            valueToReplace = record.get(tv.Field_Name__c);  
+                        } else {  
+                            // Check if the object supports relationships before querying related fields  
+                            try {  
+                                SObject relatedRecord = record.getSObject(tv.Object_Name__c);  
+                                valueToReplace = (relatedRecord != null) ? relatedRecord.get(tv.Field_Name__c) : null;  
+                            } catch (Exception ex) {  
+                                System.debug('Invalid relationship: ' + tv.Object_Name__c + ' for ' + objectApiName);  
+                                valueToReplace = null;  
+                            }  
                         }
                         if (tv.Type__c == 'Header') {
                             headerVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
@@ -307,11 +362,14 @@ public with sharing class ChatWindowController {
                 templateData.put('template', template);
                 templateData.put('headerParams', headerVariables);
                 templateData.put('bodyParams', bodyVariables);
-
+                templateData.put('template', templates[0]);
                 return templateData;
+            } else if (templates.size() > 0 && templates[0].Template_Variable__c < 1){
+                templateData.put('template', templates[0]);
+                return templateData;
+            } else {
+                return null;
             }
-            templateData.put('template', templates[0]);
-            return templateData;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
         }
