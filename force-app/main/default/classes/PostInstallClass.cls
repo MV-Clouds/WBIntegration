@@ -90,26 +90,27 @@ global class PostInstallClass implements InstallHandler {
                     User u = users[0];
                     Address address = u.Address;
                     String addressString = '';
-            
-                    if (address.getStreet() != null) {
-                        addressString += address.getStreet() + ', ';
+                    
+                    if(address != null){
+                        if (address.getStreet() != null) {
+                            addressString += address.getStreet() + ', ';
+                        }
+                        if (address.getCity() != null) {
+                            addressString += address.getCity() + ', ';
+                        }
+                        if (address.getState() != null) {
+                            addressString += address.getState() + ', ';
+                        }
+                        if (address.getPostalCode() != null) {
+                            addressString += address.getPostalCode() + ', ';
+                        }
+                        if (address.getCountry() != null) {
+                            addressString += address.getCountry();
+                        }
+                        if (addressString.endsWith(', ')) {
+                            addressString = addressString.substring(0, addressString.length() - 2);
+                        }
                     }
-                    if (address.getCity() != null) {
-                        addressString += address.getCity() + ', ';
-                    }
-                    if (address.getState() != null) {
-                        addressString += address.getState() + ', ';
-                    }
-                    if (address.getPostalCode() != null) {
-                        addressString += address.getPostalCode() + ', ';
-                    }
-                    if (address.getCountry() != null) {
-                        addressString += address.getCountry();
-                    }
-                    if (addressString.endsWith(', ')) {
-                        addressString = addressString.substring(0, addressString.length() - 2);
-                    }
-    
     
                     mapOfData.put('User_Id__c', u.Id);
                     mapOfData.put('Username__c', u.Username);
