@@ -167,14 +167,32 @@ global without sharing class WhatsAppWebhook{
 
                 contact = contacts[0];
             } else{
-                Lead Con = new Lead();
-                Map<String, Object> profile = (Map<String,Object>) sender.get('profile');
-                Con.LastName = (String) profile.get('name');
-                Con.Phone = (String) senderId;
-                Con.Status = 'Open - Not Contacted';
-                Con.Company = (String) profile.get('name');
-                insert Con;
-                contact = Con;
+                Lead newLead = new Lead();
+                Map<String, Object> profile = (Map<String, Object>) sender.get('profile');
+
+                // Always assign LastName and Phone and Company
+                newLead.LastName = (String) profile.get('name');
+                newLead.Phone = (String) senderId;
+                newLead.Company = (String) profile.get('name');
+
+                // Describe Lead fields to find required ones
+                Map<String, Schema.SObjectField> leadFields = Schema.getGlobalDescribe().get('Lead').getDescribe().fields.getMap();
+
+                for (String fieldName : leadFields.keySet()) {
+                    Schema.DescribeFieldResult fieldDesc = leadFields.get(fieldName).getDescribe();
+
+                    // Check if the field is required and not already set
+                    if (fieldDesc.isNillable() == false && fieldDesc.isCreateable() && fieldName != 'LastName' && fieldName != 'Phone') {
+                        Object defaultValue = fieldDesc.getDefaultValue(); // Get default value
+                        
+                        if (defaultValue != null) {
+                            newLead.put(fieldName, defaultValue); // Assign default value
+                        }
+                    }
+                }
+
+                insert newLead;
+                contact = newLead;
             }
             
 
@@ -288,6 +306,27 @@ global without sharing class WhatsAppWebhook{
                         whatsappChat.WhatsAppContextMessageID__c = contextId;
                     }
                     whatsappChat.Message_Type__c = 'text';
+                }
+
+                // Rachit - WP Flow changes
+                if (messageType.equalsIgnoreCase('interactive')) {
+                    Map<String, Object> interactive = (Map<String, Object>)message.get('interactive');
+                    System.debug('interactive: ' + interactive);
+                    if (interactive != null) { 
+                        String interactiveType = (String)interactive.get('type');
+                        if (interactiveType == 'nfm_reply') {
+                            Map<String, Object> nfmReply = (Map<String, Object>)interactive.get('nfm_reply');
+                            System.debug('nfmReply : ' + nfmReply);
+                            if (nfmReply != null) { 
+                                String responseJson = (String)nfmReply.get('response_json');
+                                System.debug('responseJson: ' + responseJson);
+                                if(responseJson != null){
+                                    whatsappChat.Flow_Response_JSON__c = responseJson;
+                                }
+                            }
+                        }
+                        whatsappChat.Message_Type__c = 'interactive';
+                    }
                 }
             }
             whatsappChat.Last_Interaction_Date__c = System.now();
