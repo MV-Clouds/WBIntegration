@@ -92,7 +92,7 @@ export default class ChatWindow extends LightningElement {
             if(this.pageRef){
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
-            console.log('recordId ', this.recordId, ' objectAPIName', this.objectApiName);
+            // console.log('recordId ', this.recordId, ' objectAPIName', this.objectApiName);
             this.configureHeight();
             this.getInitialData();
             this.generateEmojiCategories();
