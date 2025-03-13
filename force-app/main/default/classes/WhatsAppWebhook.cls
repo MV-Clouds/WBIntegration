@@ -171,6 +171,7 @@ global without sharing class WhatsAppWebhook{
                 newLead.Phone = (String) senderId;
                 newLead.Company = senderName;
                 newLead.Email = 'client@whatsapp.rabdan';
+                newLead.Status = 'New';
                 newLead.put('Lead_Type__c', 'WhatsApp');
                 insert newLead;
                 contact = newLead;
