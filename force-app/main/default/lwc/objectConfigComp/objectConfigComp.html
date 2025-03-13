@@ -1,0 +1,64 @@
+<template>
+    <lightning-card title="Object Configuration">
+        <div class="slds-m-around_medium">
+            <lightning-combobox 
+                label="Select Object"
+                value={selectedObject}
+                options={objectOptions}
+                onchange={handleObjectChange}>
+            </lightning-combobox>
+        </div>
+
+        <div class="slds-m-around_medium">
+            <table class="slds-table slds-table_bordered">
+                <thead>
+                    <tr>
+                        <th>Field Name (API)</th>
+                        <th>Default Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={requiredFields} for:item="field">
+                        <tr key={field.apiName}>
+                            <td>{field.apiName}</td>
+                            <td>
+                                <template if:true={field.isString}>
+                                    <lightning-input type="text" data-field={field.apiName} value={field.value} onchange={handleInputChange}></lightning-input>
+                                </template>
+
+                                <template if:true={field.isNumber}>
+                                    <lightning-input type="number" data-field={field.apiName} value={field.value} onchange={handleInputChange}></lightning-input>
+                                </template>
+
+                                <template if:true={field.isDate}>
+                                    <lightning-input type="date" data-field={field.apiName} value={field.value} onchange={handleInputChange}></lightning-input>
+                                </template>
+
+                                <!-- <template if:true={field.isBoolean}>
+                                    <lightning-checkbox data-field={field.apiName} checked={field.value} onchange={handleInputChange}></lightning-checkbox>
+                                </template> -->
+
+                                <template if:true={field.isTextArea}>
+                                    <lightning-textarea data-field={field.apiName} value={field.value} onchange={handleInputChange}></lightning-textarea>
+                                </template>
+
+                                <template if:true={field.isPicklist}>
+                                    <lightning-combobox
+                                        data-field={field.apiName}
+                                        value={field.value}
+                                        options={field.picklistValues}
+                                        onchange={handleInputChange}>
+                                    </lightning-combobox>
+                                </template>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="slds-m-around_medium">
+            <lightning-button label="Save Configuration" onclick={handleSave} variant="brand"></lightning-button>
+        </div>
+    </lightning-card>
+</template>
