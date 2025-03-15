@@ -1,7 +1,15 @@
 <template>
     <div class="main-container">
-        <div class="heading">
-            <p class="txt">Object Configuration</p>
+        <div class="heading slds-grid slds-grid_align-spread">
+            <div class="slds-col"></div> 
+            <h1 class="slds-align_absolute-center txt">Object Configuration</h1>
+            <div class="slds-col slds-p-right--large">
+                Help &nbsp;
+                <lightning-helptext 
+                    content="Choose a Salesforce object and define default values for its required fields to allow WBConnect to automatically create a record for message details when an unknown WhatsApp number messages to your linked business number."
+                    class="slds-float_right"
+                ></lightning-helptext>
+            </div>
         </div>
 
         <template if:true={isLoading}>
