@@ -27,6 +27,7 @@
                     <lightning-button label="Edit Configuration" onclick={handleEdit} variant="brand"></lightning-button>
                 </div>
             </div>
+
             <div class="slds-p-around--medium datatable">
                 <div class="table-container">
                     <table class="slds-table">
@@ -86,6 +87,39 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="slds-p-around--medium datatable">
+                <table class="slds-table table-container">
+                    <thead>
+                        <tr class="tablerow">
+                            <th class="tableHead" scope="col">
+                                <div class="slds-truncate">
+                                    Phone Field for Managing WhatsApp Messages
+                                </div>
+                            </th>
+                            <th class="tableHead" scope="col"></th>
+                            <th class="tableHead" scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="slds-table_bordered tablerow">
+                                <span>Selected Phone Field &nbsp;</span>
+                                <lightning-helptext content="Select Phone Field to Use for WBConnect for Receiving Incoming WhatsApp Messages"></lightning-helptext>
+                            </td>
+                            <td>
+                                <template if:true={phoneFields}>
+                                    {selectedPhoneFieldLabel} ({selectedPhoneFieldVal})
+                                </template>
+                                <template if:false={phoneFields}>
+                                    <p>No Phone fields available for the selected object.</p>
+                                </template>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </template>
 
@@ -177,6 +211,51 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="slds-p-around--medium datatable">
+                <table class="slds-table table-container">
+                    <thead>
+                        <tr class="tablerow">
+                            <th class="tableHead" scope="col">
+                                <div class="slds-truncate">
+                                    Phone Fields Available for Selection
+                                </div>
+                            </th>
+                            <th class="tableHead" scope="col"></th>
+                            <th class="tableHead" scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="slds-table_bordered tablerow">
+                                <span>Select Phone Field &nbsp;</span>
+                                <lightning-helptext content="Select Phone Field to Use for WBConnect for Receiving Incoming Messages"></lightning-helptext>
+                            </td>
+                            <td>
+                                <template if:true={phoneFields}>
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control radio-stack">
+                                            <template for:each={phoneFields} for:item="field">
+                                                <div key={field.value} class="slds-radio">
+                                                    <input type="radio" id={field.value} name="phoneField" value={field.value} checked={field.isSelected} onchange={handleSelectionChange}/>
+                                                    <label class="slds-radio__label" for={field.value}>
+                                                        <span class="slds-radio_faux"></span>
+                                                        <span class="slds-form-element__label"> &nbsp; {field.label} ({field.value})</span>
+                                                    </label>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template if:false={phoneFields}>
+                                    <p>No Phone fields available for the selected object.</p>
+                                </template>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             
             <div class="slds-m-around_medium slds-text-align--center button-container">

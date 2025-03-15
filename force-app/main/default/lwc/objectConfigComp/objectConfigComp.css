@@ -46,6 +46,10 @@ th, td {
     background: transparent;
 }
 
+.slds-form-element__icon {
+    padding-top: unset !important;
+}
+
 .table-container {
     border-radius: 0.4rem; 
     overflow: visible !important; 
@@ -79,6 +83,15 @@ tr{
     text-align: center;
 }
 
+.tablerow {
+    text-align: center !important;
+}
+
+.radio-stack .slds-radio {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
 .tableData {
     height: 10%;
     padding: 10px;
@@ -87,6 +100,7 @@ tr{
     overflow: visible;
     text-overflow: ellipsis;
     white-space: nowrap;
+    border: none;
 }
 
 .truncate-name{
@@ -107,11 +121,5 @@ tr:nth-child(even) {
 
 .slds-button{
     background-color: #0077B6;
-    overflow: visible;
-}
-
-.custom-lookup{
-    margin-top: 0.4rem;
-    width: 100%;
     overflow: visible;
 }

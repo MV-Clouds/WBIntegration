@@ -9,6 +9,9 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 export default class ObjectConfigComp extends LightningElement {
     @track selectedObject = 'Contact';
     @track requiredFields = [];
+    @track phoneFields = [];
+    @track selectedPhoneFieldVal = '';
+    @track selectedPhoneFieldLabel = '';
     @track objectOptions = [];
     @track isEditPage = false;
     @track isLoading = false;
@@ -82,16 +85,41 @@ export default class ObjectConfigComp extends LightningElement {
             this.isLoading = true;
             getRequiredFields({ objectName: this.selectedObject })
                 .then(data => {
-                    this.requiredFields = data.map(field => ({
+                    console.log({data});
+
+                    this.phoneFields = data[0]?.phoneFields.map(field => {
+                        return {
+                            ...field,
+                            isSelected: false
+                        };
+                    });
+                    this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
+                    const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
+                    if (selectedField) {
+                        this.selectedPhoneFieldVal = selectedField.value;
+                        this.selectedPhoneFieldLabel = selectedField.label;
+                        // Update isSelected based on selectedPhoneFieldVal
+                        this.phoneFields = this.phoneFields.map(field => {
+                            return {
+                                ...field,
+                                isSelected: field.value === this.selectedPhoneFieldVal
+                            };
+                        });
+                    } else {
+                        this.selectedPhoneFieldVal = '';
+                        this.selectedPhoneFieldLabel = '';
+                    }
+
+                    this.requiredFields = data[0].requiredFields.map(field => ({
                         apiName: field.name,
                         label: field.label,
                         type: this.capitalizeFirstLetter(field.type),
                         value: field.type === 'BOOLEAN' 
                                 ? (savedFieldValues[field.name] !== undefined ? savedFieldValues[field.name] : false)
                                 : field.type === 'DATE' 
-                                    ? (savedFieldValues[field.name] || field.value || today)
+                                    ? (savedFieldValues[field.name] || field.value || new Date().toISOString().split('T')[0])
                                     : field.type === 'DATETIME' 
-                                        ? (savedFieldValues[field.name] || field.value || now)
+                                        ? (savedFieldValues[field.name] || field.value || new Date().toISOString())
                                         : field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY'
                                             ? (savedFieldValues[field.name] || field.value || 0) 
                                             : (savedFieldValues[field.name] || field.value || ''),
@@ -107,7 +135,6 @@ export default class ObjectConfigComp extends LightningElement {
                         isReference: field.type === 'REFERENCE',
                         isTextArea: field.type === 'TEXTAREA'
                     }));
-                    console.log(this.requiredFields);
                     this.populateReferenceNames();
                 })
                 .catch(error => {
@@ -213,7 +240,29 @@ export default class ObjectConfigComp extends LightningElement {
                 );
             }
         } catch (error) {
-            console.log('Error in record selection : ' ,  error);
+            console.error('Error in record selection : ' ,  error);
+        }
+    }
+
+    handleSelectionChange(event) {
+        try {
+            this.selectedPhoneFieldVal = event.target.value;
+    
+            const selectedField = this.phoneFields.find(field => field.value === selectedValue);
+            if (selectedField) {
+                this.selectedPhoneFieldVal = selectedField.value;
+                this.selectedPhoneFieldLabel = selectedField.label;
+                
+                // Update isSelected for all fields
+                this.phoneFields = this.phoneFields.map(field => {
+                    return {
+                        ...field,
+                        isSelected: field.value === this.selectedPhoneFieldVal
+                    };
+                });
+            }
+        } catch (error) {
+            console.error('Error in selection change : ' ,  error);
         }
     }
 
@@ -244,6 +293,7 @@ export default class ObjectConfigComp extends LightningElement {
             this.isLoading = true;
             const jsonData = JSON.stringify({
                 objectApiName: this.selectedObject,
+                phoneField: this.selectedPhoneFieldVal,
                 requiredFieds: this.requiredFields.map(field => ({
                     name: field.apiName,
                     value: field.value

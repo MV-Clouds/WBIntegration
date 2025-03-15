@@ -41,12 +41,20 @@ public with sharing class ObjectConfigController {
     public static List<Map<String, Object>> getRequiredFields(String objectName) {
         try {
             List<Map<String, Object>> requiredFields = new List<Map<String, Object>>();
+            List<Map<String, String>> phoneFields = new List<Map<String, String>>();
             
             Schema.DescribeSObjectResult objectDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe();
             Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
             
             for (Schema.SObjectField field : fieldMap.values()) {
                 Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+
+                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible()) {
+                    Map<String, String> phoneFieldInfo = new Map<String, String>();
+                    phoneFieldInfo.put('label', fieldDescribe.getLabel());
+                    phoneFieldInfo.put('value', fieldDescribe.getName());
+                    phoneFields.add(phoneFieldInfo);
+                }
                 
                 // Skip fields that shouldn't be included
                 if (fieldDescribe.isNillable() || fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || 
@@ -93,8 +101,17 @@ public with sharing class ObjectConfigController {
     
                 requiredFields.add(fieldInfo);
             }
-    
-            return requiredFields;
+
+            // Create the final response structure
+            Map<String, Object> responseMap = new Map<String, Object>();
+            responseMap.put('phoneFields', phoneFields);
+            responseMap.put('requiredFields', requiredFields);
+            
+            // Wrap the response map in a list to match the desired format
+            List<Map<String, Object>> finalResponse = new List<Map<String, Object>>();
+            finalResponse.add(responseMap);
+            
+            return finalResponse;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ObjectConfigController', 'methodName' => 'getRequiredFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
