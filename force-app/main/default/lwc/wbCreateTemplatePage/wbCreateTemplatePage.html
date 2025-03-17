@@ -154,12 +154,9 @@
                                                         <div key={varItem.id} class="true-div">
                                                             <p class="var">{varItem.index}</p>
 
-                                                                <select class="object-dropdown dropdown" data-name="objectPicklist" data-id={varItem.Id} onchange={handleObjectChange} value={selectedObject}>
-                                                                    <!-- <option value={varItem.object} selected>{varItem.object}</option> -->
-                                                                    <template for:each={availableObjects} for:item="obj">
-                                                                        <option key={obj.value} value={obj.value} class="body-field-option">
-                                                                            {obj.label}
-                                                                        </option>
+                                                                <select class="slds-select" onchange={handleObjectChange}>
+                                                                    <template for:each={availableObjectsWithSelection} for:item="obj">
+                                                                        <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">{obj.label}</option>
                                                                     </template>
                                                                 </select>
                                                 
@@ -248,12 +245,10 @@
                                             
                                             <div class="true-div">
                                                 <p class="var">Select Object for merge fields :</p>
-                                                <select class="object-dropdown dropdown" data-name="objectPicklist" onchange={handleObjectChange} value={selectedObject}>
-                                                    <!-- <option value={varItem.object} selected>{varItem.object}</option> -->
-                                                    <template for:each={availableObjects} for:item="obj">
-                                                        <option key={obj.value} value={obj.value} class="body-field-option">
-                                                            {obj.label}
-                                                        </option>
+
+                                                <select class="object-dropdown dropdown" data-name="objectPicklist" onchange={handleObjectChange}>
+                                                    <template for:each={availableObjectsWithSelection} for:item="obj">
+                                                        <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">{obj.label}</option>
                                                     </template>
                                                 </select>
                                             </div>
