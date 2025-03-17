@@ -1,3 +1,18 @@
+/**
+* Class Name: ObjectConfigController
+* Test Class: 
+* @description: Used for handling object configuration for webhook class and chat window
+* Created Date: 12 Mar, 2025
+* Created By: Harsh Gandhi
+*--------------------------------------------------------------------------------
+* Last Modified By: Harsh Gandhi
+* Last Modified Date: 12 Mar, 2025
+* Last Modification Description: 
+*--------------------------------------------------------------------------------
+* Modification History:
+* Date Modified - Developer Name - Description
+* 17 Mar, 2025  - Harsh Gandhi - 
+**/
 public with sharing class ObjectConfigController {
     
     /*
@@ -34,7 +49,7 @@ public with sharing class ObjectConfigController {
     /*
     *********************************************************
     @description     : Fetch required fields for the selected object
-    @return          : List<Map<String, Object>> - return list of required and accessible fields for the selected object.
+    @return          : List<Map<String, Object>> - return list of required and phone fields for the selected object.
     ********************************************************
     */
     @AuraEnabled
@@ -42,6 +57,7 @@ public with sharing class ObjectConfigController {
         try {
             List<Map<String, Object>> requiredFields = new List<Map<String, Object>>();
             List<Map<String, String>> phoneFields = new List<Map<String, String>>();
+            List<Map<String, String>> textFields = new List<Map<String, String>>();
             
             Schema.DescribeSObjectResult objectDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe();
             Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
@@ -49,16 +65,24 @@ public with sharing class ObjectConfigController {
             for (Schema.SObjectField field : fieldMap.values()) {
                 Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
 
-                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible()) {
+                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isUpdateable()) {
                     Map<String, String> phoneFieldInfo = new Map<String, String>();
                     phoneFieldInfo.put('label', fieldDescribe.getLabel());
                     phoneFieldInfo.put('value', fieldDescribe.getName());
                     phoneFields.add(phoneFieldInfo);
                 }
+
+                // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
+                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isUpdateable()) {
+                    Map<String, String> textFieldInfo = new Map<String, String>();
+                    textFieldInfo.put('label', fieldDescribe.getLabel());
+                    textFieldInfo.put('value', fieldDescribe.getName());
+                    textFields.add(textFieldInfo);
+                }
                 
                 // Skip fields that shouldn't be included
                 if (fieldDescribe.isNillable() || fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || 
-                    !fieldDescribe.isCreateable() || !fieldDescribe.isUpdateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
+                    !fieldDescribe.isUpdateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
                     continue;
                 }
     
@@ -106,6 +130,7 @@ public with sharing class ObjectConfigController {
             Map<String, Object> responseMap = new Map<String, Object>();
             responseMap.put('phoneFields', phoneFields);
             responseMap.put('requiredFields', requiredFields);
+            responseMap.put('textFields', textFields);
             
             // Wrap the response map in a list to match the desired format
             List<Map<String, Object>> finalResponse = new List<Map<String, Object>>();
@@ -117,7 +142,57 @@ public with sharing class ObjectConfigController {
             return null;
         }
     }
- 
+    
+    /*
+    *********************************************************
+    @description     : Fetch required fields for the selected object
+    @return          : List<Map<String, Object>> - return list of required and phone fields for the selected object.
+    ********************************************************
+    */
+    @AuraEnabled
+    public static List<Map<String, Object>> getTextAndPhoneFields(String objectName) {
+        try {
+            List<Map<String, String>> phoneFields = new List<Map<String, String>>();
+            List<Map<String, String>> textFields = new List<Map<String, String>>();
+            
+            Schema.DescribeSObjectResult objectDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe();
+            Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
+            
+            for (Schema.SObjectField field : fieldMap.values()) {
+                Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+
+                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isUpdateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
+                    Map<String, String> phoneFieldInfo = new Map<String, String>();
+                    phoneFieldInfo.put('label', fieldDescribe.getLabel());
+                    phoneFieldInfo.put('value', fieldDescribe.getName());
+                    phoneFields.add(phoneFieldInfo);
+                }
+
+                // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
+                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isUpdateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
+                    Map<String, String> textFieldInfo = new Map<String, String>();
+                    textFieldInfo.put('label', fieldDescribe.getLabel());
+                    textFieldInfo.put('value', fieldDescribe.getName());
+                    textFields.add(textFieldInfo);
+                }
+            }
+
+            // Create the final response structure
+            Map<String, Object> responseMap = new Map<String, Object>();
+            responseMap.put('phoneFields', phoneFields);
+            responseMap.put('textFields', textFields);
+            
+            // Wrap the response map in a list to match the desired format
+            List<Map<String, Object>> finalResponse = new List<Map<String, Object>>();
+            finalResponse.add(responseMap);
+            
+            return finalResponse;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ObjectConfigController', 'methodName' => 'getRequiredFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            return null;
+        }
+    }
+
     /*
     *********************************************************
     @description     : Fetch saved configuration from Custom Metadata
@@ -125,14 +200,24 @@ public with sharing class ObjectConfigController {
     ********************************************************
     */
     @AuraEnabled
-    public static String getUserConfig() {
+    public static Map<String, String> getUserConfig() {
+        Map<String, String> configMap = new Map<String, String>();
         try {
-            List<Object_Config__mdt> config = [SELECT ObjectConfigInfo__c FROM Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
-            return config.size() != 0 ? config[0].ObjectConfigInfo__c : '{}';
+            List<Object_Config__mdt> config = [SELECT ObjectConfigInfo__c, ChatWindowConfigInfo__c FROM Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            if(config.size() > 0) {
+                configMap.put('ObjectConfigInfo', config[0].ObjectConfigInfo__c);
+                configMap.put('ChatWindowConfigInfo', config[0].ChatWindowConfigInfo__c);
+            } else {
+                configMap.put('ObjectConfigInfo', '{}');
+                configMap.put('ChatWindowConfigInfo', '{}');
+            }
+            return configMap;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ObjectConfigController', 'methodName' => 'getUserConfig', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-            return '{}';
+            configMap.put('ObjectConfigInfo', '{}');
+            configMap.put('ChatWindowConfigInfo', '{}');
         }
+        return configMap;
     }
 
     /*
@@ -142,7 +227,7 @@ public with sharing class ObjectConfigController {
     ********************************************************
     */
     @AuraEnabled
-    public static String saveUserConfig(String jsonData) {
+    public static String saveUserConfig(String jsonData, String jsonDataForChat) {
         try {
             List<Object_Config__mdt> config = [SELECT MasterLabel, DeveloperName FROM Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
             Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
@@ -154,10 +239,19 @@ public with sharing class ObjectConfigController {
                 mdata.label = 'objectConfigInfo';
             }
 
-            Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
-            instance1.field = 'ObjectConfigInfo__c';
-            instance1.value = jsonData;
-            mdata.values.add(instance1);
+            if(jsonData != null){
+                Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
+                instance1.field = 'ObjectConfigInfo__c';
+                instance1.value = jsonData;
+                mdata.values.add(instance1);
+            }
+
+            if(jsonDataForChat != null){
+                Metadata.CustomMetadataValue instance2 = new Metadata.CustomMetadataValue();
+                instance2.field = 'ChatWindowConfigInfo__c';
+                instance2.value = jsonDataForChat;
+                mdata.values.add(instance2);
+            }
 
             Metadata.DeployContainer container = new Metadata.DeployContainer();
             container.addMetadata(mdata);
@@ -171,6 +265,12 @@ public with sharing class ObjectConfigController {
         }
     }
     
+    /*
+    *********************************************************
+    @description     : Get record name from record ID.
+    @return          : String - return name of the record.
+    ********************************************************
+    */
     @AuraEnabled
     public static string getRecordName(String recordId, String objectApiName){
         try {

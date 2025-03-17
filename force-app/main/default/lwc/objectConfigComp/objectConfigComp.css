@@ -123,3 +123,7 @@ tr:nth-child(even) {
     background-color: #0077B6;
     overflow: visible;
 }
+
+.alignCenter {
+    text-align: center;
+}

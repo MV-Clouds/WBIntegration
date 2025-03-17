@@ -1,5 +1,6 @@
 import { LightningElement, track, wire } from 'lwc';
 import getRequiredFields from '@salesforce/apex/ObjectConfigController.getRequiredFields';
+import getTextAndPhoneFields from '@salesforce/apex/ObjectConfigController.getTextAndPhoneFields';
 import getUserConfig from '@salesforce/apex/ObjectConfigController.getUserConfig';
 import saveUserConfig from '@salesforce/apex/ObjectConfigController.saveUserConfig';
 import getObjectsWithPhoneField from '@salesforce/apex/ObjectConfigController.getObjectsWithPhoneField';
@@ -10,16 +11,22 @@ export default class ObjectConfigComp extends LightningElement {
     @track selectedObject = 'Contact';
     @track requiredFields = [];
     @track phoneFields = [];
-    @track selectedPhoneFieldVal = '';
-    @track selectedPhoneFieldLabel = '';
+    @track phoneFieldsForChatConfig = []
+    @track textFields = [];
     @track objectOptions = [];
-    @track isEditPage = false;
-    @track isLoading = false;
+    @track availableObjectOptions = [];
+    @track chatWindowRows = [];
+    @track chatConfigCounter = 0;
+    selectedPhoneFieldVal = '';
+    selectedPhoneFieldLabel = '';
+    activeSectionName = 'webhookConfig'; // Default open section
+    isWebhookConfigEdit = false;
+    isChatWindowConfigEdit = false;
+    isLoading = false;
 
     // Fetch saved metadata on load
     connectedCallback() {
         this.loadSavedValues();
-        // this.fetchObjects();
     }
 
     // Load previously saved configuration
@@ -28,21 +35,52 @@ export default class ObjectConfigComp extends LightningElement {
             this.isLoading = true;
             getUserConfig()
                 .then(data => {
-                    if(data != '{}'){
-                        this.isEditPage = false;
-                        let parsedData = JSON.parse(data);
-                        this.selectedObject = this.capitalizeFirstLetter(parsedData.objectApiName) || 'Contact';
+                    const config = JSON.parse(data.ObjectConfigInfo);
+                    if(config != '{}'){
+                        this.selectedObject = this.capitalizeFirstLetter(config.objectApiName) || 'Contact';
                         
                         // Store field values in an object
-                        let savedFieldValues = parsedData.requiredFieds?.reduce((acc, field) => {
+                        let savedFieldValues = config.requiredFieds?.reduce((acc, field) => {
                             acc[field.name] = field.value;
                             return acc;
                         }, {}) || {};
         
                         this.loadRequiredFields(savedFieldValues);
                     } else {
-                        this.isEditPage = true;
+                        this.isWebhookConfigEdit = true;
                     }
+
+                    const chatConfig = JSON.parse(data.ChatWindowConfigInfo);
+                    console.log(chatConfig);
+                    if(chatConfig != '{}'){
+                        this.chatWindowRows = Object.keys(chatConfig).map((objectName, index) => {
+                            console.log(objectName);
+                            console.log(index);
+                            console.log(chatConfig[objectName]);
+                            const row = {
+                                id: this.chatConfigCounter,
+                                selectedObject: objectName,
+                                selectedNameField: chatConfig[objectName].Name,
+                                selectedPhoneField: chatConfig[objectName].Phone,
+                                nameFieldOptions: [], // Will be populated after fetch
+                                phoneFieldOptions: [], // Will be populated after fetch
+                                objectOptions: [], // Row-specific options
+                                isNameFieldDisabled: false,
+                                isPhoneFieldDisabled: false
+                            };
+                            this.fetchFieldsForObject(row.id, objectName); // Fetch fields for pre-loaded rows
+                            this.chatConfigCounter++;
+                            return row;
+                        });
+                        this.updateRowObjectOptions();
+                        if (this.chatWindowRows.length === 0) {
+                            this.handleAddRow(); // Add one row if no config exists
+                        }
+                    } else {
+                        this.isChatWindowConfigEdit = true;
+                        this.handleAddRow();
+                    }
+
                 })
                 .catch(error => {
                     console.error('Error fetching saved values:', error);
@@ -67,6 +105,7 @@ export default class ObjectConfigComp extends LightningElement {
                         label: obj.label,  // Show friendly name
                         value: obj.value   // API name
                     }));
+                    this.availableObjectOptions = [...this.objectOptions];
                     if(this.requiredFields.length <= 0){
                         this.loadRequiredFields();
                     }
@@ -86,6 +125,8 @@ export default class ObjectConfigComp extends LightningElement {
             getRequiredFields({ objectName: this.selectedObject })
                 .then(data => {
                     console.log({data});
+
+                    this.textFields = data[0]?.textFields;
 
                     this.phoneFields = data[0]?.phoneFields.map(field => {
                         return {
@@ -109,8 +150,9 @@ export default class ObjectConfigComp extends LightningElement {
                         this.selectedPhoneFieldVal = '';
                         this.selectedPhoneFieldLabel = '';
                     }
+                    this.phoneFieldsForChatConfig = [...this.phoneFields];
 
-                    this.requiredFields = data[0].requiredFields.map(field => ({
+                    this.requiredFields = data[0]?.requiredFields.map(field => ({
                         apiName: field.name,
                         label: field.label,
                         type: this.capitalizeFirstLetter(field.type),
@@ -248,7 +290,7 @@ export default class ObjectConfigComp extends LightningElement {
         try {
             this.selectedPhoneFieldVal = event.target.value;
     
-            const selectedField = this.phoneFields.find(field => field.value === selectedValue);
+            const selectedField = this.phoneFields.find(field => field.value === this.selectedPhoneFieldVal);
             if (selectedField) {
                 this.selectedPhoneFieldVal = selectedField.value;
                 this.selectedPhoneFieldLabel = selectedField.label;
@@ -267,13 +309,29 @@ export default class ObjectConfigComp extends LightningElement {
     }
 
     handleEdit(){
-        this.isEditPage = true;
+        this.isWebhookConfigEdit = true;
+    }
+
+    handleEditChatConfig(){
+        this.isChatWindowConfigEdit = true;
     }
 
     handleCancel(){
         this.isLoading = true;
         this.loadSavedValues();
-        this.isEditPage = false;
+        this.isWebhookConfigEdit = false;
+        this.isChatWindowConfigEdit = false;
+    }
+
+    handleCancelChatConfig(){
+        this.isWebhookConfigEdit = false;
+        this.isChatWindowConfigEdit = false;
+    }
+
+    handleSectionToggle(event) {
+        console.log(event.detail);
+        const openSections = event.detail.openSections;
+        this.activeSectionName = openSections;
     }
 
     handleSave() {
@@ -296,16 +354,17 @@ export default class ObjectConfigComp extends LightningElement {
                 phoneField: this.selectedPhoneFieldVal,
                 requiredFieds: this.requiredFields.map(field => ({
                     name: field.apiName,
-                    value: field.value
+                    value: field.value,
+                    type: field.type
                 }))
             });
     
-            saveUserConfig({ jsonData })
+            saveUserConfig({ jsonData : jsonData })
                 .then(response => {
                     if(response == 'sucess'){
                         this.showToast('Success', 'Configuration saved successfully', 'success');
                         this.populateReferenceNames();
-                        this.isEditPage = false;
+                        this.isWebhookConfigEdit = false;
                     } else {
                         this.showToast('Error', response, 'error');
                     }
@@ -318,6 +377,225 @@ export default class ObjectConfigComp extends LightningElement {
                 });
         } catch (error) {
             console.error('Exception in saving configuration: ', error);
+        }
+    }
+
+    // Add a new row with preselected first available object, name, and phone
+    async handleAddRow() {
+        try {
+            const availableOptions = this.getAvailableObjectOptions();
+            const preselectedObject = availableOptions.length > 0 ? availableOptions[0].value : '';
+    
+            const newRow = {
+                id: this.chatConfigCounter++,
+                selectedObject: preselectedObject,
+                selectedNameField: '',
+                selectedPhoneField: '',
+                nameFieldOptions: [],
+                phoneFieldOptions: [],
+                objectOptions: [...this.availableObjectOptions],
+                isNameFieldDisabled: !preselectedObject,
+                isPhoneFieldDisabled: !preselectedObject
+            };
+    
+            this.chatWindowRows = [...this.chatWindowRows, newRow];
+    
+            if (preselectedObject) {
+                await this.fetchFieldsForObject(newRow.id, preselectedObject);
+                // Preselect first Name and Phone fields after fetching
+                this.chatWindowRows = this.chatWindowRows.map(row => {
+                    if (row.id === newRow.id) {
+                        return {
+                            ...row,
+                            selectedNameField: row.nameFieldOptions.length > 0 ? row.nameFieldOptions[0].value : '',
+                            selectedPhoneField: row.phoneFieldOptions.length > 0 ? row.phoneFieldOptions[0].value : ''
+                        };
+                    }
+                    return row;
+                });
+            }
+            this.updateRowObjectOptions(); // Update options for all rows
+            console.log(this.chatWindowRows);
+        } catch (error) {
+            console.error('Error in adding new row', error);
+        }
+    }
+
+    // Get available object options
+    updateRowObjectOptions() {
+        try {
+            const availableOptions = this.getAvailableObjectOptions();
+            this.chatWindowRows = this.chatWindowRows.map(row => {
+                const rowOptions = [
+                    { label: row.selectedObject, value: row.selectedObject }, // Include the selected object
+                    ...availableOptions.filter(opt => opt.value !== row.selectedObject) // Add remaining available options
+                ].filter(opt => opt.value); // Remove undefined/null options
+                return { ...row, objectOptions: rowOptions };
+            });
+            this.availableObjectOptions = availableOptions;
+        } catch (error) {
+            console.error('Error in row objct option selection : ' , error);
+        }
+    }
+
+    // Get available object options excluding selected objects
+    getAvailableObjectOptions() {
+        const selectedObjects = this.chatWindowRows.map(row => row.selectedObject).filter(obj => obj);
+        return this.objectOptions.filter(option => !selectedObjects.includes(option.value));
+    }
+
+    // Fetch fields for the selected object
+    async fetchFieldsForObject(rowId, objectName) {
+        try {
+            const result = await getTextAndPhoneFields({ objectName });
+            const data = result[0];
+            this.textFields = data.textFields || [];
+            this.phoneFieldsForChatConfig = data.phoneFields || [];
+
+            this.chatWindowRows = this.chatWindowRows.map(row => {
+                if (row.id === parseInt(rowId)) {
+                    return {
+                        ...row,
+                        nameFieldOptions: this.textFields.map(field => ({ label: field.label, value: field.value })),
+                        phoneFieldOptions: this.phoneFieldsForChatConfig.map(field => ({ label: `${field.label} (${field.value})`, value: field.value }))
+                    };
+                }
+                return row;
+            });
+        } catch (error) {
+            console.error('Error fetching fields:', error);
+        }
+    }
+
+    // Handle object selection
+    async handleObjectChange(event) {
+        try {
+            const rowId = event.target.dataset.rowId;
+            const selectedObject = event.target.value;
+    
+            this.chatWindowRows = this.chatWindowRows.map(row => {
+                if (row.id === parseInt(rowId)) {
+                    return {
+                        ...row,
+                        selectedObject,
+                        selectedNameField: '', // Reset until fetched
+                        selectedPhoneField: '', // Reset until fetched
+                        nameFieldOptions: [],
+                        phoneFieldOptions: [],
+                        isNameFieldDisabled: false,
+                        isPhoneFieldDisabled: false
+                    };
+                }
+                return row;
+            });
+    
+            if (selectedObject) {
+                await this.fetchFieldsForObject(rowId, selectedObject);
+                // Preselect first Name and Phone fields for this row only
+                this.chatWindowRows = this.chatWindowRows.map(row => {
+                    if (row.id === parseInt(rowId)) {
+                        return {
+                            ...row,
+                            selectedNameField: row.nameFieldOptions.length > 0 ? row.nameFieldOptions[0].value : '',
+                            selectedPhoneField: row.phoneFieldOptions.length > 0 ? row.phoneFieldOptions[0].value : ''
+                        };
+                    }
+                    return row;
+                });
+            }
+            this.updateRowObjectOptions();
+        } catch (error) {
+            console.error('Error in changing objects : ' , error);
+        }
+    }
+
+    // Handle Name field selection
+    handleNameFieldChange(event) {
+        try {
+            const rowId = event.target.dataset.rowId;
+            const selectedNameField = event.target.value;
+            this.chatWindowRows = this.chatWindowRows.map(row => {
+                if (row.id === parseInt(rowId)) {
+                    return { ...row, selectedNameField };
+                }
+                return row;
+            });
+            console.log(this.chatWindowRows);
+        } catch (error) {
+            console.error('Error in change Name picklist : ' , error);
+        }
+    }
+
+    // Handle Phone field selection
+    handlePhoneFieldChange(event) {
+        try {
+            const rowId = event.target.dataset.rowId;
+            const selectedPhoneField = event.target.value;
+            this.chatWindowRows = this.chatWindowRows.map(row => {
+                if (row.id === parseInt(rowId)) {
+                    return { ...row, selectedPhoneField };
+                }
+                return row;
+            });
+            console.log(this.chatWindowRows);
+        } catch (error) {
+            console.log('Error in changing Phone picklist : ' , error);
+        }
+    }
+
+    // Handle row removal
+    handleRemoveRow(event) {
+        try {
+            const rowId = event.target.dataset.rowId;
+            this.chatWindowRows = this.chatWindowRows.filter(row => row.id !== parseInt(rowId));
+            this.updateRowObjectOptions();
+            console.log(this.chatWindowRows);
+        } catch (error) {
+            console.error('Error in removing row : ', error);
+        }
+    }
+
+    // Save the configuration
+    async handleSaveChatWindowConfig() {
+        try {
+            // Validate all rows have required fields
+            const invalidRows = this.chatWindowRows.filter(row => 
+                !row.selectedObject || !row.selectedNameField || !row.selectedPhoneField
+            );
+
+            if (invalidRows.length > 0) {
+                this.showToast('Error', 'All rows must have an Object, Name, and Phone field selected.', 'error');
+                return; // Exit if validation fails
+            }
+            this.isLoading = true;
+            const config = {};
+            this.chatWindowRows.forEach(row => {
+                if (row.selectedObject && row.selectedNameField && row.selectedPhoneField) {
+                    config[row.selectedObject] = {
+                        Name: row.selectedNameField,
+                        Phone: row.selectedPhoneField
+                    };
+                }
+            });
+            const configJson = JSON.stringify(config);
+    
+            saveUserConfig({ jsonDataForChat : configJson })
+                .then(response => {
+                    if(response == 'sucess'){
+                        this.showToast('Success', 'Configuration saved successfully', 'success');
+                        this.isChatWindowConfigEdit = false;
+                    } else {
+                        this.showToast('Error', response, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving config:', error);
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                });
+        } catch (error) {
+            this.showToast('Error', 'Error saving configuration: ' + error.body.message, 'error');
         }
     }
 
