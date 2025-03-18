@@ -51,12 +51,8 @@ export default class ObjectConfigComp extends LightningElement {
                     }
 
                     const chatConfig = JSON.parse(data.ChatWindowConfigInfo);
-                    console.log(chatConfig);
                     if(chatConfig != '{}'){
-                        this.chatWindowRows = Object.keys(chatConfig).map((objectName, index) => {
-                            console.log(objectName);
-                            console.log(index);
-                            console.log(chatConfig[objectName]);
+                        this.chatWindowRows = Object.keys(chatConfig).map((objectName) => {
                             const row = {
                                 id: this.chatConfigCounter,
                                 selectedObject: objectName,
@@ -96,6 +92,7 @@ export default class ObjectConfigComp extends LightningElement {
         }
     }
 
+    // fetches objects for picklist
     fetchObjects() {
         try {
             getObjectsWithPhoneField()
@@ -109,6 +106,7 @@ export default class ObjectConfigComp extends LightningElement {
                     if(this.requiredFields.length <= 0){
                         this.loadRequiredFields();
                     }
+                    this.updateRowObjectOptions();
                 })
                 .catch(error => {
                     console.error('Error fetching objects:', error);
@@ -124,8 +122,6 @@ export default class ObjectConfigComp extends LightningElement {
             this.isLoading = true;
             getRequiredFields({ objectName: this.selectedObject })
                 .then(data => {
-                    console.log({data});
-
                     this.textFields = data[0]?.textFields;
 
                     this.phoneFields = data[0]?.phoneFields.map(field => {
@@ -323,13 +319,7 @@ export default class ObjectConfigComp extends LightningElement {
         this.isChatWindowConfigEdit = false;
     }
 
-    handleCancelChatConfig(){
-        this.isWebhookConfigEdit = false;
-        this.isChatWindowConfigEdit = false;
-    }
-
     handleSectionToggle(event) {
-        console.log(event.detail);
         const openSections = event.detail.openSections;
         this.activeSectionName = openSections;
     }
@@ -415,7 +405,6 @@ export default class ObjectConfigComp extends LightningElement {
                 });
             }
             this.updateRowObjectOptions(); // Update options for all rows
-            console.log(this.chatWindowRows);
         } catch (error) {
             console.error('Error in adding new row', error);
         }
@@ -468,7 +457,7 @@ export default class ObjectConfigComp extends LightningElement {
     }
 
     // Handle object selection
-    async handleObjectChange(event) {
+    async handleObjectChangeForChat(event) {
         try {
             const rowId = event.target.dataset.rowId;
             const selectedObject = event.target.value;
@@ -520,7 +509,6 @@ export default class ObjectConfigComp extends LightningElement {
                 }
                 return row;
             });
-            console.log(this.chatWindowRows);
         } catch (error) {
             console.error('Error in change Name picklist : ' , error);
         }
@@ -537,9 +525,8 @@ export default class ObjectConfigComp extends LightningElement {
                 }
                 return row;
             });
-            console.log(this.chatWindowRows);
         } catch (error) {
-            console.log('Error in changing Phone picklist : ' , error);
+            console.error('Error in changing Phone picklist : ' , error);
         }
     }
 
@@ -549,7 +536,6 @@ export default class ObjectConfigComp extends LightningElement {
             const rowId = event.target.dataset.rowId;
             this.chatWindowRows = this.chatWindowRows.filter(row => row.id !== parseInt(rowId));
             this.updateRowObjectOptions();
-            console.log(this.chatWindowRows);
         } catch (error) {
             console.error('Error in removing row : ', error);
         }
@@ -558,6 +544,11 @@ export default class ObjectConfigComp extends LightningElement {
     // Save the configuration
     async handleSaveChatWindowConfig() {
         try {
+            if(this.chatWindowRows.length === 0) {
+                this.showToast('Error', 'At least one object row must be configured.', 'error');
+                return;
+            }
+
             // Validate all rows have required fields
             const invalidRows = this.chatWindowRows.filter(row => 
                 !row.selectedObject || !row.selectedNameField || !row.selectedPhoneField
@@ -572,8 +563,8 @@ export default class ObjectConfigComp extends LightningElement {
             this.chatWindowRows.forEach(row => {
                 if (row.selectedObject && row.selectedNameField && row.selectedPhoneField) {
                     config[row.selectedObject] = {
-                        Name: row.selectedNameField,
-                        Phone: row.selectedPhoneField
+                        nameField: row.selectedNameField,
+                        phoneField: row.selectedPhoneField
                     };
                 }
             });

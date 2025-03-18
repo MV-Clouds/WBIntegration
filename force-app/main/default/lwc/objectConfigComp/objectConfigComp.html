@@ -19,7 +19,7 @@
         </template>
 
         <!-- Accordion Component -->
-        <lightning-accordion active-section-name={activeSectionName} onsectiontoggle={handleSectionToggle} allow-multiple-sections-open="false">
+        <lightning-accordion active-section-name={activeSectionName} onsectiontoggle={handleSectionToggle}>
             <!-- Webhook Configuration Section -->
             <lightning-accordion-section name="webhookConfig" label="Webhook Configuration">
                 <template if:false={isWebhookConfigEdit}>
@@ -354,7 +354,7 @@
                                     <tr key={row.id} class="slds-table_bordered tablerow">
                                         <!-- Object Selection -->
                                         <td class="tableData">
-                                            <lightning-combobox variant="label-hidden" data-row-id={row.id} value={row.selectedObject} options={row.objectOptions} onchange={handleObjectChange} placeholder="Select Object"></lightning-combobox>
+                                            <lightning-combobox variant="label-hidden" data-row-id={row.id} value={row.selectedObject} options={row.objectOptions} onchange={handleObjectChangeForChat} placeholder="Select Object"></lightning-combobox>
                                         </td>
                                         <!-- Name Field Selection -->
                                         <td class="tableData">
@@ -374,7 +374,7 @@
                         </table>
 
                         <div class="slds-m-top_medium slds-text-align_center">
-                            <lightning-button variant="brand-outline" onclick={handleCancelChatConfig} label="Cancel"></lightning-button>
+                            <lightning-button variant="brand-outline" onclick={handleCancel} label="Cancel"></lightning-button>
                             <lightning-button label="Save Configuration" variant="brand" onclick={handleSaveChatWindowConfig} class="slds-m-left_small"></lightning-button>
                         </div>
                     </div>

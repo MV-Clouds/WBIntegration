@@ -11,7 +11,7 @@
 *--------------------------------------------------------------------------------
 * Modification History:
 * Date Modified - Developer Name - Description
-* 17 Mar, 2025  - Harsh Gandhi - 
+* 18 Mar, 2025  - Harsh Gandhi - Updated method for fetching obects with phone field
 **/
 public with sharing class ObjectConfigController {
     
@@ -26,18 +26,34 @@ public with sharing class ObjectConfigController {
         List<Map<String, String>> objectList = new List<Map<String, String>>();
         try {
             // Query FieldDefinition to fetch all objects having at least one Phone field
-            List<FieldDefinition> phoneFields = [SELECT EntityDefinition.QualifiedApiName, EntityDefinition.Label FROM FieldDefinition WHERE DataType = 'Phone' AND EntityDefinition.IsCustomizable = true AND EntityDefinition.IsApexTriggerable = true AND EntityDefinition.IsQueryable = true WITH SECURITY_ENFORCED];
-            
+            List<FieldDefinition> phoneFields = [SELECT EntityDefinition.QualifiedApiName, EntityDefinition.Label, QualifiedApiName FROM FieldDefinition WHERE DataType = 'Phone' AND EntityDefinition.IsCustomizable = true AND EntityDefinition.IsApexTriggerable = true AND EntityDefinition.IsQueryable = true WITH SECURITY_ENFORCED];
+
             Set<String> processedObjects = new Set<String>();
-    
+
+            // Get Object Descriptions
+            Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
+
             for (FieldDefinition field : phoneFields) {
                 String objectName = field.EntityDefinition.QualifiedApiName;
-                if (!processedObjects.contains(objectName)) {
-                    objectList.add(new Map<String, String>{
-                        'label' => field.EntityDefinition.Label,
-                        'value' => objectName
-                    });
-                    processedObjects.add(objectName);
+                
+                // Ensure object exists in schema description
+                if (schemaMap.containsKey(objectName)) {
+                    Schema.DescribeSObjectResult objDescribe = schemaMap.get(objectName).getDescribe();
+
+                    // Check field-level permissions
+                    if (objDescribe.fields.getMap().containsKey(field.QualifiedApiName)) {
+                        Schema.DescribeFieldResult fieldDescribe = objDescribe.fields.getMap().get(field.QualifiedApiName).getDescribe();
+
+                        if (fieldDescribe.isAccessible() && fieldDescribe.isCreateable()) {
+                            if (!processedObjects.contains(objectName)) {
+                                objectList.add(new Map<String, String>{
+                                    'label' => field.EntityDefinition.Label,
+                                    'value' => objectName
+                                });
+                                processedObjects.add(objectName);
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
@@ -161,7 +177,7 @@ public with sharing class ObjectConfigController {
             for (Schema.SObjectField field : fieldMap.values()) {
                 Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
 
-                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isUpdateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
+                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isCreateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
                     Map<String, String> phoneFieldInfo = new Map<String, String>();
                     phoneFieldInfo.put('label', fieldDescribe.getLabel());
                     phoneFieldInfo.put('value', fieldDescribe.getName());
@@ -169,7 +185,7 @@ public with sharing class ObjectConfigController {
                 }
 
                 // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
-                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isUpdateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
+                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isCreateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
                     Map<String, String> textFieldInfo = new Map<String, String>();
                     textFieldInfo.put('label', fieldDescribe.getLabel());
                     textFieldInfo.put('value', fieldDescribe.getName());
