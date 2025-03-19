@@ -5,7 +5,7 @@
     <targets>
         <target>lightning__RecordPage</target>
     </targets>
-    <targetConfigs>
+    <!-- <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
             <objects>
                 <object>Contact</object>
@@ -18,5 +18,5 @@
                 <supportedFormFactor type="Small" />
             </supportedFormFactors>
         </targetConfig>
-    </targetConfigs>
+    </targetConfigs> -->
 </LightningComponentBundle>
