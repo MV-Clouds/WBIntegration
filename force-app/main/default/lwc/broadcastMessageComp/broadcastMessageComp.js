@@ -100,6 +100,7 @@ export default class BroadcastMessage extends LightningElement {
 
     handleListViewChange(event) {
         this.selectedListView = event.detail.value;
+        
     }
     
 }
