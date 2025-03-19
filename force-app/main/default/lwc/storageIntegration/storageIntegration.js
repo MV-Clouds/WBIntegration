@@ -1,3 +1,9 @@
+/**
+ * Component Name: StorageIntegration
+ * @description: Used LWC components to handle AWS configuration settings
+ * Date: 19/03/2025
+ * Created By: Kavya Trivedi
+ */
 import { LightningElement, track, api } from 'lwc';
 import saveConfiguration from '@salesforce/apex/StorageIntegrationConfigController.saveConfiguration';
 import getConfiguration from '@salesforce/apex/StorageIntegrationConfigController.getConfiguration';
@@ -29,6 +35,12 @@ export default class StorageIntegration extends LightningElement {
     AWS_logo = AWS_logo;
     NoData = NoData;
 
+    /** 
+    * Method Name: fetchConfiguration
+    * @description: fetches configuration details
+    * Date: 19/03/2025
+    * Created By: Kavya Trivedi 
+    */
     fetchConfiguration() {
         getConfiguration()
             .then(result => {
@@ -61,8 +73,14 @@ export default class StorageIntegration extends LightningElement {
 
     connectedCallback() {
         this.fetchConfiguration();
-    }    
+    }
 
+    /** 
+    * Method Name: handleNewClick
+    * @description: Enables the form for entering a new AWS configuration
+    * Date: 19/03/2025
+    * Created By: Kavya Trivedi 
+    */
     handleNewClick() {
         this.showNoData = false;
         this.isEditing = true;
@@ -73,23 +91,12 @@ export default class StorageIntegration extends LightningElement {
         return this.createdDate && this.lastModifiedDate;
     }
 
-    handleCancel() {
-        this.accessKey = '*'.repeat(this.accessKeyValue.length);
-        this.secretAccessKey = '*'.repeat(this.secretAccessKeyValue.length);
-        this.isEditing = false;
-        this.isDisabled = true;
-        this.fetchConfiguration();
-    }
-    
-    handleEdit(){
-        this.accessKey = this.accessKeyValue;
-        this.secretAccessKey = this.secretAccessKeyValue;
-        this.s3BucketName = this.s3BucketNameValue;
-        this.s3RegionName = this.s3RegionNameValue;
-        this.isDisabled = false;
-        this.isEditing = true;
-    }
-
+    /** 
+    * Method Name: handleInput
+    * @description: Handles user input
+    * Date: 19/03/2025
+    * Created By: Kavya Trivedi 
+    */
     handleInput(event) {
         if(event.target.name == 'AccessKey'){
             this.accessKey = event.target.value;
@@ -109,7 +116,42 @@ export default class StorageIntegration extends LightningElement {
             this.s3RegionNameValue = this.s3RegionName;
         }
     }
+    
+    /** 
+    * Method Name: handleEdit
+    * @description: Populates the input fields with existing configuration values
+    * Date: 19/03/2025
+    * Created By: Kavya Trivedi 
+    */
+    handleEdit(){
+        this.accessKey = this.accessKeyValue;
+        this.secretAccessKey = this.secretAccessKeyValue;
+        this.s3BucketName = this.s3BucketNameValue;
+        this.s3RegionName = this.s3RegionNameValue;
+        this.isDisabled = false;
+        this.isEditing = true;
+    }
 
+    /** 
+    * Method Name: handleCancel
+    * @description: Cancels the editing process and restores the previously saved values
+    * Date: 19/03/2025
+    * Created By: Kavya Trivedi 
+    */
+    handleCancel() {
+        this.accessKey = '*'.repeat(this.accessKeyValue.length);
+        this.secretAccessKey = '*'.repeat(this.secretAccessKeyValue.length);
+        this.isEditing = false;
+        this.isDisabled = true;
+        this.fetchConfiguration();
+    }
+    
+    /** 
+    * Method Name: handleSave
+    * @description: Saves the storage configuration details
+    * Date: 19/03/2025
+    * Created By: Kavya Trivedi 
+    */
     handleSave() {
 
         if (!this.accessKey || !this.secretAccessKey || !this.s3BucketName|| !this.s3RegionName) {
@@ -117,7 +159,6 @@ export default class StorageIntegration extends LightningElement {
             return;
         }
 
-        // Handle saving logic (e.g., API calls, data storage)
         console.log('Saved values:', this.accessKey, this.secretAccessKey, this.s3BucketName, this.s3RegionName);
         saveConfiguration({accessKey : this.accessKey, regionName : this.s3RegionName , secretAccessKey : this.secretAccessKey, bucketName : this.s3BucketName})
         .then(() => {
@@ -136,6 +177,12 @@ export default class StorageIntegration extends LightningElement {
         });
     }
 
+    /** 
+    * Method Name: handleDeactivate
+    * @description: Deletes the record associated with the access key
+    * Date: 19/03/2025
+    * Created By: Kavya Trivedi
+    */
     async handleDeactivate() {
         try {
             const result = await deleteRecordByAccessKey({ accessKey: this.accessKeyValue });
