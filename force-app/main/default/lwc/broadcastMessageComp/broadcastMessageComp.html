@@ -1,0 +1,69 @@
+<template>
+    <div class="wrapper">
+        <h1 class="slds-text-align_center heading">Broadcast Message Tool</h1>
+        <div class="slds-m-around_medium container">
+
+            <!-- Comboboxes in Grid -->
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col">
+                    <lightning-combobox
+                        label="Select Object"
+                        value={selectedObject}
+                        options={objectOptions}
+                        onchange={handleObjectChange}>
+                    </lightning-combobox>
+                </div>
+
+                <div class="slds-col">
+                    <lightning-combobox
+                        label="Select List View"
+                        value={selectedListView}
+                        options={listViewOptions}
+                        onchange={handleListViewChange}
+                        disabled={isListViewDropdownDisabled}>
+                    </lightning-combobox>
+                </div>
+            </div>
+
+            <!-- Custom Table -->
+            <template if:true={data.length}>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th class="sr-no">Sr. No</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={data} for:item="row">
+                                <tr key={row.Id}>
+                                    <td class="sr-no">{row.index}</td>
+                                    <td>{row.name}</td>
+                                    <td>{row.phone}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+
+            <!-- No Records Message -->
+            <template if:true={showNoRecordsMessage}>
+                <div class="no-records-message">
+                    No records to display.
+                </div>
+            </template>
+
+            <!-- Spinner -->
+            <template if:true={isLoading}>
+                <div class="spinner-container">
+                    <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+        </div>
+    </div>
+
+</template>
