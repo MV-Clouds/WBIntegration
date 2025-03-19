@@ -48,6 +48,7 @@ export default class ChatWindow extends LightningElement {
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
     @track phoneNumber;
+    @track recordName;
 
     replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
 
@@ -79,7 +80,6 @@ export default class ChatWindow extends LightningElement {
     }
 
     get recordMobileNumber(){
-        // return this.recordData.Phone;
         return this.phoneNumber;
     }
 
@@ -180,12 +180,12 @@ export default class ChatWindow extends LightningElement {
                 }
 
                 if(combinedData.record){
-                    if(!combinedData.record.Phone){
+                    if(!combinedData.phoneNumber){
                         this.showToast('Something went wrong!', 'The record does not have a mobile number.', 'error');
                         this.showSpinner = false;
                         return;
                     }
-                    combinedData.record.Phone = combinedData.record.Phone.replaceAll(' ', '').replace('+', '');
+                    combinedData.phoneNumber = combinedData.phoneNumber.replaceAll(' ', '').replace('+', '');
                     this.recordData = combinedData.record;
                 }else{
                     this.showToast('Something went wrong!', 'Couldn\'t fetch data of record', 'error');
@@ -197,6 +197,7 @@ export default class ChatWindow extends LightningElement {
                 
                 this.chats = JSON.parse(JSON.stringify(combinedData.chats));
                 this.phoneNumber = combinedData.phoneNumber;
+                this.recordName = combinedData.recordName;
                 this.showSpinner = false;
                 this.processChats(true);
                 
@@ -229,7 +230,7 @@ export default class ChatWindow extends LightningElement {
                 ch.isImage = ch.MVWB__Message_Type__c == 'Image';
                 ch.isOther = !['Text', 'Image', 'Template'].includes(ch.MVWB__Message_Type__c) ;
                 ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
-                ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
+                ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordName;
                 return ch;
             });
 
@@ -625,7 +626,7 @@ export default class ChatWindow extends LightningElement {
                     this.chats.push(chat);
                     this.processChats(true);
                     
-                    let imagePayload = this.createJSONBody(this.recordData.Phone, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    let imagePayload = this.createJSONBody(this.phoneNumber, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         link: chat.MVWB__Message__c,
                         fileName: event.detail.files[0].name || 'whatsapp image'
                     });
@@ -769,7 +770,7 @@ export default class ChatWindow extends LightningElement {
             .then(ch => {
                 // this.showSpinner = false;
                 this.processChats();
-                let reactPayload = this.createJSONBody(this.recordData.Phone, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                let reactPayload = this.createJSONBody(this.phoneNumber, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                     reactToId : chat.MVWB__WhatsAppMessageId__c,
                     emoji: chat.MVWB__Reaction__c?.split('<|USER|>')[0]
                 });
@@ -826,7 +827,7 @@ export default class ChatWindow extends LightningElement {
             createChat({chatData: {message: this.messageText, templateId: this.selectedTemplate, messageType: 'text', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
-                    let textPayload = this.createJSONBody(this.recordData.Phone, "text", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    let textPayload = this.createJSONBody(this.phoneNumber, "text", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         textBody: this.messageText
                     });
                     let textareaMessageElement = this.template.querySelector('.message-input');

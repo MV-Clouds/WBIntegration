@@ -154,53 +154,35 @@ global without sharing class WhatsAppWebhook{
             List<Lead> contacts = new List<Lead>();
             System.debug('Sender Id => ' + senderId);
             System.debug('formattedNumber Id => ' + formattedNumber);
-            // Map<String, Object> profile = (Map<String, Object>) sender.get('profile');
-            // String senderName = (String) profile.get('name');
-            // String senderPhone = formattedNumber;
-            
-            // contacts = [SELECT Id, Name, Phone, MobilePhone, OwnerId FROM Lead WHERE Phone = :formattedNumber LIMIT 1];
-
-            // List<User> userRecs = [SELECT Id, Name, Phone FROM User WHERE Phone = :formattedNumber LIMIT 1];
-            // System.debug('userecs size : ' + userRecs.size());
-            
-            // Lead contact;
-            // if (!contacts.isEmpty()){
-            //     contact = contacts[0];
-            // } else if(userRecs.isEmpty()) {
-            //     System.debug('inside debug --- ');
-            //     Lead newLead = new Lead();
-            //     newLead.LastName = senderName;
-            //     newLead.Phone = (String) senderId;
-            //     newLead.Company = senderName;
-            //     newLead.Email = 'client@whatsapp.rabdan';
-            //     newLead.Status = 'New';
-            //     newLead.put('Lead_Type__c', 'WhatsApp');
-            //     insert newLead;
-            //     contact = newLead;
-            // }
 
             Map<String, Object> profile = (Map<String, Object>) sender.get('profile');
             String senderName = (String) profile.get('name');
             String senderPhone = formattedNumber;
             List<User> userRecs = [SELECT Id, Name, Phone FROM User WHERE Phone = :formattedNumber LIMIT 1];
             System.debug('userecs size : ' + userRecs.size());
-            String recordId;
-            String recordName;
-            String recordPhone;
-            String objectApiName;
+            String recordId = '';
+            String recordName = '';
+            String recordPhone = '';
+            String objectApiName = '';
             SObject record;
 
             // Fetch metadata record from Object_Config__mdt
-            List<Object_Config__mdt> objectConfigList = [SELECT Id, ObjectConfigInfo__c FROM Object_Config__mdt LIMIT 1];
+            List<Object_Config__mdt> objectConfigList = [SELECT Id, ObjectConfigInfo__c, ChatWindowConfigInfo__c FROM Object_Config__mdt LIMIT 1];
             if(objectConfigList.size() <= 0) {
+                System.debug('Object Config not found!');
                 return;
             } else {
                 // Deserialize the JSON string from ObjectConfigInfo__c
                 Map<String, Object> configData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ObjectConfigInfo__c);
+                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ChatWindowConfigInfo__c);
     
                 // Extract values from deserialized data
                 objectApiName = (String) configData.get('objectApiName'); // e.g., 'Account'
                 String phoneField = (String) configData.get('phoneField'); // e.g., 'Fax'
+
+                Map<String, Object> chatConfig = (Map<String, Object>) chatConfigData.get(objectApiName);
+                String nameField = (String) chatConfig.get('nameField'); // e.g., 'Name'
+
                 List<Object> requiredFieldsList = (List<Object>) configData.get('requiredFieds'); 
 
                 Map<String, Object> requiredFieldsMap = new Map<String, Object>();
@@ -252,8 +234,17 @@ global without sharing class WhatsAppWebhook{
                             newRecord.put(fieldName, value);
                         }
                     }
-                    newRecord.put('Name', senderName);
-                    newRecord.put(phoneField, senderPhone);
+
+                    if(nameField != '' && nameField != null){
+                        newRecord.put(nameField, senderName);
+                    } else {
+                        newRecord.put('Name', senderName);
+                    }
+                    if(phoneField != '' && phoneField != null){
+                        newRecord.put(phoneField, senderPhone);
+                    } else {
+                        newRecord.put('Phone', senderPhone);
+                    }
                     
                     insert newRecord;
                     record = newRecord;

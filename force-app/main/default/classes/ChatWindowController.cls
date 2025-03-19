@@ -16,6 +16,7 @@
 * 06 Dec, 2024  - Kevin Suvagiya - Added implementation for the theme preference logic
 * 09 Dec, 2024  - Kevin Suvagiya - Added method to send the message to the user with http request
 * 11 Dec, 2024  - Kevin Suvagiya - Added a method to fetch the full template data with replaced variables
+* 19 Mar, 2025  - Harsh Gandhi - Updated dynamic Name & Phone field from custom metadata and Logic for only object related templates are visible for sending Updated methods getCombinedData & getTemplateData
 **/
 public with sharing class ChatWindowController {
 
@@ -27,7 +28,7 @@ public with sharing class ChatWindowController {
     */
     /* ---------------- Start ---------------- */
     public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-    public static List<User_Theme_Preference__c> userPreferences = [SELECT Theme__c FROM User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
+    public static List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Theme__c FROM MVWB__User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
     /* ----------------  End  ---------------- */
 
 
@@ -45,13 +46,33 @@ public with sharing class ChatWindowController {
             List<Chat__c> chats = new List<Chat__c>();
             List<Template__c> templates = new List<Template__c>();
             // Contact recordData = new Contact();
-            User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
+            MVWB__User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
+            // Fetch metadata record from Object_Config__mdt
+            List<Object_Config__mdt> objectConfigList = [SELECT Id, ObjectConfigInfo__c, ChatWindowConfigInfo__c FROM Object_Config__mdt LIMIT 1];
+            String phoneField = '';
+            String nameField = '';
+            if(objectConfigList.size() <= 0) {
+                System.debug('Object Config not found!');
+            } else {
+                // Deserialize the JSON string from ChatWindowConfigInfo__c
+                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ChatWindowConfigInfo__c);
+                Map<String, Object> chatConfig = (Map<String, Object>) chatConfigData.get(objectApiName);
+                phoneField = (String) chatConfig.get('phoneField');
+                nameField = (String) chatConfig.get('nameField');
+            }
+
+            sObject recordData;
+            String phoneNumber = '';
+            String recordName = '';
             // recordData = [SELECT Id, Name, Phone FROM Contact WHERE Phone =:contactId WITH SECURITY_ENFORCED LIMIT 1];
-            String query = 'SELECT Id, Name, Phone FROM ' + objectApiName + ' WHERE Id =: contactId LIMIT 1';
-            sObject recordData = Database.query(query);
-            String phoneNumber = (String) recordData.get('Phone');
+            if(nameField != '' && phoneField != '') {
+                String query = 'SELECT Id, ' +  nameField + ', ' +  phoneField + ' FROM ' + objectApiName + ' WHERE Id =: contactId LIMIT 1';
+                recordData = Database.query(query);
+                phoneNumber = (String) recordData.get(phoneField);
+                recordName = (String) recordData.get(nameField);
+            }
             chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, Phone__c FROM Chat__c WHERE Phone__c =:phoneNumber WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
             //templates = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
             // Step 1: Get template IDs with matching child variables
@@ -78,6 +99,7 @@ public with sharing class ChatWindowController {
             combinedData.put('templates', templates);
             combinedData.put('record', recordData);
             combinedData.put('phoneNumber', phoneNumber);
+            combinedData.put('recordName', recordName);
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'fetchAllChats', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
