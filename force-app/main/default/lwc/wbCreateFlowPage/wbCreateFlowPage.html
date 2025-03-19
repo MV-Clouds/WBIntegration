@@ -1,0 +1,140 @@
+<template>
+    <div class="main-container">
+        <template if:true={isLoading}>
+            <div class="spinner-overlay">
+                <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+            </div>
+        </template>
+
+        <div class="slds-theme_default main" style={backgroundImageStyle}>
+           
+            <template if:true={iscreateflowvisible}>   
+                <div class="slds-box slds-theme_default texttemp">
+                    <p class="templatetxt">Create Flow</p>
+                </div>    
+                <div class="divcontainer2">
+                    <div class="createtempdiv2">
+                        <div class="slds-box slds-theme_default templateContent3">
+                            <div class="nameLan">
+                                <div class="namediv">
+                                    <label for="flowName">Name</label>
+                                    <input class="nameInput" type="text" id="flowName" name="flowName"
+                                        value={flowName} maxlength="200" placeholder="Enter name"
+                                        oninput={handleInputChange}/>
+                                    <p class="char-count tempname-count">{flowName.length}/{maxFlowNamelength}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slds-box slds-theme_default templateContent4">
+                            <label for="flowName">Catagories</label>                       
+                            <div class="contentType">
+                                <c-custom-multiselect-picklist
+                                options={TypeOptions}
+                                onselectionchange={handleCatagories} ></c-custom-multiselect-picklist>
+                            </div>
+                        </div>
+                
+                        <div class="slds-box slds-theme_default authContent1">
+                            <div class="tempHead">
+                                <p class="content">Template</p>
+                            </div>                             
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <div class="radio">
+                                        <lightning-input type="radio" class="radio-name" name="authMethod" value="default" onchange={handleChange} checked></lightning-input>
+                                        <p class="radio-label">Default</p>
+                                    </div>
+                                </div>
+                                <div class="radio-item">
+                                    <div class="radio">
+                                        <lightning-input type="radio" class="radio-name" name="authMethod" value="purchase-interest" onchange={handleChange}></lightning-input>
+                                        <p class="radio-label">Collect purchase interest</p>
+                                    </div>
+                                </div>
+                                <div class="radio-item">
+                                    <div class="radio">
+                                        <lightning-input type="radio" class="radio-name" name="authMethod" value="get-feedback" onchange={handleChange}></lightning-input>
+                                        <p class="radio-label">Get feedback</p>
+                                    </div>
+                                </div>
+                                <div class="radio-item">
+                                    <div class="radio">
+                                        <lightning-input type="radio" class="radio-name" name="authMethod" value="send-survey" onchange={handleChange}></lightning-input>
+                                        <p class="radio-label">Send a survey</p>
+                                    </div>
+                                </div>
+                                <div class="radio-item">
+                                    <div class="radio">
+                                        <lightning-input type="radio" class="radio-name" name="authMethod" value="cus-support" onchange={handleChange}></lightning-input>
+                                        <p class="radio-label">Customer support</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            </div>
+                        </div>
+                </div>
+                <div class="slds-box slds-theme_default templatebtn">
+                <div class="footer-btn">
+                    <lightning-button variant="brand-outline" onclick={handleDiscard} label="Discard"
+                    class="slds-m-left_x-small"></lightning-button>
+                    <p class="footer-desp">When utilising template flow JSON, you are responsible for customising the experience to suit your use case, adhering to applicable laws and complying with WhatsApp Business Messaging Policy. Learn more about templates.</p>                      
+                </div>
+            <lightning-button variant="brand" label="Create" onclick={handleCreate} class="slds-m-left_x-small"  disabled={isCreateDisabled}></lightning-button>
+            </div>
+            </template>
+            <template if:true={isJsonVisible}>
+                <div class="divcontainer2">
+                    <div class="createtempdiv2">
+                        <div class="name-header">
+                            <div class="puzzle">
+                                <!-- <img src={flowIconUrl} alt="puzzle icon"> -->
+                            </div>
+                            <div class="name-section">
+                                <p class="flow-name">{flowName}</p>
+                                <div class="status-date">
+                                    <div class="formatted-text1">
+                                        <span class="segment one">Deaft</span>
+                                        <span class="dot">•</span>
+                                        <span class="segment two">Updated 6 Nov 2024</span>
+                                    </div>
+    
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-box slds-theme_default Content4">
+                            <div class="editor-div">
+                                <p class="editor">Editor</p>
+                                <button class="run-btn">Run</button>
+                            </div> 
+                            <div class="json-container">
+                                <template for:each={jsonLines} for:item="line">
+                                    <div key={line.lineNumber} class="json-line">
+                                        <span class="line-number">{line.lineNumber}</span>
+                                        <span class="json-text">{line.text}</span>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="foot-div">
+                                <div class="foot-left">
+                                    <p class="err">Flow JSON errors <span class="error-rate">0</span></p>
+                                    <p class="action">Actions</p>
+                                    <p class="endpoint">Endpoint</p>
+                                </div>
+                               <lightning-icon 
+                                 icon-name="utility:chevronup" 
+                                 size="xx-small" 
+                               ></lightning-icon>
+                            </div>                            
+                        </div>
+                    </div>
+                </div>
+            </template>
+            
+         </div>
+        <template if:true={isFlowVisible}>
+            <c-wb-all-flows-page></c-wb-all-flows-page>
+        </template>
+    </div>
+</template>
