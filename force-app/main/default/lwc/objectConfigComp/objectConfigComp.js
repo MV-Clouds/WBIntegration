@@ -56,8 +56,8 @@ export default class ObjectConfigComp extends LightningElement {
                             const row = {
                                 id: this.chatConfigCounter,
                                 selectedObject: objectName,
-                                selectedNameField: chatConfig[objectName].Name,
-                                selectedPhoneField: chatConfig[objectName].Phone,
+                                selectedNameField: chatConfig[objectName].nameField,
+                                selectedPhoneField: chatConfig[objectName].phoneField,
                                 nameFieldOptions: [], // Will be populated after fetch
                                 phoneFieldOptions: [], // Will be populated after fetch
                                 objectOptions: [], // Row-specific options
@@ -97,7 +97,6 @@ export default class ObjectConfigComp extends LightningElement {
         try {
             getObjectsWithPhoneField()
                 .then(data => {
-                    console.log({data});
                     this.objectOptions = data.map(obj => ({
                         label: obj.label,  // Show friendly name
                         value: obj.value   // API name

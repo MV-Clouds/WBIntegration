@@ -5,18 +5,18 @@
     <targets>
         <target>lightning__RecordPage</target>
     </targets>
-    <!-- <targetConfigs>
+    <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
-            <objects>
+            <!-- <objects>
                 <object>Contact</object>
                 <object>Lead</object>
                 <object>Account</object>
-            </objects>
+            </objects> -->
             <property label="Height(px)" name="height" type="Integer" />
             <supportedFormFactors>
                 <supportedFormFactor type="Large" />
                 <supportedFormFactor type="Small" />
             </supportedFormFactors>
         </targetConfig>
-    </targetConfigs> -->
+    </targetConfigs>
 </LightningComponentBundle>
