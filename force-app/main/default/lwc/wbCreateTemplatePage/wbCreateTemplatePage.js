@@ -12,7 +12,7 @@ MODIFICATION LOG*
  * Change Description : Beta 10 bug resolved
  ********************************************************************** */
 
-import { LightningElement, track, wire,api } from 'lwc';
+import { LightningElement, track,api } from 'lwc';
 import {loadStyle} from 'lightning/platformResourceLoader';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
@@ -28,7 +28,7 @@ import uploadFileChunk from '@salesforce/apex/WBTemplateController.uploadFileChu
 import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFields';
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
-
+import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
 export default class WbCreateTemplatePage extends LightningElement {
     maxTempNamelength = 512;
     maxShortlength = 60;
@@ -76,7 +76,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track tempBody = 'Hello';
     @track previewBody='Hello';
     @track previewHeader='';
-    @track formatedTempBody=this.tempBody;
+    @track formatedTempBody= this.tempBody;
     @track btntext = '';
     @track webURL = '';
     @track Cbtntext = '';
@@ -113,12 +113,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track filePreview='';
     @track languageOptions=[];
     @track countryType=[];
-    @track availableObjects = [
-        { label: 'Lead', value: 'Lead' },
-        { label: 'Contact', value: 'Contact' },
-        { label: 'Account', value: 'Account' }
-    ];
-    @track selectedObject = 'Lead';
+    @track availableObjects = [];
+    @track selectedObject = '';
     @track fields = [];
     @track chatMessages = [];
     @track richTextZip = richTextZip;
@@ -245,12 +241,37 @@ export default class WbCreateTemplatePage extends LightningElement {
         });
     }
 
+    get availableObjectsWithSelection() {
+        return this.availableObjects.map(obj => ({
+            ...obj,
+            isSelected: obj.value === this.selectedObject
+        }));
+    }
+
     connectedCallback() {
         this.fetchCountries();
         this.fetchLanguages();
-        this.fetchFields('Lead');
+        // this.fetchFields('Lead');
         this.generateEmojiCategories();
         this.fetchUpdatedTemplates(false);
+        this.fetchObjectsWithPhoneField();
+    }
+
+    fetchObjectsWithPhoneField() {
+        this.isLoading = true;
+        getObjectsWithPhoneField()
+        .then((result) => {            
+            this.availableObjects = result;
+            this.selectedObject = this.availableObjects[0].value;
+            this.fetchFields(this.selectedObject);
+        })
+        .catch((error) => {
+            console.error('Error fetching objects with phone field: ', error);
+            this.showToastError('Error fetching objects with phone field: '+error.message);
+        })
+        .finally(() => {
+            this.isLoading = false;
+        });
     }
     
     renderedCallback() {
@@ -1137,7 +1158,8 @@ export default class WbCreateTemplatePage extends LightningElement {
             const selectedObject = event.target.value;
             this.selectedObject = selectedObject;
 
-            this.template.querySelectorAll('[data-name="objectPicklist"]').forEach((dropdown) => {
+            // Update all object dropdowns to show the same selected value
+            this.template.querySelectorAll('[data-name="objectPicklist"]').forEach(dropdown => {
                 dropdown.value = selectedObject;
             });
 
@@ -1145,21 +1167,18 @@ export default class WbCreateTemplatePage extends LightningElement {
                 .then((result) => {
                     this.fields = result.map((field) => ({ label: field, value: field }));
 
-                    this.variables = this.variables.map(varItem => {
-                        return {
+                    // Update variables for both header and body
+                    this.variables = this.variables.map(varItem => ({
                             ...varItem,
                             object: selectedObject,
                             field: this.fields[0].value
-                        };
-                    });
+                    }));
         
-                    this.header_variables = this.header_variables.map(varItem => {
-                        return {
+                    this.header_variables = this.header_variables.map(varItem => ({
                             ...varItem,
                             object: selectedObject,
                             field: this.fields[0].value
-                        };
-                    });
+                    }));
         
                     this.formatedTempBody = this.formatText(this.tempBody);
                     this.updateTextarea();
