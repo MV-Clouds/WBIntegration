@@ -28,7 +28,7 @@ public with sharing class ChatWindowController {
     */
     /* ---------------- Start ---------------- */
     public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-    public static List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Theme__c FROM MVWB__User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
+    public static List<User_Theme_Preference__c> userPreferences = [SELECT Theme__c FROM User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
     /* ----------------  End  ---------------- */
 
 
@@ -46,7 +46,7 @@ public with sharing class ChatWindowController {
             List<Chat__c> chats = new List<Chat__c>();
             List<Template__c> templates = new List<Template__c>();
             // Contact recordData = new Contact();
-            MVWB__User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
+            User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
             // Fetch metadata record from Object_Config__mdt
@@ -203,7 +203,7 @@ public with sharing class ChatWindowController {
     public static Boolean updateThemePreference(String theme) {
         Boolean isSuccess = false;
         try {
-            MVWB__User_Theme_Preference__c userPreference = new MVWB__User_Theme_Preference__c();
+            User_Theme_Preference__c userPreference = new User_Theme_Preference__c();
             if (userPreferences.isEmpty()) {
                 userPreference.SetupOwnerId = UserInfo.getUserId();
             }else{
