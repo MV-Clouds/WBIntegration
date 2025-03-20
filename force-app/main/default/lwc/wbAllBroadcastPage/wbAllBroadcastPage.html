@@ -107,25 +107,68 @@
         <template if:true={showPopup}>
             <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
                 <div class="slds-modal__container preview-container">
-                    <div class="slds-modal__content slds-p-around_medium template-preview" id="modal-content-id-2">
-                        <div class="divcontainer">
-                            <p class="preview-heading">Choose Broadcast option</p>
-                            <div class="divcontainer2">
-                                <div class="createtempdiv2">
-                                    Give two options 
-
-                                    - Create New Broadcast Group or Choose Existing Group
-                                    
-                                    - If Choose Exsiting Group - Then Can able to select the multiple existing groups and as well as additional recods
-                                    - Create New Broadcast then - Rachit's component - In that create group and show on Group Page.
-                                </div>
-                            </div>
-                            <div class="footer">
-                                <div class="inputs">
-                                    <button class="close-btn" onclick={closePopUp}>Close</button>
-                                </div>
-                            </div>
+                    <div class="slds-modal__content slds-p-around_medium pop-up" id="modal-content-id-2">
+                        <div class="pop-heading">
+                            {popupHeader}
                         </div>
+                        <template if:true={popUpFirstPage}>
+                            <div class="popUpBody slds-p-around--large">
+                                <!-- Header Section: Search and Create New Group Button -->
+                                <div class="popUpHeader slds-m-bottom_medium">
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_8-of-12">
+                                            <lightning-input type="search" label="Search by Name" variant="label-hidden" placeholder="Enter group name..." onchange={handleSearchPopup}>
+                                            </lightning-input>
+                                        </div>
+                                        <div class="slds-col slds-size_4-of-12 slds-text-align_right">
+                                            <lightning-button variant="brand" label="Create New Group" onclick={handleCreateNewGroup}>
+                                            </lightning-button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Groups List -->
+                                <div class="slds-box slds-theme_default">
+                                    <template if:true={filteredGroups.length}>
+                                        <template for:each={filteredGroups} for:item="group">
+                                            <div key={group.Id} class="slds-box slds-theme_default">
+                                                <div class="slds-grid slds-gutters">
+                                                    <div class="slds-col slds-size_1-of-12">
+                                                        <lightning-input type="checkbox" label="Select" variant="label-hidden" data-id={group.Id} onchange={handleGroupSelection}>
+                                                        </lightning-input>
+                                                    </div>
+                                                    <div class="slds-col slds-size_11-of-12">
+                                                        <h3 class="slds-text-heading_small">{group.Name}</h3>
+                                                        <p><strong>Members:</strong> {group.Count_of_Members__c}</p>
+                                                        <p><strong>Object of Group Members:</strong> {group.Object_Name__c}</p>
+                                                        <p><strong>Description:</strong> {group.Description__c}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={filteredGroups.length}>
+                                        <p>No groups found.</p>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="popUpFooter slds-p-bottom--large slds-text-align--center">
+                                <lightning-button variant="brand-outline" onclick={handleCloseOnPopup} label="Close" class="slds-m-left_x-small"></lightning-button>
+                                <lightning-button variant="brand" label="Next" onclick={handleNextOnPopup} class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
+                            </div>
+                        </template>
+                        <template if:false={popUpFirstPage}>
+                            <div class="popUpBody slds-p-around--large">
+                                <div>
+                                    <!-- <lightning-record-picker variant="label-hidden" placeholder="Search template records here..." object-api-name={field.relatedObject} 
+                                                value={field.value} data-field={field.apiName} onchange={handleRecordSelection}></lightning-record-picker> -->
+                                </div>
+                            </div>
+                            <div class="popUpFooter slds-p-bottom--large slds-text-align--center">
+                                <lightning-button variant="brand-outline" onclick={handlePreviousOnPopup} label="Previous" class="slds-m-left_x-small"></lightning-button>
+                                <lightning-button variant="brand" label="Send" onclick={handleSendOnPopup} class="slds-m-left_x-small"></lightning-button>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </section>

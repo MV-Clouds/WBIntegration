@@ -53,7 +53,7 @@ public with sharing class BroadcastMessageController {
     @AuraEnabled
     public static List<Broadcast_Group__c> getBroadcastGroups(){
         try {
-            return [SELECT Id, Name, Count_of_Members__c, Description__c FROM Broadcast_Group__c WITH SECURITY_ENFORCED];
+            return [SELECT Id, Name, Count_of_Members__c, Description__c, Object_Name__c FROM Broadcast_Group__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
