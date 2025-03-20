@@ -46,13 +46,26 @@ public with sharing class BroadcastMessageController {
         try {
             return [SELECT Id, Name FROM ListView WHERE SobjectType = :objectApiName WITH SECURITY_ENFORCED ORDER BY LastViewedDate DESC];
         } catch (Exception e) {
-            
             throw new AuraHandledException('Error fetching list views: ' + e.getMessage());
         }
     }
 
-    
-    
-    
+    @AuraEnabled
+    public static List<Broadcast_Group__c> getBroadcastGroups(){
+        try {
+            return [SELECT Id, Name, Count_of_Members__c, Description__c FROM Broadcast_Group__c WITH SECURITY_ENFORCED];
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+
+    @AuraEnabled
+    public static List<Broadcast__c> getBroadcastRecs(){
+        try {
+            return [SELECT Id, Name, Broadcast_Group__r.Name, Recipient_Count__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Failed__c FROM Broadcast__c WITH SECURITY_ENFORCED];
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
 
 }
