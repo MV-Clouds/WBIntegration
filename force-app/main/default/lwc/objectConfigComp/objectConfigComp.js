@@ -1,4 +1,4 @@
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, track } from 'lwc';
 import getRequiredFields from '@salesforce/apex/ObjectConfigController.getRequiredFields';
 import getTextAndPhoneFields from '@salesforce/apex/ObjectConfigController.getTextAndPhoneFields';
 import getUserConfig from '@salesforce/apex/ObjectConfigController.getUserConfig';
