@@ -48,6 +48,7 @@ export default class ChatWindow extends LightningElement {
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
     @track phoneNumber;
+    @track recordName;
 
     replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
 
@@ -79,7 +80,6 @@ export default class ChatWindow extends LightningElement {
     }
 
     get recordMobileNumber(){
-        // return this.recordData.Phone;
         return this.phoneNumber;
     }
 
@@ -92,13 +92,12 @@ export default class ChatWindow extends LightningElement {
             if(this.pageRef){
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
-            // console.log('recordId ', this.recordId, ' objectAPIName', this.objectApiName);
             this.configureHeight();
             this.getInitialData();
             this.generateEmojiCategories();
             this.handleSubscribe();
         } catch (e) {
-            console.log('Error in connectedCallback:::', e.message);
+            console.error('Error in connectedCallback:::', e.message);
         }
     }
 
@@ -112,7 +111,7 @@ export default class ChatWindow extends LightningElement {
                 this.scrollBottom = false;
             }
         } catch (e) {
-            console.log('Error in function renderedCallback:::', e.message);
+            console.error('Error in function renderedCallback:::', e.message);
         }
     }
 
@@ -180,12 +179,12 @@ export default class ChatWindow extends LightningElement {
                 }
 
                 if(combinedData.record){
-                    if(!combinedData.record.Phone){
+                    if(!combinedData.phoneNumber){
                         this.showToast('Something went wrong!', 'The record does not have a mobile number.', 'error');
                         this.showSpinner = false;
                         return;
                     }
-                    combinedData.record.Phone = combinedData.record.Phone.replaceAll(' ', '').replace('+', '');
+                    combinedData.phoneNumber = combinedData.phoneNumber.replaceAll(' ', '').replace('+', '');
                     this.recordData = combinedData.record;
                 }else{
                     this.showToast('Something went wrong!', 'Couldn\'t fetch data of record', 'error');
@@ -197,6 +196,7 @@ export default class ChatWindow extends LightningElement {
                 
                 this.chats = JSON.parse(JSON.stringify(combinedData.chats));
                 this.phoneNumber = combinedData.phoneNumber;
+                this.recordName = combinedData.recordName;
                 this.showSpinner = false;
                 this.processChats(true);
                 
@@ -212,7 +212,7 @@ export default class ChatWindow extends LightningElement {
             });
         } catch (e) {
             this.showSpinner = false;
-            console.log('Error in function getInitialData:::', e.message);
+            console.error('Error in function getInitialData:::', e.message);
         }
     }
 
@@ -229,7 +229,7 @@ export default class ChatWindow extends LightningElement {
                 ch.isImage = ch.MVWB__Message_Type__c == 'Image';
                 ch.isOther = !['Text', 'Image', 'Template'].includes(ch.MVWB__Message_Type__c) ;
                 ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
-                ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
+                ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordName;
                 return ch;
             });
 
@@ -280,7 +280,7 @@ export default class ChatWindow extends LightningElement {
             if(needToScroll) this.scrollBottom = true;
             this.checkLastMessage();
         } catch (e) {
-            console.log('Error in function processChats:::', e.message);
+            console.error('Error in function processChats:::', e.message);
             this.showSpinner = false;
         }
     }
@@ -310,7 +310,7 @@ export default class ChatWindow extends LightningElement {
             this.showSpinner = false;
         } catch (e) {
             this.showSpinner = false;
-            console.log('Error in function checkLastMessage:::', e.message);
+            console.error('Error in function checkLastMessage:::', e.message);
         }
     }
 
@@ -324,7 +324,7 @@ export default class ChatWindow extends LightningElement {
             let randomIndex = Math.floor(Math.random() * this.replyBorderColors.length);
             this.template.host.style.setProperty('--reply-to-received-border-color', this.replyBorderColors[randomIndex]);
         } catch (e) {
-            console.log('Error in function configureHeight:::', e.message);
+            console.error('Error in function configureHeight:::', e.message);
         }
     }
 //Handling the Backdrop
@@ -343,7 +343,7 @@ export default class ChatWindow extends LightningElement {
             this.showAttachmentOptions = false;
             this.selectedTemplate = null;
         } catch (e) {
-            console.log('Error in function handleBackDropClick:::', e.message);
+            console.error('Error in function handleBackDropClick:::', e.message);
         }
     }
     
@@ -360,11 +360,11 @@ export default class ChatWindow extends LightningElement {
                 }
             })
             .catch((e) => {
-                console.log('Failed to update theme preference!.', e.message);
+                console.error('Failed to update theme preference!.', e.message);
                 
             });
         }catch(e){
-            console.log('Error in toggleTheme:::', e.message);
+            console.error('Error in toggleTheme:::', e.message);
         }
     }
 
@@ -380,7 +380,7 @@ export default class ChatWindow extends LightningElement {
         try {
             event.currentTarget.classList.toggle('show-options');
         } catch (e) {
-            console.log('Error in function handleToggleActions:::', e.message);
+            console.error('Error in function handleToggleActions:::', e.message);
         }
     }
 
@@ -388,7 +388,7 @@ export default class ChatWindow extends LightningElement {
         try {
             event.currentTarget?.querySelector('.action-options-btn')?.classList.remove('show-options');
         } catch (e) {
-            console.log('Error in function handleHideActions:::', e.message);
+            console.error('Error in function handleHideActions:::', e.message);
         }
     }
 
@@ -412,7 +412,7 @@ export default class ChatWindow extends LightningElement {
                 this.showReactEmojiPicker = false;
             }
         } catch (e) {
-            console.log('Error in function handleReply:::', e.message);
+            console.error('Error in function handleReply:::', e.message);
         }
     }
 
@@ -426,7 +426,7 @@ export default class ChatWindow extends LightningElement {
                 this.updateMessageReaction(chat);
             }
         } catch (e) {
-            console.log('Error in function handleReactWithEmoji:::', e.message);
+            console.error('Error in function handleReactWithEmoji:::', e.message);
         }
     }
 
@@ -436,7 +436,7 @@ export default class ChatWindow extends LightningElement {
             chat.MVWB__Reaction__c = chat.MVWB__Reaction__c?.slice(chat.MVWB__Reaction__c.indexOf('<|USER|>'));
             this.updateMessageReaction(chat);
         } catch (e) {
-            console.log('Error in function handleRemoveReaction:::', e.message);
+            console.error('Error in function handleRemoveReaction:::', e.message);
         }
     }
 
@@ -475,7 +475,7 @@ export default class ChatWindow extends LightningElement {
             observer.observe(replyToChatEle);
             
         } catch (e) {
-            console.log('Error in function handleReplyMessageClick:::', e.message);
+            console.error('Error in function handleReplyMessageClick:::', e.message);
         }
     }
     handleToggleImagePreview(event){
@@ -493,7 +493,7 @@ export default class ChatWindow extends LightningElement {
                 event.stopPropagation()
             }
         } catch (e) {
-            console.log('Error in function handleToggleImagePreview:::', e.message);
+            console.error('Error in function handleToggleImagePreview:::', e.message);
         }
     }
 
@@ -516,9 +516,9 @@ export default class ChatWindow extends LightningElement {
                 );
                 this.emojiCategories = groupedEmojis;
             })
-            .catch((e) => console.log('There was an error fetching the emoji.', e));
+            .catch((e) => console.error('There was an error fetching the emoji.', e));
         }catch(e){
-            console.log('Error in generateEmojiCategories', e);
+            console.error('Error in generateEmojiCategories', e);
             
         }
     }
@@ -532,7 +532,7 @@ export default class ChatWindow extends LightningElement {
                 this.template.querySelector('.emoji-picker-div').scrollTop = 0;
             }
         } catch (e) {
-            console.log('Error in function handleEmojiButtonClick:::', e.message);
+            console.error('Error in function handleEmojiButtonClick:::', e.message);
         }
     }
 
@@ -545,7 +545,7 @@ export default class ChatWindow extends LightningElement {
             textareaMessageElement.focus();
             textareaMessageElement.setSelectionRange(curPos + event.target.innerText.length,curPos + event.target.innerText.length); 
         } catch (e) {
-            console.log('Error in function handleEmojiClick:::', e.message);
+            console.error('Error in function handleEmojiClick:::', e.message);
         }
     }
     handleMessageTextChange(event) {
@@ -566,7 +566,7 @@ export default class ChatWindow extends LightningElement {
             this.showAttachmentOptions = false;
             this.template.host.style.setProperty("--max-height-for-attachment-options","0rem");
         } catch (e) {
-            console.log('Error in function handleMessageTextChange:::', e.message);
+            console.error('Error in function handleMessageTextChange:::', e.message);
         }
     }
     
@@ -577,7 +577,7 @@ export default class ChatWindow extends LightningElement {
             this.closeAllPopups();
             this.template.host.style.setProperty("--max-height-for-attachment-options",this.showAttachmentOptions ? "13rem" : "0rem");
         } catch (e) {
-            console.log('Error in function handleAttachmentButtonClick:::', e.message);
+            console.error('Error in function handleAttachmentButtonClick:::', e.message);
         }
     }
 
@@ -625,7 +625,7 @@ export default class ChatWindow extends LightningElement {
                     this.chats.push(chat);
                     this.processChats(true);
                     
-                    let imagePayload = this.createJSONBody(this.recordData.Phone, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    let imagePayload = this.createJSONBody(this.phoneNumber, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         link: chat.MVWB__Message__c,
                         fileName: event.detail.files[0].name || 'whatsapp image'
                     });
@@ -645,19 +645,19 @@ export default class ChatWindow extends LightningElement {
                     })
                     .catch((e) => {
                         this.showSpinner = false;
-                        console.log('Error in handleUploadFinished > sendWhatsappMessage :: ', e);
+                        console.error('Error in handleUploadFinished > sendWhatsappMessage :: ', e);
                     })
                     this.handleBackDropClick();
                 }else{
                     this.showSpinner = false;
                     this.showToast('Something went wrong!', 'The photo is not sent, please make sure image size does not exceed 5MB.', 'error');
-                    console.log('there was some error sending the message!');
+                    console.error('there was some error sending the message!');
                 }
             })
             .catch((e) => {
                 this.showSpinner = false;
                 this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
-                console.log('Error in handleUploadFinished > createChat :: ', e);
+                console.error('Error in handleUploadFinished > createChat :: ', e);
             })
             this.uploadFileType = null;
             this.showFileUploader = false;
@@ -665,7 +665,7 @@ export default class ChatWindow extends LightningElement {
         } catch (e) {
             this.showSpinner = false;
             this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
-            console.log('Error in function handleUploadFinished:::', e.message);
+            console.error('Error in function handleUploadFinished:::', e.message);
         }
     }
     
@@ -674,7 +674,7 @@ export default class ChatWindow extends LightningElement {
             event.currentTarget.src = "/resource/MVWB__Alt_Image";
             event.currentTarget.parentNode.classList.add('not-loaded-image');
         } catch (e) {
-            console.log('Error in function handleImageError:::', e.message);
+            console.error('Error in function handleImageError:::', e.message);
         }
     }
 
@@ -682,7 +682,7 @@ export default class ChatWindow extends LightningElement {
         try {
             this.templateSearchKey = event.target.value || null;
         } catch (e) {
-            console.log('Error in function handleSearchTemplate:::', e.message);
+            console.error('Error in function handleSearchTemplate:::', e.message);
         }
     }
 
@@ -694,7 +694,7 @@ export default class ChatWindow extends LightningElement {
                 this.showTemplatePreview = true;
             }
         } catch (e) {
-            console.log('Error in function handleShowTemplatePreview:::', e.message);
+            console.error('Error in function handleShowTemplatePreview:::', e.message);
         }
     }
 
@@ -704,7 +704,7 @@ export default class ChatWindow extends LightningElement {
             this.showTemplatePreview = false;
             this.showTemplateSelection = true;
         } catch (e) {
-            console.log('Error in function handleBackToList:::', e.message);
+            console.error('Error in function handleBackToList:::', e.message);
         }
     }
 
@@ -718,7 +718,7 @@ export default class ChatWindow extends LightningElement {
             this.showSpinner = false;
             this.processChats(true);
         } catch (e) {
-            console.log('Error in function handleTemplateSent:::', e.message);
+            console.error('Error in function handleTemplateSent:::', e.message);
         }
     }
 
@@ -743,11 +743,11 @@ export default class ChatWindow extends LightningElement {
                 }
                 payload += ` }`;
             
-                // console.log('The Payload is ::: ', payload);
+                // console.error('The Payload is ::: ', payload);
                 
                 return payload;
         } catch (e) {
-            console.log('Error in function createJSONBody:::', e.message);
+            console.error('Error in function createJSONBody:::', e.message);
         }
     }
 
@@ -758,7 +758,7 @@ export default class ChatWindow extends LightningElement {
     //         this.closeAllPopups();
     //         this.template.host.style.setProperty("--max-height-for-send-options",this.showSendOptions ? "7rem" : "0rem");
     //     } catch (e) {
-    //         console.log('Error in function handleOpenSendOptions:::', e.message);
+    //         console.error('Error in function handleOpenSendOptions:::', e.message);
     //     }
     // }
 
@@ -769,11 +769,11 @@ export default class ChatWindow extends LightningElement {
             .then(ch => {
                 // this.showSpinner = false;
                 this.processChats();
-                let reactPayload = this.createJSONBody(this.recordData.Phone, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                let reactPayload = this.createJSONBody(this.phoneNumber, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                     reactToId : chat.MVWB__WhatsAppMessageId__c,
                     emoji: chat.MVWB__Reaction__c?.split('<|USER|>')[0]
                 });
-                console.log('ReactPayload :: ', reactPayload);
+                // console.log('ReactPayload :: ', reactPayload);
                 
                 sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true, reaction: chat.MVWB__Reaction__c})
                 .then(result => {
@@ -787,18 +787,18 @@ export default class ChatWindow extends LightningElement {
                 })
                 .catch((e) => {
                     // this.showSpinner = false;
-                    console.log('Error in updateMessageReaction > sendWhatsappMessage :: ', e);
+                    console.error('Error in updateMessageReaction > sendWhatsappMessage :: ', e);
                 })
             })
             .catch((e) => {
                 // this.showSpinner = false;
                 this.showToast('Something went wrong!', 'The reaction could not be updated, please try again.', 'error');
-                console.log('Error in updateMessageReaction > updateReaction :: ', e);
+                console.error('Error in updateMessageReaction > updateReaction :: ', e);
             })
         } catch (e) {
             // this.showSpinner = false;
             this.showToast('Something went wrong!', 'The reaction could not be updated, please try again.', 'error');
-            console.log('Error in function updateMessageReaction:::', e.message);
+            console.error('Error in function updateMessageReaction:::', e.message);
         }
     }
 
@@ -826,7 +826,7 @@ export default class ChatWindow extends LightningElement {
             createChat({chatData: {message: this.messageText, templateId: this.selectedTemplate, messageType: 'text', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
-                    let textPayload = this.createJSONBody(this.recordData.Phone, "text", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    let textPayload = this.createJSONBody(this.phoneNumber, "text", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         textBody: this.messageText
                     });
                     let textareaMessageElement = this.template.querySelector('.message-input');
@@ -852,23 +852,23 @@ export default class ChatWindow extends LightningElement {
                     })
                     .catch((e) => {
                         this.showSpinner = false;
-                        console.log('Error in handleSendMessage > sendWhatsappMessage :: ', e);
+                        console.error('Error in handleSendMessage > sendWhatsappMessage :: ', e);
                     })
                 }else{
                     this.showSpinner = false;
                     this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
-                    console.log('there was some error sending the message!');
+                    console.error('there was some error sending the message!');
                 }
             })
             .catch((e) => {
                 this.showToast('Something went wrong!', (e.body.message == 'STORAGE_LIMIT_EXCEEDED' ? 'Storage Limit Exceeded, please free up space and try again.' : 'Message could not be sent, please try again.'), 'error');
                 this.showSpinner = false;
-                console.log('Error in handleSendMessage > createChat :: ', e);
+                console.error('Error in handleSendMessage > createChat :: ', e);
             })
         } catch (e) {
             this.showSpinner = false;
             this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
-            console.log('Error in handleSendMessage:::', e.message);
+            console.error('Error in handleSendMessage:::', e.message);
         }
     }
     
@@ -876,7 +876,7 @@ export default class ChatWindow extends LightningElement {
         try {
             this.template.querySelector('.dropdown-menu').classList.add('hidden');
         } catch (e) {
-            console.log('Error in function handleScheduleMessage:::', e.message);
+            console.error('Error in function handleScheduleMessage:::', e.message);
         }
     }
 
@@ -891,7 +891,7 @@ export default class ChatWindow extends LightningElement {
             });
             this.dispatchEvent(evt);
         } catch (e) {
-            console.log('Error in function showToast:::', e.message);
+            console.error('Error in function showToast:::', e.message);
         }
     }
 }

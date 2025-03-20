@@ -7,11 +7,11 @@
     </targets>
     <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
-            <objects>
+            <!-- <objects>
                 <object>Contact</object>
                 <object>Lead</object>
                 <object>Account</object>
-            </objects>
+            </objects> -->
             <property label="Height(px)" name="height" type="Integer" />
             <supportedFormFactors>
                 <supportedFormFactor type="Large" />

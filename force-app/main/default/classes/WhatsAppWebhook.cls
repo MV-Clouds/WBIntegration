@@ -140,10 +140,7 @@ global without sharing class WhatsAppWebhook{
             System.debug('messageType ==> ' + messageType);
 
             // Query to check if the message has already been processed
-            List<Chat__c> existingChatRecords = [SELECT Id
-                                                          FROM Chat__c
-                                                          WHERE WhatsAppMessageId__c = :whatsAppMessageID
-                                                          LIMIT 1];
+            List<Chat__c> existingChatRecords = [SELECT Id FROM Chat__c WHERE WhatsAppMessageId__c = :whatsAppMessageID LIMIT 1];
             if (!existingChatRecords.isEmpty()){
                 System.debug('Message already processed: ' + whatsAppMessageID);
                 return;
@@ -156,27 +153,108 @@ global without sharing class WhatsAppWebhook{
 
             List<Lead> contacts = new List<Lead>();
             System.debug('Sender Id => ' + senderId);
-            
-            contacts = [SELECT Id, Name, Phone, MobilePhone, OwnerId
-                                      FROM Lead
-                                      WHERE Phone = :formattedNumber
-                                      LIMIT 1];
             System.debug('formattedNumber Id => ' + formattedNumber);
-            Lead contact;
-            if (!contacts.isEmpty()){
 
-                contact = contacts[0];
-            } else{
-                Lead Con = new Lead();
-                Map<String, Object> profile = (Map<String,Object>) sender.get('profile');
-                Con.LastName = (String) profile.get('name');
-                Con.Phone = (String) senderId;
-                Con.Status = 'Open - Not Contacted';
-                Con.Company = (String) profile.get('name');
-                insert Con;
-                contact = Con;
+            Map<String, Object> profile = (Map<String, Object>) sender.get('profile');
+            String senderName = (String) profile.get('name');
+            String senderPhone = formattedNumber;
+            List<User> userRecs = [SELECT Id, Name, Phone FROM User WHERE Phone = :formattedNumber LIMIT 1];
+            System.debug('userecs size : ' + userRecs.size());
+            String recordId = '';
+            String recordName = '';
+            String recordPhone = '';
+            String objectApiName = '';
+            SObject record;
+
+            // Fetch metadata record from Object_Config__mdt
+            List<Object_Config__mdt> objectConfigList = [SELECT Id, ObjectConfigInfo__c, ChatWindowConfigInfo__c FROM Object_Config__mdt LIMIT 1];
+            if(objectConfigList.size() <= 0) {
+                System.debug('Object Config not found!');
+                return;
+            } else {
+                // Deserialize the JSON string from ObjectConfigInfo__c
+                Map<String, Object> configData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ObjectConfigInfo__c);
+                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ChatWindowConfigInfo__c);
+    
+                // Extract values from deserialized data
+                objectApiName = (String) configData.get('objectApiName'); // e.g., 'Account'
+                String phoneField = (String) configData.get('phoneField'); // e.g., 'Fax'
+
+                Map<String, Object> chatConfig = (Map<String, Object>) chatConfigData.get(objectApiName);
+                String nameField = (String) chatConfig.get('nameField'); // e.g., 'Name'
+
+                List<Object> requiredFieldsList = (List<Object>) configData.get('requiredFieds'); 
+
+                Map<String, Object> requiredFieldsMap = new Map<String, Object>();
+                for (Object obj : requiredFieldsList) {
+                    Map<String, Object> fieldData = (Map<String, Object>) obj;
+                    requiredFieldsMap.put((String) fieldData.get('name'), fieldData); // Store the entire field data including type
+                }
+    
+                // Query the object specified in objectApiName using dynamic SOQL
+                String query = 'SELECT Id, Name, ' + phoneField + ' FROM ' + objectApiName + ' WHERE ' + phoneField + ' = :formattedNumber LIMIT 1';
+                List<SObject> records = Database.query(query);
+                
+                if (!records.isEmpty()) {
+                    record = records[0];
+                    recordId = (String) record.get('Id');
+                    recordName = (String) record.get('Name');
+                    recordPhone = (String) record.get(phoneField);
+                } else if (userRecs.isEmpty()) {
+                    System.debug('inside debug --- ');
+                    // Create a new record for the object specified in objectApiName
+                    SObject newRecord = Schema.getGlobalDescribe().get(objectApiName).newSObject();
+                    
+                    // Populate required fields from metadata with type conversion
+                    for (String fieldName : requiredFieldsMap.keySet()) {
+                        Map<String, Object> fieldData = (Map<String, Object>) requiredFieldsMap.get(fieldName);
+                        String value = (String) fieldData.get('value');
+                        String fieldType = (String) fieldData.get('type');
+
+                        if (fieldType == 'Date') {
+                            // Convert string to Date (assuming value is in YYYY-MM-DD format)
+                            if (value != null && value != '') {
+                                List<String> dateParts = value.split('-');
+                                if (dateParts.size() == 3) {
+                                    newRecord.put(fieldName, Date.newInstance(Integer.valueOf(dateParts[0]), Integer.valueOf(dateParts[1]), Integer.valueOf(dateParts[2])));
+                                }
+                            }
+                        } else if (fieldType == 'Datetime') {
+                            // Convert string to Datetime (assuming value is in ISO 8601 format, e.g., YYYY-MM-DDTHH:mm:ssZ)
+                            if (value != null && value != '') {
+                                newRecord.put(fieldName, Datetime.valueOf(value.replace('Z', '')));
+                            }
+                        } else if (fieldType == 'Boolean') {
+                            // Convert string to Boolean
+                            if (value != null && value != '') {
+                                newRecord.put(fieldName, Boolean.valueOf(value));
+                            }
+                        } else {
+                            // Handle String, Reference, Picklist, etc. as direct string assignment
+                            newRecord.put(fieldName, value);
+                        }
+                    }
+
+                    if(nameField != '' && nameField != null){
+                        newRecord.put(nameField, senderName);
+                    } else {
+                        newRecord.put('Name', senderName);
+                    }
+                    if(phoneField != '' && phoneField != null){
+                        newRecord.put(phoneField, senderPhone);
+                    } else {
+                        newRecord.put('Phone', senderPhone);
+                    }
+                    
+                    insert newRecord;
+                    record = newRecord;
+                    
+                    // Set the variables after insertion
+                    recordId = (String) newRecord.get('Id');
+                    recordName = (String) newRecord.get('Name');
+                    recordPhone = (String) newRecord.get(phoneField);
+                }
             }
-            
 
             DateTime myDateTime = DateTime.now();
             // String formattedDate = myDateTime.format(' d MMM yyyy');
@@ -205,7 +283,7 @@ global without sharing class WhatsAppWebhook{
                 }
 
                 // whatsappChat.Contact__c = contact.Id;
-                whatsappChat.Phone__c = contact.Phone;
+                whatsappChat.Phone__c = senderPhone;
                 whatsappChat.Type_of_Message__c = 'Inbound Messages';
                 whatsappChat.Message_Type__c = messageType;
                 whatsappChat.WhatsAppMessageId__c = whatsAppMessageID;
@@ -221,73 +299,95 @@ global without sharing class WhatsAppWebhook{
                     }
                     whatsappChat.Message__c = messageBody;
                 }
-                if (messageType.equalsIgnoreCase('image')){
-                    Map<String, Object> image = (Map<String, Object>) message.get('image');
-                    String imageId = (String) image.get('id');
-                    String mimeType = (String) image.get('mime_type');
-                    String filename = whatsAppMessageID + '-' + mimeType;
-
-                    Blob documentBody = handleMediaAttachment(imageId);
-                    Map<String, Object> filedata = new Map<String, Object>();
-                    if (documentBody != null){
-                        filedata = saveMediaToSalesforce(documentBody, filename, mimeType, contact.Id);
-                    }
-                    whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
-                    whatsappChat.File_Data__c = JSON.serialize(fileData);
-
-                }
-                if (messageType.equalsIgnoreCase('document')){
-                    Map<String, Object> document = (Map<String, Object>)message.get('document');
-                    String mediaId = (String) document.get('id');
-                    String mimeType = (String) document.get('mime_type');
-                    String filename = whatsAppMessageID + '-' + mimeType;
+                if(userRecs.isEmpty()){
+                    if (messageType.equalsIgnoreCase('image')){
+                        Map<String, Object> image = (Map<String, Object>) message.get('image');
+                        String imageId = (String) image.get('id');
+                        String mimeType = (String) image.get('mime_type');
+                        String filename = whatsAppMessageID + '-' + mimeType;
     
-                    Blob documentBody = handleMediaAttachment(mediaId);
-
-                    Map<String, Object> filedata = new Map<String, Object>();
-                    if (documentBody != null){
-                        filedata = saveMediaToSalesforce(documentBody, filename, mimeType, contact.Id);
+                        Blob documentBody = handleMediaAttachment(imageId);
+                        Map<String, Object> filedata = new Map<String, Object>();
+                        if (documentBody != null){
+                            filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                        }
+                        whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
+                        whatsappChat.File_Data__c = JSON.serialize(fileData);
                     }
-                    whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
-                    whatsappChat.File_Data__c = JSON.serialize(fileData);
+                    if (messageType.equalsIgnoreCase('document')){
+                        Map<String, Object> document = (Map<String, Object>)message.get('document');
+                        String mediaId = (String) document.get('id');
+                        String mimeType = (String) document.get('mime_type');
+                        String filename = whatsAppMessageID + '-' + mimeType;
+        
+                        Blob documentBody = handleMediaAttachment(mediaId);
+    
+                        Map<String, Object> filedata = new Map<String, Object>();
+                        if (documentBody != null){
+                            filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                        }
+                        whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
+                        whatsappChat.File_Data__c = JSON.serialize(fileData);
+                    }
+                    if (messageType.equalsIgnoreCase('video')){
+                        Map<String, Object> video = (Map<String, Object>) message.get('video');
+                        String videoId = (String) video.get('id');
+                        String mimeType = (String) video.get('mime_type');
+                        String filename = whatsAppMessageID + '-' + mimeType;
+    
+                        Blob documentBody = handleMediaAttachment(videoId);
+                        Map<String, Object> filedata = new Map<String, Object>();
+                        if (documentBody != null){
+                            filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                        }
+                        whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
+                        whatsappChat.File_Data__c = JSON.serialize(fileData);
+                    }
+                    if (messageType.equalsIgnoreCase('audio')){
+                        Map<String, Object> video = (Map<String, Object>) message.get('audio');
+                        String audioId = (String) video.get('id');
+                        String mimeType = (String) video.get('mime_type');
+                        String filename = whatsAppMessageID + '-' + mimeType;
+    
+                        Blob documentBody = handleMediaAttachment(audioId);
+                        Map<String, Object> filedata = new Map<String, Object>();
+                        if (documentBody != null){
+                            filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                        }
+                        whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
+                        whatsappChat.File_Data__c = JSON.serialize(fileData);
+                    }
+                    if (messageType.equalsIgnoreCase('button')){
+                        Map<String, Object> button = (Map<String, Object>)message.get('button');
+                        String payload = (String) button.get('payload');
+                        String text = (String) button.get('text');
+                        whatsappChat.Message__c = text;
+                        if (contextId != null && contextId != ''){
+                            whatsappChat.WhatsAppContextMessageID__c = contextId;
+                        }
+                        whatsappChat.Message_Type__c = 'text';
+                    }
                 }
-                if (messageType.equalsIgnoreCase('video')){
-                    Map<String, Object> video = (Map<String, Object>) message.get('video');
-                    String videoId = (String) video.get('id');
-                    String mimeType = (String) video.get('mime_type');
-                    String filename = whatsAppMessageID + '-' + mimeType;
 
-                    Blob documentBody = handleMediaAttachment(videoId);
-                    Map<String, Object> filedata = new Map<String, Object>();
-                    if (documentBody != null){
-                        filedata = saveMediaToSalesforce(documentBody, filename, mimeType, contact.Id);
+                // Rachit - WP Flow changes
+                if (messageType.equalsIgnoreCase('interactive')) {
+                    Map<String, Object> interactive = (Map<String, Object>)message.get('interactive');
+                    System.debug('interactive: ' + interactive);
+                    if (interactive != null) { 
+                        String interactiveType = (String)interactive.get('type');
+                        if (interactiveType == 'nfm_reply') {
+                            Map<String, Object> nfmReply = (Map<String, Object>)interactive.get('nfm_reply');
+                            System.debug('nfmReply : ' + nfmReply);
+                            if (nfmReply != null) { 
+                                String responseJson = (String)nfmReply.get('response_json');
+                                System.debug('responseJson: ' + responseJson);
+                                if(responseJson != null){
+                                    whatsappChat.Flow_Response_JSON__c = responseJson;
+                                }
+                            }
+                        }
+                        whatsappChat.Message_Type__c = 'interactive';
                     }
-                    whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
-                    whatsappChat.File_Data__c = JSON.serialize(fileData);
-                }
-                if (messageType.equalsIgnoreCase('audio')){
-                    Map<String, Object> video = (Map<String, Object>) message.get('audio');
-                    String audioId = (String) video.get('id');
-                    String mimeType = (String) video.get('mime_type');
-                    String filename = whatsAppMessageID + '-' + mimeType;
-
-                    Blob documentBody = handleMediaAttachment(audioId);
-                    Map<String, Object> filedata = new Map<String, Object>();
-                    if (documentBody != null){
-                        filedata = saveMediaToSalesforce(documentBody, filename, mimeType, contact.Id);
-                    }
-                    whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
-                    whatsappChat.File_Data__c = JSON.serialize(fileData);
-                }
-                if (messageType.equalsIgnoreCase('button')){
-                    Map<String, Object> button = (Map<String, Object>)message.get('button');
-                    String payload = (String) button.get('payload');
-                    String text = (String) button.get('text');
-                    whatsappChat.Message__c = text;
-                    if (contextId != null && contextId != ''){
-                        whatsappChat.WhatsAppContextMessageID__c = contextId;
-                    }
-                    whatsappChat.Message_Type__c = 'text';
                 }
             }
             whatsappChat.Last_Interaction_Date__c = System.now();
@@ -301,7 +401,9 @@ global without sharing class WhatsAppWebhook{
             newChatEvent.ContactId__c = whatsappChat.Phone__c;
             EventBus.publish(newChatEvent);
 
-            sendNotificationForContact(contact);
+            if(userRecs.isEmpty()){
+                sendNotificationForContact(recordId, objectApiName);
+            }
 
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processSingleMessage', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
@@ -401,13 +503,14 @@ global without sharing class WhatsAppWebhook{
         }
     }
 
-    public static Map<String, Object> saveMediaToSalesforce(Blob mediaBlob, String filename, String mimeType, Id parentRecordId){
+    public static Map<String, Object> saveMediaToSalesforce(Blob mediaBlob, String filename, String mimeType, Id parentRecordId, String objectApiName){
         Map<String, Object> fileData = new Map<String, Object>();
         try{
-            Lead contact = [SELECT Id, Name, OwnerId
-                               FROM Lead
-                               WHERE Id = :parentRecordId
-                               LIMIT 1];
+            // Lead contact = [SELECT Id, Name, OwnerId FROM Lead WHERE Id = :parentRecordId LIMIT 1];
+            // Query the object specified in objectApiName using dynamic SOQL
+            String query = 'SELECT Id, CreatedById FROM ' + objectApiName + ' WHERE Id = :parentRecordId LIMIT 1';
+            List<SObject> records = Database.query(query);
+            SObject record = records[0];
 
             // Create ContentVersion with Contact's OwnerId
             System.debug('filename--> '+ filename);
@@ -416,18 +519,15 @@ global without sharing class WhatsAppWebhook{
                 VersionData = mediaBlob, 
                 PathOnClient = filename, 
                 ContentLocation = 'S', 
-                OwnerId = contact.OwnerId
+                OwnerId = (Id) record.get('CreatedById')
             );
 
             insert contentVersion;
 
-            ContentVersion insertedContentVersion = [SELECT ContentDocumentId
-                                                     FROM ContentVersion
-                                                     WHERE Id = :contentVersion.Id
-                                                     LIMIT 1];
+            ContentVersion insertedContentVersion = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :contentVersion.Id LIMIT 1];
             String contentDocumentId = insertedContentVersion.ContentDocumentId;
 
-            CDLWrapper cdlWrap = new CDLWrapper(contact.Id, contentDocumentId);
+            CDLWrapper cdlWrap = new CDLWrapper((String) record.get('Id'), contentDocumentId);
             String body = JSON.Serialize(cdlWrap);
 
             sendEmail(body);
@@ -445,25 +545,26 @@ global without sharing class WhatsAppWebhook{
         return filedata;
     }
 
-    public static void sendNotificationForContact(Lead con){
+    public static void sendNotificationForContact(String recordId, String objectApiName){
         try{
-            List<CustomNotificationType> cnType = [SELECT Id
-                                                   FROM CustomNotificationType
-                                                   WHERE DeveloperName = 'WBConnectNotification'
-                                                   LIMIT 1];
+            String query = 'SELECT Id, Name, CreatedById FROM ' + objectApiName + ' WHERE Id = :recordId LIMIT 1';
+            List<SObject> records = Database.query(query);
+            sObject record = records[0];
+
+            List<CustomNotificationType> cnType = [SELECT Id FROM CustomNotificationType WHERE DeveloperName = 'WBConnectNotification' LIMIT 1];
             System.debug('custom notification===> ' + cnType[0]);
 
             // Id userId = Userinfo.getUserId();
-            String messageContent = con.Name + ' has sent a new message. Tap to view.';
+            String messageContent = (String) record.get('Name') + ' has sent a new message. Tap to view.';
             System.debug('messageContent==> ' + messageContent);
             // Prepare the custom notification object
             Set<String> addressee = new Set<String>();
-            addressee.add(con.OwnerId);
+            addressee.add((Id) record.get('CreatedById'));
             Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
             customNotificationObj.setBody(messageContent);
             customNotificationObj.setTitle('New Whatsapp Message Received');
             customNotificationObj.setNotificationTypeId(cnType[0].Id);
-            customNotificationObj.setTargetId(con.Id);
+            customNotificationObj.setTargetId((Id) record.get('Id'));
             customNotificationObj.send(addressee);
 
         } catch (Exception e){
