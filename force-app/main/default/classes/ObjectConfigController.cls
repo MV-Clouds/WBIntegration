@@ -81,7 +81,7 @@ public with sharing class ObjectConfigController {
             for (Schema.SObjectField field : fieldMap.values()) {
                 Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
 
-                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isUpdateable()) {
+                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isCreateable()) {
                     Map<String, String> phoneFieldInfo = new Map<String, String>();
                     phoneFieldInfo.put('label', fieldDescribe.getLabel());
                     phoneFieldInfo.put('value', fieldDescribe.getName());
@@ -89,7 +89,7 @@ public with sharing class ObjectConfigController {
                 }
 
                 // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
-                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isUpdateable()) {
+                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isCreateable()) {
                     Map<String, String> textFieldInfo = new Map<String, String>();
                     textFieldInfo.put('label', fieldDescribe.getLabel());
                     textFieldInfo.put('value', fieldDescribe.getName());
@@ -98,7 +98,7 @@ public with sharing class ObjectConfigController {
                 
                 // Skip fields that shouldn't be included
                 if (fieldDescribe.isNillable() || fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || 
-                    !fieldDescribe.isUpdateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
+                    !fieldDescribe.isCreateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
                     continue;
                 }
     
