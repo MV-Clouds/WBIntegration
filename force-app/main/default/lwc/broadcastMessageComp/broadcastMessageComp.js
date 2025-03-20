@@ -52,7 +52,7 @@ export default class BroadcastMessage extends LightningElement {
         return Math.ceil(this.totalItems / this.pageSize);
     }
 
-        /**
+    /**
     * Getter Name : pageNumbers
     * @description : set the list for page number in pagination.
     */
