@@ -8,8 +8,15 @@
             </div>
         </template>
         
-
-        <h1 class="slds-text-align_center heading">Create Broadcast Group</h1>
+        <div class="heading-container">
+            <h1 class="slds-text-align_center heading">Create Broadcast Group</h1>
+            <div class="btns">
+                <button class="cus-btns" onclick={handleCreateBroadcast}>
+                    <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small" class="left-icon"></lightning-icon>
+                    <span>New Broadcast</span>
+                </button>
+            </div>
+        </div>
         <div class="slds-m-around_medium container">
 
             <!-- Comboboxes in Grid -->
@@ -44,6 +51,14 @@
                     <table class="table">
                         <thead>
                             <tr>
+                                <th class="checkbox-column">
+                                    <lightning-input 
+                                        type="checkbox" 
+                                        checked={isAllSelected}
+                                        indeterminate={isIndeterminate}
+                                        onchange={handleSelectAll}>
+                                    </lightning-input>
+                                </th>
                                 <th class="sr-no">Sr. No</th>
                                 <th>Name</th>
                                 <th>Phone</th>
@@ -52,6 +67,14 @@
                         <tbody>
                             <template for:each={paginatedData} for:item="row">
                                 <tr key={row.Id}>
+                                    <td>
+                                        <lightning-input 
+                                            type="checkbox" 
+                                            checked={row.isSelected}
+                                            data-record-id={row.Id}
+                                            onchange={handleRecordSelection}>
+                                        </lightning-input>
+                                    </td>
                                     <td class="sr-no">{row.index}</td>
                                     <td>{row.name}</td>
                                     <td>{row.phone}</td>
@@ -107,5 +130,19 @@
     </template>
 
     </div>
+
+    <template if:true={isCreateBroadcast}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container preview-container">
+                <div class="slds-modal__content slds-p-around_medium pop-up" id="modal-content-id-2">
+                    <div class="pop-heading">
+                        <h1>Create Broadcast Group</h1>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
 
 </template>

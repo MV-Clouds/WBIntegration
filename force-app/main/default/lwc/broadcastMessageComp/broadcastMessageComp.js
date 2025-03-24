@@ -17,7 +17,8 @@ export default class BroadcastMessage extends LightningElement {
     @track isLoading = false;
     @track configMap = {}; // store object -> {nameField, phoneField}
     @track searchTerm = '';
-
+    @track selectedRecords = new Set(); // Track selected record IDs
+    @track isCreateBroadcast = false;
 
     get dynamicFieldNames() {
         if (!this.selectedObject || !this.configMap[this.selectedObject]) {
@@ -28,6 +29,22 @@ export default class BroadcastMessage extends LightningElement {
             `${this.selectedObject}.${fields.nameField}`,
             `${this.selectedObject}.${fields.phoneField}`
         ];
+    }
+
+        /**
+     * Getter for select all checkbox state
+     */
+    get isAllSelected() {
+        return this.paginatedData.length > 0 && 
+                this.paginatedData.every(record => this.selectedRecords.has(record.Id));
+    }
+
+    /**
+     * Getter for indeterminate state of select all checkbox
+     */
+    get isIndeterminate() {
+        return this.paginatedData.some(record => this.selectedRecords.has(record.Id)) && 
+                !this.isAllSelected;
     }
 
     get showNoRecordsMessage() {
@@ -163,8 +180,10 @@ export default class BroadcastMessage extends LightningElement {
         try {
             const startIndex = (this.currentPage - 1) * this.pageSize;
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
-            this.paginatedData = this.filteredData.slice(startIndex, endIndex);
-            
+            this.paginatedData = this.filteredData.slice(startIndex, endIndex).map(record => ({
+                ...record,
+                isSelected: this.selectedRecords.has(record.Id)
+            }));
         } catch (error) {
             console.log('Error updateShownData->' + error);
         }
@@ -243,6 +262,7 @@ export default class BroadcastMessage extends LightningElement {
         this.filteredData = [];
         this.paginatedData = [];
         this.currentPage = 1;
+        this.selectedRecords.clear(); // Clear selections
         this.loadListViews();
     }
 
@@ -283,15 +303,65 @@ export default class BroadcastMessage extends LightningElement {
                 index : index + 1,
                 Id: record.id,
                 name: record.fields[fields.nameField] ? record.fields[fields.nameField].value : '',
-                phone: record.fields[fields.phoneField] ? record.fields[fields.phoneField].value : ''
+                phone: record.fields[fields.phoneField] ? record.fields[fields.phoneField].value : '',
+                isSelected: false
             }));
 
             this.filteredData = [...this.data];
             this.currentPage = 1;
+            this.selectedRecords.clear();
             this.updateShownData();
         } else if (error) {
             console.error('Error loading records:', error);
         }
     }
     
+
+    /**
+     * Handle individual record selection
+     */
+    handleRecordSelection(event) {
+        const recordId = event.target.dataset.recordId;
+        const record = this.paginatedData.find(row => row.Id === recordId);
+        if (record) {
+            record.isSelected = event.target.checked;
+            if (record.isSelected) {
+                this.selectedRecords.add(recordId);
+            } else {
+                this.selectedRecords.delete(recordId);
+            }
+            this.selectedRecords = new Set(this.selectedRecords);
+        }
+    }
+
+    /**
+     * Handle select all records
+     */
+    handleSelectAll(event) {
+        const isChecked = event.target.checked;
+        this.paginatedData.forEach(record => {
+            record.isSelected = isChecked;
+            if (isChecked) {
+                this.selectedRecords.add(record.Id);
+            } else {
+                this.selectedRecords.delete(record.Id);
+            }
+        });
+        this.selectedRecords = new Set(this.selectedRecords);
+    }
+
+    /**
+     * Check if a specific record is selected
+     */
+    isRecordSelected(recordId) {
+        return this.selectedRecords.has(recordId);
+    }
+
+    handleCreateBroadcast(){
+        this.isCreateBroadcast = true;
+    }
+
+    handleCancel(){
+        this.isCreateBroadcast = false;
+    }
 }
