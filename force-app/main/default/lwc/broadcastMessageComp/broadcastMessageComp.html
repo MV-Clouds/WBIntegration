@@ -7,6 +7,7 @@
                 <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
             </div>
         </template>
+        
 
         <h1 class="slds-text-align_center heading">Create Broadcast Group</h1>
         <div class="slds-m-around_medium container">
@@ -31,6 +32,10 @@
                         disabled={isListViewDropdownDisabled}>
                     </lightning-combobox>
                 </div>
+            </div>
+
+            <div class="slds-m-top_medium">
+                <lightning-input type="text" label="Search"  onchange={handleSearch} disabled={isSearchDisabled}></lightning-input>
             </div>
 
             <!-- Custom Table -->
