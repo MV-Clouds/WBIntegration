@@ -172,6 +172,7 @@ export default class WbAllFlowsPage extends LightningElement {
     closePopup(){
         this.showPopup = false;
         this.flowPreviewURL = '';
+        this.selectedFlowId = '';
     }
 
     publishFlow(){
