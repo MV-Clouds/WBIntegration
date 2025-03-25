@@ -229,6 +229,8 @@ label{
     border: 1px solid #d8dde6;
     border-radius: 5px;
     margin-left: 1rem;
+    overflow-y: auto;
+    pointer-events: none;
 }
 
 .editor {
