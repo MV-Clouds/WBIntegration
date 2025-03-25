@@ -27,7 +27,6 @@
             </div>
 
             <div class="datatable">
-                <!-- Custom HTML Table -->
                 <div class="table-container">
                     <table class="slds-table">
                         <thead>
@@ -44,33 +43,51 @@
                                 <th class="tableHead" scope="col">
                                     <div class="slds-truncate">Last Updated</div>
                                 </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Actions</div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             <template if:true={filteredRecords.length}>
                                 <template for:each={filteredRecords} for:item="record">
-                                    <tr class="tablerow" key={record.id}>
+                                    <tr class="tablerow" key={record.Id}>
                                         <td class="tableData" data-label="Flow Name">
-                                            <div class="slds-truncate">{record.Name}</div>
+                                            <div class="slds-truncate">{record.Flow_Name__c}</div>
                                         </td>
                                         <td class="tableData" data-label="Flow ID">
-                                            <div class="slds-truncate">{record.Flow_ID__c}</div>
+                                            <div class="slds-truncate">{record.Flow_Id__c}</div>
                                         </td>
                                         <td class="tableData" data-label="Status">
-                                            <div class="slds-truncate"><p class={record.Flow_Status__c}>{record.Flow_Status__c}</p></div>
+                                            <div class="slds-truncate"><p class={record.Status__c}>{record.Status__c}</p></div>
                                         </td>
                                         <td class="tableData" data-label="LastModifiedDate">
                                             <div class="slds-truncate">{record.LastModifiedDate}</div>
                                         </td>
-                                        <!-- <td class="tableData tablebtns" data-label="Actions">
-                                            <lightning-button-icon icon-name="utility:threedots" data-id={record.id}></lightning-button-icon>
-                                        </td> -->
+                                        <td class="tableData tablebtns" data-label="Actions">
+                                            <template if:false={record.isDeprecated}>
+                                                <button class="action-buttons slds-m-right--x-small">
+                                                    <img src="/resource/MVWB__previewIcon" class="action" title="preview" alt="preview" data-id={record.Flow_Id__c} onclick={previewTemplate}>
+                                                </button>
+                                            </template>
+                                            <!-- <button disabled={record.isButtonDisabled} class="action-buttons slds-m-horizontal--x-small">
+                                                <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
+                                            </button> -->
+                                            <button class="action-buttons slds-m-horizontal--x-small">
+                                                <template if:true={record.isPublished}>
+                                                    <img src="/resource/MVWB__trashIcon" class="action trash" title="Deprecate" alt="Deprecate" data-id={record.Flow_Id__c} data-status={record.Status__c} onclick={deprecateFlow}>
+                                                </template>
+                                                <template if:true={record.isDraft}>
+                                                    <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete" alt="deDeletelete" data-id={record.Flow_Id__c} data-status={record.Status__c} onclick={deleteFlow}>
+                                                </template>
+                                            </button>
+                                        </td>
                                     </tr>
                                 </template>
                             </template>
                             <template if:false={filteredRecords.length}>
                                 <tr>
-                                    <td class="slds-text-align_center" colspan="4">
+                                    <td class="slds-text-align_center" colspan="5">
                                         No records found.
                                     </td>
                                 </tr>
@@ -79,6 +96,28 @@
                     </table>
                 </div>
             </div>
+
+            <template if:true={showPopup}>
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container preview-container">
+                        <div class="slds-modal__content slds-p-around_medium flow-preview" id="modal-content-id-2">
+                            <p class="preview-heading">Flow Preview</p>
+                            <template if:true={isFlowDraft}>
+                                <div class="slds-text-align--right slds-m-around--medium">
+                                    <button class="publish-btn" onclick={publishFlow}>Publish Flow</button>
+                                </div>
+                            </template>
+                            <div class="previewContainer">
+                                <iframe src={flowPreviewURL} width="430" height="800"></iframe>
+                            </div>
+                            <div class="footer">
+                                <button class="close-btn" onclick={closePopup}>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open" onclick={closePopup}></div>
+            </template>
         </div>
     </template>
     <template if:true={iscreateflowvisible}>

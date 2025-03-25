@@ -1,64 +1,37 @@
-import { LightningElement,track,wire } from 'lwc';
-import flowBG from '@salesforce/resourceUrl/wbiTemplateBg';
+import { LightningElement, track, wire } from 'lwc';
 import createWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.createWhatsAppFlow';
+import publishWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.publishWhatsAppFlow';
+import deleteWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deleteWhatsAppFlow';
+import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deprecateWhatsAppFlow';
+import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.getPreviewURLofWhatsAppFlow';
+import FlowIcon from '@salesforce/resourceUrl/FlowIcon';
+import { loadScript } from 'lightning/platformResourceLoader';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import MonacoEditor from '@salesforce/resourceUrl/MonacoEditor';
+import PublishPopupImage from '@salesforce/resourceUrl/PublishPopupImage';
 import getJSONData from '@salesforce/apex/WhatsAppFlowController.getJSONData';
 
 export default class WbCreateFlowPage extends LightningElement {
-    @track isFlowVisible = false;
-    @track iscreateflowvisible = true; 
-    @track dropdownClose = true;
-    @track isJsonVisible=false;
-    @track value = 'default';
-    @track flowName = '';
-    @track selectedCatagories = [];
-    backgroundImage = flowBG;
+    @track selectedCategories = [];
+    status = '';
+    editor;
+    templateType = 'Default';
+    jsonString = '';
+    isFlowVisible = true;
+    isCreateDisabled = true;
+    publishImageUrl = PublishPopupImage;
+    iscreateflowvisible = true; 
+    dropdownClose = true;
+    showPublishPopup = false;
+    showDeletePopup = false;
+    showDeprecatePopup = false;
+    isJsonVisible=false;
+    flowName = '';
+    flowId = '';
+    flowPreviewURL = '';
     maxFlowNamelength = 200;
-    // flowIconUrl = FlowIcon;
-    @track jsonString = ``;    
-    jsonLines = [];
-    @track dataMap={};
-    @track isLoading=false;
-
-    @wire(getJSONData)
-    wiredData({ error, data }) {
-        if (data) {
-            console.log('Data from Apex:', data);
-
-            data.forEach(item => {                
-                if (item.name && item.data) {
-                    this.dataMap[item.name] = item.data;
-                } else {
-                    console.warn('Item missing name or data:', item);
-                }
-            });
-
-            if (this.dataMap['default']) {
-                this.initializeJsonDisplay('default');
-            }
-        } else if (error) {
-            console.error('Error loading JSON data:', error);
-        }
-    }
-    
-    initializeJsonDisplay(option) {
-        this.jsonString = JSON.stringify(this.dataMap[option], null, 2);
-        this.formatJsonWithLineNumbers();
-    }
-    
-    formatJsonWithLineNumbers() {
-        try {
-            const parsedJson = JSON.parse(this.jsonString); 
-            const jsonString = JSON.stringify(parsedJson, null, 2);
-            const lines = jsonString.split('\n'); 
-            
-            this.jsonLines = lines.map((line, index) => ({
-                lineNumber: index + 1,
-                text: line
-            }));
-        } catch (error) {
-            console.error('Error parsing JSON in formatJsonWithLineNumbers:', error);
-        }
-    }
+    flowIconUrl = FlowIcon;
+    isLoading = false;
 
     get TypeOptions() {
         return [
@@ -73,68 +46,289 @@ export default class WbCreateFlowPage extends LightningElement {
             { label: 'Other', value: 'OTHER' }
         ];
     }
-    get backgroundImageStyle() {
-        return `background-image:url(${flowBG}); background-size: cover; background-position: center;`;
+
+    get isSaveEnabled(){
+        return false;
     }
 
-    handleChange(event) {
-        this.value = event.target.value;
-        console.log('value ',this.value);
-        
-        if (this.dataMap && this.dataMap[this.value]) {
-            console.log('enter in if');
-            
-            this.jsonString = JSON.stringify(this.dataMap[this.value], null, 2); 
-            console.log('this.jsonString:', this.jsonString);
-            this.formatJsonWithLineNumbers();
-        } else {
-            console.log('No matching data found for:', this.value);
-            this.jsonString = '';
-            this.jsonLines = [];
-        }
+    get isPublishedEnabled(){
+        return this.status == 'Draft' ? true : false;
+    }
+
+    get isDeleteEnabled(){
+        return this.status == 'Draft' ? true : false;
+    }
+
+    get isDeprecateEnabled(){
+        return this.status == 'Published' ? true : false;
+    }
+
+    handleTypeChange(event) {
+        this.templateType = event.target.value;
     }
 
     handleInputChange(event){
-        this.flowName = event.target.value;        
+        this.flowName = event.target.value;  
+        if (this.selectedCategories.length > 0 && this.flowName.trim()) {
+            this.isCreateDisabled = false;
+        } else {
+            this.isCreateDisabled = true;
+        }
     }
 
     handleDiscard() {
-        this.isFlowVisible = true;
-        this.iscreateflowvisible = false;    
+        this.isFlowVisible = false;
     }
   
     handleCatagories(event) {
         const selectedCategories = event.detail.selectedValues;
-        this.selectedCatagories = selectedCategories; 
-        console.log('Selected Categories from child:', JSON.stringify(this.selectedCatagories));
+        this.selectedCategories = selectedCategories;
 
+        if (this.selectedCategories.length > 0 && this.flowName.trim()) {
+            this.isCreateDisabled = false;
+        } else {
+            this.isCreateDisabled = true;
+        }
     }
   
     handleCreate(){
-        // this.isJsonVisible=true;
-        // this.iscreateflowvisible = false; 
-        this.isLoading=true;
-        const catagories1 = Array.from(this.selectedCategories);  
-        console.log('Converted Array:', catagories1);
-        const catagories2 = JSON.stringify(this.selectedCatagories);
-        console.log(catagories2);
-        
-        createWhatsAppFlow({ flowName: this.flowName, category:  catagories1 })
-            .then( (result) => {
-                if (result) {
-                    console.log('Flows created Successfully!!',"success");
-                    this.isJsonVisible=true;
-                    this.iscreateflowvisible = false; 
-                    this.isLoading=false;
-                } else {
-                    console.log
-                    ('Error in creating Flows!!',"error");
-                    this.isLoading=false;
-                }
-             
-            }).catch( error => {
-                // this.toast(error, "error");
-                this.isLoading=false;
+        this.getJSONDataFromApex();
+    }
+
+    get formatDate(){
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const today = new Date();
+        const day = today.getDate();
+        const month = months[today.getMonth()];
+        const year = today.getFullYear();
+        return `Updated ${day} ${month} ${year}`;
+    }
+
+    getJSONDataFromApex(){
+        try {
+            console.log(this.templateType);
+            this.isLoading = true;
+            getJSONData({type: this.templateType})
+                .then((data) => {
+                    console.log({data});
+                    if(data){
+                        this.jsonString = data;
+    
+                        const catagories = Array.from(this.selectedCategories);  
+    
+                        createWhatsAppFlow({ flowName: this.flowName, categories: catagories, flowJson: this.jsonString, templateType: this.templateType })
+                            .then((result) => {
+                                console.log({result});
+                                if (!result.startsWith('Failed')) {
+                                    this.flowId = result;
+                                    this.status = 'Draft';
+                                    this.formatJSONDataonUI();
+                                    this.getFlowPreview();
+                                    // this.isJsonVisible = true;
+                                    // this.iscreateflowvisible = false; 
+                                } else {
+                                    console.error(result);
+                                    this.showToastError(result);
+                                }
+                            }).catch(error => {
+                                console.error('Error in creating Flow : ',error);
+                                this.isLoading = false;
+                            });
+                    } else {
+                        console.error('Error loading JSON data:', error);
+                        this.isLoading = false;
+                    }
+                })
+                .catch((error) => {
+                    console.error('error in json fetch' , error);
+                    this.isLoading = false;
+                });
+        } catch (error) {
+            console.error('Error loading JSON data:', error);
+        }
+    }
+
+    formatJSONDataonUI(){
+        try {
+            this.isLoading = true;
+            Promise.all([
+                loadScript(this, MonacoEditor + '/min/vs/loader.js')
+            ])
+            .then(() => {
+                require.config({ paths: { vs: MonacoEditor + '/min/vs' } });
+                this.isJsonVisible = true;
+                this.iscreateflowvisible = false; 
+                require(['vs/editor/editor.main'], () => {
+                    this.initializeEditor();
+                });
             })
+            .catch(error => {
+                console.error('Error loading Monaco Editor:', error);
+                this.isLoading = false;
+            })
+        } catch (error) {
+            console.error('Error loading Monaco Editor:', error);
+            this.isLoading = false;
+        }
+    }
+    
+    initializeEditor() {
+        try {
+            this.editor = monaco.editor.create(this.template.querySelector('.editor'), {
+                value: this.jsonString,
+                language: 'json',
+                theme: 'vs-light',
+                automaticLayout: true,
+                minimap: { enabled: false }
+            });
+    
+            this.editor.onDidChangeModelContent(() => {
+                this.jsonString = this.editor.getValue();
+            });
+            this.isLoading = false;
+        } catch (error) {
+            console.error('Error in initializing Editor:', error);
+            this.isLoading = false;
+        }
+    }
+
+    getFlowPreview(){
+        try {
+            if(this.flowId != '') {
+                this.isLoading = true;
+                getPreviewURLofWhatsAppFlow({ flowId : this.flowId })
+                    .then((data) => {
+                        console.log({data});
+                        if(data != 'failed'){
+                            this.flowPreviewURL = data;
+                        } else {
+                            console.error('Error in getting Flow Preview URL:', error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error in getting Flow Preview URL:', error);
+                    })
+                    .finally(() => {
+                        this.isLoading = false;
+                    });
+            } else {
+                console.error('Flow id not found');
+            }
+        } catch (error) {
+            console.error('Error in getting Flow Preview URL:', error);
+        }
+    }
+
+    onRunClick(){
+        this.getFlowPreview();
+    }
+
+    onPublishClick(){
+        this.showPublishPopup = true;
+    }
+
+    // Close Popup
+    closePublishPopup() {
+        this.showPublishPopup = false;
+    }
+
+    // Handle Publish Button Click
+    handlePublish() {
+        try {
+            this.isLoading = true;
+            this.showPublishPopup = false;
+            publishWhatsAppFlow({flowId : this.flowId})
+                .then((result) => {
+                    if(!result.startsWith('Failed')){
+                        this.isFlowVisible = false;
+                    } else {
+                        console.error('Error in publishing WhatsApp Flow:', error);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Failed to publish flow : ' , error);
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                })
+        } catch (error) {
+            console.error('Failed to publish flow : ' , error);
+        }
+    }
+
+    onDeleteClick(){
+        this.showDeletePopup = true;
+    }
+
+    handleDelete(){
+        try {
+            this.isLoading = true;
+            this.showDeletePopup = false;
+            deleteWhatsAppFlow({flowId : this.flowId})
+                .then((result) => {
+                    if(!result.startsWith('Failed')){
+                        this.isFlowVisible = false;
+                    } else {
+                        console.error('Error in deleting WhatsApp Flow:', error);
+                    }
+                    })
+                .catch((error) => {
+                    console.error('Failed to delete flow : ' , error);
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                })
+        } catch (error) {
+            console.error('Failed to delete flow : ' , error);
+        }
+    }
+
+    closeDeletePopup(){
+        this.showDeletePopup = false;
+    }
+
+    onDeprecateClick(){
+        this.showDeprecatePopup = true;
+    }
+
+    handleDeprecate(){
+        try {
+            this.isLoading = true;
+            this.showDeletePopup = false;
+            deprecateWhatsAppFlow({flowId : this.flowId})
+                .then((result) => {
+                    if(!result.startsWith('Failed')){
+                        this.isFlowVisible = false;
+                    } else {
+                        console.error('Error in deleting WhatsApp Flow:', error);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Failed to delete flow : ' , error);
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                })
+        } catch (error) {
+            console.error('Failed to delete flow : ' , error);
+            this.closeDeletePopup();
+        }
+    }
+
+    closeDeprecatePopup(){
+        this.showDeletePopup = false;
+    }
+
+    onBackClick(){
+        this.isFlowVisible = false;
+    }
+
+    showToastError(message) {
+        const toastEvent = new ShowToastEvent({
+            title: 'Error',
+            message,
+            variant: 'error'
+        });
+        this.dispatchEvent(toastEvent);
     }
 }

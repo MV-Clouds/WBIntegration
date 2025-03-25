@@ -1,42 +1,62 @@
 import { LightningElement, track, wire } from 'lwc';
 import getWhatsAppFlows from '@salesforce/apex/WhatsAppFlowController.getWhatsAppFlows';
-import getStatusPicklistValues from '@salesforce/apex/WhatsAppFlowController.getStatusPicklistValues';
+import publishWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.publishWhatsAppFlow';
+import deleteWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deleteWhatsAppFlow';
+import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deprecateWhatsAppFlow';
+import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.getPreviewURLofWhatsAppFlow';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
+import FLOW_OBJECT from "@salesforce/schema/Flow__c";
+import STATUS_FIELD from "@salesforce/schema/Flow__c.Status__c";
 
 export default class WbAllFlowsPage extends LightningElement {
-    @track isFlowVisible = true;
-    @track iscreateflowvisible = false;
-    @track statusValues = [];
-    @track searchInput;
-    @track filteredRecords = [];
-    @track categoryOptions = [];
-    @track statusOptions = [];
     @track allRecords = [];
-    @track isLoading=false;
+    @track filteredRecords = [];
+    @track statusValues = [];
+    @track statusOptions = [];
+    isFlowVisible = true;
+    iscreateflowvisible = false;
+    searchInput;
+    isLoading = false;
+    flowPreviewURL = '';
+    showPopup = false;
+    isFlowDraft = false;
+    selectedFlowId = '';
 
-    @wire(getStatusPicklistValues)
-    wiredCategoryAndStatus({ error, data }) {
+    @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
+    flowMetadata;
+
+    @wire(getPicklistValues, { recordTypeId: "$flowMetadata.data.defaultRecordTypeId", fieldApiName: STATUS_FIELD })
+    wiredPicklistValues({ error, data }) {
         if (data) {
-            this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(stat => ({ label: stat, value: stat }))];
+            this.statusOptions = data.values;
         } else if (error) {
-            console.error(error);
+            console.error(`Error fetching Status picklist values: ${error}`);
+            this.statusOptions = [];
         }
     }
 
-    @wire(getWhatsAppFlows)
-    wiredWhatsappFlows({ error, data }) {
-        if (data) {
-            this.allRecords = data.map(record => {
-                return {
-                    ...record,
-                    id: record.Id,
-                    LastModifiedDate: this.formatDate(record.LastModifiedDate)
-                };
-            });
-            this.filterRecords();
-        } else if (error) {
-            console.error(error);
-        }
+    connectedCallback(){
+        this.fetchWhatsAppFlows();
+    }
+
+    fetchWhatsAppFlows(){
+        getWhatsAppFlows()
+            .then((data) => {
+                this.allRecords = data.map(record => {
+                    return {
+                        ...record,
+                        isDraft: record.Status__c === 'Draft',
+                        isPublished: record.Status__c === 'Published',
+                        isDeprecated: record.Status__c === 'Deprecated',
+                        LastModifiedDate: this.formatDate(record.LastModifiedDate)
+                    };
+                });
+                this.filterRecords();
+            })
+            .catch((error) => {
+                console.error(error);
+            })
     }
 
     showCreateFlow(){
@@ -46,38 +66,130 @@ export default class WbAllFlowsPage extends LightningElement {
 
     handleStatusChange(event) {
         this.statusValues = event.detail.value;
-        console.log(this.statusValues);
         this.filterRecords();
     }
 
     handleSearchInputChange(event) {
-        this.searchInput = event.target.value.toLowerCase();
+        this.searchInput = event.target.value.trim().toLowerCase();
         this.filterRecords();
     }
 
     filterRecords() {
-        let filtered = [...this.allRecords];
-
-        if (this.statusValues.length > 0) {
-            filtered = filtered.filter(record => this.statusValues.includes(record.Flow_Status__c));
-            console.log('status filter==>',filtered);
+        try {
+            let filtered = [...this.allRecords];
+    
+            if (this.statusValues.length > 0) {
+                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
+            }
+    
+            if (this.searchInput) {
+                filtered = filtered.filter(record => record.Flow_Name__c.toLowerCase().includes(this.searchInput));
+            }
+    
+            this.filteredRecords = filtered;
+            this.isLoading = false;
+        } catch (error) {
+            console.error('Error in filtering records:', error);
+            this.isLoading = false;
         }
-
-        if (this.searchInput) {
-            filtered = filtered.filter(record => record.Name.toLowerCase().includes(this.searchInput));
-        }
-
-        this.filteredRecords = filtered;
     }
 
     formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric'
-        });
-    }    
+        if(dateString){
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+    }   
+    
+    deleteFlow(event){
+        var flowId = event.currentTarget.dataset.id;
+        var status = event.currentTarget.dataset.status;
+        if(status === 'Draft' || status === 'Published') {
+            this.isLoading = true;
+            deleteWhatsAppFlow({flowId : flowId})
+                .then((result) => {
+                    if(!result.startsWith('Failed')){
+                        this.fetchWhatsAppFlows();
+                    } else {
+                        console.error('Error in deleting WhatsApp Flow:', error);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Failed to delete flow : ' , error);
+                })
+        } else {
+            this.showToastError('Only flows in Draft or Published status can be deleted.')
+        }
+    }
+
+    deprecateFlow(event){
+        var flowId = event.currentTarget.dataset.id;
+        var status = event.currentTarget.dataset.status;
+        if(status === 'Draft' || status === 'Published'){
+            this.isLoading = true;
+            deprecateWhatsAppFlow({flowId : flowId})
+                .then((result) => {
+                    if(!result.startsWith('Failed')){
+                        this.fetchWhatsAppFlows();
+                    } else {
+                        console.error('Error in deleting WhatsApp Flow:', error);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Failed to delete flow : ' , error);
+                })
+        } else {
+            this.showToastError('Only flows in Draft or Published status can be deleted.')
+        }
+    }
+
+    previewTemplate(event){
+        try {
+            var flowId = event.currentTarget.dataset.id;
+            this.showPopup = true;
+            this.isFlowDraft = true;
+            this.selectedFlowId = flowId;
+            getPreviewURLofWhatsAppFlow({ flowId : flowId })
+                .then((data) => {
+                    if(data != 'failed'){
+                        this.flowPreviewURL = data;
+                    } else {
+                        console.error('Error in getting Flow Preview URL:', error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error in getting Flow Preview URL:', error);
+                });
+        } catch (error) {
+            console.error('Error in getting Flow Preview URL:', error);
+        }
+    }
+
+    closePopup(){
+        this.showPopup = false;
+        this.flowPreviewURL = '';
+    }
+
+    publishFlow(){
+        this.isLoading = true;
+        publishWhatsAppFlow({flowId : this.selectedFlowId})
+            .then((result) => {
+                if(!result.startsWith('Failed')){
+                    this.closePopup();
+                    this.fetchWhatsAppFlows();
+                    this.showToastSuccess('Flow successfully published.');
+                } else {
+                    console.error('Error in publishing WhatsApp Flow:', error);
+                }
+            })
+            .catch((error) => {
+                console.error('Failed to publish flow : ' , error);
+            })
+    }
 
     showToastError(message) {
         const toastEvent = new ShowToastEvent({

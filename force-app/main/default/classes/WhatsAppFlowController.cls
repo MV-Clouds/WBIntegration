@@ -1,87 +1,230 @@
 public with sharing class WhatsAppFlowController {
     
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static List<sObject> getWhatsAppFlows() {
-        // List<WhatsApp_Flow__c> listName = [SELECT Id, Name, Catagories__c, Flow_ID__c, Flow_Status__c,Flow_Type__c,LastModifiedDate, CreatedDate 
-        //                                          FROM WhatsApp_Flow__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
-        
-        // System.debug('list name==> ' + listName);
-        
-        return null;
-    }
-
-    @AuraEnabled(cacheable=true)
-    public static List<Map<String, Object>> getJSONData() {
-        try {
-            // StaticResource resource = [SELECT Body FROM StaticResource WHERE Name = 'WhatsappFlowJson'];
-            // String jsonString = resource.Body.toString();
-            // Map<String, Object> parsedJson = (Map<String, Object>) JSON.deserializeUntyped(jsonString);
-
-            // List<Object> items = (List<Object>) parsedJson.get('items');
-            List<Map<String, Object>> itemsList = new List<Map<String, Object>>();
-
-            // if (items != null) {
-            //     for (Object item : items) {
-            //         itemsList.add((Map<String, Object>) item);
-            //     }
-            // }
-
-            return itemsList; // Always return a valid list, even if empty
-        } catch (Exception e) {
-            System.debug('Error retrieving or parsing JSON: ' + e.getMessage());
-            return new List<Map<String, Object>>(); // Return empty list in case of an error
-        }
-    }
-
-    @AuraEnabled(cacheable=true)
-    public static Map<String, List<String>> getStatusPicklistValues() {
-        Map<String, List<String>> picklistValues = new Map<String, List<String>>();
-        // List<String> statusValues = new List<String>();
-
-        // // Fetch Status__c picklist values
-        // Schema.DescribeFieldResult statusFieldResult = WhatsApp_Flow__c.Flow_Status__c.getDescribe();
-        // for (Schema.PicklistEntry entry : statusFieldResult.getPicklistValues()) {
-        //     statusValues.add(entry.getLabel());
-        // }
-        // picklistValues.put('statuses', statusValues);
-
-        return picklistValues;
+        List<Flow__c> flowRecs = [SELECT Id, Flow_Name__c, Status__c, Flow_Id__c, Category__c, Template_Type__c, LastModifiedDate, CreatedDate FROM Flow__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
+        return flowRecs;
     }
 
     @AuraEnabled
-    public static String createWhatsAppFlow(String flowName, String categories) {
+    public static String getJSONData(String type) {
+        String jsonString = '';
         try {
-            String accessToken = '';
-            String endpoint = 'https://graph.facebook.com/v20.0/319254377948692/flows';
+            List<WBC_Flows_JSON__mdt> FlowJSON = [SELECT Id, Default_JSON__c, Collect_purchase_interest_JSON__c, Customer_support_JSON__c, Get_feedback_JSON__c, Send_a_survey_JSON__c FROM WBC_Flows_JSON__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            
+            if(type == 'Default') {
+                jsonString = FlowJSON[0].Default_JSON__c;
+            } else if(type == 'Collect purchase interest') {
+                jsonString = FlowJSON[0].Collect_purchase_interest_JSON__c;
+            } else if(type == 'Get feedback') {
+                jsonString = FlowJSON[0].Get_feedback_JSON__c;
+            } else if(type == 'Send a survey') {
+                jsonString = FlowJSON[0].Send_a_survey_JSON__c;
+            } else if(type == 'Customer support') {
+                jsonString = FlowJSON[0].Customer_support_JSON__c;
+            }
+        } catch (Exception e) {
+            System.debug('Error retrieving or parsing JSON: ' + e.getMessage());
+        }
+        return jsonString;
+    }
 
-            List<String> categoryList = (List<String>) JSON.deserialize(categories, List<String>.class);            
-            System.debug('Categories received: ' + categoryList);
+    @AuraEnabled
+    public static String createWhatsAppFlow(String flowName, List<String> categories, String flowJson, String templateType) {
+        try {
+            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Business_Account_Id__c + '/flows';
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(endpoint);
+            request.setMethod('POST');
+            request.setHeader('Authorization', 'Bearer ' + accessToken);
+            request.setHeader('Content-Type', 'application/json');
+            
+            String payload = JSON.serialize(new Map<String, Object>{
+                'categories' => categories,
+                'name' => flowName,
+                'flow_json' => flowJson
+            });
+            request.setBody(payload);
+            Http http = new Http();
+            HttpResponse response = http.send(request);
+            
+            if (response.getStatusCode() == 200) {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+                String flowId = (String) responseMap.get('id');
+
+                // Create a new Flow record
+                Flow__c flow = new Flow__c();
+                flow.Flow_Name__c = flowName;
+                flow.Status__c = 'Draft';
+                flow.Flow_Id__c = flowId;
+                flow.Flow_JSON__c = flowJson;
+                flow.Category__c = String.join(categories, ';');
+                flow.Template_Type__c = templateType;
+
+                insert flow;
+                return flowId;
+            } else {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+                Map<String, Object> errorMap = (Map<String, Object>) responseMap.get('error');
+                String errorMessage = (String) errorMap.get('error_user_msg');
+                return 'Failed to create flow : ' + errorMessage;
+            }
+        } catch (Exception e) {
+            return 'Failed to create flow : ' + e.getMessage();
+        }
+    }
+
+    @AuraEnabled
+    public static String updateWhatsAppFlow(String flowId, String flowJson) {
+        try {
+            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/assets';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
             request.setHeader('Authorization', 'Bearer ' + accessToken);
             request.setHeader('Content-Type', 'application/x-www-form-urlencoded');
             
-            String categoriesJson = JSON.serialize(categoryList);
-            
-            String body = 'name=' + EncodingUtil.urlEncode(flowName, 'UTF-8') + 
-                        '&categories=' + EncodingUtil.urlEncode(categoriesJson, 'UTF-8');
-            request.setBody(body);
-            System.debug(body);
+            String payload = JSON.serialize(new Map<String, Object>{
+                'file' => flowJson,
+                'name' => 'flow.json',
+                'asset_type' => 'FLOW_JSON'
+            });
+            request.setBody(payload);
             Http http = new Http();
             HttpResponse response = http.send(request);
             
             if (response.getStatusCode() == 200) {
-                Map<String, Object> jsonResponse = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
-                return 'Flow created successfully with ID: ' + (String) jsonResponse.get('id');
+                return 'sucess';
             } else {
-                System.debug('Error response: ' + response.getBody());
-                return 'Failed to create flow. Status Code: ' + response.getStatusCode() + ', Response: ' + response.getBody();
+                return 'failed';
             }
         } catch (Exception e) {
-            System.debug('Exception: ' + e.getMessage());
-            return 'An error occurred: ' + e.getMessage();
+            return 'failed';
+        }
+    }
+
+    @AuraEnabled
+    public static String publishWhatsAppFlow(String flowId) {
+        try {
+            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/publish';
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(endpoint);
+            request.setMethod('POST');
+            request.setHeader('Authorization', 'Bearer ' + accessToken);
+            Http http = new Http();
+            HttpResponse response = http.send(request);
+            
+            if (response.getStatusCode() == 200) {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+                Boolean successVal = (Boolean) responseMap.get('success');
+                if(successVal == true) {
+                    List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                    if(flowRecs.size() > 0){
+                        flowRecs[0].Status__c = 'Published';
+                        update as user flowRecs;
+                    }
+                    return 'success';
+                } else {
+                    return 'Failed to publish flow';
+                }
+            } else {
+                return 'Failed to publish flow : ' + response.getBody();
+            }
+        } catch (Exception e) {
+            return 'Failed to publish flow : ' + e.getMessage();
+        }
+    }
+
+    @AuraEnabled
+    public static String deleteWhatsAppFlow(String flowId) {
+        try {
+            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId;
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(endpoint);
+            request.setMethod('DELETE');
+            request.setHeader('Authorization', 'Bearer ' + accessToken);
+            Http http = new Http();
+            HttpResponse response = http.send(request);
+            
+            if (response.getStatusCode() == 200) {
+                List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                if(flowRecs.size() > 0){
+                    delete as user flowRecs[0];
+                }
+                return 'sucess';
+            } else {
+                return 'failed';
+            }
+        } catch (Exception e) {
+            return 'failed';
+        }
+    }
+
+    @AuraEnabled
+    public static String deprecateWhatsAppFlow(String flowId) {
+        try {
+            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/deprecate';
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(endpoint);
+            request.setMethod('POST');
+            request.setHeader('Authorization', 'Bearer ' + accessToken);
+            Http http = new Http();
+            HttpResponse response = http.send(request);
+            
+            if (response.getStatusCode() == 200) {
+                List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                if(flowRecs.size() > 0){
+                    flowRecs[0].Status__c = 'Deprecated';
+                    update as user flowRecs[0];
+                }
+                return 'sucess';
+            } else {
+                return 'failed';
+            }
+        } catch (Exception e) {
+            return 'failed';
+        }
+    }
+
+    @AuraEnabled
+    public static String getPreviewURLofWhatsAppFlow(String flowId) {
+        try {
+            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '?fields=preview.invalidate(false)';
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(endpoint);
+            request.setMethod('GET');
+            request.setHeader('Authorization', 'Bearer ' + accessToken);
+            Http http = new Http();
+            HttpResponse response = http.send(request);
+            
+            if (response.getStatusCode() == 200) {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+                Map<String, Object> previewMap = (Map<String, Object>) responseMap.get('preview');
+                String previewUrl = (String) previewMap.get('preview_url');
+                return previewUrl;
+            } else {
+                return 'failed';
+            }
+        } catch (Exception e) {
+            return 'failed';
         }
     }
 }
