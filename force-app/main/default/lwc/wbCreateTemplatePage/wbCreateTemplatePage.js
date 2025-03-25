@@ -29,6 +29,12 @@ import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFiel
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 
+import tempLocationIcon from '@salesforce/resourceUrl/tempLocationIcon';
+import tempVideoIcon from '@salesforce/resourceUrl/tempVideoIcon';
+import imageUploadPreview from '@salesforce/resourceUrl/imageUploadPreview';
+import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
+import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
+
 export default class WbCreateTemplatePage extends LightningElement {
     maxTempNamelength = 512;
     maxShortlength = 60;
@@ -55,6 +61,17 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track addMedia = false;
     @track isImageFile = false;
     @track isImageFileUploader=false;
+    @track isImgSelected = false;
+    @track isDocSelected = false;
+    @track isVidSelected = false;
+    @track isVideoFile = false;
+    @track isDocFile = false;
+    @track isImageFile = false;
+    @track isImageFileUploader=false;
+    @track isVideoFileUploader=false;
+    @track isDocFileUploader=false;
+    @track isLocation=false;
+    @track addMedia = false;
     @track isCallPhone = false;
     @track isOfferCode = false;
     @track isVisitSite = false;
@@ -64,7 +81,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isStopMarketing = false;
     @track buttonDisabled = false;
     @track isRefreshEnabled = true;
-    @track isDefault=true;
+    @track isDefault=false; // change
     @track isLoading=false;
     @track templateExists=false;
     @track showEmojis = false;
@@ -88,6 +105,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track headIndex = 1;
     @track selectedOption='Custom';
     @track activeTab = 'Marketing';
+    @track activeSection = 'section1';
     @track selectedLabel = 'Add button';
     @track selectedContentType = 'None';  
     @track selectedLanguage = 'en_US';
@@ -135,6 +153,222 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track contentDocumentId='';
     @track isRendered=false;
 
+    // -----------------------------------------------------------------
+    @track isStage1 = true;
+    @track isStage2 = false;
+
+    @track isSection1Active = true;
+    @track isSection2Active = false;
+    @track isSection3Active = false;
+    @track selectedOption='Custom';
+    @track activeTab = 'Marketing';
+    
+    @track showDefaultBtn=true;
+    @track utilityOrderStatusSelected = false;
+    @track defaultPreview = true;
+    @track authenticationPasscodeSelected = false;
+    @track UtilityCustomSelected = false;
+    @track isDefault=true;
+    @track ifAuthentication = false;
+    @track isAppSetup=true;
+    @track showAutofill=true;
+    @track showAuthBtn=false;
+    @track authZeroTab=true;
+     
+    @track isautofillChecked=false;
+    @track selectContent=['Add security recommendation'];
+    @track showOneTap=false;
+    @track autofilLabel='Autofill';
+    @track autoCopyCode='Copy Code';
+    @track value='zero_tap';
+    @track packages = [
+        { id: 1, packagename: '', signature: '', curPackageName: 0, curHashCode: 0 }
+    ];
+    @track expirationTime = 10; 
+    @track isExpiration=false;
+    @track prevContent=true;
+    @track maxPackages=5;
+    @track showMsgValidity = false; //change
+    
+    @track IsHeaderText = false;
+    
+    @track authPrevBody = `{{1}}`;
+    
+    @track isAddCallPhoneNumber = false;
+    @track isAddVisitWebsiteCount = false;
+    @track isAddCopyOfferCode = false;
+    
+    @track tempLocationIcon=tempLocationIcon;
+    @track tempVideoIcon=tempVideoIcon;
+    @track imageUploadPreview = imageUploadPreview;
+    
+    
+    
+    get contentOption() {
+        return [
+            { label: 'Add security recommendation', value: 'Add security recommendation' },
+            { label: 'Add expiry time for the code', value: 'Add expiry time for the code' },
+        ];
+    }
+
+    
+
+    handleTabClick(event) {
+        this.activeSection = event.target.dataset.tab;
+        console.log(event.target.dataset.tab);
+        
+        console.log(this.activeSection);
+        
+        this.resetSections();
+        // this.template.querySelectorAll('.section-tab-li').forEach(item => {
+        //     item.classList.remove('active-tab');
+        // })
+               
+        if (this.activeSection === 'section1') {
+            this.isSection1Active = true;
+            this.activeTab = 'Marketing';
+            this.selectedOption='CustomMarketing';
+            this.ifAuthentication=false;
+            this.showMsgValidity=false;
+            this.isDefault=true;
+        } else if (this.activeSection === 'section2') {
+            this.isSection2Active = true;
+            this.activeTab = 'Utility';
+            this.selectedOption='Custom';
+            this.ifAuthentication=false;
+            this.showMsgValidity=true;
+            this.isDefault=true;
+        } else if (this.activeSection === 'section3') {
+            console.log('ehere  sec 3');
+            
+            this.isSection3Active = true;
+            this.ifAuthentication=true;
+            this.showMsgValidity=true;
+            this.selectedOption='One-time passcode';
+            this.isDefault=false;
+            this.activeTab = 'Authentication';
+        }
+        this.handleDefaultValues();
+        console.log('Erer : '+this.template);
+        
+        // this.template.querySelector('.' + this.activeSection).classList.add('active-tab');
+    }
+
+    handleDefaultValues(){
+        console.log(this.selectedOption);
+        
+        if(this.selectedOption =='ORDER_STATUS'){
+            this.utilityOrderStatusSelected = true;
+            this.authenticationPasscodeSelected = false;
+            this.UtilityCustomSelected = false;
+            this.defaultPreview = false;
+            this.showDefaultBtn=false;
+        }else if (this.selectedOption == 'One-time passcode'){
+            console.log('OTP default');
+            
+            this.authenticationPasscodeSelected = true;
+            this.utilityOrderStatusSelected = false;
+            this.UtilityCustomSelected = false;
+            this.defaultPreview = false;
+            this.showDefaultBtn=true;
+        }else if (this.selectedOption == 'Custom'){
+            this.UtilityCustomSelected = true;
+            this.authenticationPasscodeSelected = false;
+            this.utilityOrderStatusSelected = false;
+            this.defaultPreview = false;
+            this.showDefaultBtn=true;
+        }else if (this.selectedOption == 'CustomMarketing'){
+            this.UtilityCustomSelected = false;
+            this.authenticationPasscodeSelected = false;
+            this.utilityOrderStatusSelected = false;
+            this.defaultPreview = true;
+            this.showDefaultBtn=true;
+        } else {
+            this.defaultPreview = true;
+            this.authenticationPasscodeSelected = false;
+            this.utilityOrderStatusSelected = false;
+            this.UtilityCustomSelected = false;
+            this.showDefaultBtn=true;
+        }
+        
+    }
+
+    resetSections() {
+        this.isSection1Active = false;
+        this.isSection2Active = false;
+        this.isSection3Active = false;
+        console.log('Reset');
+        console.log(this.isSection1Active+' '+this.isSection2Active+" "+this.isSection3Active);
+        
+        
+    }
+    
+    handleRadioChange(event) {
+        this.selectedOption = event.target.value;
+        console.log('selected option in function==> ', this.selectedOption);
+        if(this.selectedOption =='ORDER_STATUS'){
+            this.ifUtilty=true;
+            this.showDefaultBtn=false;
+            this.utilityOrderStatusSelected = true;
+            this.authenticationPasscodeSelected = false;
+            this.UtilityCustomSelected = false;
+            this.defaultPreview = false;
+        }else if (this.selectedOption == 'One-time passcode'){
+            this.ifUtilty=false;
+            this.authenticationPasscodeSelected = true;
+            this.utilityOrderStatusSelected = false;
+            this.UtilityCustomSelected = false;
+            this.defaultPreview = false;
+            // this.ifAuthentication = true;
+            this.showDefaultBtn=true;
+        }else if (this.selectedOption == 'Custom'){
+            this.ifUtilty=false;
+            this.UtilityCustomSelected = true;
+            this.authenticationPasscodeSelected = false;
+            this.utilityOrderStatusSelected = false;
+            this.defaultPreview = false;
+            this.showDefaultBtn=true;
+
+        } else {
+            this.defaultPreview = true;
+            this.authenticationPasscodeSelected = false;
+            this.utilityOrderStatusSelected = false;
+            this.UtilityCustomSelected = false;
+            this.showDefaultBtn=true;
+
+        }
+    }
+
+    
+    handleChange(event) {
+        this.value = event.target.value;
+        if(this.value=='zero_tap'){
+            this.authZeroTab=true;
+            this.isAppSetup=true;
+            // this.showOneTap=true;
+        }else{
+            this.authZeroTab=false;
+        }
+        if(this.value=='COPY_CODE'){
+            this.showAutofill=false;
+            this.showAuthBtn=true;
+            this.isAppSetup=false;
+            this.showOneTap=false;
+        }else{
+            this.showAutofill=true;
+            this.showAuthBtn=false;
+
+        }
+        if(this.value=='ONE_TAP'){
+            this.showAutofill=true;
+            // this.showAuthBtn=false;
+            this.showOneTap=true;
+            this.isAppSetup=true;
+        }
+    }
+
+    
+
     @api
     get edittemplateid() {
         return this._edittemplateid;
@@ -159,9 +393,9 @@ export default class WbCreateTemplatePage extends LightningElement {
             { label: 'None', value: 'None'},
             { label: 'Text', value: 'Text'},
             { label: 'Image', value: 'Image'},
-            { label: 'Video', value: 'Video', isDisabled:true},
-            { label: 'Document', value: 'Document',isDisabled:true },
-            { label: 'Location', value: 'Location',isDisabled:true }
+            { label: 'Video', value: 'Video'},
+            { label: 'Document', value: 'Document'},
+            { label: 'Location', value: 'Location' }
         ];
     }
 
@@ -251,14 +485,41 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.fetchFields('Lead');
         this.generateEmojiCategories();
         this.fetchUpdatedTemplates(false);
+        // this.template.querySelector('.' + activeSection).classList.add('active-tab');
     }
     
     renderedCallback() {
         loadStyle(this, wbCreateTempStyle).then(() => {
-            console.log("Loaded Successfully");
+            try {
+                console.log("Loaded Successfully");
+                console.log('eerrooo '+this.template.querySelectorAll('.section-tab-li'));
+                
+                this.template.querySelectorAll('.section-tab-li').forEach(item => {
+                    item.classList.remove('active-tab');
+                })
+        
+                console.log(this.activeSection);
+                if(this.isStage1){
+                    const activeEl = this.template.querySelector('.' + this.activeSection);
+                    if (activeEl) {
+                        activeEl.classList.add('active-tab');
+                    } else {
+                        console.warn(`Element with class .${this.activeSection} not found`);
+                    }
+                }
+                
+                // var c = '.' + this.activeSection;
+                // this.template.querySelector('.section1').classList.add('active-tab');
+
+            } catch (error) {
+                console.log('eror :: ', error);
+                
+            }
         }).catch(error => {
             console.error("Error in loading the colors",error);
         })
+
+        
         if (this.isRendered) return;
         this.isRendered = true;
         let headerEls = this.template.querySelectorAll('.field-header-dd');
@@ -447,184 +708,536 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
     }
 
-    handleFileChange(event) {
-        try {            
-            const fileInput = event.target.files[0];
-            if (!fileInput) {
-                console.error('No file selected. Please choose a file.');
-            }
+    // handleFileChange(event) {
+    //     try {            
+    //         const fileInput = event.target.files[0];
+    //         if (!fileInput) {
+    //             console.error('No file selected. Please choose a file.');
+    //         }
 
-            this.file = fileInput;
-            this.fileName = fileInput.name;
-            this.fileSize = fileInput.size;
-            this.fileType = fileInput.type;
+    //         this.file = fileInput;
+    //         this.fileName = fileInput.name;
+    //         this.fileSize = fileInput.size;
+    //         this.fileType = fileInput.type;
         
-            if (this.selectedContentType === 'Image') {
-                const allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-                if (!allowedImageTypes.includes(fileInput.type)) {
-                    this.showToastError(`Unsupported file type. Please upload a valid file for ${this.selectedContentType}: ${this.getAllowedFileTypes(this.selectedContentType)}.`);
-                    this.handleRemoveFile();
-                }
-                this.generatePreview(fileInput);
+    //         if (this.selectedContentType === 'Image') {
+    //             const allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    //             if (!allowedImageTypes.includes(fileInput.type)) {
+    //                 this.showToastError(`Unsupported file type. Please upload a valid file for ${this.selectedContentType}: ${this.getAllowedFileTypes(this.selectedContentType)}.`);
+    //                 this.handleRemoveFile();
+    //             }
+    //             this.generatePreview(fileInput);
+    //         }
+    
+    //         this.isfilename = true;
+    //         this.NoFileSelected = false;
+    
+    //         this.uploadFile();
+    //     } catch (error) {
+    //         console.error('Error handling file change:', error);
+    //         this.handleRemoveFile(); 
+    //     }
+    // }
+
+    
+    @track contentVersionId; // Store ContentVersionId
+
+    // Handle file selection
+    handleFileChange(event) {
+        const file = event.target.files[0];
+        if (file) {
+            this.fileName = file.name;
+
+            // Optional: File size limit (10 MB)
+            const MAX_FILE_SIZE = 10 * 1024 * 1024;
+            if (file.size > MAX_FILE_SIZE) {
+                alert('File size exceeds 10 MB. Please select a smaller file.');
+                return;
             }
-    
-            this.isfilename = true;
-            this.NoFileSelected = false;
-    
-            this.uploadFile();
-        } catch (error) {
-            console.error('Error handling file change:', error);
-            // this.showToastError(error.message || 'An error occurred while processing the file.');
-            this.handleRemoveFile(); 
-        }
-    }
-    
-    getAllowedFileTypes(contentType) {
-        switch (contentType) {
-            case 'Image':
-                return 'Image (PNG, JPG,JPEG)';
-            default:
-                return '';
-        }
-    }
-
-    handleRemoveFile(){
-        this.isfilename=false;
-        this.NoFileSelected=true;
-        this.isVidSelected=false;
-        this.isDocSelected=false;
-        this.filePreview = null;
-        this.isImageFile=false;
-        this.headerHandle='';
-        if(this.isImageFileUploader==true){
-            this.isImgSelected=true;
-        }
-    }
-
-    generatePreview(file) {
-        if (file.type.startsWith('image/')) {
-            this.isImgSelected = false;
-            this.isImageFile = true;
 
             const reader = new FileReader();
             reader.onload = () => {
-                this.filePreview = reader.result; 
+                this.fileData = reader.result.split(',')[1];
+                this.generatePreview(file);
+                this.handleUpload(); // Auto-upload
             };
             reader.readAsDataURL(file);
-        } 
-    }
-    
-    uploadFile() {
-        this.isLoading=true;
-        if (!this.file) {
-            alert('Please select a file to upload.');
-            return;
-        }
-        try {
-           startUploadSession({
-                fileName: this.fileName,
-                fileLength: this.fileSize,
-                fileType: this.fileType
-            }).then(result=>{
-                if (result) {
-                    this.uploadSessionId = result;
-                    this.uploadChunks();
-                } else {
-                    console.error('Failed to start upload session.');
-                    this.showToastError('Failed to start upload session.');
-                    this.isLoading=false;
-                }
-            })
-            .catch(error=>{
-                console.error('Failed upload session.', error.body);
-                this.isLoading=false;
-            })
-        } catch (error) {
-            console.error('Error starting upload session: ', error);
-            this.isLoading=false;
+
+            this.isfilename = true;
+            this.NoFileSelected = false;
         }
     }
 
-    uploadChunks() {
-        try {
-            let chunkStart = 0;
-            const uploadNextChunk = () => {
-                const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
-                const chunk = this.file.slice(chunkStart, chunkEnd);
-                const reader = new FileReader();
+    // Generate file preview
+    generatePreview(file) {
+        if (file.type.startsWith('image/')) {
+            this.isImgSelected = true;
+            this.isDocSelected = false;
+            this.isVidSelected = false;
+            this.filePreview = URL.createObjectURL(file);
+        } else if (file.type.startsWith('video/')) {
+            this.isImgSelected = false;
+            this.isDocSelected = false;
+            this.isVidSelected = true;
+            this.filePreview = URL.createObjectURL(file);
+        } else if (file.type === 'application/pdf') {
+            this.isDocSelected = true;
+            this.isImgSelected = false;
+            this.isVidSelected = false;
+            this.filePreview = URL.createObjectURL(file);
+        } else {
+            this.isImgSelected = false;
+            this.isDocSelected = false;
+            this.isVidSelected = false;
+            alert('Unsupported file type! Please select an image, PDF, or video.');
+        }
+    }
+
+    // Upload file to Apex
+    handleUpload() {
+        if (this.fileData) {
+            uploadFile({ base64Data: this.fileData, fileName: this.fileName })
+                .then((result) => {
+                    this.contentVersionId = result; // Store the returned ContentVersion Id
+                    alert('File uploaded successfully!');
+                })
+                .catch((error) => {
+                    console.error('Error uploading file: ', error);
+                    alert('Error uploading file!');
+                });
+        } else {
+            alert('Please select a file first!');
+        }
+    }
+
+    // Delete file from ContentVersion
+    handleDelete() {
+        if (this.contentVersionId) {
+            deleteFile({ contentVersionId: this.contentVersionId })
+                .then((result) => {
+                    alert(result);
+                    this.resetFileData(); // Reset file data after deletion
+                })
+                .catch((error) => {
+                    console.error('Error deleting file: ', error);
+                    alert('Error deleting file!');
+                });
+        } else {
+            alert('No file to delete!');
+        }
+    }
+
+    // Reset file data after deletion
+    resetFileData() {
+        this.fileName = null;
+        this.fileData = null;
+        this.filePreview = null;
+        this.isImgSelected = false;
+        this.isDocSelected = false;
+        this.isVidSelected = false;
+        this.isfilename = false;
+        this.NoFileSelected = true;
+        this.contentVersionId = null;
+    }
+    // uploadFile() {
+    //     if (!this.file) {
+    //         alert('Please select a file to upload.');
+    //         return;
+    //     }
+
+    //     try {
+    //        startUploadSession({
+    //             fileName: this.fileName,
+    //             fileLength: this.fileSize,
+    //             fileType: this.fileType
+    //         }).then(result=>{
+    //             console.log('result ',result);
+                
+    //             if (result) {
+    //                 this.uploadSessionId = result;
+    //                 console.log('Upload session started with ID: ', this.uploadSessionId);
     
-                reader.onloadend = async () => {
-                    const base64Data = reader.result.split(',')[1]; 
-                    const fileChunkWrapper = {
-                        uploadSessionId: this.uploadSessionId,
-                        fileContent: base64Data,
-                        chunkStart: chunkStart,
-                        chunkSize: base64Data.length,
-                        fileName: this.fileName,
-                    };
-                    const serializedWrapper = JSON.stringify(fileChunkWrapper);
+    //                 this.uploadChunks();
+    //             } else {
+    //                 console.error('Failed to start upload session.');
+    //             }
+    //         })
+    //         .catch(error=>{
+    //             console.error('Failed upload session.', error.body);
+
+    //         })
+
+           
+    //     } catch (error) {
+    //         console.error('Error starting upload session: ', error);
+    //     }
+    // }
+    // uploadChunks() {
+    //     let chunkStart = 0;
+    //     const uploadNextChunk = () => {
+    //         const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
+    //         const chunk = this.file.slice(chunkStart, chunkEnd);
+    //         const reader = new FileReader();
+    //         reader.onloadend = async () => {
+    //             const base64Data = reader.result.split(',')[1]; 
+
+    //             try {
+    //                 uploadFileChunk({
+    //                     uploadSessionId: this.uploadSessionId,
+    //                     fileContent: base64Data,  
+    //                     chunkStart: chunkStart,
+    //                     chunkSize: base64Data.length
+    //                 })
+    //                 .then(result=>{
+    //                     console.log('result ',result);
+    //                     if (result) {
+    //                         this.headerHandle = result;
+    //                         chunkStart += this.chunkSize;
+    //                         if (chunkStart < this.fileSize) {
+    //                             uploadNextChunk(); 
+    //                         } else {
+    //                             console.log('File upload completed.');
+    //                         }
+    //                     } else {
+    //                         console.error('Failed to upload file chunk.');
+    //                     }
+    //                 })
+    //                 .catch(error=>{
+    //                     console.error('Failed upload session.', error.body);
+        
+    //                 })
+    //             } catch (error) {
+    //                 console.error('Error uploading file chunk: ', error);
+    //             }
+    //         };
+
+    //         reader.readAsDataURL(chunk); 
+    //     };
+
+    //     uploadNextChunk();
+    // }
+
+
+    // generatePreview(file) {
+    //     if (file.type.startsWith('image/')) {
+    //         this.isImgSelected = false;
+    //         this.isImageFile = true;
+
+    //         const reader = new FileReader();
+    //         reader.onload = () => {
+    //             this.filePreview = reader.result; 
+    //         };
+    //         reader.readAsDataURL(file);
+    //     } 
+    // }
+    
+    // uploadFile() {
+    //     this.isLoading=true;
+    //     if (!this.file) {
+    //         alert('Please select a file to upload.');
+    //         return;
+    //     }
+    //     try {
+    //        startUploadSession({
+    //             fileName: this.fileName,
+    //             fileLength: this.fileSize,
+    //             fileType: this.fileType
+    //         }).then(result=>{
+    //             if (result) {
+    //                 this.uploadSessionId = result;
+    //                 this.uploadChunks();
+    //             } else {
+    //                 console.error('Failed to start upload session.');
+    //                 this.showToastError('Failed to start upload session.');
+    //                 this.isLoading=false;
+    //             }
+    //         })
+    //         .catch(error=>{
+    //             console.error('Failed upload session.', error.body);
+    //             this.isLoading=false;
+    //         })
+    //     } catch (error) {
+    //         console.error('Error starting upload session: ', error);
+    //         this.isLoading=false;
+    //     }
+    // }
+
+    // uploadChunks() {
+    //     try {
+    //         let chunkStart = 0;
+    //         const uploadNextChunk = () => {
+    //             const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
+    //             const chunk = this.file.slice(chunkStart, chunkEnd);
+    //             const reader = new FileReader();
+    
+    //             reader.onloadend = async () => {
+    //                 const base64Data = reader.result.split(',')[1]; 
+    //                 const fileChunkWrapper = {
+    //                     uploadSessionId: this.uploadSessionId,
+    //                     fileContent: base64Data,
+    //                     chunkStart: chunkStart,
+    //                     chunkSize: base64Data.length,
+    //                     fileName: this.fileName,
+    //                 };
+    //                 const serializedWrapper = JSON.stringify(fileChunkWrapper);
                     
-                        uploadFileChunk({serializedWrapper:serializedWrapper})
-                        .then(result=>{
-                            if (result) {
-                                let serializeResult = JSON.parse(result); 
-                                this.headerHandle = serializeResult.headerHandle;
-                                this.imageurl = serializeResult.imageurl;
-                                this.contentDocumentId =serializeResult.contentDocumentId;
+    //                     uploadFileChunk({serializedWrapper:serializedWrapper})
+    //                     .then(result=>{
+    //                         if (result) {
+    //                             let serializeResult = JSON.parse(result); 
+    //                             this.headerHandle = serializeResult.headerHandle;
+    //                             this.imageurl = serializeResult.imageurl;
+    //                             this.contentDocumentId =serializeResult.contentDocumentId;
 
-                                chunkStart += this.chunkSize;
-                                if (chunkStart < this.fileSize) {
-                                    uploadNextChunk(); 
-                                } else {
-                                    this.isLoading=false;
-                                    this.showToastSuccess('File upload successfully.');
-                                }
-                            } else {
-                                console.error('Failed to upload file chunk.');
-                                this.isLoading=false;
-                                this.showToastError('Failed to upload file chunk.');
-                            }
-                        })
-                        .catch(error=>{
-                            console.error('Failed upload session.', error);
-                            this.isLoading=false;
-                            this.showToastError(error.body.message || 'An error occurred while uploading image.');
-                        })
-                };
+    //                             chunkStart += this.chunkSize;
+    //                             if (chunkStart < this.fileSize) {
+    //                                 uploadNextChunk(); 
+    //                             } else {
+    //                                 this.isLoading=false;
+    //                                 this.showToastSuccess('File upload successfully.');
+    //                             }
+    //                         } else {
+    //                             console.error('Failed to upload file chunk.');
+    //                             this.isLoading=false;
+    //                             this.showToastError('Failed to upload file chunk.');
+    //                         }
+    //                     })
+    //                     .catch(error=>{
+    //                         console.error('Failed upload session.', error);
+    //                         this.isLoading=false;
+    //                         this.showToastError(error.body.message || 'An error occurred while uploading image.');
+    //                     })
+    //             };
 
-                reader.readAsDataURL(chunk); 
-            };
+    //             reader.readAsDataURL(chunk); 
+    //         };
 
-            uploadNextChunk();
-        } catch (error) {
-            this.isLoading=false;
-            console.error('Error uploading file chunk: ', error);
-        }
-    }
+    //         uploadNextChunk();
+    //     } catch (error) {
+    //         this.isLoading=false;
+    //         console.error('Error uploading file chunk: ', error);
+    //     }
+    // }
+
+    // generatePreview(file) {
+    //     if (file.type.startsWith('image/')) {
+    //         this.isImgSelected = true;
+    //         this.isDocSelected = false;
+    //         this.isVidSelected = false;
+    //         this.isImageFile = false;
+    
+    //         const reader = new FileReader();
+    //         reader.onload = () => {
+    //             this.filePreview = reader.result; 
+    //         };
+    //         reader.readAsDataURL(file);
+    //     } 
+    //     else if (file.type.startsWith('video/')) {
+    //         this.isImgSelected = false;
+    //         this.isDocSelected = false;
+    //         this.isVidSelected = true;
+    //         this.isVideoFile = false;
+    
+    //         this.filePreview = URL.createObjectURL(file); 
+    //         console.log('file==> ',file);
+    //         console.log('filepreview ',this.filePreview);
+            
+            
+    //     } 
+    //     else if (file.type === 'application/pdf' || file.type.startsWith('application/')) {
+    //         this.isDocSelected = true;
+    //         this.isImgSelected = false;
+    //         this.isVidSelected = false;
+    //         this.isDocFile = false;
+    
+    //         this.filePreview = URL.createObjectURL(file); 
+    //     }
+    // }
+    
+
+    // uploadFile() {
+    //     if (!this.file) {
+    //         alert('Please select a file to upload.');
+    //         return;
+    //     }
+
+    //     try {
+    //        startUploadSession({
+    //             fileName: this.fileName,
+    //             fileLength: this.fileSize,
+    //             fileType: this.fileType
+    //         }).then(result=>{
+    //             console.log('result ',result);
+                
+    //             if (result) {
+    //                 this.uploadSessionId = result;
+    //                 console.log('Upload session started with ID: ', this.uploadSessionId);
+    
+    //                 this.uploadChunks();
+    //             } else {
+    //                 console.error('Failed to start upload session.');
+    //             }
+    //         })
+    //         .catch(error=>{
+    //             console.error('Failed upload session.', error.body);
+
+    //         })
+
+           
+    //     } catch (error) {
+    //         console.error('Error starting upload session: ', error);
+    //     }
+    // }
+
+    // uploadChunks() {
+    //     let chunkStart = 0;
+    //     const uploadNextChunk = () => {
+    //         const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
+    //         const chunk = this.file.slice(chunkStart, chunkEnd);
+    //         const reader = new FileReader();
+    //         reader.onloadend = async () => {
+    //             const base64Data = reader.result.split(',')[1]; 
+
+    //             try {
+    //                 uploadFileChunk({
+    //                     uploadSessionId: this.uploadSessionId,
+    //                     fileContent: base64Data,  
+    //                     chunkStart: chunkStart,
+    //                     chunkSize: base64Data.length
+    //                 })
+    //                 .then(result=>{
+    //                     console.log('result ',result);
+    //                     if (result) {
+    //                         this.headerHandle = result;
+    //                         chunkStart += this.chunkSize;
+    //                         if (chunkStart < this.fileSize) {
+    //                             uploadNextChunk(); 
+    //                         } else {
+    //                             console.log('File upload completed.');
+    //                         }
+    //                     } else {
+    //                         console.error('Failed to upload file chunk.');
+    //                     }
+    //                 })
+    //                 .catch(error=>{
+    //                     console.error('Failed upload session.', error.body);
+        
+    //                 })
+    //             } catch (error) {
+    //                 console.error('Error uploading file chunk: ', error);
+    //             }
+    //         };
+
+    //         reader.readAsDataURL(chunk); 
+    //     };
+
+    //     uploadNextChunk();
+    // }
+
 
     handleContentType(event) {
         try {
+            // this.NoFileSelected=true;
+            // this.isfilename=false;
+            // this.previewHeader = ''; 
+            // this.header='';
+            // this.selectedContentType = event.target.value;
+            
+            // setTimeout(() => {
+            //     this.template.querySelector('.conInput').value=this.selectedContentType;
+            // }, 1000)
+    
+            // this.IsHeaderText = this.selectedContentType == 'Text' ? true : false;
             this.NoFileSelected=true;
             this.isfilename=false;
-            this.previewHeader = ''; 
-            this.header='';
             this.selectedContentType = event.target.value;
-            setTimeout(() => {
-                this.template.querySelector('.conInput').value=this.selectedContentType;
-            }, 1000)
-    
-            this.IsHeaderText = this.selectedContentType == 'Text' ? true : false;
-            if (this.selectedContentType == 'Image') {
-                    this.isImgSelected = true;
-                    this.isImageFileUploader=true;
-                    this.isImageFile = false;
-                    this.addMedia = true;
+            console.log(this.selectedContentType);
+
+            if (this.selectedContentType == 'Text') {
+                this.IsHeaderText = true;
             } else {
+                this.IsHeaderText = false;
+            }
+            console.log(this.selectedContentType);
+            
+        //     if (this.selectedContentType == 'Image' || this.selectedContentType == 'Video' || this.selectedContentType == 'Document' || this.selectedContentType == 'Location') {
+        //     if (this.selectedContentType == 'Image') {
+        //             this.isImgSelected = false;
+        //             this.isImageFileUploader=true;
+        //             this.isImageFile = true;
+        //             this.addMedia = true;
+        //     } else {
+        //         this.isImageFile = false;
+        //         this.isImageFileUploader=false
+        //         this.addMedia = false;
+        //         this.isImgSelected = false;
+        //     }
+        // }
+        if (this.selectedContentType == 'Image' || this.selectedContentType == 'Video' || this.selectedContentType == 'Document' || this.selectedContentType == 'Location') {
+            if (this.selectedContentType == 'Image') {
+                this.isImgSelected = false;
+                this.isDocSelected = false;
+                this.isVidSelected = false;
+                this.isImageFileUploader=true;
+                this.isVideoFileUploader=false;
+                this.isImageFile = true;
+                this.isVideoFile = false;
+                this.isDocFile = false;
+                this.isDocFileUploader=false;
+                this.isLocation=false;
+                this.addMedia = true;
+            } else if (this.selectedContentType == 'Video') {
+                this.isImgSelected = false;
+                this.isDocSelected = false;
+                this.isVidSelected = false;
+                this.isVideoFile = true;
+                this.isDocFile = false;
+                this.isImageFile = false;
+                this.isImageFileUploader=false;
+                this.isVideoFileUploader=true;
+                this.isDocFileUploader=false;
+                this.isLocation=false;
+                this.addMedia = true;
+            } else if (this.selectedContentType == 'Document') {
+                this.isImgSelected = false;
+                this.isDocSelected = false;
+                this.isVidSelected = false;
+                this.isDocFile = true;
+                this.isImageFile = false;
+                this.isVideoFile = false;
+                this.isImageFileUploader=false;
+                this.isVideoFileUploader=false;
+                this.isDocFileUploader=true;
+                this.isLocation=false;
+                this.addMedia = true;
+            }
+            else if (this.selectedContentType == 'Location'){
+                this.isLocation=true;
                 this.isImageFile = false;
                 this.isImageFileUploader=false
+                this.isVideoFileUploader=false;
+                this.isVideoFile = false;
+                this.isDocFile = false;
                 this.addMedia = false;
                 this.isImgSelected = false;
+                this.isDocSelected = false;
+                this.isVidSelected = false;
+                this.addMedia = false;
             }
+            
+        }
+        else{
+            this.isImageFile = false;
+            this.isImageFileUploader=false
+            this.isVideoFileUploader=false;
+            this.isVideoFile = false;
+            this.isDocFile = false;
+            this.addMedia = false;
+            this.isImgSelected = false;
+            this.isDocSelected = false;
+            this.isVidSelected = false;
+            this.isLocation=false;
+        }
 
         } catch (error) {
             console.error('Something wrong while selecting content type: ', JSON.stringify(error));
@@ -634,12 +1247,44 @@ export default class WbCreateTemplatePage extends LightningElement {
     handleNextclick() {
         this.iscreatetemplatevisible = false;
         this.iseditTemplatevisible = true;
+        if(this.isStage1){
+            this.isStage1 = false;
+            this.isStage2=true ;
+        }
+        else if(this.isStage2){
+            this.isStage2 = false;
+            this.isStage3=true ;
+        }
+        else{
+            this.isStage1 = true;
+        }
     }
 
     handlePrevclick() {
         this.isAllTemplate = true;
-        this.iseditTemplatevisible = false;
+        this.iseditTemplatevisible = true;
         this.clearEditTemplateData();
+        
+        if(this.isStage2){
+            this.isStage2 = false;
+            this.isStage1=true ;
+        }
+        else if(this.isStage3){
+            this.isStage3 = false;
+            this.isStage2=true ;
+        }
+        else{
+            this.isStage1 = true;
+        }
+        // console.log(this.template);
+        
+        // this.template.querySelectorAll('.section-tab-li').forEach(item => {
+        //     item.classList.remove('active-tab');
+        // })
+        
+        // this.template.querySelector('.' + this.activeSection).classList.add('active-tab');
+
+        
     }
 
     clearEditTemplateData() {
@@ -667,7 +1312,16 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.callPhoneNumber = 0;
         this.copyOfferCode = 0;
         this.marketingOpt = 0;
-
+        this.selectContent='Add security recommendation';
+        // this.isVideoFileUploader = false;
+        // this.isDocFileUploader = false;
+        this.addMedia = false;
+        this.isDocSelected = false;
+        this.isVidSelected = false;
+        this.isImgSelected = false;
+        
+        this.isautofillChecked=false;
+        this.isExpiration = false;
         const headerInput = this.template.querySelector('input[name="header"]');
         if (headerInput) {
             headerInput.value = '';  
@@ -691,7 +1345,11 @@ export default class WbCreateTemplatePage extends LightningElement {
 
             switch (name) {
                 case 'templateName':
+                    console.log(name);
+                    
                     this.templateName = value.replace(/\s+/g, '_').toLowerCase();
+                    console.log(this.templateName);
+                    
                     this.checkTemplateExistence();
                     break;
                 case 'language':
@@ -731,6 +1389,32 @@ export default class WbCreateTemplatePage extends LightningElement {
                     break;
                 case 'isCheckboxChecked':
                     this.isCheckboxChecked = checked;
+                    break;
+                case 'isautofillChecked':
+                    this.isautofillChecked = checked;
+                    break;
+                // Change
+                case 'selectContent':
+                    this.selectContent = value;
+                    this.isExpiration = value.includes('Add expiry time for the code');
+                    this.addSecurityRecommendation = value.includes('Add security recommendation');
+                    this.prevContent = this.addSecurityRecommendation;
+                    break;
+            
+                case 'autofill':
+                    this.autofilLabel = value;
+                    break;
+                
+                case 'expirationTime':
+                    this.expirationTime = value;
+                    break;
+
+                case 'autoCopyCode':
+                    this.autoCopyCode = value;
+                    break;
+                    
+                case 'toggle':
+                    this.isFeatureEnabled = checked;
                     break;
                 case 'header':
                     this.header = value;
@@ -774,13 +1458,19 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     checkTemplateExistence() {
         try {
-            this.templateExists = this.allTemplates.some(
-                template => template.MVWB__Template_Name__c.toLowerCase() === this.templateName.toLowerCase()
-            );
+            if (Array.isArray(this.allTemplates)) {
+                this.templateExists = this.allTemplates.some(
+                    template => template.MVWB__Template_Name__c?.toLowerCase() === this.templateName?.toLowerCase()
+                );
+            } else {
+                console.warn('allTemplates is not an array or is null/undefined');
+                this.templateExists = false;
+            }
         } catch (error) {
             console.error(error.message);
             this.showToastError(error.message || 'An error occurred while checking template existence.');
         }
+        
     }
 
     handleRemove(event) {
@@ -811,6 +1501,10 @@ export default class WbCreateTemplatePage extends LightningElement {
             const selectedValue = event.currentTarget.dataset.value; 
             this.menuButtonSelected = selectedValue;
             let buttonData=event.currentTarget.dataset.buttonData;
+
+            console.log(buttonData+' --- '+this.menuButtonSelected);
+            console.log(event.currentTarget.dataset.buttonData);
+            
         
             let newButton = buttonData ? buttonData:{
                 id: this.buttonList.length + 1,
@@ -828,6 +1522,14 @@ export default class WbCreateTemplatePage extends LightningElement {
                 hasError: false,  
                 errorMessage: ''   
             };
+
+            console.log(newButton);
+            console.log(selectedValue);
+
+            
+            this.isAddCallPhoneNumber = false;
+            this.isAddVisitWebsiteCount = false;
+            this.isAddCopyOfferCode = false;
         
             switch (selectedValue) {
                 case 'QUICK_REPLY':
@@ -852,6 +1554,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                         newButton.btntext = buttonData?.btntext || 'Call Phone Number';
                         this.btntext = buttonData?.btntext || 'Call Phone Number';
                         this.callPhoneNumber++;
+                        this.isAddCallPhoneNumber = true;
                     }
                     break;
                 case 'URL':
@@ -862,6 +1565,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                         newButton.btntext = buttonData?.btntext || 'Visit Website';
                         this.btntext = buttonData?.btntext || 'Visit Website';
                         this.visitWebsiteCount++;
+                        this.isAddVisitWebsiteCount = true;
                     }
                     break;
                 case 'COPY_CODE':
@@ -871,6 +1575,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                         newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
                         this.btntext = buttonData?.btntext || 'Copy Offer Code';
                         this.copyOfferCode++;
+                        this.isAddCopyOfferCode = true;
                     }
                     break;
                 default:
@@ -887,8 +1592,10 @@ export default class WbCreateTemplatePage extends LightningElement {
             }
         
             if (newButton.selectedActionType != 'QUICK_REPLY' && newButton.selectedActionType != 'Marketing opt-out') {
-                this.buttonList.push(newButton);
-                this.totalButtonsCount++;
+                if(this.isAddCallPhoneNumber || this.isAddCopyOfferCode || this.isAddVisitWebsiteCount){
+                    this.buttonList.push(newButton);
+                    this.totalButtonsCount++;
+                }
             }
         
             this.updateButtonErrors();
@@ -957,7 +1664,40 @@ export default class WbCreateTemplatePage extends LightningElement {
             console.error('Error creating custom button:', error);
         }
     }
+    
 
+    createButtonList(btnType, btnText) {
+        try {
+            const btnTextExists = this.customButtonList.some(button => button.Cbtntext === btnText);
+    
+            let newCustomButton = {
+                id: this.customButtonList.length + 1,
+                selectedCustomType: btnType,
+                Cbtntext: btnText,
+                buttonClass: 'button-label-preview',
+                showFooterText: btnType === 'Marketing opt-out',
+                iconName: this.getButtonIcon(btnType),
+                hasError: false,  
+                errorMessage: ''  
+            };
+    
+            if (btnTextExists) {
+                newCustomButton.hasError = true;
+                newCustomButton.errorMessage = 'You have entered same text for multiple buttons.';
+            } else {
+                newCustomButton.hasError = false;
+                newCustomButton.errorMessage = '';
+            }
+    
+            this.customButtonList.push(newCustomButton);
+            this.totalButtonsCount++;
+    
+            this.updateButtonErrors(true);
+            this.updateButtonDisabledState();
+        } catch (error) {
+            console.error('Error creating custom button:', error);
+        }
+    }
     getButtonIcon(type) {
         const iconMap = {
             'QUICK_REPLY': 'utility:reply',
@@ -1061,7 +1801,7 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     updateButtonDisabledState() {
         this.isDropdownOpen=false;
-        this.isButtonDisabled = this.totalButtonsCount >= 1;
+        this.isButtonDisabled = this.totalButtonsCount >= 10;
         this.buttonList.forEach(button => {
             button.isDisabled = button.selectedActionType === 'COPY_CODE';
         });
@@ -1595,6 +2335,16 @@ export default class WbCreateTemplatePage extends LightningElement {
         switch (currentTemplate) {
             case 'Marketing':
                 return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerImageNotSelected && !hasHeaderError && !headerTextNotSelected);    
+            case 'Authentication':
+                if (this.value == 'zero_tap') {
+                    return !((this.templateName && areAllFieldsFilled && this.isautofillChecked) && this.autoCopyCode && this.autofilLabel);
+                } else if (this.value === 'ONE_TAP') {
+                    return !((this.templateName && areAllFieldsFilled) && this.autoCopyCode && this.autofilLabel); 
+                } else if (this.value === 'COPY_CODE') {
+                    return !(this.templateName  && this.autoCopyCode); 
+                }else {
+                    return true;
+                }        
             default:
                 return true; 
         }
@@ -1602,6 +2352,105 @@ export default class WbCreateTemplatePage extends LightningElement {
     
         return result; 
     }
+
+    handlePackagename(event) {
+        const index = parseInt(event.target.dataset.index, 10);
+        const value = event.target.value;
+
+        this.packages[index].errorPackageMessage = '';
+
+        if (!this.isPackageValid(value)) {
+            this.packages[index].errorPackageMessage = 'Package name must have at least two segments separated by dots, and each segment must start with a letter and contain only alphanumeric characters or underscores.';
+        }
+
+        this.packages[index].packagename = value;
+        this.packages[index].curPackageName = value.length; 
+
+        const isDuplicate = this.packages.some((pkg, i) => i < index && pkg.packagename === value);
+       
+        if (isDuplicate) {
+            this.showToastError('Package name must be unique');
+           
+        }
+        this.updateErrorMessages();
+
+
+    }
+
+    
+    handleSignaturehash(event) {
+        const index = parseInt(event.target.dataset.index, 10);
+        const value = event.target.value;
+
+        this.packages[index].errorSignature = '';
+
+        if (!this.isSignatureValid(value)) {
+            this.packages[index].errorSignature = 'Signature hash must contain only alphanumeric characters, /, +, = and must be exactly 11 characters long.';
+        }
+
+        this.packages[index].signature = value;
+        this.packages[index].curHashCode = value.length;
+    
+        const isDuplicate = this.packages.some((pkg, i) => i < index && pkg.signature === value);
+    
+        if (isDuplicate) {
+            this.showToastError('Signature hash must be unique');
+           
+        }
+        this.updateErrorMessages();
+
+    }  
+    updateErrorMessages() {
+        this.uniqueErrorMessages.packageErrors = [];
+        this.uniqueErrorMessages.signatureErrors = [];
+        this.appError = false;
+
+        this.packages.forEach(pkg => {
+            if (pkg.errorPackageMessage && !this.uniqueErrorMessages.packageErrors.includes(pkg.errorPackageMessage)) {
+                this.uniqueErrorMessages.packageErrors.push(pkg.errorPackageMessage);
+                this.appError = true; 
+            }
+            if (pkg.errorSignature && !this.uniqueErrorMessages.signatureErrors.includes(pkg.errorSignature)) {
+                this.uniqueErrorMessages.signatureErrors.push(pkg.errorSignature);
+                this.appError = true; 
+            }
+        });
+    }
+
+    addPackageApp() {
+        if (this.packages.length < this.maxPackages) {
+            const newPackage = {
+                id: this.packages.length + 1,
+                packagename: '',
+                signature: '',
+                curPackageName: 0,
+                curHashCode: 0
+            };
+            this.packages = [...this.packages, newPackage];
+            // this.addAppBtn=true;
+        } else {
+            console.warn('Maximum number of packages reached.');
+        }
+    }
+
+    removePackageApp(event) {
+        const index = parseInt(event.target.dataset.index, 10);
+    
+        if (index >= 0 && index < this.packages.length) {
+            this.packages = this.packages.filter((pkg, i) => i !== index);
+    
+            this.packages = this.packages.map((pkg, i) => ({
+                ...pkg,
+                id: i + 1  
+            }));
+        } else {
+            console.warn('Invalid package index for removal.');
+        }
+    }
+    get showRemoveButton() {
+        return this.packages.length > 1;
+    }
+    
      
     handleSubmit() {
         try {
@@ -1612,6 +2461,11 @@ export default class WbCreateTemplatePage extends LightningElement {
 
                 return;
             }     
+            const formData = this.packages.map(pkg => ({
+                packagename: pkg.packagename,
+                signaturename: pkg.signature
+            }));
+        
             const buttonData = [];
 
             if (this.buttonList && this.buttonList.length > 0) {
@@ -1621,6 +2475,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             if (this.customButtonList && this.customButtonList.length > 0) {
                 buttonData.push(...this.customButtonList);
             }
+            // Change
             const template = {
                 templateName: this.templateName ? this.templateName : null,
                 templateCategory: this.activeTab ? this.activeTab : null,
@@ -1638,8 +2493,14 @@ export default class WbCreateTemplatePage extends LightningElement {
                 templateBody: this.tempBody ? this.tempBody : '',
                 templateBodyText: (this.templateBodyText && this.templateBodyText.length > 0) ? this.templateBodyText : null,
                 tempFooterText: this.footer ? this.footer : null,
-                typeOfButton: buttonData.length > 0 ? JSON.stringify(buttonData) : null 
+                typeOfButton: buttonData.length > 0 ? JSON.stringify(buttonData) : null,
+                autofillCheck: this.isautofillChecked ? this.isautofillChecked : null,
+                expireTime: this.expirationTime ? this.expirationTime : null,                
+                packagename: formData.length > 0 ? formData.map(pkg => pkg.packagename) : null,
+                signaturename: formData.length > 0 ? formData.map(pkg => pkg.signaturename) : null
+
             };
+            // Change
 
             const serializedWrapper = JSON.stringify(template);
             if(this.metaTemplateId){
