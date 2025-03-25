@@ -1,33 +1,34 @@
 /**
- * @description       : 
+ * @description       :
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
- * @group             : 
- * @last modified on  : 03-18-2025
+ * @group             :
+ * @last modified on  : 03-25-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
-**/
-public with sharing class ChatGeminiHandler {
+ **/
+public with sharing class ChatGeminiHandler{
+    @InvocableMethod(label = 'Generate AI Response and Send WhatsApp'description = 'Calls Gemini API, sends WhatsApp message, and creates a new Chat record.')
+    public static void processChat(List<InvocableInput> chats){
 
-    @InvocableMethod(label='Generate AI Response and Send WhatsApp' description='Calls Gemini API, sends WhatsApp message, and creates a new Chat record.')
-    public static void processChat(List<InvocableInput> chats) {
-        
         InvocableInput input = chats.get(0); // Assuming the flow only passes one record at a time.
         String chatId = input.chatId;
-        System.debug('chatId:- ' + chatId);  
-        Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c From Chat__c Where id = :chatId];
-        if (chat == null) {
+        System.debug('chatId:- ' + chatId);
+        Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c
+                        From Chat__c
+                        Where id = :chatId];
+        if (chat == null){
             System.debug('No record Found');
             return;
         } else{
-            System.debug('chat Record:- '+ chat);
+            System.debug('chat Record:- ' + chat);
         }
         String message = chat.Message__c;
 
-        if (String.isBlank(message)) {
+        if (String.isBlank(message)){
             return; // No message to process.
         }
 
-        try {
-            String geminiResponse = callGeminiAPI(message); // Call Gemini API
+        try{
+            String geminiResponse = callGeminiAPI(message, chat.Phone__c); // Call Gemini API
 
             Chat__c newChat = new Chat__c();
             newChat.Message__c = message;
@@ -38,17 +39,17 @@ public with sharing class ChatGeminiHandler {
             insert as user newChat;
 
 
-            if (String.isNotBlank(geminiResponse)) {
+            if (String.isNotBlank(geminiResponse)){
                 sendWhatsAppMessage(newChat.Id, geminiResponse); // Send WhatsApp message
             }
 
-        } catch (Exception e) {
+        } catch (Exception e){
             System.debug('Error processing chat: ' + e.getMessage());
             // Optionally, handle the error (e.g., log it, send an alert).
         }
     }
 
-    private static String callGeminiAPI(String message) {
+    private static String callGeminiAPI(String message, String phone){
         // Replace with your actual Gemini API endpoint and authentication details.
         String endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBDZiI4CgGbAQ_7i73Hq33jTneh2SyxZtU'; // Example: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBDZiI4CgGbAQ_7i73Hq33jTneh2SyxZtU';
         String apiKey = 'AIzaSyBDZiI4CgGbAQ_7i73Hq33jTneh2SyxZtU'; // Replace with your actual API key.
@@ -60,46 +61,90 @@ public with sharing class ChatGeminiHandler {
         req.setMethod('POST');
         req.setHeader('Content-Type', 'application/json');
 
-        String requestBody = '{' +
-            '"contents": [{' +
-                '"parts": [{"text": "Act as a chat bot Assistant for a Salesforce based company named MV Clouds Pvt Lmt located in Ahmedabad for the given User Prompt also your are directly replying to the user so it should be direct and acurat response not suggestions and all. User Prompt: ' + String.escapeSingleQuotes(message) + '"}]' +
-                // '"parts": [{"text": "Write a single outbound message response for the following inbound message. Message: ' + String.escapeSingleQuotes(message) + '"}]' +
-            '}]' +
-        '}';
+        String requestBody = generateRequestBody(message, phone);
+
+        // String requestBody = '{' +
+        //     '"contents": [{' +
+        //         '"parts": [{"text": "Act as a chat bot Assistant for a Salesforce based company named MV Clouds Pvt Lmt located in Ahmedabad for the given User Prompt also your are directly replying to the user so it should be direct and acurat response not suggestions and all. User Prompt: ' + String.escapeSingleQuotes(message) + '"}]' +
+        //         // '"parts": [{"text": "Write a single outbound message response for the following inbound message. Message: ' + String.escapeSingleQuotes(message) + '"}]' +
+        //     '}]' +
+        // '}';
 
         req.setBody(requestBody);
 
         Http http = new Http();
         HttpResponse res = http.send(req);
 
-        if (res.getStatusCode() == 200) {
+        if (res.getStatusCode() == 200){
             // Parse the JSON response from Gemini API.
-            Map<String, Object> response = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-            List<Object> candidates = (List<Object>) response.get('candidates');
+            Map<String, Object> response = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());
+            List<Object> candidates = (List<Object>)response.get('candidates');
 
-            if (candidates != null && !candidates.isEmpty()) {
-                Map<String, Object> candidate = (Map<String, Object>) candidates.get(0);
-                List<Object> parts = (List<Object>) ((Map<String, Object>) candidate.get('content')).get('parts');
-                if(parts!=null && !parts.isEmpty()){
-                    return String.valueOf(((Map<String, Object>) parts.get(0)).get('text'));
+            if (candidates != null && !candidates.isEmpty()){
+                Map<String, Object> candidate = (Map<String, Object>)candidates.get(0);
+                List<Object> parts = (List<Object>)((Map<String, Object>)candidate.get('content')).get('parts');
+                if (parts != null && !parts.isEmpty()){
+                    return String.valueOf(((Map<String, Object>)parts.get(0)).get('text'));
                 }
             }
 
-        } else {
+        } else{
             System.debug('Gemini API call failed: ' + res.getStatusCode() + ' - ' + res.getBody());
         }
 
         return null; // Return null if API call fails or no response is available.
     }
 
+    public static String generateRequestBody(String message, String phone){
+
+        Datetime twentyFourHoursAgo = System.now().addHours(-24);
+        List<Chat__c> chatHistory = [SELECT Id, Message__c, Type_of_Message__c
+                                     FROM Chat__c
+                                     WHERE Phone__c = :phone AND CreatedDate >= :twentyFourHoursAgo
+                                     ORDER BY CreatedDate ASC LIMIT 20];
+                                     
+        String formattedConversation = '';
+        boolean isUserTurn = true; // Start with User prompt
+
+        for (Chat__c chat : chatHistory){
+            if (chat.Type_of_Message__c.containsIgnoreCase('Inbound Messages')){
+                if (isUserTurn){
+                    formattedConversation += 'User: ' + chat.Message__c + ', ';
+                    isUserTurn = false;
+                }
+            } else if (chat.Type_of_Message__c.containsIgnoreCase('Outbound Messages')){
+                if (!isUserTurn){
+                    formattedConversation += 'Assistant: ' + chat.Message__c + ', ';
+                    isUserTurn = true;
+                }
+            }
+        }
+
+        // Remove trailing comma and space
+        if (formattedConversation.endsWith(', ')){
+            formattedConversation = formattedConversation.substring(0, formattedConversation.length() - 2);
+        }
+
+        String json = '{' + 
+                     '"contents": [{' + 
+                     '"parts": [{"text": "Act as a chat bot Assistant for a Salesforce based company named MVClouds Private Limited owned by Dharmik Shah and located in Ahmedabad (Look for more details of MV Clouds over the web and linkedin) for the given User Prompt also your are directly replying to the user so it should be direct and acurat response not suggestions and all. Current User Prompt: ' + String.escapeSingleQuotes(message) + ' , moreever consider the below given sets of previous converations for user and assistant to provide better answer - ' + formattedConversation + ' "}]' + 
+                     '}]' + 
+                     '}';
+
+        return json;
+    }
+
+
     @future(callout = true)
-    private static void sendWhatsAppMessage(String chatId, String message) {
-       
+    private static void sendWhatsAppMessage(String chatId, String message){
+
         List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
-        Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c From Chat__c Where id = :chatId];
+        Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c
+                        From Chat__c
+                        Where id = :chatId];
         String phoneNumber = chat.Phone__c;
-        if (phoneNumber != null && (wbConfig!=null || !wbConfig.isEmpty())) {
-            
+        if (phoneNumber != null && (wbConfig != null || !wbConfig.isEmpty())){
+
             // String JSON = '{ "messaging_product": "whatsapp", "to": "919428234735", "context":{ "message_id" : "wamid.HBgMOTE5NDI4MjM0NzM1FQIAERgSMEM3QjdBODJGMEMxQTkwRkEyAA=="}, "type": "text", "text": { "body" : "Hello, We hope that you are doing great!. This is a simple text message sent using the WhatsApp Cloud API."} }';// reply to
             // String jsonData = '{ "messaging_product": "whatsapp", "to": "'+ phoneNumber +'",  "type": "text", "text": { "body" : "'+ message +'"} }';
             String jsonData = '';
@@ -130,7 +175,7 @@ public with sharing class ChatGeminiHandler {
             Http http = new Http();
             HttpResponse response = http.send(httpReq);
             Integer statusCode = response.getStatusCode();
-            if(response != null && statusCode == 200){
+            if (response != null && statusCode == 200){
                 String responseBody = response.getBody();
                 Map<String, Object> jsonMap = (Map<String, Object>)JSON.deserializeUntyped(responseBody);
                 List<Object> messages = (List<Object>)jsonMap.get('messages');
@@ -140,22 +185,22 @@ public with sharing class ChatGeminiHandler {
                 // Update the chat record
                 chat.WhatsAppMessageId__c = whatsAppMessageID;
                 chat.Message_Status__c = 'Sent';
-            }else{
-                System.debug('Error sending WhatsApp Message: '+response.getBody());
+            } else{
+                System.debug('Error sending WhatsApp Message: ' + response.getBody());
                 chat.Message_Status__c = 'Failed';
-                ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatGeminiHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chat.Id, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
+                ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatGeminiHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chat.Id, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
 
             update chat;
-            
-        } else {
+
+        } else{
             System.debug('Contact phone number not found.');
         }
-
     }
 
     public class InvocableInput {
         @InvocableVariable(required=true label='Template Id')
         public String chatId;
     }
+
 }
