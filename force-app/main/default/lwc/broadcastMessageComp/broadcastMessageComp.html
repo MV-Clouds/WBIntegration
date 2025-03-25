@@ -7,16 +7,11 @@
                 <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
             </div>
         </template>
-        
+
         <div class="heading-container">
-            <h1 class="slds-text-align_center heading">Create Broadcast Group</h1>
-            <div class="btns">
-                <button class="cus-btns" onclick={handleCreateBroadcast}>
-                    <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small" class="left-icon"></lightning-icon>
-                    <span>New Broadcast</span>
-                </button>
-            </div>
+            <h1 class="heading">New Broadcast Group</h1>
         </div>
+
         <div class="slds-m-around_medium container">
 
             <!-- Comboboxes in Grid -->
@@ -130,19 +125,5 @@
     </template>
 
     </div>
-
-    <template if:true={isCreateBroadcast}>
-        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
-            <div class="slds-modal__container preview-container">
-                <div class="slds-modal__content slds-p-around_medium pop-up" id="modal-content-id-2">
-                    <div class="pop-heading">
-                        <h1>Create Broadcast Group</h1>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-        <div class="slds-backdrop slds-backdrop_open"></div>
-    </template>
 
 </template>

@@ -18,7 +18,6 @@ export default class BroadcastMessage extends LightningElement {
     @track configMap = {}; // store object -> {nameField, phoneField}
     @track searchTerm = '';
     @track selectedRecords = new Set(); // Track selected record IDs
-    @track isCreateBroadcast = false;
 
     get dynamicFieldNames() {
         if (!this.selectedObject || !this.configMap[this.selectedObject]) {
@@ -350,18 +349,4 @@ export default class BroadcastMessage extends LightningElement {
         this.selectedRecords = new Set(this.selectedRecords);
     }
 
-    /**
-     * Check if a specific record is selected
-     */
-    isRecordSelected(recordId) {
-        return this.selectedRecords.has(recordId);
-    }
-
-    handleCreateBroadcast(){
-        this.isCreateBroadcast = true;
-    }
-
-    handleCancel(){
-        this.isCreateBroadcast = false;
-    }
 }
