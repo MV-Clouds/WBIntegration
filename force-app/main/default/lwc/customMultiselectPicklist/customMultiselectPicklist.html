@@ -5,8 +5,7 @@
             <lightning-icon icon-name="utility:down" alternative-text="Open dropdown" class="dropdown-icon"></lightning-icon>
         </div>
 
-    
-        <div class="dropdown" if:true={isDropdownOpen}>
+        <div class="dropdown" tabindex="0" onfocusout={handleBlur} if:true={isDropdownOpen}>
             <div class="searchbar">
                 <input type="text" placeholder="Search..." value={searchTerm} oninput={handleSearchInput} class="search-input" />
                 <lightning-icon icon-name="utility:search" alternative-text="search" class="dropdown-icon search"></lightning-icon>
@@ -14,7 +13,7 @@
             <ul>
                 <template for:each={filteredOptions} for:item="option">
                     <li key={option.value} class="dropdown-item">
-                        <input type="checkbox" name={option.value} checked={option.selected}  onchange={handleOptionChange} />
+                        <input type="checkbox" name={option.value} checked={option.selected} onchange={handleOptionChange} />
                         <label>{option.label}</label>
                     </li>
                 </template>

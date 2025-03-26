@@ -25,6 +25,7 @@ public with sharing class WhatsAppFlowController {
             }
         } catch (Exception e) {
             System.debug('Error retrieving or parsing JSON: ' + e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getJSONData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
         }
         return jsonString;
     }
@@ -73,6 +74,7 @@ public with sharing class WhatsAppFlowController {
                 return 'Failed to create flow : ' + errorMessage;
             }
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'createWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
             return 'Failed to create flow : ' + e.getMessage();
         }
     }
@@ -105,6 +107,7 @@ public with sharing class WhatsAppFlowController {
                 return 'failed';
             }
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'updateWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
             return 'failed';
         }
     }
@@ -140,6 +143,7 @@ public with sharing class WhatsAppFlowController {
                 return 'Failed to publish flow : ' + response.getBody();
             }
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'publishWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
             return 'Failed to publish flow : ' + e.getMessage();
         }
     }
@@ -168,6 +172,7 @@ public with sharing class WhatsAppFlowController {
                 return 'failed';
             }
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'deleteWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
             return 'failed';
         }
     }
@@ -197,6 +202,7 @@ public with sharing class WhatsAppFlowController {
                 return 'failed';
             }
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'deprecateWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
             return 'failed';
         }
     }
@@ -224,6 +230,7 @@ public with sharing class WhatsAppFlowController {
                 return 'failed';
             }
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getPreviewURLofWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
             return 'failed';
         }
     }

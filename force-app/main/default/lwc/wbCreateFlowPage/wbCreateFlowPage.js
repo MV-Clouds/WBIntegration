@@ -68,11 +68,15 @@ export default class WbCreateFlowPage extends LightningElement {
     }
 
     handleInputChange(event){
-        this.flowName = event.target.value;  
-        if (this.selectedCategories.length > 0 && this.flowName.trim()) {
-            this.isCreateDisabled = false;
-        } else {
-            this.isCreateDisabled = true;
+        try {
+            this.flowName = event.target.value;  
+            if (this.selectedCategories.length > 0 && this.flowName.trim()) {
+                this.isCreateDisabled = false;
+            } else {
+                this.isCreateDisabled = true;
+            }
+        } catch (error) {
+            console.error('Error in handleInputChange : ' , error);
         }
     }
 
@@ -81,13 +85,17 @@ export default class WbCreateFlowPage extends LightningElement {
     }
   
     handleCatagories(event) {
-        const selectedCategories = event.detail.selectedValues;
-        this.selectedCategories = selectedCategories;
-
-        if (this.selectedCategories.length > 0 && this.flowName.trim()) {
-            this.isCreateDisabled = false;
-        } else {
-            this.isCreateDisabled = true;
+        try {
+            const selectedCategories = event.detail.selectedValues;
+            this.selectedCategories = selectedCategories;
+    
+            if (this.selectedCategories.length > 0 && this.flowName.trim()) {
+                this.isCreateDisabled = false;
+            } else {
+                this.isCreateDisabled = true;
+            }
+        } catch (error) {
+            console.error('Error in handleCategories : ' , error);
         }
     }
   
