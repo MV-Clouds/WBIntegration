@@ -272,7 +272,7 @@
     border-radius: 4px;
 }
 
-.show-image-preview{
+.show-image-preview, .audio-preview{
     position: fixed;
     z-index: 200;
     top: 0;
@@ -298,6 +298,13 @@
     cursor: pointer;
 }
 
+.audio-preview-close{
+    cursor: pointer;
+    position: fixed;
+    top: 14px;
+    right: 14px;
+}
+
 .image-preview-close:hover{
     scale: 1.1;
 }
@@ -308,6 +315,47 @@
     top: 14px;
     right: 14px;
     z-index: 30;
+}
+
+.thumbnail{
+    width: 100%;
+}
+
+.slds-file__title_card{
+    color: black;
+}
+
+.audio-div {
+    width: 14rem;
+    position: relative;
+    height: 2rem;
+    display: flex;
+    margin-top: 0.4rem;
+}
+
+.headphone {
+    border: 1px solid orange;
+    background: orange;
+    border-radius: 50%;
+    width: 2rem;
+    padding: 0.3rem;
+    cursor: pointer;
+}
+
+.audio-icon {
+    width: 1.1rem;
+    margin-left: 0.1rem;
+    margin-bottom: 0.1rem;
+}
+
+.audio-name p {
+    width: 9.5rem;
+    margin-left: 0.4rem;
+    margin-top: 0.5rem;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .other-message-sub-text{
@@ -379,6 +427,7 @@
     align-items: center;
     text-transform: uppercase;
     font-weight: 200;
+    padding-top: 0.4rem;
 }
 
 .status-icon {
@@ -590,6 +639,19 @@
 .message-image-for-reply, .message-image{
     max-height: 3rem;
     border-radius: 4px;
+}
+
+.message-video{
+    max-height: 10rem;
+    min-width: 15rem;
+    margin-top: 0.4rem;
+    margin-bottom: 0.3rem;
+}
+
+.doc-preview{
+    width: 14rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.3rem;
 }
 
 .message-draft-container {
