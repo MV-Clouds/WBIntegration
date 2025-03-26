@@ -1,5 +1,5 @@
 /** 
-* Class Name: getConfiguration 
+* Class Name: StorageIntegrationConfigController 
 * Test Class:
 * @description: Used in storageIntegration LWC components
 * Date: 19/03/2025
@@ -58,12 +58,6 @@ public without sharing class StorageIntegrationConfigController {
     */
     @AuraEnabled
     public static String saveConfiguration(String accessKey, String secretAccessKey, String bucketName, String regionName) {
-        // if (!Schema.sObjectType.AWS_Config__c.isAccessible()) {
-        //     throw new SecurityException('You do not have permission to access AWS configuration.');
-        // }
-        // if (!Schema.sObjectType.AWS_Config__c.isUpdateable() || !Schema.sObjectType.AWS_Config__c.isCreateable()) {
-        //     throw new SecurityException('You do not have permission to modify AWS configuration.');
-        // }
 
         try {
             List<AWS_Config__c> configList = [
