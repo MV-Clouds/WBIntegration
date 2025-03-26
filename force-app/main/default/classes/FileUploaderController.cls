@@ -27,22 +27,11 @@ public with sharing class FileUploaderController {
                 WHERE LatestPublishedVersionId = :contentVersionId
                 LIMIT 1
             ];
-
+            System.debug(docs.size());
             if (!docs.isEmpty()) {
                 Id contentDocumentId = docs[0].Id;
-
-                // Get all related ContentDocumentLinks
-                List<ContentDocumentLink> links = [
-                    SELECT Id
-                    FROM ContentDocumentLink
-                    WHERE ContentDocumentId = :contentDocumentId
-                ];
-
-                // Delete all ContentDocumentLinks first
-                if (!links.isEmpty()) {
-                    delete links;
-                }
-
+                
+                System.debug(contentDocumentId);
                 // Delete the ContentDocument (deletes related ContentVersion)
                 delete docs;
                 System.debug('File deleted successfully.');

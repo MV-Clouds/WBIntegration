@@ -394,8 +394,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             { label: 'Text', value: 'Text'},
             { label: 'Image', value: 'Image'},
             { label: 'Video', value: 'Video'},
-            { label: 'Document', value: 'Document'},
-            { label: 'Location', value: 'Location' }
+            { label: 'Document', value: 'Document'}
         ];
     }
 
@@ -745,9 +744,12 @@ export default class WbCreateTemplatePage extends LightningElement {
     // Handle file selection
     handleFileChange(event) {
         const file = event.target.files[0];
+        console.log(file);
+        
         if (file) {
             this.fileName = file.name;
-
+            this.fileType = file.type;
+            this.fileSize = file.size;
             // Optional: File size limit (10 MB)
             const MAX_FILE_SIZE = 10 * 1024 * 1024;
             if (file.size > MAX_FILE_SIZE) {
@@ -758,39 +760,50 @@ export default class WbCreateTemplatePage extends LightningElement {
             const reader = new FileReader();
             reader.onload = () => {
                 this.fileData = reader.result.split(',')[1];
-                this.generatePreview(file);
+                // this.generatePreview(file);
                 this.handleUpload(); // Auto-upload
             };
             reader.readAsDataURL(file);
 
-            this.isfilename = true;
-            this.NoFileSelected = false;
         }
     }
 
     // Generate file preview
-    generatePreview(file) {
-        if (file.type.startsWith('image/')) {
+    generatePreview(fileId) {
+        if (this.fileType.startsWith('image/')) {
             this.isImgSelected = true;
             this.isDocSelected = false;
             this.isVidSelected = false;
-            this.filePreview = URL.createObjectURL(file);
-        } else if (file.type.startsWith('video/')) {
+            this.isImageFile = false;
+            // this.filePreview = `/sfc/servlet.shepherd/document/download/${fileId}`;
+            this.filePreview = `/sfc/servlet.shepherd/version/download/${fileId}`;
+            // this.filePreview = URL.createObjectURL(file);
+        } else if (this.fileType.startsWith('video/')) {
             this.isImgSelected = false;
             this.isDocSelected = false;
             this.isVidSelected = true;
-            this.filePreview = URL.createObjectURL(file);
-        } else if (file.type === 'application/pdf') {
-            this.isDocSelected = true;
+            this.isVideoFile = false ;
+            // this.filePreview = URL.createObjectURL(file);
+            this.filePreview = `/sfc/servlet.shepherd/version/download/${fileId}`;
+        } 
+        
+        else if (this.fileType === 'application/pdf') {
+            // this.isDocSelected = true;
             this.isImgSelected = false;
             this.isVidSelected = false;
-            this.filePreview = URL.createObjectURL(file);
-        } else {
+            // this.isDocFile = false;
+            // this.filePreview = URL.createObjectURL(file);
+            // this.filePreview = `/sfc/servlet.shepherd/version/preview/${fileId}`;
+        }
+         else {
             this.isImgSelected = false;
             this.isDocSelected = false;
             this.isVidSelected = false;
             alert('Unsupported file type! Please select an image, PDF, or video.');
         }
+        
+        this.isfilename = true;
+        this.NoFileSelected = false;
     }
 
     // Upload file to Apex
@@ -799,7 +812,8 @@ export default class WbCreateTemplatePage extends LightningElement {
             uploadFile({ base64Data: this.fileData, fileName: this.fileName })
                 .then((result) => {
                     this.contentVersionId = result; // Store the returned ContentVersion Id
-                    alert('File uploaded successfully!');
+                    alert('File uploaded successfully!'+this.contentVersionId);
+                    this.generatePreview(this.contentVersionId);
                 })
                 .catch((error) => {
                     console.error('Error uploading file: ', error);
@@ -812,6 +826,8 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     // Delete file from ContentVersion
     handleDelete() {
+        console.log(this.contentVersionId);
+        
         if (this.contentVersionId) {
             deleteFile({ contentVersionId: this.contentVersionId })
                 .then((result) => {
@@ -832,12 +848,24 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.fileName = null;
         this.fileData = null;
         this.filePreview = null;
+        console.log(this.isImgSelected +' '+ this.isVidSelected + ' ' + this.isDocSelected);
+        
+        if(this.isImgSelected){
+            this.isImageFile = true;
+        }
+        else if(this.isVidSelected){
+            this.isVideoFile = true;
+        }
+        // else if(this.isDocFile){
+        //     this.isDocFile = true;
+        // }
         this.isImgSelected = false;
         this.isDocSelected = false;
         this.isVidSelected = false;
         this.isfilename = false;
         this.NoFileSelected = true;
         this.contentVersionId = null;
+        // this.isDocFile = false;
     }
     // uploadFile() {
     //     if (!this.file) {
