@@ -29,66 +29,87 @@ public with sharing class AutomationConfigController {
     }
 
     /**
-    * Method Name : saveAutomation
-    * @description : Save Automation record
-    * @param name String value
-    * @param description String value
-    * @param templateId Id value
-    * @return Automation__c record
+    * Method Name : saveAutomations
+    * @description : Save Automation records
+    * @param automations List of Automation__c records
+    * @return List of Automation__c records
     */
     @AuraEnabled
-    public static Automation__c saveAutomation(String name, String description, Id templateId) {
-        Automation__c newAutomation = new Automation__c(
-            Name = name,
-            Description__c = description,
-            WB_Template__c = templateId
-        );
+    public static List<Automation__c> saveAutomations(List<Automation__c> automations) {
+        if (automations == null || automations.isEmpty()) {
+            return new List<Automation__c>();
+        }
+
         if (Schema.sObjectType.Automation__c.fields.Name.IsCreateable() && Schema.sObjectType.Automation__c.fields.Description__c.isCreateable() && Schema.sObjectType.Automation__c.fields.WB_Template__c.isCreateable()){
-            insert newAutomation;
+            insert automations;
         }
-        return newAutomation;
+        return automations;
     }
 
     /**
-    * Method Name : updateAutomation
-    * @description : Update Automation record
-    * @param recordId Id value
-    * @param name String value
-    * @param description String value
-    * @param templateId Id value
-    * @return Automation__c record
+    * Method Name : updateAutomations
+    * @description : Update Automation records
+    * @param automationsToUpdate List of Automation__c records
+    * @return List of Automation__c records
     */
     @AuraEnabled
-    public static Automation__c updateAutomation(Id recordId, String name, String description, Id templateId) {
-        Automation__c recordToUpdate = [SELECT Id, Name, Description__c, WB_Template__c FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
-
-        if (Schema.sObjectType.Automation__c.fields.Name.isUpdateable()) {
-            recordToUpdate.Name = name;
-        }
-        if (Schema.sObjectType.Automation__c.fields.Description__c.isUpdateable()) {
-            recordToUpdate.Description__c = description;
-        }
-        if (Schema.sObjectType.Automation__c.fields.WB_Template__c.isUpdateable()) {
-            recordToUpdate.WB_Template__c = templateId;
+    public static List<Automation__c> updateAutomations(List<Automation__c> automationsToUpdate) {
+        if (automationsToUpdate == null || automationsToUpdate.isEmpty()) {
+            return new List<Automation__c>();
         }
 
-        update recordToUpdate;
-        return recordToUpdate;
+        Map<Id, Automation__c> existingRecords = new Map<Id, Automation__c>(
+            [SELECT Id, Name, Description__c, WB_Template__c 
+            FROM Automation__c 
+            WHERE Id IN :automationsToUpdate 
+            WITH SECURITY_ENFORCED]
+        );
+
+        List<Automation__c> recordsToUpdate = new List<Automation__c>();
+
+        for (Automation__c newRecord : automationsToUpdate) {
+            if (existingRecords.containsKey(newRecord.Id)) {
+                Automation__c existingRecord = existingRecords.get(newRecord.Id);
+
+                existingRecord.Name = newRecord.Name;
+                existingRecord.Description__c = newRecord.Description__c;
+                existingRecord.WB_Template__c = newRecord.WB_Template__c;
+
+                recordsToUpdate.add(existingRecord);
+            }
+        }
+
+        if (!recordsToUpdate.isEmpty() && Schema.sObjectType.Automation__c.fields.Name.isUpdateable() && Schema.sObjectType.Automation__c.fields.Description__c.isUpdateable() && Schema.sObjectType.Automation__c.fields.WB_Template__c.isUpdateable()) {
+            update recordsToUpdate;
+        }
+
+        return recordsToUpdate;
     }
 
     /**
-    * Method Name : deleteAutomation
-    * @description : Delete Automation record
-    * @param recordId Id value
+    * Method Name : deleteAutomations
+    * @description : Delete Automation records
+    * @param recordIds List of Ids
     * @return void
     */
     @AuraEnabled
-    public static void deleteAutomation(Id recordId) {
-        if (!Schema.sObjectType.Automation__c.isDeletable()) {
-            throw new SecurityException('You do not have permission to delete this record.');
+    public static void deleteAutomations(List<Id> recordIds) {
+        if (recordIds == null || recordIds.isEmpty()) {
+            return;
         }
-        
-        Automation__c recordToDelete = [SELECT Id FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];        
-        delete recordToDelete;
+
+        if (!Schema.sObjectType.Automation__c.isDeletable()) {
+            throw new SecurityException('You do not have permission to delete Automation records.');
+        }
+
+        List<Automation__c> recordsToDelete = [
+            SELECT Id FROM Automation__c 
+            WHERE Id IN :recordIds 
+            WITH SECURITY_ENFORCED
+        ];
+
+        if (!recordsToDelete.isEmpty()) {
+            delete recordsToDelete;
+        }
     }
 }
