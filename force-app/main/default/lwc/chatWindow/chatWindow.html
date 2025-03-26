@@ -34,7 +34,7 @@
                                         <img class="message-image" src={chat.replyTo.Message__c} alt="Image" />
                                     </div>
                                     <div if:true={chat.replyTo.isVideo}>
-                                        <video class="message-video" src={chat.replyTo.Message__c} onerror={handleImageError} alt="Video"></video>
+                                        Video
                                     </div>
                                     <div if:true={chat.replyTo.isAudio}>
                                         <div class="reply-audio">
@@ -256,10 +256,13 @@
                         <img class="message-image-for-reply" src={replyToMessage.Message__c} alt="Image" />
                     </div>
                     <div class="image-reply-to" if:true={replyToMessage.isVideo}>
-                        <img class="message-image-for-reply" src={replyToMessage.Message__c} alt="Image" />
+                        Video
                     </div>
-                    <div class="image-reply-to" if:true={replyToMessage.isImage}>
-                        <img class="message-image-for-reply" src={replyToMessage.Message__c} alt="Image" />
+                    <div class="image-reply-to" if:true={replyToMessage.isDoc}>
+                        {replyToMessage.fileName}
+                    </div>
+                    <div class="image-reply-to" if:true={replyToMessage.isAudio}>
+                        {replyToMessage.fileName}
                     </div>
                     <div class="template-reply-to" if:true={replyToMessage.isTemplate}>
                         <div class="reply-to-template-message-div">{replyToTemplateId}</div>

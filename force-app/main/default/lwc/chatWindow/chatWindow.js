@@ -618,7 +618,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     handleAttachmentOptionClick(event) {
         try {
             let mediaType = event.target.dataset.media;
-            console.log(mediaType);
             this.checkLastMessage();
             if(this.sendOnlyTemplate && mediaType != 'Template'){
                 this.showToast(`Cannot send ${mediaType}!`, 'You don\'t have any response from record in last 24 hours.', 'info');
@@ -664,7 +663,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     handleUploadFinished(event){
         this.showSpinner = true;
         try {
-            console.log(event.detail.files[0]);
             if(!(event.detail.files.length > 0)){
                 this.handleBackDropClick();
                 this.showSpinner = false;
@@ -680,21 +678,16 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             } else if(event.detail.files[0].mimeType.includes('video/')){
                 messageType = 'Video';
             }
-            console.log(messageType);
-            console.log(this.phoneNumber);
             createChat({chatData: {message: event.detail.files[0].contentVersionId, templateId: this.selectedTemplate, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
                     this.chats.push(chat);
-                    // this.processChats(true);
-                    console.log(event.detail.files[0].name);
-                    console.log(chat.Message__c);
+                    this.processChats(true);
                     
                     let imagePayload = this.createJSONBody(this.phoneNumber, messageType, this.replyToMessage?.WhatsAppMessageId__c || null, {
                         link: chat.Message__c,
                         fileName: event.detail.files[0].name || 'whatsapp file'
                     });
-                    console.log({imagePayload});
                     sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
                     .then(result => {
                         if(result.errorMessage == 'METADATA_ERROR'){
@@ -708,7 +701,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                         this.replyToMessage = null;
                         this.showSpinner = false;
                         this.processChats(true);
-                        console.log(this.chats);
                     })
                     .catch((e) => {
                         this.showSpinner = false;
@@ -841,8 +833,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                         }`;
                 }
                 payload += ` }`;
-            
-                console.log('The Payload is ::: ', payload);
                 
                 return payload;
         } catch (e) {

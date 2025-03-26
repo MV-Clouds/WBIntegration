@@ -6,17 +6,15 @@
  * @Last Modified On : 12-19-2024
  * @Modification Log :
  *==============================================================================
- * Ver | Date | Author | Modification
- *==============================================================================
- * 1.0 | November 18, 2024 |   | Initial Version
+ * Date Modified - Developer Name - Description
+ * 18 Nov, 2024  - ChangeMeIn@UserSettingsUnder.SFDoc  -  Initial Version
+ * 26 Mar, 2025  - Harsh Gandhi - Updated naming convention for files and made changes for saving files wih correct extentions
  **/
 @RestResource(urlMapping = '/WBI/webhooks/v1/*')
 global without sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
-
-    //Callback URL :- https://mvclouds-d2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/WBI/webhooks/v1/
 
     @HttpGet // GET
     global static void doGet(){
@@ -342,7 +340,7 @@ global without sharing class WhatsAppWebhook{
                         // String filename = whatsAppMessageID + '-' + mimeType;
                         String fileExtension = getFileExtension(mimeType);
                         String fileDateFormat = myDateTime.format('ddMMyyyy_HHmmss');
-                        String filename = 'Video-' + fileDateFormat + fileExtension;
+                        String filename = 'VID-' + fileDateFormat + fileExtension;
     
                         Blob documentBody = handleMediaAttachment(videoId);
                         Map<String, Object> filedata = new Map<String, Object>();
@@ -699,10 +697,7 @@ global without sharing class WhatsAppWebhook{
                                     String status = (String) statusMap.get('status');
                                     String waid = statusMap!= null ? (String) statusMap.get('id') : null;
 
-                                    List<Chat__c> waChats = [SELECT Id, Message_Status__c, WhatsAppMessageId__c, Phone__c
-                                                               FROM Chat__c
-                                                               WHERE WhatsAppMessageId__c = :waid
-                                                               LIMIT 1];
+                                    List<Chat__c> waChats = [SELECT Id, Message_Status__c, WhatsAppMessageId__c, Phone__c FROM Chat__c WHERE WhatsAppMessageId__c = :waid LIMIT 1];
                                     if(waChats.size() > 0){
                                         Chat__c waChat = waChats[0];
                                         if (status == 'sent' && waChat.Message_Status__c != 'Delivered' && waChat.Message_Status__c != 'Seen'){
@@ -744,10 +739,7 @@ global without sharing class WhatsAppWebhook{
     // @future(callout = true)
     public static void updateWhatsAppTemplateStatus(String templateId, String event){
         try{
-            List<Template__c> templates = [SELECT Id, Status__c
-                                                    FROM Template__c
-                                                    WHERE Template_Id__c = :templateId
-                                                    LIMIT 1];
+            List<Template__c> templates = [SELECT Id, Status__c FROM Template__c WHERE Template_Id__c = :templateId LIMIT 1];
 
             if (!templates.isEmpty()){
                 Template__c waTemplate = templates[0];

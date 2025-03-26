@@ -17,6 +17,7 @@
 * 09 Dec, 2024  - Kevin Suvagiya - Added method to send the message to the user with http request
 * 11 Dec, 2024  - Kevin Suvagiya - Added a method to fetch the full template data with replaced variables
 * 19 Mar, 2025  - Harsh Gandhi - Updated dynamic Name & Phone field from custom metadata and Logic for only object related templates are visible for sending Updated methods getCombinedData & getTemplateData
+* 26 Mar, 2025  - Harsh Gandhi - Updated Conditions to handle multiple media types in createChat method
 **/
 public with sharing class ChatWindowController {
 
