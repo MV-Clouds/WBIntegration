@@ -37,6 +37,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track objectNames = []; 
     @track fieldNames = [];
     @track isImgSelected = false;
+    @track isVidSelected = false;
     @track IsHeaderText = true;
     @track options = [
         { label: 'Contact', value: 'Contact', isSelected: true }
@@ -273,40 +274,73 @@ export default class WbPreviewTemplatePage extends LightningElement {
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
-                    this.isImgSelected = result.isImgUrl;
+                    console.log(result.template.Header_Type__c);
+                    
                     this.IsHeaderText = !result.isImgUrl;                    
-                    this.originalHeader = result.template.MVWB__WBHeader_Body__c;
-                    this.originalBody = result.template.MVWB__WBTemplate_Body__c;
+                    this.originalHeader = result.template.WBHeader_Body__c;
+                    this.originalBody = result.template.WBTemplate_Body__c;
                     const variableMappings = result.templateVariables;
-
-                    if(result.template.MVWB__Header_Type__c=='Image'){
+                    
+                    if(result.template.Header_Type__c=='Image'){
+                        this.isImgSelected = result.isImgUrl;
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(this.originalHeader, "text/html");
                         this.tempHeader = doc.documentElement.textContent || "";
-                    }else{
+                        console.log(this.tempHeader);
+                        
+                    }
+                    else if(result.template.Header_Type__c=='Video'){
+                        console.log('Here vedio');
+                        
+                        this.isVidSelected = result.isImgUrl;
+                        console.log(result.isImgUrl);
+                        
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(this.originalHeader, "text/html");
+                        this.tempHeader = doc.documentElement.textContent || "";
+                        console.log(this.tempHeader);
+                    }
+                    else{
                         this.tempHeader = this.originalHeader ||'';
                     }
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
-                    this.tempFooter = result.template.MVWB__WBFooter_Body__c;
+                    this.tempFooter = result.template.WBFooter_Body__c;
 
-                    this.isSendDisabled = result.template.MVWB__Status__c !== 'Active-Quality Pending';
+                    this.isSendDisabled = result.template.Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    const buttonLabels = result.template.MVWB__Button_Label__c ? result.template.MVWB__Button_Label__c.split(',') : [];
-                    const buttonTypes = result.template.MVWB__Button_Type__c ? result.template.MVWB__Button_Type__c.split(',') : [];
+                    // const buttonLabels = result.template.Button_Label__c ? result.template.Button_Label__c.split(',') : [];
+                    // const buttonTypes = result.template.Button_Type__c ? result.template.Button_Type__c.split(',') : [];
         
-                    this.buttonList = buttonLabels.map((label, index) => {
-                        const type = buttonTypes[index]?.trim() || 'default';
-                        return {
-                            id: index,
-                            btntext: label.trim(),
-                            btnType: type,
-                            iconName: this.getIconName(type) 
-                        };
-                    });
+                    // this.buttonList = buttonLabels.map((label, index) => {
+                    //     const type = buttonTypes[index]?.trim() || 'default';
+                    //     return {
+                    //         id: index,
+                    //         btntext: label.trim(),
+                    //         btnType: type,
+                    //         iconName: this.getIconName(type) 
+                    //     };
+                    // });
+                    const buttonBody = result.template.Button_Body__c
+                    ? JSON.parse(result.template.Button_Body__c)
+                    : []
+                  
+                  this.buttonList = buttonBody.map((buttonLabel, index) => {
+                    console.log(buttonLabel)
+                  
+                    const type = buttonLabel.type
+                    return {
+                      id: index,
+                      btntext: buttonLabel.text.trim(),
+                      btnType: type,
+                      iconName: this.getIconName(type)
+                    }
+                  })
+                  
+
 
                     const grouped = variableMappings.reduce((acc, mapping) => {
                         const mappingWithValue = { 
@@ -387,14 +421,14 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 return;
             }
             const templatePayload = this.createJSONBody(phonenum, "template", {
-                templateName: this.template.MVWB__Template_Name__c,
-                languageCode: this.template.MVWB__Language__c,
-                headerImageURL: this.template.MVWB__WBHeader_Body__c,
-                headerType:this.template.MVWB__Header_Type__c,
+                templateName: this.template.Template_Name__c,
+                languageCode: this.template.Language__c,
+                headerImageURL: this.template.WBHeader_Body__c,
+                headerType:this.template.Header_Type__c,
                 headerParameters: this.headerParams,
                 bodyParameters: this.bodyParams,
-                buttonLabel: this.template.MVWB__Button_Label__c,
-                buttonType: this.template.MVWB__Button_Type__c
+                buttonLabel: this.template.Button_Label__c,
+                buttonType: this.template.Button_Type__c
             });
     
             sendPreviewTemplate({ jsonData: templatePayload })

@@ -349,7 +349,7 @@
                                                         <p class="uploadlabel">Image</p>
                                                         <div class="custom-upload-button">
                                                             <label class="upload-label">
-                                                                <img src="/resource/MVWB__uploadImgIcon"
+                                                                <img src="/resource/uploadImgIcon"
                                                                     alt="Upload Icon" class="upload-icon" />
                                                                 <template if:true={NoFileSelected}>
                                                                     <span>Choose JPG or PNG file</span>
@@ -567,7 +567,7 @@
                                         <div class="inner-rich">
                                             <div class="rich-icon">
                                                 <button class="toolbar-button" onclick={handleEmoji}>
-                                                    <img src="/resource/MVWB__wbSmileIcon" class="custom-icon" />
+                                                    <img src="/resource/wbSmileIcon" class="custom-icon" />
                                                 </button>
                                                 <template for:each={toolbarButtonsWithClasses} for:item="button">
                                                     <button key={button.title} class={button.classes}
@@ -838,7 +838,7 @@
                                                         </template>
                                                         <!-- <div class="remove-btn">
                                                                  <div class="img">
-                                                                     <img src="/resource/MVWB__trashIcon" alt="remove" onclick={handleRemove} data-index={index} style="width: 9rem;">
+                                                                     <img src="/resource/trashIcon" alt="remove" onclick={handleRemove} data-index={index} style="width: 9rem;">
                                                                  </div>
                                                              </div> -->
                                                         <div class="remove-btn">
@@ -1440,7 +1440,7 @@
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
     <template if:true={isAllTemplate}>
-        <!-- <c-wb-all-template-page ontemplateupdate={handleTemplateUpdate}></c-wb-all-template-page> -->
+        <c-wb-all-template-page ontemplateupdate={handleTemplateUpdate}></c-wb-all-template-page>
     </template>
 
 </template>

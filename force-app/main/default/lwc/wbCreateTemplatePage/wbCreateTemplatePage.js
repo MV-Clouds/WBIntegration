@@ -629,7 +629,18 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.imageurl=template.MVWB__WBHeader_Body__c;
                     this.headerHandle=template.MVWB__WBImage_Header_Handle__c;
                     this.NoFileSelected = false;
-                }else{
+                }
+                else if(headerType.toLowerCase()=='video'){
+                    this.isVideoFile=true;
+                    this.isfilename=true;
+                    this.isVidSelected=false;
+                    this.fileName=template.MVWB__File_Name__c;
+                    this.filePreview=headerBody;
+                    this.imageurl=template.MVWB__WBHeader_Body__c;
+                    this.headerHandle=template.MVWB__WBImage_Header_Handle__c;
+                    this.NoFileSelected = false;
+                }
+                else{
                     this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
                 }
              
@@ -747,6 +758,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         console.log(file);
         
         if (file) {
+            this.file = file ;
             this.fileName = file.name;
             this.fileType = file.type;
             this.fileSize = file.size;
@@ -814,6 +826,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.contentVersionId = result; // Store the returned ContentVersion Id
                     alert('File uploaded successfully!'+this.contentVersionId);
                     this.generatePreview(this.contentVersionId);
+                    
+                    this.uploadFile();
                 })
                 .catch((error) => {
                     console.error('Error uploading file: ', error);
@@ -867,6 +881,99 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.contentVersionId = null;
         // this.isDocFile = false;
     }
+
+    uploadFile() {
+        this.isLoading=true;
+        if (!this.file) {
+            alert('Please select a file to upload.');
+            return;
+        }
+        try {
+            console.log('Upload Files');
+            
+           startUploadSession({
+                fileName: this.fileName,
+                fileLength: this.fileSize,
+                fileType: this.fileType
+            }).then(result=>{
+                if (result) {
+                    this.uploadSessionId = result;
+                    this.uploadChunks();
+                } else {
+                    console.error('Failed to start upload session.');
+                    this.showToastError('Failed to start upload session.');
+                    this.isLoading=false;
+                }
+            })
+            .catch(error=>{
+                console.error('Failed upload session.', error.body);
+                this.isLoading=false;
+            })
+        } catch (error) {
+            console.error('Error starting upload session: ', error);
+            this.isLoading=false;
+        }
+    }
+
+    uploadChunks() {
+        try {
+            let chunkStart = 0;
+            const uploadNextChunk = () => {
+                
+            console.log('Upload Chunk');
+                const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
+                const chunk = this.file.slice(chunkStart, chunkEnd);
+                const reader = new FileReader();
+    
+                reader.onloadend = async () => {
+                    const base64Data = reader.result.split(',')[1]; 
+                    const fileChunkWrapper = {
+                        uploadSessionId: this.uploadSessionId,
+                        fileContent: base64Data,
+                        chunkStart: chunkStart,
+                        chunkSize: base64Data.length,
+                        fileName: this.fileName,
+                    };
+                    const serializedWrapper = JSON.stringify(fileChunkWrapper);
+                    
+                        uploadFileChunk({serializedWrapper:serializedWrapper})
+                        .then(result=>{
+                            if (result) {
+                                let serializeResult = JSON.parse(result); 
+                                this.headerHandle = serializeResult.headerHandle;
+                                // this.imageurl = serializeResult.imageurl;
+                                this.contentDocumentId =serializeResult.contentDocumentId;
+
+                                chunkStart += this.chunkSize;
+                                if (chunkStart < this.fileSize) {
+                                    uploadNextChunk(); 
+                                } else {
+                                    this.isLoading=false;
+                                    this.showToastSuccess('File upload successfully.');
+                                }
+                            } else {
+                                console.error('Failed to upload file chunk.');
+                                this.isLoading=false;
+                                this.showToastError('Failed to upload file chunk.');
+                            }
+                        })
+                        .catch(error=>{
+                            console.error('Failed upload session.', error);
+                            this.isLoading=false;
+                            this.showToastError(error.body.message || 'An error occurred while uploading image.');
+                        })
+                };
+
+                reader.readAsDataURL(chunk); 
+            };
+
+            uploadNextChunk();
+        } catch (error) {
+            this.isLoading=false;
+            console.error('Error uploading file chunk: ', error);
+        }
+    }
+
     // uploadFile() {
     //     if (!this.file) {
     //         alert('Please select a file to upload.');
@@ -1694,38 +1801,38 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
     
 
-    createButtonList(btnType, btnText) {
-        try {
-            const btnTextExists = this.customButtonList.some(button => button.Cbtntext === btnText);
+    // createButtonList(btnType, btnText) {
+    //     try {
+    //         const btnTextExists = this.customButtonList.some(button => button.Cbtntext === btnText);
     
-            let newCustomButton = {
-                id: this.customButtonList.length + 1,
-                selectedCustomType: btnType,
-                Cbtntext: btnText,
-                buttonClass: 'button-label-preview',
-                showFooterText: btnType === 'Marketing opt-out',
-                iconName: this.getButtonIcon(btnType),
-                hasError: false,  
-                errorMessage: ''  
-            };
+    //         let newCustomButton = {
+    //             id: this.customButtonList.length + 1,
+    //             selectedCustomType: btnType,
+    //             Cbtntext: btnText,
+    //             buttonClass: 'button-label-preview',
+    //             showFooterText: btnType === 'Marketing opt-out',
+    //             iconName: this.getButtonIcon(btnType),
+    //             hasError: false,  
+    //             errorMessage: ''  
+    //         };
     
-            if (btnTextExists) {
-                newCustomButton.hasError = true;
-                newCustomButton.errorMessage = 'You have entered same text for multiple buttons.';
-            } else {
-                newCustomButton.hasError = false;
-                newCustomButton.errorMessage = '';
-            }
+    //         if (btnTextExists) {
+    //             newCustomButton.hasError = true;
+    //             newCustomButton.errorMessage = 'You have entered same text for multiple buttons.';
+    //         } else {
+    //             newCustomButton.hasError = false;
+    //             newCustomButton.errorMessage = '';
+    //         }
     
-            this.customButtonList.push(newCustomButton);
-            this.totalButtonsCount++;
+    //         this.customButtonList.push(newCustomButton);
+    //         this.totalButtonsCount++;
     
-            this.updateButtonErrors(true);
-            this.updateButtonDisabledState();
-        } catch (error) {
-            console.error('Error creating custom button:', error);
-        }
-    }
+    //         this.updateButtonErrors(true);
+    //         this.updateButtonDisabledState();
+    //     } catch (error) {
+    //         console.error('Error creating custom button:', error);
+    //     }
+    // }
     getButtonIcon(type) {
         const iconMap = {
             'QUICK_REPLY': 'utility:reply',
@@ -2503,14 +2610,24 @@ export default class WbCreateTemplatePage extends LightningElement {
             if (this.customButtonList && this.customButtonList.length > 0) {
                 buttonData.push(...this.customButtonList);
             }
+            let fileUrl = null;
+                if (this.filePreview) {
+                    fileUrl = this.filePreview; // Use ContentVersion if available
+                } 
+
             // Change
+            // tempImgId:this.contentDocumentId ? this.contentDocumentId : null,
+                
+            // tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
+            console.log('Templateeeeeeeeeeeeeeeeeeee ::: ',this.filePreview);
+            
             const template = {
                 templateName: this.templateName ? this.templateName : null,
                 templateCategory: this.activeTab ? this.activeTab : null,
                 templateType: this.selectedOption ? this.selectedOption : null,
-                tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
                 tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
-                tempImgUrl:this.imageurl ? this.imageurl : null,
+                tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
+                tempImgUrl:this.filePreview ? this.filePreview : null,
                 tempImgId:this.contentDocumentId ? this.contentDocumentId : null,
                 tempImgName:this.fileName ? this.fileName : null,
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,

@@ -112,7 +112,7 @@
                 }
                 return headerComponent;
             }            
-            if (templateWrapper.tempHeaderFormat == 'Image' && templateWrapper.tempHeaderHandle != null) {
+            if (((templateWrapper.tempHeaderFormat == 'Image')||(templateWrapper.tempHeaderFormat == 'Video')) && templateWrapper.tempHeaderHandle != null) {
                 headerComponent.put('example', new Map<String, Object>{
                     'header_handle' => templateWrapper.tempHeaderHandle
                 });
@@ -226,7 +226,8 @@
             Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
             Map<String, Object> payloadMap = (Map<String, Object>) JSON.deserializeUntyped(JSON.serialize(payload));
             
-            List<Map<String, String>> buttonDetails;
+            // List<Map<String, String>> buttonDetails;
+            String buttonDetails;
             String templatename = (String) payloadMap.get('name');
             Template__c whatsAppTemplate;
 
@@ -293,7 +294,7 @@
                 // HEADER Component
                 if (type == 'HEADER') {
                     whatsAppTemplate.Header_Type__c = (String) component.get('format');
-                    if ((String) component.get('format') == 'IMAGE') {
+                    if (((String) component.get('format') == 'IMAGE')||(((String) component.get('format') == 'VIDEO'))) {
                         whatsAppTemplate.WBHeader_Body__c = templateWrapper.tempImgUrl;
                         whatsAppTemplate.File_Name__c = templateWrapper.tempImgName;
                         whatsAppTemplate.WBImage_Header_Handle__c = templateWrapper.tempHeaderHandle;
@@ -397,12 +398,15 @@
                 }
                 // BUTTONS Component
                 else if (type == 'BUTTONS') {
+                    System.debug('Buttons:'+component);
                     buttonDetails = handleButtonComponent(component);
-                    for (Map<String, String> button : buttonDetails) {
-                        whatsAppTemplate.Button_Type__c = button.get('type');
-                        whatsAppTemplate.Button_Label__c = button.get('text');
-                        whatsAppTemplate.Button_Body__c = String.isNotBlank(button.get('value')) ? button.get('value') : button.get('text');
-                    }
+                    whatsAppTemplate.Button_Body__c = buttonDetails;
+                    System.debug(whatsAppTemplate.Button_Body__c);
+                    // for (Map<String, String> button : buttonDetails) {
+                    //     whatsAppTemplate.Button_Type__c = button.get('type');
+                    //     whatsAppTemplate.Button_Label__c = button.get('text');
+                    //     whatsAppTemplate.Button_Body__c = String.isNotBlank(button.get('value')) ? button.get('value') : button.get('text');
+                    // }
                 }
             }
     
@@ -507,44 +511,50 @@
     @return          : buttonDetails - contain type ,label and value of different buttons.
     ********************************************************
     */
-    private static List<Map<String, String>> handleButtonComponent(Map<String, Object> component) {
-        List<Map<String, String>> buttonDetails = new List<Map<String, String>>();
+    // private static List<Map<String, String>> handleButtonComponent(Map<String, Object> component) {
+    private static String handleButtonComponent(Map<String, Object> component) {
+        // List<Map<String, String>> buttonDetails = new List<Map<String, String>>();
+        String buttonList = '';
         try {
-            List<Object> buttons = (List<Object>) component.get('buttons'); 
+            List<Object> buttons = (List<Object>) component.get('buttons');
+            System.debug(buttons) ;
     
             if (buttons != null) {
-                for (Object buttonObj : buttons) {
-                    if (buttonObj instanceof Map<String, Object>) {
-                        Map<String, Object> button = (Map<String, Object>) buttonObj;
-                        String buttonType = (String) button.get('type');
-                        String buttonText = (String) button.get('text');
-                        String buttonValue = '';
+                buttonList = (String) JSON.serialize(buttons);
+                // buttonDetails.add(new Map<String, String>{;
+                // for (Object buttonObj : buttons) {
+                //     if (buttonObj instanceof Map<String, Object>) {
+                //         Map<String, Object> button = (Map<String, Object>) buttonObj;
+                //         String buttonType = (String) button.get('type');
+                //         String buttonText = (String) button.get('text');
+                //         String buttonValue = '';
     
-                        if (buttonType == 'COPY_CODE') {
-                            buttonValue = (String) button.get('example');
-                            buttonText = 'Copy offer code';
-                        } else if(buttonType == 'URL'){
-                            buttonValue = (String) button.get('url'); 
-                        } else if(buttonType == 'PHONE_NUMBER'){
-                            buttonValue = (String) button.get('phone_number'); 
-                        }
+                //         if (buttonType == 'COPY_CODE') {
+                //             buttonValue = (String) button.get('example');
+                //             buttonText = 'Copy offer code';
+                //         } else if(buttonType == 'URL'){
+                //             buttonValue = (String) button.get('url'); 
+                //         } else if(buttonType == 'PHONE_NUMBER'){
+                //             buttonValue = (String) button.get('phone_number'); 
+                //         }
     
-                        buttonDetails.add(new Map<String, String>{
-                            'type' => buttonType,
-                            'text' => buttonText,
-                            'value' => buttonValue
-                        });
-                    } else {
-                        System.debug('Expected button to be a Map<String, Object>, found: ' + buttonObj);
-                    }
-                }
+                //         buttonDetails.add(new Map<String, String>{
+                //             'type' => buttonType,
+                //             'text' => buttonText,
+                //             'value' => buttonValue
+                //         });
+                //     } else {
+                //         System.debug('Expected button to be a Map<String, Object>, found: ' + buttonObj);
+                //     }
+                // }
+
             } else {
                 System.debug('No buttons found in component: ' + component);
             }
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleButtonComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
-        return buttonDetails; 
+        return buttonList; 
     }
     
       /*

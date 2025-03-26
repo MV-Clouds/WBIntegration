@@ -201,6 +201,9 @@
             if (template.Header_Type__c == 'Image') {
                 wrapper.isImgUrl = true;
             }
+            else if (template.Header_Type__c == 'Video') {
+                wrapper.isImgUrl = true;
+            }
 
             List<Template_Variable__c> templateVariables = [
                 SELECT Name, Object_Name__c, Field_Name__c, Type__c, Alternate_Text__c
@@ -519,6 +522,7 @@
     @AuraEnabled
     public static String startUploadSession(String fileName, Integer fileLength, String fileType) {
         try {
+            System.debug('Start upload');
             if (String.isBlank(SETTINGS.MVWB__Application_Id__c)) {
                 return 'Application ID is not configured in the system.';
             }
@@ -575,6 +579,8 @@
     @AuraEnabled
     public static String uploadFileChunk(String serializedWrapper) {
         try {
+            
+            System.debug('Start upload file chunk');
             FileChunkWrapper fileWrapper = (FileChunkWrapper) JSON.deserialize(serializedWrapper, FileChunkWrapper.class);
 
             Blob fileBlob = EncodingUtil.base64Decode(fileWrapper.fileContent);

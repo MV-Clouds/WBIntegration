@@ -88,7 +88,7 @@ public without sharing class CreateTemplateController {
     }
 
     @AuraEnabled
-    public static Map<String, Object>  (String serializedWrapper) {
+    public static Map<String, Object> createWhatsappTemplate(String serializedWrapper) {
         Map<String, Object> response = new Map<String, Object>();
 
         try {
