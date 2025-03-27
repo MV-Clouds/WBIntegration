@@ -862,7 +862,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     reactToId : chat.MVWB__WhatsAppMessageId__c,
                     emoji: chat.MVWB__Reaction__c?.split('<|USER|>')[0]
                 });
-                console.error('ReactPayload :: ', reactPayload);
                 
                 sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true, reaction: chat.MVWB__Reaction__c})
                 .then(result => {
