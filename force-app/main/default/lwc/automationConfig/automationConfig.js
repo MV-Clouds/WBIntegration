@@ -38,8 +38,8 @@ export default class AutomationConfig extends LightningElement {
                     id: record.Id,
                     srNo: index + 1,
                     name: record.Name,
-                    description: record.Description__c,
-                    template: record.WB_Template__r ? record.WB_Template__r.MVWB__Template_Name__c : ''
+                    description: record.MVWB__Description__c,
+                    template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : ''
                 }));
                 this.originalAutomationData = [...this.automationData];
             })
@@ -50,14 +50,14 @@ export default class AutomationConfig extends LightningElement {
             .finally(() => {
                 this.isLoading = false;
             });
-    }
+    }      
 
     /** 
     * Method Name: fetchTemplates 
     * @description: fetches all templates for picklist  
     * Date: 27/03/2025
     * Created By: Kavya Trivedi
-    */
+    */ 
     fetchTemplates() {
         getTemplates()
             .then(data => {
@@ -103,8 +103,8 @@ export default class AutomationConfig extends LightningElement {
         const automationRecord = {
             Id: this.isEditMode ? this.recordId : undefined,
             Name: this.name,
-            Description__c: this.description,
-            WB_Template__c: this.selectedTemplateId
+            MVWB__Description__c: this.description,
+            MVWB__WB_Template__c: this.selectedTemplateId
         };
 
         const apexMethod = this.isEditMode ? updateAutomations : saveAutomations;
