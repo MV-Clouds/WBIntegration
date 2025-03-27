@@ -6,8 +6,8 @@ import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.depre
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.getPreviewURLofWhatsAppFlow';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
-import FLOW_OBJECT from "@salesforce/schema/Flow__c";
-import STATUS_FIELD from "@salesforce/schema/Flow__c.Status__c";
+import FLOW_OBJECT from "@salesforce/schema/MVWB__Flow__c";
+import STATUS_FIELD from "@salesforce/schema/MVWB__Flow__c.MVWB__Status__c";
 
 export default class WbAllFlowsPage extends LightningElement {
     @track allRecords = [];
@@ -47,9 +47,9 @@ export default class WbAllFlowsPage extends LightningElement {
                     this.allRecords = data.map(record => {
                         return {
                             ...record,
-                            isDraft: record.Status__c === 'Draft',
-                            isPublished: record.Status__c === 'Published',
-                            isDeprecated: record.Status__c === 'Deprecated',
+                            isDraft: record.MVWB__Status__c === 'Draft',
+                            isPublished: record.MVWB__Status__c === 'Published',
+                            isDeprecated: record.MVWB__Status__c === 'Deprecated',
                             LastModifiedDate: this.formatDate(record.LastModifiedDate)
                         };
                     });
@@ -83,11 +83,11 @@ export default class WbAllFlowsPage extends LightningElement {
             let filtered = [...this.allRecords];
     
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
             }
     
             if (this.searchInput) {
-                filtered = filtered.filter(record => record.Flow_Name__c.toLowerCase().includes(this.searchInput));
+                filtered = filtered.filter(record => record.MVWB__Flow_Name__c.toLowerCase().includes(this.searchInput));
             }
     
             this.filteredRecords = filtered;
@@ -164,9 +164,9 @@ export default class WbAllFlowsPage extends LightningElement {
             var flowId = event.currentTarget.dataset.id;
             this.showPopup = true;
 
-            let matchingRecord = this.filteredRecords.find(record => record.Flow_Id__c === flowId);
+            let matchingRecord = this.filteredRecords.find(record => record.MVWB__Flow_Id__c === flowId);
             console.log({matchingRecord});
-            if (matchingRecord && matchingRecord.Status__c === 'Draft') {
+            if (matchingRecord && matchingRecord.MVWB__Status__c === 'Draft') {
                 this.isFlowDraft = true;
             }
 

@@ -10,18 +10,18 @@ public with sharing class WhatsAppFlowController {
     public static String getJSONData(String type) {
         String jsonString = '';
         try {
-            List<WBC_Flows_JSON__mdt> FlowJSON = [SELECT Id, Default_JSON__c, Collect_purchase_interest_JSON__c, Customer_support_JSON__c, Get_feedback_JSON__c, Send_a_survey_JSON__c FROM WBC_Flows_JSON__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            List<MVWB__WBC_Flows_JSON__mdt> FlowJSON = [SELECT Id, MVWB__Default_JSON__c, MVWB__Collect_purchase_interest_JSON__c, MVWB__Customer_support_JSON__c, MVWB__Get_feedback_JSON__c, MVWB__Send_a_survey_JSON__c FROM MVWB__WBC_Flows_JSON__mdt WITH SECURITY_ENFORCED LIMIT 1];
             
             if(type == 'Default') {
-                jsonString = FlowJSON[0].Default_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Default_JSON__c;
             } else if(type == 'Collect purchase interest') {
-                jsonString = FlowJSON[0].Collect_purchase_interest_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Collect_purchase_interest_JSON__c;
             } else if(type == 'Get feedback') {
-                jsonString = FlowJSON[0].Get_feedback_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Get_feedback_JSON__c;
             } else if(type == 'Send a survey') {
-                jsonString = FlowJSON[0].Send_a_survey_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Send_a_survey_JSON__c;
             } else if(type == 'Customer support') {
-                jsonString = FlowJSON[0].Customer_support_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Customer_support_JSON__c;
             }
         } catch (Exception e) {
             System.debug('Error retrieving or parsing JSON: ' + e.getMessage());
