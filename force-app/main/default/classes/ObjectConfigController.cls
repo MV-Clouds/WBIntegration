@@ -219,10 +219,10 @@ public with sharing class ObjectConfigController {
     public static Map<String, String> getUserConfig() {
         Map<String, String> configMap = new Map<String, String>();
         try {
-            List<Object_Config__mdt> config = [SELECT ObjectConfigInfo__c, ChatWindowConfigInfo__c FROM Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            List<MVWB__Object_Config__mdt> config = [SELECT MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
             if(config.size() > 0) {
-                configMap.put('ObjectConfigInfo', config[0].ObjectConfigInfo__c);
-                configMap.put('ChatWindowConfigInfo', config[0].ChatWindowConfigInfo__c);
+                configMap.put('ObjectConfigInfo', config[0].MVWB__ObjectConfigInfo__c);
+                configMap.put('ChatWindowConfigInfo', config[0].MVWB__ChatWindowConfigInfo__c);
             } else {
                 configMap.put('ObjectConfigInfo', '{}');
                 configMap.put('ChatWindowConfigInfo', '{}');
@@ -245,26 +245,26 @@ public with sharing class ObjectConfigController {
     @AuraEnabled
     public static String saveUserConfig(String jsonData, String jsonDataForChat) {
         try {
-            List<Object_Config__mdt> config = [SELECT MasterLabel, DeveloperName FROM Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            List<MVWB__Object_Config__mdt> config = [SELECT MasterLabel, DeveloperName FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
             Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
             if(config.size() > 0){
-                mdata.fullName = 'Object_Config__mdt.' + config[0].DeveloperName; 
+                mdata.fullName = 'MVWB__Object_Config__mdt.' + config[0].DeveloperName; 
                 mdata.label = config[0].MasterLabel;
             } else {
-                mdata.fullName = 'Object_Config__mdt.objectConfigInfo'; 
+                mdata.fullName = 'MVWB__Object_Config__mdt.objectConfigInfo'; 
                 mdata.label = 'objectConfigInfo';
             }
 
             if(jsonData != null){
                 Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
-                instance1.field = 'ObjectConfigInfo__c';
+                instance1.field = 'MVWB__ObjectConfigInfo__c';
                 instance1.value = jsonData;
                 mdata.values.add(instance1);
             }
 
             if(jsonDataForChat != null){
                 Metadata.CustomMetadataValue instance2 = new Metadata.CustomMetadataValue();
-                instance2.field = 'ChatWindowConfigInfo__c';
+                instance2.field = 'MVWB__ChatWindowConfigInfo__c';
                 instance2.value = jsonDataForChat;
                 mdata.values.add(instance2);
             }
@@ -312,7 +312,7 @@ public with sharing class ObjectConfigController {
     public static void initializeDummyConfig() {
         try {
             // Check if any record already exists
-            List<Object_Config__mdt> existingConfigs = [SELECT Id FROM Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            List<MVWB__Object_Config__mdt> existingConfigs = [SELECT Id FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
             if (!existingConfigs.isEmpty()) {
                 return;
             }
@@ -391,18 +391,18 @@ public with sharing class ObjectConfigController {
     
             // Create new custom metadata record
             Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
-            mdata.fullName = 'Object_Config__mdt.objectConfigInfo'; // Default DeveloperName
+            mdata.fullName = 'MVWB__Object_Config__mdt.objectConfigInfo'; // Default DeveloperName
             mdata.label = 'objectConfigInfo';
     
             // Add ChatWindowConfigInfo__c field with dummy data
             Metadata.CustomMetadataValue instance = new Metadata.CustomMetadataValue();
-            instance.field = 'ChatWindowConfigInfo__c';
+            instance.field = 'MVWB__ChatWindowConfigInfo__c';
             instance.value = dummyChatConfig;
             mdata.values.add(instance);
 
             // Add ObjectConfigInfo__c field with dynamic dummy data
             Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
-            instance1.field = 'ObjectConfigInfo__c';
+            instance1.field = 'MVWB__ObjectConfigInfo__c';
             instance1.value = dummyObjectConfig;
             mdata.values.add(instance1);
     
