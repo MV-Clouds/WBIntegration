@@ -51,14 +51,14 @@ public with sharing class ChatWindowController {
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
             // Fetch metadata record from Object_Config__mdt
-            List<Object_Config__mdt> objectConfigList = [SELECT Id, ObjectConfigInfo__c, ChatWindowConfigInfo__c FROM Object_Config__mdt LIMIT 1];
+            List<MVWB__Object_Config__mdt> objectConfigList = [SELECT Id, MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt LIMIT 1];
             String phoneField = '';
             String nameField = '';
             if(objectConfigList.size() <= 0) {
                 System.debug('Object Config not found!');
             } else {
                 // Deserialize the JSON string from ChatWindowConfigInfo__c
-                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ChatWindowConfigInfo__c);
+                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].MVWB__ChatWindowConfigInfo__c);
                 Map<String, Object> chatConfig = (Map<String, Object>) chatConfigData.get(objectApiName);
                 phoneField = (String) chatConfig.get('phoneField');
                 nameField = (String) chatConfig.get('nameField');
