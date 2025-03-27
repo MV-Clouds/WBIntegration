@@ -11,6 +11,9 @@ import updateThemePreference from '@salesforce/apex/ChatWindowController.updateT
 import updateStatus from '@salesforce/apex/ChatWindowController.updateStatus';
 import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
 import whatsappAudioIcon from '@salesforce/resourceUrl/MVWB__whatsAppAudioIcon';
+import { loadScript } from 'lightning/platformResourceLoader';
+import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
+import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import { subscribe} from 'lightning/empApi';
 
 export default class ChatWindow extends NavigationMixin(LightningElement) {
@@ -51,6 +54,14 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     @track headphone = whatsappAudioIcon;
     audioPreview = false;
     audioURL = '';
+    isAWSEnabled = false;
+    @track currentDateTimeWithSeconds = '';
+    @track confData;
+    @track s3;
+    @track isAwsSdkInitialized = true;
+    @track selectedFilesToUpload = [];
+    @track fileName = [];
+    @track fileSize = [];
 
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
@@ -100,6 +111,8 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
             this.configureHeight();
+            this.getS3ConfigDataAsync();
+            this.timeInString();
             this.getInitialData();
             this.generateEmojiCategories();
             this.handleSubscribe();
@@ -116,6 +129,17 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     chatDiv.scrollTop = chatDiv.scrollHeight;
                 }
                 this.scrollBottom = false;
+            }
+            if (this.isAwsSdkInitialized) {
+                Promise.all([loadScript(this, AWS_SDK)])
+                    .then(() => {
+                        console.log('Script loaded successfully');
+                    })
+                    .catch((error) => {
+                        console.error("error -> ", error);
+                    });
+
+                this.isAwsSdkInitialized = false;
             }
         } catch (e) {
             console.error('Error in function renderedCallback:::', e.message);
@@ -242,7 +266,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordName;
                 if ((ch.isDoc || ch.isAudio) && ch.MVWB__File_Data__c) {
                     try {
-                        const fileData = JSON.parse(ch.MVWB__File_Data__c);
+                        const fileData = JSON.parse(ch.File_Data__c);
                         const fileName = fileData.fileName;
                         ch.fileName = fileName;
                         ch.contentDocumentId = fileData.documentId;
@@ -252,6 +276,11 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                         console.error("Error parsing File_Data__c:", error);
                     }
                 }
+                // if(ch.isImage || ch.isVideo || ch.isAudio || ch.isDoc) {
+                //     if(ch.Message__c.includes('amazonaws.com')){
+                //         ch.isAWSEnabled = true;
+                //     }
+                // }
                 return ch;
             });
 
@@ -965,6 +994,144 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             this.template.querySelector('.dropdown-menu').classList.add('hidden');
         } catch (e) {
             console.error('Error in function handleScheduleMessage:::', e.message);
+        }
+    }
+
+    getS3ConfigDataAsync() {
+        try {
+            getS3ConfigSettings()
+                .then(result => {
+                    console.log('result--> ', result);
+                    if (result != null) {
+                        this.confData = result;
+                        this.isAWSEnabled = true;
+                    }
+                }).catch(error => {
+                    console.error('error in apex -> ', error.stack);
+                });
+        } catch (error) {
+            console.error('error in getS3ConfigDataAsync -> ', error.stack);
+        }
+    }
+
+    timeInString() {
+        try {
+            const currentDateTime = new Date();
+
+            const day = currentDateTime.getDate().toString().padStart(2, '0');
+            const month = (currentDateTime.getMonth() + 1).toString().padStart(2, '0'); // Month is zero-indexed, so add 1
+            const year = currentDateTime.getFullYear().toString();
+            const hours = currentDateTime.getHours().toString().padStart(2, '0');
+            const minutes = currentDateTime.getMinutes().toString().padStart(2, '0');
+            const seconds = currentDateTime.getSeconds().toString().padStart(2, '0');
+
+            const formattedDateTime = `${day}_${month}_${year}_${hours}:${minutes}:${seconds}`;
+            this.currentDateTimeWithSeconds = formattedDateTime;
+        } catch (error) {
+            console.log('error in timeinstring -> ', error);
+        }
+    }
+
+    async handleSelectedFiles(event) {
+        try {
+            const files = event.target.files;
+            console.log({files});
+            if (files.length > 0) {
+                // this.largeImagefiles = [];
+                for (let fileCount = 0; fileCount < files.length; fileCount++) {
+                    let file = files[fileCount];
+                    console.log({file});
+                    
+                    if (Math.floor((file.size) / 1024) <= 10000) {
+                        this.selectedFilesToUpload.push(file);
+                        this.fileName.push(file.name);
+                        this.fileSize.push(Math.floor((file.size) / 1024));
+                        console.log(this.selectedFilesToUpload);
+                        await this.uploadToAWS(this.selectedFilesToUpload);
+                    } else {
+                        // this.largeImagefiles.push(file.name);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('error file upload ', error.stack);
+        }
+    }
+
+    async uploadToAWS() {
+        try {
+            this.initializeAwsSdk(this.confData);
+            const uploadPromises = this.selectedFilesToUpload.map(async (file, index) => {
+                this.showSpinner = true;
+                let objKey = this.renameFileName(this.fileName[index]);
+
+                let params = {
+                    Key: objKey,
+                    ContentType: file.type,
+                    Body: file,
+                    ACL: "public-read"
+                };
+
+                let upload = this.s3.upload(params);
+                this.showSpinner = false;
+
+                return await upload.promise();
+            });
+
+            // Wait for all uploads to complete
+            const results = await Promise.all(uploadPromises);
+            results.forEach((result) => {
+                if (result) {
+                    console.log({result});
+                    let bucketName = this.confData.S3_Bucket_Name__c;
+                    let objKey = result.Key;
+                    // this.fileURL.push(`https://${bucketName}.s3.amazonaws.com/${objKey}`);
+                }
+            });
+
+        } catch (error) {
+            this.showSpinner = false;
+            console.error("Error in uploadToAWS: ", error);
+        }
+    }
+
+    initializeAwsSdk(confData) {
+        try {
+            let AWS = window.AWS;
+
+            AWS.config.update({
+                accessKeyId: confData.AWS_Access_Key__c,
+                secretAccessKey: confData.AWS_Secret_Access_Key__c
+            });
+
+            AWS.config.region = confData.S3_Region_Name__c;
+
+            this.s3 = new AWS.S3({
+                apiVersion: "2006-03-01",
+                params: {
+                    Bucket: confData.S3_Bucket_Name__c
+                }
+            });
+
+        } catch (error) {
+            console.error("error initializeAwsSdk ", error);
+        }
+    }
+
+    renameFileName(filename) {
+        try {
+            let originalFileName = filename;
+            let extensionIndex = originalFileName.lastIndexOf('.');
+            let baseFileName = originalFileName.substring(0, extensionIndex);
+            let extension = originalFileName.substring(extensionIndex + 1);
+
+            const time = this.currentDateTimeWithSeconds;
+            let objKey = `${baseFileName}_${time}.${extension}`
+                .replace(/\s+/g, "_")
+                .toLowerCase();
+            return objKey;
+        } catch (error) {
+            console.error('error in renameFileName -> ', error.stack);            
         }
     }
 
