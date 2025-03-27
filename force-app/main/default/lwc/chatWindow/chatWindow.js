@@ -6,11 +6,14 @@ import updateReaction from '@salesforce/apex/ChatWindowController.updateReaction
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { NavigationMixin } from 'lightning/navigation';
 import updateThemePreference from '@salesforce/apex/ChatWindowController.updateThemePreference';
 import updateStatus from '@salesforce/apex/ChatWindowController.updateStatus';
+import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
+import whatsappAudioIcon from '@salesforce/resourceUrl/MVWB__whatsAppAudioIcon';
 import { subscribe} from 'lightning/empApi';
 
-export default class ChatWindow extends LightningElement {
+export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     //Data Variables
     @api recordId;
@@ -44,6 +47,10 @@ export default class ChatWindow extends LightningElement {
     @track showTemplateSelection = false;
     @track showTemplatePreview = false;
     @track uploadFileType = null;
+    @track NoPreviewAvailable = NoPreviewAvailable;
+    @track headphone = whatsappAudioIcon;
+    audioPreview = false;
+    audioURL = '';
 
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
@@ -63,11 +70,11 @@ export default class ChatWindow extends LightningElement {
         return `toggle-button moon-icon ${this.isLightMode ? "hide" : "show"}`;
     }
     get showPopup(){
-        return this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview;
+        return this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview || this.audioPreview;
     }
     
     get displayBackDrop(){
-        return this.showEmojiPicker || this.showAttachmentOptions || this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview;
+        return this.showEmojiPicker || this.showAttachmentOptions || this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview || this.audioPreview;
     }
 
     get uploadLabel(){
@@ -184,7 +191,7 @@ export default class ChatWindow extends LightningElement {
                         this.showSpinner = false;
                         return;
                     }
-                    combinedData.phoneNumber = combinedData.phoneNumber.replaceAll(' ', '').replace('+', '');
+                    combinedData.phoneNumber = combinedData.phoneNumber.replaceAll(' ', '');
                     this.recordData = combinedData.record;
                 }else{
                     this.showToast('Something went wrong!', 'Couldn\'t fetch data of record', 'error');
@@ -227,9 +234,24 @@ export default class ChatWindow extends LightningElement {
             this.chats = this.chats?.map(ch => {
                 ch.isText = ch.MVWB__Message_Type__c == 'Text';
                 ch.isImage = ch.MVWB__Message_Type__c == 'Image';
-                ch.isOther = !['Text', 'Image', 'Template'].includes(ch.MVWB__Message_Type__c) ;
+                ch.isVideo = ch.MVWB__Message_Type__c == 'Video';
+                ch.isAudio = ch.MVWB__Message_Type__c == 'Audio';
+                ch.isDoc = ch.MVWB__Message_Type__c == 'Document';
+                ch.isOther = !['Text', 'Image', 'Template', 'Video', 'Document', 'Audio'].includes(ch.MVWB__Message_Type__c) ;
                 ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
                 ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordName;
+                if ((ch.isDoc || ch.isAudio) && ch.MVWB__File_Data__c) {
+                    try {
+                        const fileData = JSON.parse(ch.MVWB__File_Data__c);
+                        const fileName = fileData.fileName;
+                        ch.fileName = fileName;
+                        ch.contentDocumentId = fileData.documentId;
+                        ch.fileUrl = `/sfc/servlet.shepherd/version/download/${fileData.contentVersionId}?as=${fileName}`;
+                        ch.fileThumbnail = `/sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=${fileData.contentVersionId}`;
+                    } catch (error) {
+                        console.error("Error parsing File_Data__c:", error);
+                    }
+                }
                 return ch;
             });
 
@@ -342,6 +364,8 @@ export default class ChatWindow extends LightningElement {
             this.showEmojiPicker = false;
             this.showAttachmentOptions = false;
             this.selectedTemplate = null;
+            this.audioPreview = false;
+            this.audioURL = '';
         } catch (e) {
             console.error('Error in function handleBackDropClick:::', e.message);
         }
@@ -497,6 +521,16 @@ export default class ChatWindow extends LightningElement {
         }
     }
 
+    handleToggleAudioPreview(event){
+        let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
+        if(isMobileDevice){
+            return;
+        }
+        let audioURL = event.currentTarget.dataset.url;
+        this.audioPreview = !this.audioPreview;
+        this.audioURL = audioURL;
+    }
+
 // Emoji Support
     generateEmojiCategories() {
         try{
@@ -601,6 +635,21 @@ export default class ChatWindow extends LightningElement {
                     this.acceptedFormats = ['.jpg', '.png', '.jpeg', '.jpe'];
                     this.uploadFileType = 'Image';
                     break;
+                case 'Document':
+                    this.showFileUploader = true;
+                    this.acceptedFormats = ['.txt', '.xls', '.xlsx', '.doc', '.docx', '.ppt', '.pptx', '.pdf'];
+                    this.uploadFileType = 'Document';
+                    break;
+                case 'Video':
+                    this.showFileUploader = true;
+                    this.acceptedFormats = ['.3gp', '.mp4'];
+                    this.uploadFileType = 'Video';
+                    break;
+                case 'Audio':
+                    this.showFileUploader = true;
+                    this.acceptedFormats = ['.aac', '.amr', '.mp3', '.m4a', '.ogg'];
+                    this.uploadFileType = 'Audio';
+                    break;
                 default:
                     this.showToast('Something went wrong!', 'Could not process request, please try again.', 'error');
                     break;
@@ -619,15 +668,25 @@ export default class ChatWindow extends LightningElement {
                 this.showSpinner = false;
                 return;
             }
-            createChat({chatData: {message: event.detail.files[0].contentVersionId, templateId: this.selectedTemplate, messageType: 'Image', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
+            var messageType = '';
+            if(event.detail.files[0].mimeType.includes('image/')){
+                messageType = 'Image';
+            } else if (event.detail.files[0].mimeType.includes('application/') || event.detail.files[0].mimeType.includes('text/')){
+                messageType = 'Document';
+            } else if (event.detail.files[0].mimeType.includes('audio/')){
+                messageType = 'Audio';
+            } else if(event.detail.files[0].mimeType.includes('video/')){
+                messageType = 'Video';
+            }
+            createChat({chatData: {message: event.detail.files[0].contentVersionId, templateId: this.selectedTemplate, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
                     this.chats.push(chat);
                     this.processChats(true);
                     
-                    let imagePayload = this.createJSONBody(this.phoneNumber, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    let imagePayload = this.createJSONBody(this.phoneNumber, messageType, this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         link: chat.MVWB__Message__c,
-                        fileName: event.detail.files[0].name || 'whatsapp image'
+                        fileName: event.detail.files[0].name || 'whatsapp file'
                     });
                     sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
                     .then(result => {
@@ -641,7 +700,7 @@ export default class ChatWindow extends LightningElement {
                         this.template.querySelector('.message-input').value = '';
                         this.replyToMessage = null;
                         this.showSpinner = false;
-                        this.processChats();
+                        this.processChats(true);
                     })
                     .catch((e) => {
                         this.showSpinner = false;
@@ -667,6 +726,24 @@ export default class ChatWindow extends LightningElement {
             this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
             console.error('Error in function handleUploadFinished:::', e.message);
         }
+    }
+
+    handlePreview(event) {
+        const contentDocumentId = event.target.dataset.id;
+        this[NavigationMixin.Navigate]({
+            type: 'standard__namedPage',
+            attributes: {
+                pageName: 'filePreview'
+            },
+            state: {
+                selectedRecordId: contentDocumentId
+            }
+        });
+    }
+
+    handleDocError(event){
+        event.target.onerror=null; 
+        event.target.src = this.NoPreviewAvailable;
     }
     
     handleImageError(event){
@@ -731,10 +808,24 @@ export default class ChatWindow extends LightningElement {
             
                 if (type === "text") {
                     payload += `, "text": { "body": "${data.textBody.replace(/\n/g, "\\n")}" }`;
-                } else if (type === "image") {
+                } else if (type === "Image") {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(data.link, "text/html");
                     payload += `, "image": { "link": "${doc.documentElement.textContent}" } `;
+                }
+                else if (type === "Video") {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.link, "text/html");
+                    payload += `, "video": { "link": "${doc.documentElement.textContent}" } `;
+                }
+                else if (type === "Document") {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.link, "text/html");
+                    payload += `, "document": { "link": "${doc.documentElement.textContent}", "filename": "${data.fileName}" } `;
+                } else if (type === "Audio") {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.link, "text/html");
+                    payload += `, "audio": { "link": "${doc.documentElement.textContent}" } `;
                 } else if (type === "reaction"){
                     payload += `, "reaction": { 
                         "message_id": "${data.reactToId}",
@@ -742,8 +833,6 @@ export default class ChatWindow extends LightningElement {
                         }`;
                 }
                 payload += ` }`;
-            
-                // console.error('The Payload is ::: ', payload);
                 
                 return payload;
         } catch (e) {
@@ -773,7 +862,6 @@ export default class ChatWindow extends LightningElement {
                     reactToId : chat.MVWB__WhatsAppMessageId__c,
                     emoji: chat.MVWB__Reaction__c?.split('<|USER|>')[0]
                 });
-                // console.log('ReactPayload :: ', reactPayload);
                 
                 sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true, reaction: chat.MVWB__Reaction__c})
                 .then(result => {

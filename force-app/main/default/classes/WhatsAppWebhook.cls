@@ -6,17 +6,15 @@
  * @Last Modified On : 12-19-2024
  * @Modification Log :
  *==============================================================================
- * Ver | Date | Author | Modification
- *==============================================================================
- * 1.0 | November 18, 2024 |   | Initial Version
+ * Date Modified - Developer Name - Description
+ * 18 Nov, 2024  - ChangeMeIn@UserSettingsUnder.SFDoc  -  Initial Version
+ * 26 Mar, 2025  - Harsh Gandhi - Updated naming convention for files and made changes for saving files wih correct extentions
  **/
 @RestResource(urlMapping = '/WBI/webhooks/v1/*')
 global without sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
-
-    //Callback URL :- https://mvclouds-d2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/WBI/webhooks/v1/
 
     @HttpGet // GET
     global static void doGet(){
@@ -304,7 +302,10 @@ global without sharing class WhatsAppWebhook{
                         Map<String, Object> image = (Map<String, Object>) message.get('image');
                         String imageId = (String) image.get('id');
                         String mimeType = (String) image.get('mime_type');
-                        String filename = whatsAppMessageID + '-' + mimeType;
+                        // String filename = whatsAppMessageID + '-' + mimeType;
+                        String fileExtension = getFileExtension(mimeType);
+                        String fileDateFormat = myDateTime.format('ddMMyyyy_HHmmss');
+                        String filename = 'IMG-' + fileDateFormat + fileExtension;
     
                         Blob documentBody = handleMediaAttachment(imageId);
                         Map<String, Object> filedata = new Map<String, Object>();
@@ -318,8 +319,11 @@ global without sharing class WhatsAppWebhook{
                         Map<String, Object> document = (Map<String, Object>)message.get('document');
                         String mediaId = (String) document.get('id');
                         String mimeType = (String) document.get('mime_type');
-                        String filename = whatsAppMessageID + '-' + mimeType;
-        
+                        // String filename = whatsAppMessageID + '-' + mimeType;
+                        String name = (String) document.get('filename');
+                        String fileExtension = getFileExtension(mimeType);
+                        String filename = name + fileExtension;
+
                         Blob documentBody = handleMediaAttachment(mediaId);
     
                         Map<String, Object> filedata = new Map<String, Object>();
@@ -333,7 +337,10 @@ global without sharing class WhatsAppWebhook{
                         Map<String, Object> video = (Map<String, Object>) message.get('video');
                         String videoId = (String) video.get('id');
                         String mimeType = (String) video.get('mime_type');
-                        String filename = whatsAppMessageID + '-' + mimeType;
+                        // String filename = whatsAppMessageID + '-' + mimeType;
+                        String fileExtension = getFileExtension(mimeType);
+                        String fileDateFormat = myDateTime.format('ddMMyyyy_HHmmss');
+                        String filename = 'VID-' + fileDateFormat + fileExtension;
     
                         Blob documentBody = handleMediaAttachment(videoId);
                         Map<String, Object> filedata = new Map<String, Object>();
@@ -347,7 +354,10 @@ global without sharing class WhatsAppWebhook{
                         Map<String, Object> video = (Map<String, Object>) message.get('audio');
                         String audioId = (String) video.get('id');
                         String mimeType = (String) video.get('mime_type');
-                        String filename = whatsAppMessageID + '-' + mimeType;
+                        // String filename = whatsAppMessageID + '-' + mimeType;
+                        String fileExtension = getFileExtension(mimeType);
+                        String fileDateFormat = myDateTime.format('ddMMyyyy_HHmmss');
+                        String filename = 'AUD-' + fileDateFormat + fileExtension;
     
                         Blob documentBody = handleMediaAttachment(audioId);
                         Map<String, Object> filedata = new Map<String, Object>();
@@ -394,7 +404,7 @@ global without sharing class WhatsAppWebhook{
             insert whatsappChat;
             // System.debug('Chat__c record created: ' + whatsappChat);
             Chat_Message__e newChatEvent = new Chat_Message__e();
-            Chat__c chatToSend = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c, Contact__c, Phone__c FROM Chat__c WHERE Id =:whatsappChat.Id LIMIT 1];
+            Chat__c chatToSend = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Name, CreatedDate, Last_Interaction_Date__c, Contact__c, Phone__c, File_Data__c FROM Chat__c WHERE Id =:whatsappChat.Id LIMIT 1];
             newChatEvent.Chat_Data__c = JSON.serialize(chatToSend);
             newChatEvent.Type__c = 'new';
             // newChatEvent.ContactId__c = whatsappChat.Contact__c;
@@ -411,7 +421,7 @@ global without sharing class WhatsAppWebhook{
         }
     }
 
-    private static String getFileExtension(String mimeType){
+    public static String getFileExtension(String mimeType){
         if (mimeType.equals('image/jpeg')){
             return '.jpeg';
         } else if (mimeType.equals('image/png')){
@@ -420,12 +430,30 @@ global without sharing class WhatsAppWebhook{
             return '.jpg';
         } else if (mimeType.equals('audio/mp3') || mimeType.equals('audio/mpeg')){
             return '.mp3';
+        } else if (mimeType.equals('audio/aac')){
+            return '.aac';
         } else if (mimeType.equals('audio/ogg; codecs=opus')){
             return '.ogg';
         } else if (mimeType.equals('video/mp4')){
             return '.mp4';
         } else if (mimeType.equals('video/3gp')){
             return '.3gp';
+        } else if (mimeType.equals('application/pdf')){
+            return '.pdf';
+        } else if (mimeType.equals('application/msword')){
+            return '.doc';
+        } else if (mimeType.equals('application/vnd.openxmlformats-officedocument.wordprocessingml.document')){
+            return '.docx';
+        } else if (mimeType.equals('application/vnd.ms-powerpoint')){
+            return '.ppt';
+        } else if (mimeType.equals('application/vnd.openxmlformats-officedocument.presentationml.presentation')){
+            return '.pptx';
+        } else if (mimeType.equals('application/vnd.ms-excel')){
+            return '.xls';
+        } else if (mimeType.equals('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')){
+            return '.xlsx';
+        } else if (mimeType.equals('text/plain')){
+            return '.txt';
         } else{
             return '.bin';
         }
@@ -669,10 +697,7 @@ global without sharing class WhatsAppWebhook{
                                     String status = (String) statusMap.get('status');
                                     String waid = statusMap!= null ? (String) statusMap.get('id') : null;
 
-                                    List<Chat__c> waChats = [SELECT Id, Message_Status__c, WhatsAppMessageId__c, Phone__c
-                                                               FROM Chat__c
-                                                               WHERE WhatsAppMessageId__c = :waid
-                                                               LIMIT 1];
+                                    List<Chat__c> waChats = [SELECT Id, Message_Status__c, WhatsAppMessageId__c, Phone__c FROM Chat__c WHERE WhatsAppMessageId__c = :waid LIMIT 1];
                                     if(waChats.size() > 0){
                                         Chat__c waChat = waChats[0];
                                         if (status == 'sent' && waChat.Message_Status__c != 'Delivered' && waChat.Message_Status__c != 'Seen'){
@@ -714,10 +739,7 @@ global without sharing class WhatsAppWebhook{
     // @future(callout = true)
     public static void updateWhatsAppTemplateStatus(String templateId, String event){
         try{
-            List<Template__c> templates = [SELECT Id, Status__c
-                                                    FROM Template__c
-                                                    WHERE Template_Id__c = :templateId
-                                                    LIMIT 1];
+            List<Template__c> templates = [SELECT Id, Status__c FROM Template__c WHERE Template_Id__c = :templateId LIMIT 1];
 
             if (!templates.isEmpty()){
                 Template__c waTemplate = templates[0];

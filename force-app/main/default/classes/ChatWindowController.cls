@@ -17,6 +17,7 @@
 * 09 Dec, 2024  - Kevin Suvagiya - Added method to send the message to the user with http request
 * 11 Dec, 2024  - Kevin Suvagiya - Added a method to fetch the full template data with replaced variables
 * 19 Mar, 2025  - Harsh Gandhi - Updated dynamic Name & Phone field from custom metadata and Logic for only object related templates are visible for sending Updated methods getCombinedData & getTemplateData
+* 26 Mar, 2025  - Harsh Gandhi - Updated Conditions to handle multiple media types in createChat method
 **/
 public with sharing class ChatWindowController {
 
@@ -73,7 +74,7 @@ public with sharing class ChatWindowController {
                 phoneNumber = (String) recordData.get(phoneField);
                 recordName = (String) recordData.get(nameField);
             }
-            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, Phone__c FROM Chat__c WHERE Phone__c =:phoneNumber WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
+            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, Phone__c, File_Data__c FROM Chat__c WHERE Phone__c =:phoneNumber WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
             //templates = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
             // Step 1: Get template IDs with matching child variables
             Set<Id> matchingTemplateIds = new Set<Id>();
@@ -137,7 +138,7 @@ public with sharing class ChatWindowController {
             chat.Message_Type__c = messageType;
             chat.Reply_To__c = replyToChatId;
 
-            if(messageType == 'Image'){
+            if(messageType == 'Image' || messageType == 'Document' || messageType == 'Video' || messageType == 'Audio'){
                 List<ContentVersion> cv = [SELECT Id, ContentSize, Title, ContentDocumentId FROM ContentVersion WHERE Id =: message WITH SECURITY_ENFORCED];
                 if(cv.size() < 1) {return null;}
                 if(cv[0].ContentSize > 5000000){
@@ -156,9 +157,11 @@ public with sharing class ChatWindowController {
                 insert as user cd;
 
                 chat.Message__c = [SELECT ContentDownloadUrl FROM ContentDistribution WHERE Id=:cd.Id].ContentDownloadUrl;
+                Map<String, Object> fileData = new Map<String, Object>{ 'fileName' => cv[0].Title, 'documentId' => cv[0].ContentDocumentId, 'contentVersionId' => message };
+                chat.File_Data__c = JSON.serialize(fileData);
             }
             insert as user chat;
-            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, File_Data__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
         } catch (Exception e) {
             if(e.getMessage().contains('STORAGE_LIMIT_EXCEEDED')){
