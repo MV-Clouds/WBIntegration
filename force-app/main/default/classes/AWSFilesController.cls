@@ -217,6 +217,72 @@ public with sharing class AWSFilesController {
     }
 
     @AuraEnabled
+    public static String getPresignedDownloadUrl(String fileName, Integer expirationInSeconds) {
+        String presignedUrl = '';
+        try {
+            AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;
+            
+            if (configData != null) {
+                String service = 's3';
+                String host = configData.S3_Bucket_Name__c + '.s3.amazonaws.com';
+                String algorithm = 'AWS4-HMAC-SHA256';
+                
+                Datetime now = Datetime.now();
+                String amzDate = now.formatGMT('yyyyMMdd\'T\'HHmmss\'Z\'');
+                String dateStamp = now.formatGMT('yyyyMMdd');
+                
+                // Canonical request components
+                String canonicalUri = '/' + fileName;
+                String canonicalQueryString = 'X-Amz-Algorithm=' + algorithm +
+                                            '&X-Amz-Credential=' + configData.AWS_Access_Key__c + '/' + dateStamp + '/' + configData.S3_Region_Name__c + '/' + service + '/aws4_request' +
+                                            '&X-Amz-Date=' + amzDate +
+                                            '&X-Amz-Expires=' + String.valueOf(expirationInSeconds) +
+                                            '&X-Amz-SignedHeaders=host';
+                String canonicalHeaders = 'host:' + host + '\n';
+                String signedHeaders = 'host';
+                String payloadHash = 'UNSIGNED-PAYLOAD';
+                
+                String canonicalRequest = 'GET\n' +
+                                        canonicalUri + '\n' +
+                                        canonicalQueryString + '\n' +
+                                        canonicalHeaders + '\n' +
+                                        signedHeaders + '\n' +
+                                        payloadHash;
+                
+                String credentialScope = dateStamp + '/' + configData.S3_Region_Name__c + '/' + service + '/aws4_request';
+                String stringToSign = algorithm + '\n' +
+                                    amzDate + '\n' +
+                                    credentialScope + '\n' +
+                                    EncodingUtil.convertToHex(Crypto.generateDigest('SHA-256', Blob.valueOf(canonicalRequest)));
+                
+                Blob signingKey = getSignatureKey(configData.AWS_Secret_Access_Key__c, dateStamp, configData.S3_Region_Name__c, service);
+                String signature = EncodingUtil.convertToHex(Crypto.generateMac('HmacSHA256', Blob.valueOf(stringToSign), signingKey));
+                
+                // Construct the pre-signed URL
+                presignedUrl = 'https://' + host + canonicalUri + '?' + canonicalQueryString + '&X-Amz-Signature=' + signature;
+                
+                System.debug('Pre-signed URL generated: ' + presignedUrl);
+            } else {
+                System.debug('AWS Config Data is empty! Please enter Access Key and Secret Access Key!');
+            }
+        } catch (Exception e) {
+            System.debug('Error: ' + e.getMessage());
+            System.debug('Line: ' + e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AWSFilesController', 
+                'methodName' => 'getPresignedDownloadUrl', 
+                'exceptionObj' => e, 
+                'isApiException' => false, 
+                'statusCode' => null, 
+                'chatId' => null, 
+                'moreDetails' => e.getMessage(), 
+                'apiResponse' => null
+            });
+        }
+        return presignedUrl;
+    }
+
+    @AuraEnabled
     public static AWS_Config__c getS3ConfigSettings(){
         try {
             AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;

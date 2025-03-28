@@ -65,29 +65,59 @@
                                     <video class="message-video" src={chat.MVWB__Message__c} onerror={handleImageError} alt="Video" controls></video>
                                 </div>
                                 <div if:true={chat.isDoc}>
-                                    <div class="doc-preview">
-                                        <div class="slds-file slds-file_card slds-has-title">
-                                            <figure>
-                                                <a href={chat.filePreviewUrl} class="slds-file__crop" onclick={handlePreview}
-                                                   data-id={chat.contentDocumentId}>
-                                                    <img class="thumbnail" src={chat.fileThumbnail} alt="No Preview Available" onerror={handleDocError} />
-                                                </a>
-                                                <figcaption class="slds-file__title slds-file__title_card">
-                                                    <div class="slds-media__body">
-                                                        <p class="slds-truncate" title={chat.fileName}>
-                                                            {chat.fileName}
-                                                        </p>
-                                                    </div>
-                                                    <a href={chat.fileUrl} >
-                                                        <lightning-button-icon
-                                                            icon-name="utility:download"
-                                                            variant="bare"
-                                                            alternative-text="Download File">
-                                                        </lightning-button-icon>
+                                    <template if:false={chat.isAWSFile}>
+                                        <div class="doc-preview">
+                                            <div class="slds-file slds-file_card slds-has-title">
+                                                <figure>
+                                                    <a href={chat.filePreviewUrl} class="slds-file__crop" onclick={handlePreview}
+                                                       data-id={chat.contentDocumentId}>
+                                                        <img class="thumbnail" src={chat.fileThumbnail} alt="No Preview Available" onerror={handleDocError} />
                                                     </a>
-                                                </figcaption>
-                                            </figure>
+                                                    <figcaption class="slds-file__title slds-file__title_card">
+                                                        <div class="slds-media__body">
+                                                            <p class="slds-truncate" title={chat.fileName}>
+                                                                {chat.fileName}
+                                                            </p>
+                                                        </div>
+                                                        <a href={chat.fileUrl} >
+                                                            <lightning-button-icon
+                                                                icon-name="utility:download"
+                                                                variant="bare"
+                                                                alternative-text="Download File">
+                                                            </lightning-button-icon>
+                                                        </a>
+                                                    </figcaption>
+                                                </figure>
+                                            </div>
                                         </div>
+                                    </template>
+                                    <div if:true={chat.isAWSFile} class="slds-file slds-file_card slds-has-title preview-container">
+                                        <figure>
+                                            <!-- Iframe Preview Container -->
+                                            <div>
+                                                <div if:true={chat.isPreviewable} data-action="open" onclick={handleTogglePDFPreview}>
+                                                    <svg class="pdf-preview-close" data-action="close" onclick={handleTogglePDFPreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="30" width="30">
+                                                        <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                                                    </svg>
+                                                    <iframe src={chat.MVWB__Message__c} class="doc-preview-aws" data-action="open" onclick={handleTogglePDFPreview}></iframe>
+                                                </div>
+                                                <div if:false={chat.isPreviewable}>
+                                                    <img class="doc-preview-aws" src={NoPreviewAvailable} alt="No Preview Available"/>
+                                                </div>
+                                            </div>
+                                    
+                                            <!-- File Title and Download -->
+                                            <figcaption class="slds-file__title slds-file__title_card">
+                                                <div class="slds-media__body">
+                                                    <p class="slds-truncate" title={chat.fileName}>
+                                                        {chat.fileName}
+                                                    </p>
+                                                </div>
+                                                <a href="javascript:void(0)" onclick={downloadRowImage} data-name={chat.fileName}>
+                                                    <lightning-button-icon icon-name="utility:download" variant="bare" alternative-text="Download File"></lightning-button-icon>
+                                                </a>
+                                            </figcaption>
+                                        </figure>
                                     </div>
                                 </div>
                                 <div if:true={chat.isAudio}>
@@ -370,10 +400,5 @@
                 </div>
             </div>
         </template>
-    </div>
-    <div style="z-index: 99999; height:100%; width: 100%; background: red; display: block">
-        isAWSEnabled        eqfdc2qe3fcqwecwec
-        <input type="file" onchange={handleSelectedFiles}
-                                accept="image/png, image/jpeg, image/jpg, video/mp4"/>
     </div>
 </template>

@@ -263,22 +263,31 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
                 ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordName;
                 if ((ch.isDoc || ch.isAudio) && ch.MVWB__File_Data__c) {
-                    try {
-                        const fileData = JSON.parse(ch.File_Data__c);
-                        const fileName = fileData.fileName;
+                    if(ch.MVWB__Message__c.includes('amazonaws.com') && ch.isDoc){
+                        ch.isAWSFile = true;
+                        const fileData = JSON.parse(ch.MVWB__File_Data__c);
+                        const fileName = fileData?.fileName;
+                        const mimeType = fileData?.mimeType;
                         ch.fileName = fileName;
-                        ch.contentDocumentId = fileData.documentId;
-                        ch.fileUrl = `/sfc/servlet.shepherd/version/download/${fileData.contentVersionId}?as=${fileName}`;
-                        ch.fileThumbnail = `/sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=${fileData.contentVersionId}`;
-                    } catch (error) {
-                        console.error("Error parsing File_Data__c:", error);
+                        if(mimeType.includes('pdf')){
+                            ch.isPreviewable = true;
+                        } else {
+                            ch.isPreviewable = false;
+                        }
+                    } else {
+                        ch.isAWSFile = false;
+                        try {
+                            const fileData = JSON.parse(ch.MVWB__File_Data__c);
+                            const fileName = fileData?.fileName;
+                            ch.fileName = fileName;
+                            ch.contentDocumentId = fileData?.documentId;
+                            ch.fileUrl = `/sfc/servlet.shepherd/version/download/${fileData?.contentVersionId}?as=${fileName}`;
+                            ch.fileThumbnail = `/sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=${fileData?.contentVersionId}`;
+                        } catch (error) {
+                            console.error("Error parsing File_Data__c:", error);
+                        }
                     }
                 }
-                // if(ch.isImage || ch.isVideo || ch.isAudio || ch.isDoc) {
-                //     if(ch.Message__c.includes('amazonaws.com')){
-                //         ch.isAWSEnabled = true;
-                //     }
-                // }
                 return ch;
             });
 
@@ -559,6 +568,21 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         let audioURL = event.currentTarget.dataset.url;
         this.audioPreview = !this.audioPreview;
         this.audioURL = audioURL;
+    }
+
+    handleTogglePDFPreview(event){
+        let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
+        if(isMobileDevice){
+            return;
+        }
+        let action = event.currentTarget.dataset.action;
+        
+        if(action == 'open'){
+            event.currentTarget.classList.add('pdf-preview');
+        }else if(action == 'close'){
+            this.template.querySelector('.pdf-preview').classList.remove('pdf-preview');
+            event.stopPropagation()
+        }
     }
 
 // Emoji Support
@@ -1098,7 +1122,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     } else if(this.selectedFilesToUpload[0].type.includes('video/')){
                         messageType = 'Video';
                     }
-                    createChatForAWSFiles({chatData: {message: awsFileUrl, fileName: objKey, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
+                    createChatForAWSFiles({chatData: {message: awsFileUrl, fileName: objKey, mimeType: this.selectedFilesToUpload[0].type, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
                         .then(chat => {
                             if(chat){
                                 this.chats.push(chat);
@@ -1186,6 +1210,55 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             return objKey;
         } catch (error) {
             console.error('error in renameFileName -> ', error.stack);            
+        }
+    }
+
+    downloadRowImage(event) {
+        try {
+            this.showSpinner = true;
+            const fileName = event.currentTarget.dataset.name;
+    
+            this.initializeAwsSdk(this.confData);
+            const bucketName = this.confData.S3_Bucket_Name__c;
+
+            // Generate the signed URL for the S3 object
+            const signedUrl = this.s3.getSignedUrl('getObject', {
+                Bucket: bucketName,
+                Key: fileName,
+                Expires: 60 // URL expires in 60 seconds
+            });
+
+            // Fetch the file as a Blob
+            fetch(signedUrl)
+                .then(response => {
+                    console.log(response);
+                    if (!response.ok) {
+                        console.log(`Error downloading file from S3: ${response.status}`);
+                        return null;
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    if (blob) {
+                        console.log(blob);
+                        const blobUrl = window.URL.createObjectURL(blob);
+                        const link = window?.globalThis?.document?.createElement('a');
+                        link.href = blobUrl;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(blobUrl);
+                        this.showSpinner = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error downloading file from S3:', error.stack);
+                    this.showSpinner = false;
+                });
+        } catch (error) {
+            this.showSpinner = false;
+            console.error('Error downloading file:', error.stack);
         }
     }
 
