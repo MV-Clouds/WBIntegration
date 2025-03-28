@@ -2,6 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { CurrentPageReference } from 'lightning/navigation';
 import getCombinedData from '@salesforce/apex/ChatWindowController.getCombinedData';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
+import createChatForAWSFiles from '@salesforce/apex/ChatWindowController.createChatForAWSFiles';
 import updateReaction from '@salesforce/apex/ChatWindowController.updateReaction';
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
@@ -12,7 +13,7 @@ import updateStatus from '@salesforce/apex/ChatWindowController.updateStatus';
 import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
 import whatsappAudioIcon from '@salesforce/resourceUrl/MVWB__whatsAppAudioIcon';
 import { loadScript } from 'lightning/platformResourceLoader';
-import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
+import AWS_SDK from "@salesforce/resourceUrl/MVWB__AWSSDK";
 import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import { subscribe} from 'lightning/empApi';
 
@@ -55,13 +56,11 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     audioPreview = false;
     audioURL = '';
     isAWSEnabled = false;
-    @track currentDateTimeWithSeconds = '';
     @track confData;
     @track s3;
     @track isAwsSdkInitialized = true;
     @track selectedFilesToUpload = [];
-    @track fileName = [];
-    @track fileSize = [];
+    selectedFileName;
 
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
@@ -93,7 +92,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
     get filteredTemplate(){
-        let searchedResult = (this.allTemplates?.filter(template => template.MVWB__Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
+        let searchedResult = (this.allTemplates?.filter(template => template.Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
         return this.templateSearchKey ? (searchedResult.length > 0 ? searchedResult : null) : this.allTemplates;
     }
 
@@ -102,7 +101,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
     get replyToTemplateId(){
-        return this.allTemplates.find(t => t.Id == this.replyToMessage.MVWB__Whatsapp_Template__c)?.MVWB__Template_Name__c || null;
+        return this.allTemplates.find(t => t.Id == this.replyToMessage.Whatsapp_Template__c)?.Template_Name__c || null;
     }
 
     connectedCallback(){
@@ -112,7 +111,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             }
             this.configureHeight();
             this.getS3ConfigDataAsync();
-            this.timeInString();
             this.getInitialData();
             this.generateEmojiCategories();
             this.handleSubscribe();
@@ -395,6 +393,9 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             this.selectedTemplate = null;
             this.audioPreview = false;
             this.audioURL = '';
+            this.selectedFileName = null;
+            this.selectedFilesToUpload = [];
+            this.template.querySelector('input[type="file"]').value = null;
         } catch (e) {
             console.error('Error in function handleBackDropClick:::', e.message);
         }
@@ -1014,56 +1015,59 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         }
     }
 
-    timeInString() {
-        try {
-            const currentDateTime = new Date();
-
-            const day = currentDateTime.getDate().toString().padStart(2, '0');
-            const month = (currentDateTime.getMonth() + 1).toString().padStart(2, '0'); // Month is zero-indexed, so add 1
-            const year = currentDateTime.getFullYear().toString();
-            const hours = currentDateTime.getHours().toString().padStart(2, '0');
-            const minutes = currentDateTime.getMinutes().toString().padStart(2, '0');
-            const seconds = currentDateTime.getSeconds().toString().padStart(2, '0');
-
-            const formattedDateTime = `${day}_${month}_${year}_${hours}:${minutes}:${seconds}`;
-            this.currentDateTimeWithSeconds = formattedDateTime;
-        } catch (error) {
-            console.log('error in timeinstring -> ', error);
-        }
-    }
-
     async handleSelectedFiles(event) {
         try {
-            const files = event.target.files;
-            console.log({files});
-            if (files.length > 0) {
-                // this.largeImagefiles = [];
-                for (let fileCount = 0; fileCount < files.length; fileCount++) {
-                    let file = files[fileCount];
-                    console.log({file});
-                    
-                    if (Math.floor((file.size) / 1024) <= 10000) {
-                        this.selectedFilesToUpload.push(file);
-                        this.fileName.push(file.name);
-                        this.fileSize.push(Math.floor((file.size) / 1024));
-                        console.log(this.selectedFilesToUpload);
-                        await this.uploadToAWS(this.selectedFilesToUpload);
-                    } else {
-                        // this.largeImagefiles.push(file.name);
-                    }
+            const file = event.target.files[0];
+            if (file) {
+                let fileType = file.type;
+                let fileSizeMB = Math.floor(file.size / (1024 * 1024));
+                let isValid = false;
+                let maxSize = 0;
+                console.log(fileType, fileSizeMB);
+    
+                if (fileType.includes('image/')) {
+                    maxSize = 5;
+                    isValid = fileSizeMB <= maxSize;
+                } else if (fileType.includes('video/') || fileType.includes('audio/')) {
+                    maxSize = 16;
+                    isValid = fileSizeMB <= maxSize;
+                } else if (fileType.includes('application/') || fileType.includes('text/')) {
+                    maxSize = 100;
+                    isValid = fileSizeMB <= maxSize;
+                }
+    
+                if (isValid) {
+                    this.selectedFilesToUpload.push(file);
+                    this.selectedFileName = file.name;
+                } else {
+                    this.showToast('Error', `${file.name} exceeds the ${maxSize}MB limit`, 'error');
                 }
             }
         } catch (error) {
-            console.error('error file upload ', error.stack);
+            console.error('Error in file upload:', error);
+        }
+    }
+
+    removeFile() {
+        this.selectedFileName = null;
+        this.selectedFilesToUpload = [];
+        this.template.querySelector('input[type="file"]').value = null;
+    }
+
+    async handleUploadClick(){
+        if(this.selectedFilesToUpload.length > 0){
+            this.showSpinner = true;
+            await this.uploadToAWS(this.selectedFilesToUpload);
         }
     }
 
     async uploadToAWS() {
         try {
+            this.showSpinner = true;
             this.initializeAwsSdk(this.confData);
-            const uploadPromises = this.selectedFilesToUpload.map(async (file, index) => {
+            const uploadPromises = this.selectedFilesToUpload.map(async (file) => {
                 this.showSpinner = true;
-                let objKey = this.renameFileName(this.fileName[index]);
+                let objKey = this.renameFileName(this.selectedFileName);
 
                 let params = {
                     Key: objKey,
@@ -1073,19 +1077,71 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 };
 
                 let upload = this.s3.upload(params);
-                this.showSpinner = false;
 
                 return await upload.promise();
             });
-
             // Wait for all uploads to complete
             const results = await Promise.all(uploadPromises);
             results.forEach((result) => {
                 if (result) {
-                    console.log({result});
                     let bucketName = this.confData.S3_Bucket_Name__c;
                     let objKey = result.Key;
-                    // this.fileURL.push(`https://${bucketName}.s3.amazonaws.com/${objKey}`);
+                    let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
+
+                    var messageType = '';
+                    if(this.selectedFilesToUpload[0].type.includes('image/')){
+                        messageType = 'Image';
+                    } else if (this.selectedFilesToUpload[0].type.includes('application/') || this.selectedFilesToUpload[0].type.includes('text/')){
+                        messageType = 'Document';
+                    } else if (this.selectedFilesToUpload[0].type.includes('audio/')){
+                        messageType = 'Audio';
+                    } else if(this.selectedFilesToUpload[0].type.includes('video/')){
+                        messageType = 'Video';
+                    }
+                    createChatForAWSFiles({chatData: {message: awsFileUrl, fileName: objKey, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
+                        .then(chat => {
+                            if(chat){
+                                this.chats.push(chat);
+                                this.processChats(true);
+                                
+                                let imagePayload = this.createJSONBody(this.phoneNumber, messageType, this.replyToMessage?.WhatsAppMessageId__c || null, {
+                                    link: chat.Message__c,
+                                    fileName: objKey || 'whatsapp file'
+                                });
+                                sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
+                                    .then(result => {
+                                        if(result.errorMessage == 'METADATA_ERROR'){
+                                            this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
+                                        }
+                                        let resultChat = result.chat;
+                                        this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = resultChat.Message_Status__c;
+                                        this.chats.find(ch => ch.Id === chat.Id).WhatsAppMessageId__c = resultChat?.WhatsAppMessageId__c;
+                                        this.messageText = '';
+                                        this.template.querySelector('.message-input').value = '';
+                                        this.replyToMessage = null;
+                                        this.showSpinner = false;
+                                        this.processChats(true);
+                                    })
+                                    .catch((e) => {
+                                        this.showSpinner = false;
+                                        console.error('Error in handleUploadFinished > sendWhatsappMessage :: ', e);
+                                    })
+                                this.handleBackDropClick();
+                            }else{
+                                this.showSpinner = false;
+                                this.showToast('Something went wrong!', 'The photo is not sent, please make sure image size does not exceed 5MB.', 'error');
+                                console.error('there was some error sending the message!');
+                            }
+                        })
+                        .catch((e) => {
+                            this.showSpinner = false;
+                            this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
+                            console.error('Error in handleUploadFinished > createChat :: ', e);
+                        })
+                    this.uploadFileType = null;
+                    this.showFileUploader = false;
+                    this.acceptedFormats = [];
+                    this.removeFile();
                 }
             });
 
@@ -1124,11 +1180,9 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             let extensionIndex = originalFileName.lastIndexOf('.');
             let baseFileName = originalFileName.substring(0, extensionIndex);
             let extension = originalFileName.substring(extensionIndex + 1);
-
-            const time = this.currentDateTimeWithSeconds;
-            let objKey = `${baseFileName}_${time}.${extension}`
-                .replace(/\s+/g, "_")
-                .toLowerCase();
+            
+            let objKey = `${baseFileName}.${extension}`
+                .replace(/\s+/g, "_");
             return objKey;
         } catch (error) {
             console.error('error in renameFileName -> ', error.stack);            

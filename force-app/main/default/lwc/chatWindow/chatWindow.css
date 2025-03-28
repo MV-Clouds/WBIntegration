@@ -791,7 +791,7 @@
 }
 
 .files-uploader-div {
-    height: 8rem;
+    height: 12rem;
     display: flex;
     border-radius: 6px;
     align-items: center;
@@ -1029,4 +1029,52 @@
 .send-template-button:hover{
     background-color: #00bfff20;
     border-color: #00bfff;
+}
+
+.upload-container {
+    padding: 10px;
+}
+
+.custom-file-upload {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #d8dde6;
+    border-radius: 5px;
+    background-color: #f4f6f9;
+    cursor: pointer;
+}
+
+.custom-file-upload input {
+    display: none;
+}
+
+.file-details {
+    margin-top: 10px;
+}
+
+.file-name {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.remove-icon {
+    cursor: pointer;
+    color: #ff5c5c;
+}
+
+.upload-button {
+    padding: 7px;
+    width: 75px;
+    margin-top: 10px;
+    background-color: #0176d3;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.upload-button:disabled {
+    background-color: #d8dde6;
+    cursor: not-allowed;
 }
