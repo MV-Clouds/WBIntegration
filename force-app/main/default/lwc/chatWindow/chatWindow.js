@@ -2,6 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { CurrentPageReference } from 'lightning/navigation';
 import getCombinedData from '@salesforce/apex/ChatWindowController.getCombinedData';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
+import createChatForAWSFiles from '@salesforce/apex/ChatWindowController.createChatForAWSFiles';
 import updateReaction from '@salesforce/apex/ChatWindowController.updateReaction';
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
@@ -11,6 +12,9 @@ import updateThemePreference from '@salesforce/apex/ChatWindowController.updateT
 import updateStatus from '@salesforce/apex/ChatWindowController.updateStatus';
 import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
 import whatsappAudioIcon from '@salesforce/resourceUrl/MVWB__whatsAppAudioIcon';
+import { loadScript } from 'lightning/platformResourceLoader';
+import AWS_SDK from "@salesforce/resourceUrl/MVWB__AWSSDK";
+import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import { subscribe} from 'lightning/empApi';
 
 export default class ChatWindow extends NavigationMixin(LightningElement) {
@@ -51,6 +55,12 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     @track headphone = whatsappAudioIcon;
     audioPreview = false;
     audioURL = '';
+    isAWSEnabled = false;
+    @track confData;
+    @track s3;
+    @track isAwsSdkInitialized = true;
+    @track selectedFilesToUpload = [];
+    selectedFileName;
 
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
@@ -100,6 +110,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
             this.configureHeight();
+            this.getS3ConfigDataAsync();
             this.getInitialData();
             this.generateEmojiCategories();
             this.handleSubscribe();
@@ -116,6 +127,17 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     chatDiv.scrollTop = chatDiv.scrollHeight;
                 }
                 this.scrollBottom = false;
+            }
+            if (this.isAwsSdkInitialized) {
+                Promise.all([loadScript(this, AWS_SDK)])
+                    .then(() => {
+                        console.log('Script loaded successfully');
+                    })
+                    .catch((error) => {
+                        console.error("error -> ", error);
+                    });
+
+                this.isAwsSdkInitialized = false;
             }
         } catch (e) {
             console.error('Error in function renderedCallback:::', e.message);
@@ -241,15 +263,29 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
                 ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordName;
                 if ((ch.isDoc || ch.isAudio) && ch.MVWB__File_Data__c) {
-                    try {
+                    if(ch.MVWB__Message__c.includes('amazonaws.com') && ch.isDoc){
+                        ch.isAWSFile = true;
                         const fileData = JSON.parse(ch.MVWB__File_Data__c);
-                        const fileName = fileData.fileName;
+                        const fileName = fileData?.fileName;
+                        const mimeType = fileData?.mimeType;
                         ch.fileName = fileName;
-                        ch.contentDocumentId = fileData.documentId;
-                        ch.fileUrl = `/sfc/servlet.shepherd/version/download/${fileData.contentVersionId}?as=${fileName}`;
-                        ch.fileThumbnail = `/sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=${fileData.contentVersionId}`;
-                    } catch (error) {
-                        console.error("Error parsing File_Data__c:", error);
+                        if(mimeType.includes('pdf')){
+                            ch.isPreviewable = true;
+                        } else {
+                            ch.isPreviewable = false;
+                        }
+                    } else {
+                        ch.isAWSFile = false;
+                        try {
+                            const fileData = JSON.parse(ch.MVWB__File_Data__c);
+                            const fileName = fileData?.fileName;
+                            ch.fileName = fileName;
+                            ch.contentDocumentId = fileData?.documentId;
+                            ch.fileUrl = `/sfc/servlet.shepherd/version/download/${fileData?.contentVersionId}?as=${fileName}`;
+                            ch.fileThumbnail = `/sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=${fileData?.contentVersionId}`;
+                        } catch (error) {
+                            console.error("Error parsing File_Data__c:", error);
+                        }
                     }
                 }
                 return ch;
@@ -366,6 +402,9 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             this.selectedTemplate = null;
             this.audioPreview = false;
             this.audioURL = '';
+            this.selectedFileName = null;
+            this.selectedFilesToUpload = [];
+            this.template.querySelector('input[type="file"]').value = null;
         } catch (e) {
             console.error('Error in function handleBackDropClick:::', e.message);
         }
@@ -529,6 +568,21 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         let audioURL = event.currentTarget.dataset.url;
         this.audioPreview = !this.audioPreview;
         this.audioURL = audioURL;
+    }
+
+    handleTogglePDFPreview(event){
+        let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
+        if(isMobileDevice){
+            return;
+        }
+        let action = event.currentTarget.dataset.action;
+        
+        if(action == 'open'){
+            event.currentTarget.classList.add('pdf-preview');
+        }else if(action == 'close'){
+            this.template.querySelector('.pdf-preview').classList.remove('pdf-preview');
+            event.stopPropagation()
+        }
     }
 
 // Emoji Support
@@ -965,6 +1019,208 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             this.template.querySelector('.dropdown-menu').classList.add('hidden');
         } catch (e) {
             console.error('Error in function handleScheduleMessage:::', e.message);
+        }
+    }
+
+    getS3ConfigDataAsync() {
+        try {
+            getS3ConfigSettings()
+                .then(result => {
+                    console.log('result--> ', result);
+                    if (result != null) {
+                        this.confData = result;
+                        this.isAWSEnabled = true;
+                    }
+                }).catch(error => {
+                    console.error('error in apex -> ', error.stack);
+                });
+        } catch (error) {
+            console.error('error in getS3ConfigDataAsync -> ', error.stack);
+        }
+    }
+
+    async handleSelectedFiles(event) {
+        try {
+            const file = event.target.files[0];
+            if (file) {
+                let fileType = file.type;
+                let fileSizeMB = Math.floor(file.size / (1024 * 1024));
+                let isValid = false;
+                let maxSize = 0;
+                console.log(fileType, fileSizeMB);
+    
+                if (fileType.includes('image/')) {
+                    maxSize = 5;
+                    isValid = fileSizeMB <= maxSize;
+                } else if (fileType.includes('video/') || fileType.includes('audio/')) {
+                    maxSize = 16;
+                    isValid = fileSizeMB <= maxSize;
+                } else if (fileType.includes('application/') || fileType.includes('text/')) {
+                    maxSize = 100;
+                    isValid = fileSizeMB <= maxSize;
+                }
+    
+                if (isValid) {
+                    this.selectedFilesToUpload.push(file);
+                    this.selectedFileName = file.name;
+                } else {
+                    this.showToast('Error', `${file.name} exceeds the ${maxSize}MB limit`, 'error');
+                }
+            }
+        } catch (error) {
+            console.error('Error in file upload:', error);
+        }
+    }
+
+    removeFile() {
+        this.selectedFileName = null;
+        this.selectedFilesToUpload = [];
+        this.template.querySelector('input[type="file"]').value = null;
+    }
+
+    async handleUploadClick(){
+        if(this.selectedFilesToUpload.length > 0){
+            this.showSpinner = true;
+            await this.uploadToAWS(this.selectedFilesToUpload);
+        }
+    }
+
+    async uploadToAWS() {
+        try {
+            this.showSpinner = true;
+            this.initializeAwsSdk(this.confData);
+            const uploadPromises = this.selectedFilesToUpload.map(async (file) => {
+                this.showSpinner = true;
+                let objKey = this.renameFileName(this.selectedFileName);
+
+                let params = {
+                    Key: objKey,
+                    ContentType: file.type,
+                    Body: file,
+                    ACL: "public-read"
+                };
+
+                let upload = this.s3.upload(params);
+
+                return await upload.promise();
+            });
+            // Wait for all uploads to complete
+            const results = await Promise.all(uploadPromises);
+            results.forEach((result) => {
+                if (result) {
+                    let bucketName = this.confData.S3_Bucket_Name__c;
+                    let objKey = result.Key;
+                    let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
+
+                    var messageType = '';
+                    if(this.selectedFilesToUpload[0].type.includes('image/')){
+                        messageType = 'Image';
+                    } else if (this.selectedFilesToUpload[0].type.includes('application/') || this.selectedFilesToUpload[0].type.includes('text/')){
+                        messageType = 'Document';
+                    } else if (this.selectedFilesToUpload[0].type.includes('audio/')){
+                        messageType = 'Audio';
+                    } else if(this.selectedFilesToUpload[0].type.includes('video/')){
+                        messageType = 'Video';
+                    }
+                    createChatForAWSFiles({chatData: {message: awsFileUrl, fileName: objKey, mimeType: this.selectedFilesToUpload[0].type, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
+                        .then(chat => {
+                            if(chat){
+                                this.chats.push(chat);
+                                this.processChats(true);
+                                
+                                let imagePayload = this.createJSONBody(this.phoneNumber, messageType, this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                                    link: chat.MVWB__Message__c,
+                                    fileName: objKey || 'whatsapp file'
+                                });
+                                sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
+                                    .then(result => {
+                                        if(result.errorMessage == 'METADATA_ERROR'){
+                                            this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
+                                        }
+                                        let resultChat = result.chat;
+                                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = resultChat.MVWB__Message_Status__c;
+                                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = resultChat?.MVWB__WhatsAppMessageId__c;
+                                        this.messageText = '';
+                                        this.template.querySelector('.message-input').value = '';
+                                        this.replyToMessage = null;
+                                        this.showSpinner = false;
+                                        this.processChats(true);
+                                    })
+                                    .catch((e) => {
+                                        this.showSpinner = false;
+                                        console.error('Error in handleUploadFinished > sendWhatsappMessage :: ', e);
+                                    })
+                                this.handleBackDropClick();
+                            }else{
+                                this.showSpinner = false;
+                                this.showToast('Something went wrong!', 'The photo is not sent, please make sure image size does not exceed 5MB.', 'error');
+                                console.error('there was some error sending the message!');
+                            }
+                        })
+                        .catch((e) => {
+                            this.showSpinner = false;
+                            this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
+                            console.error('Error in handleUploadFinished > createChat :: ', e);
+                        })
+                    this.uploadFileType = null;
+                    this.showFileUploader = false;
+                    this.acceptedFormats = [];
+                    this.removeFile();
+                }
+            });
+
+        } catch (error) {
+            this.showSpinner = false;
+            console.error("Error in uploadToAWS: ", error);
+        }
+    }
+
+    initializeAwsSdk(confData) {
+        try {
+            let AWS = window.AWS;
+
+            AWS.config.update({
+                accessKeyId: confData.AWS_Access_Key__c,
+                secretAccessKey: confData.AWS_Secret_Access_Key__c
+            });
+
+            AWS.config.region = confData.S3_Region_Name__c;
+
+            this.s3 = new AWS.S3({
+                apiVersion: "2006-03-01",
+                params: {
+                    Bucket: confData.S3_Bucket_Name__c
+                }
+            });
+
+        } catch (error) {
+            console.error("error initializeAwsSdk ", error);
+        }
+    }
+
+    renameFileName(filename) {
+        try {
+            let originalFileName = filename;
+            let extensionIndex = originalFileName.lastIndexOf('.');
+            let baseFileName = originalFileName.substring(0, extensionIndex);
+            let extension = originalFileName.substring(extensionIndex + 1);
+            
+            let objKey = `${baseFileName}.${extension}`
+                .replace(/\s+/g, "_");
+            return objKey;
+        } catch (error) {
+            console.error('error in renameFileName -> ', error.stack);            
+        }
+    }
+
+    downloadRowImage(event) {
+        try {
+            const fileName = event.currentTarget.dataset.name;
+            const vfPageUrl = `/apex/FileDownloadVFPage?fileName=${encodeURIComponent(fileName)}`;
+            window.open(vfPageUrl, '_blank');
+        } catch (error) {
+            this.showSpinner = false;
+            console.error('Error downloading file:', error.stack);
         }
     }
 

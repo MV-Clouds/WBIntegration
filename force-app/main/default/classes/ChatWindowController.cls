@@ -446,4 +446,45 @@ public with sharing class ChatWindowController {
         }
     }
 
+    /*
+    *********************************************************
+    @description     : Method is used to create a new chat message for the Files which are stored in AWS
+    @param           : chatData - {Map<String, String>} - Map containing all the data to create a new chat
+    @return          : chat - {Chat__c} - the newly created chat
+    ********************************************************
+    */
+    @AuraEnabled
+    public static Chat__c createChatForAWSFiles(Map<String, String> chatData ){
+        try {
+
+            String message = chatData.get('message');
+            String fileName = chatData.get('fileName');
+            String messageType = chatData.get('messageType');
+            String recordId = chatData.get('recordId');
+            String replyToChatId = chatData.get('replyToChatId');
+            String phoneNumber = chatData.get('phoneNumber');
+
+            Chat__c chat = new Chat__c();
+            chat.Message__c = message;
+            chat.Phone__c = phoneNumber;
+            chat.Type_of_Message__c	= 'OutBound Messages';
+            chat.Message_Status__c = null;
+            chat.Message_Type__c = messageType;
+            chat.Reply_To__c = replyToChatId;
+            Map<String, Object> fileData = new Map<String, Object>{ 'fileName' => fileName };
+            chat.File_Data__c = JSON.serialize(fileData);
+
+            insert as user chat;
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, File_Data__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+
+            return chat;
+        } catch (Exception e) {
+            if(e.getMessage().contains('STORAGE_LIMIT_EXCEEDED')){
+                throw new AuraHandledException('STORAGE_LIMIT_EXCEEDED');
+            }
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
+            return null;
+        }
+    }
+
 }
