@@ -92,7 +92,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
     get filteredTemplate(){
-        let searchedResult = (this.allTemplates?.filter(template => template.Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
+        let searchedResult = (this.allTemplates?.filter(template => template.MVWB__Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
         return this.templateSearchKey ? (searchedResult.length > 0 ? searchedResult : null) : this.allTemplates;
     }
 
@@ -101,7 +101,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
     get replyToTemplateId(){
-        return this.allTemplates.find(t => t.Id == this.replyToMessage.Whatsapp_Template__c)?.Template_Name__c || null;
+        return this.allTemplates.find(t => t.Id == this.replyToMessage.MVWB__Whatsapp_Template__c)?.MVWB__Template_Name__c || null;
     }
 
     connectedCallback(){
@@ -1128,8 +1128,8 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                                 this.chats.push(chat);
                                 this.processChats(true);
                                 
-                                let imagePayload = this.createJSONBody(this.phoneNumber, messageType, this.replyToMessage?.WhatsAppMessageId__c || null, {
-                                    link: chat.Message__c,
+                                let imagePayload = this.createJSONBody(this.phoneNumber, messageType, this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                                    link: chat.MVWB__Message__c,
                                     fileName: objKey || 'whatsapp file'
                                 });
                                 sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
@@ -1138,8 +1138,8 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                                             this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
                                         }
                                         let resultChat = result.chat;
-                                        this.chats.find(ch => ch.Id === chat.Id).Message_Status__c = resultChat.Message_Status__c;
-                                        this.chats.find(ch => ch.Id === chat.Id).WhatsAppMessageId__c = resultChat?.WhatsAppMessageId__c;
+                                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = resultChat.MVWB__Message_Status__c;
+                                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = resultChat?.MVWB__WhatsAppMessageId__c;
                                         this.messageText = '';
                                         this.template.querySelector('.message-input').value = '';
                                         this.replyToMessage = null;
