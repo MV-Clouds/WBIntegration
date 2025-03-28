@@ -2,7 +2,9 @@ import { LightningElement, track, wire } from 'lwc';
 import getObjectConfigs from '@salesforce/apex/BroadcastMessageController.getObjectConfigs';
 import getListViewsForObject from '@salesforce/apex/BroadcastMessageController.getListViewsForObject';
 import { getListUi } from 'lightning/uiListApi';
-
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
+import processBroadcastMessageWithObject from '@salesforce/apex/BroadcastMessageController.processBroadcastMessageWithObject';
 export default class BroadcastMessage extends LightningElement {
     @track objectOptions = [];
     @track listViewOptions = [];
@@ -18,6 +20,13 @@ export default class BroadcastMessage extends LightningElement {
     @track configMap = {}; // store object -> {nameField, phoneField}
     @track searchTerm = '';
     @track selectedRecords = new Set(); // Track selected record IDs
+    @track isCreateBroadcastModalOpen = false;
+    @track templateOptions = []; // Will store the processed template options
+    @track templateMap = new Map(); // Store the raw Map from Apex
+    @track messageText = '';
+    @track selectedTemplate = '';
+    @track broadcastGroupName = '';
+
 
     get dynamicFieldNames() {
         if (!this.selectedObject || !this.configMap[this.selectedObject]) {
@@ -30,9 +39,9 @@ export default class BroadcastMessage extends LightningElement {
         ];
     }
 
-        /**
+    /**
      * Getter for select all checkbox state
-     */
+    */
     get isAllSelected() {
         return this.paginatedData.length > 0 && 
                 this.paginatedData.every(record => this.selectedRecords.has(record.Id));
@@ -149,9 +158,27 @@ export default class BroadcastMessage extends LightningElement {
         return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
     }
     
-    
     connectedCallback() {
         this.loadConfigs();
+        this.loadAllTemplates(); // Load templates on component initialization
+    }
+
+    // Load all templates once during initialization
+    loadAllTemplates() {
+        this.isLoading = true;
+        getTemplatesByObject()
+            .then(result => {
+                // Convert the Apex Map to JavaScript Map
+                this.templateMap = new Map(Object.entries(result));
+                this.updateTemplateOptions(); // Update options based on selected object
+            })
+            .catch(error => {
+                console.error('Error loading templates:', error);
+                this.showToast('Error', 'Failed to load templates', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
     }
 
     loadConfigs() {
@@ -252,7 +279,21 @@ export default class BroadcastMessage extends LightningElement {
         this.currentPage = 1;
         this.updateShownData();    
     }
-    
+
+    handleInputChange(event) {
+        const { name, value } = event.target;
+        switch(name) {
+            case 'name':
+                this.broadcastGroupName = value;
+                break;
+            case 'template':
+                this.selectedTemplate = value;
+                break;
+            case 'message':
+                this.messageText = value;
+                break;
+        }
+    }
 
     handleObjectChange(event) {
         this.selectedObject = event.detail.value;
@@ -263,6 +304,36 @@ export default class BroadcastMessage extends LightningElement {
         this.currentPage = 1;
         this.selectedRecords.clear(); // Clear selections
         this.loadListViews();
+        this.updateTemplateOptions(); // Update template options when object changes
+    }
+
+    updateTemplateOptions() {
+        if (!this.selectedObject || this.templateMap.size === 0) {
+            this.templateOptions = [];
+            return;
+        }
+
+        let combinedTemplates = [];
+
+        // Add object-specific templates
+        if (this.templateMap.has(this.selectedObject)) {
+            combinedTemplates = [...this.templateMap.get(this.selectedObject)];
+        }
+
+        // Add Generic templates
+        if (this.templateMap.has('Generic')) {
+            combinedTemplates = [...combinedTemplates, ...this.templateMap.get('Generic')];
+        }
+
+        // Convert to combobox options format
+        this.templateOptions = combinedTemplates.map(template => ({
+            label: template.Template_Name__c,
+            value: template.Id
+        }));
+
+        console.log('templateOptions ==> ', this.templateOptions);
+        console.log('templateOptions ==> ', JSON.stringify(this.templateOptions));
+        
     }
 
     loadListViews() {
@@ -314,8 +385,6 @@ export default class BroadcastMessage extends LightningElement {
             console.error('Error loading records:', error);
         }
     }
-    
-
     /**
      * Handle individual record selection
      */
@@ -349,4 +418,77 @@ export default class BroadcastMessage extends LightningElement {
         this.selectedRecords = new Set(this.selectedRecords);
     }
 
+    handleModalOpen(){
+
+        if(this.selectedRecords.size === 0){
+            this.showToast('Error', 'Please select at least one record', 'error');
+            return;
+        }
+
+        // Check selectedRecords for invalid phone numbers
+        if (Array.from(this.selectedRecords).some(recordId => {
+            const record = this.data.find(r => r.Id === recordId);
+            return !record || !record.phone || record.phone.trim() === '';
+        })) {
+            this.showToast('Error', 'One or more selected records have invalid or missing phone numbers', 'error');
+            return;
+        }
+
+
+        this.isCreateBroadcastModalOpen = true;
+    }
+
+    closePopUp(){
+        this.selectedTemplate = '';
+        this.broadcastGroupName = '';
+        this.messageText = '';
+        this.isCreateBroadcastModalOpen = false;
+
+    }
+
+    handleSave(){
+        if(this.messageText.trim() === '' || this.selectedTemplate === null || this.broadcastGroupName.trim() === ''){            
+            this.showToast('Error', 'Please fill in all required fields', 'error');
+            return;
+        }
+
+        const phoneNumbers = Array.from(this.selectedRecords)
+        .map(recordId => {
+            const record = this.data.find(r => r.Id === recordId);
+            return record ? record.phone : null;
+        })
+        .filter(phone => phone !== null && phone !== '');
+  
+                
+        const messageData = {
+            objectApiName: this.selectedObject,
+            listViewName: this.selectedListView,
+            phoneNumbers: phoneNumbers,
+            description: this.messageText,
+            templateId: this.selectedTemplate,
+            name: this.broadcastGroupName
+        };
+
+        // Call the Apex method
+        processBroadcastMessageWithObject({ request: messageData })
+        .then(() => {
+            this.showToast('Success', 'Broadcast group created successfully', 'success');
+            this.closePopUp();
+            this.selectedRecords.clear();
+            this.updateShownData();
+        })
+        .catch(error => {
+            this.showToast('Error', error.body?.message || 'Failed to process broadcast', 'error');
+        });
+    }
+
+    showToast(title, message, variant){
+        this.dispatchEvent(new ShowToastEvent({
+            title: title,
+            message: message,
+            variant: variant
+        }));
+    }
+
 }
+

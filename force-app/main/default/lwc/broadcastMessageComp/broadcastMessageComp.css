@@ -5,27 +5,21 @@
 
 .wrapper {
     background-color: #ffffff;
-    padding: 1rem 0rem;
-    padding-bottom: 1rem;
+    padding-top: 1rem;
     height: calc(100% + 1.5rem);
     margin-top: -0.8rem;
     width: calc(100% + 1.5rem);
     margin-left: -0.8rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
     overflow: hidden;
     background-image: url('/resource/MVWB__wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
 }
 
-.container {
-    height: 75%;
-}
-
 .no-records-message {
-    height: inherit;
+    height: 70%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -43,14 +37,18 @@
     text-align: center;
 }
 
+.container{
+    height: 80%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding: 2px;
+}
+
 
 /* Custom Table Styling */
 .table-container {
     margin-top: 1rem;
     border-radius: 0.4rem; 
-    overflow: scroll !important; 
-    height: 75%;
-    scrollbar-width: none !important;
 }
 
 .table {
@@ -67,6 +65,11 @@
 .table th, .table td {
     padding: 0.75rem;
     text-align: center !important;
+}
+
+.table table{
+    position: sticky;
+    top: 0;
 }
 
 .table thead{
@@ -96,6 +99,7 @@
 
 .table tr:nth-child(even) {
     background-color: white;
+
 }
 
 .table tr:nth-child(odd) {
@@ -107,8 +111,6 @@
     align-items: center;
     font-size: 14px;
     justify-content: center;
-    padding-top: 16px;
-    padding-bottom: 16px;
 }
 
 .pagination-button {
@@ -157,4 +159,80 @@ span {
 
 .checkbox-column {
     width: 40px;
+}
+
+.footer-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    bottom: 0;
+    background-color: transparent;
+    padding-block: 1rem;
+}
+
+
+/* Modal CSS */
+
+
+.modal-content{
+    padding: 0;
+    border-radius: 5px;
+    overflow: hidden;
+    background-image: url('/resource/MVWB__wbiTemplateBg');
+}
+
+
+.modal-heading{
+    font-size: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    font-weight: 500;
+    color: white;
+    padding: 0.4rem;
+    background: #0077B6;
+}
+
+.modal-body{
+    padding: 1rem 1rem 0 1rem;    ;
+}
+
+.modal-body-content {
+    width: 100%;
+    display: grid;
+    height: -webkit-fill-available;
+}
+
+.save-btn{
+    border: 1px solid #c7c7c7;
+    border-radius: 3px;
+    color: white;
+    padding: 0.3rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    font-size: 14px;
+    background: #066afe;;
+    font-weight: 500;
+}
+
+.close-btn{
+    border: 1px solid #c7c7c7;
+    border-radius: 3px;
+    color: black;
+    padding: 0.3rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    font-size: 14px;
+    background: white;
+    font-weight: 500;
+}
+
+.footer{
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem;
+    gap: 1rem;
 }
