@@ -1215,47 +1215,9 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     downloadRowImage(event) {
         try {
-            this.showSpinner = true;
             const fileName = event.currentTarget.dataset.name;
-    
-            this.initializeAwsSdk(this.confData);
-            const bucketName = this.confData.S3_Bucket_Name__c;
-
-            // Generate the signed URL for the S3 object
-            const signedUrl = this.s3.getSignedUrl('getObject', {
-                Bucket: bucketName,
-                Key: fileName,
-                Expires: 60 // URL expires in 60 seconds
-            });
-
-            // Fetch the file as a Blob
-            fetch(signedUrl)
-                .then(response => {
-                    console.log(response);
-                    if (!response.ok) {
-                        console.log(`Error downloading file from S3: ${response.status}`);
-                        return null;
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    if (blob) {
-                        console.log(blob);
-                        const blobUrl = window.URL.createObjectURL(blob);
-                        const link = window?.globalThis?.document?.createElement('a');
-                        link.href = blobUrl;
-                        link.download = fileName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(blobUrl);
-                        this.showSpinner = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error downloading file from S3:', error.stack);
-                    this.showSpinner = false;
-                });
+            const vfPageUrl = `/apex/FileDownloadVFPage?fileName=${encodeURIComponent(fileName)}`;
+            window.open(vfPageUrl, '_blank');
         } catch (error) {
             this.showSpinner = false;
             console.error('Error downloading file:', error.stack);
