@@ -44,4 +44,37 @@ public with sharing class FileUploaderController {
             throw new AuraHandledException('Error deleting file: ' + e.getMessage());
         }
     }
+    @AuraEnabled
+    public static String getPublicLink(String contentVersionId) {
+        try {
+            System.debug(contentVersionId);
+            // Get the related ContentDocument Id
+            ContentVersion contentVersion = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :contentVersionId LIMIT 1];
+            
+            // Create a new ContentDistribution (public link)
+            ContentDistribution distribution = new ContentDistribution();
+            distribution.Name = 'Public Link';
+            distribution.ContentVersionId = contentVersion.Id;
+            distribution.PreferencesAllowViewInBrowser= true;
+                distribution.PreferencesLinkLatestVersion=true;
+                distribution.PreferencesNotifyOnVisit=false;
+                distribution.PreferencesPasswordRequired=false;
+                distribution.PreferencesAllowOriginalDownload= true;
+
+
+
+
+
+            insert distribution;
+            
+            // Query the created ContentDistribution to get the public URL
+            distribution = [SELECT DistributionPublicUrl,ContentDownloadUrl FROM ContentDistribution WHERE Id = :distribution.Id LIMIT 1];
+        
+         // Return the public URL
+            return distribution.ContentDownloadUrl;
+        } catch (Exception e) {
+            System.debug('❌ Error while creating public link: ' + e.getMessage());
+            return 'Error: ' + e.getMessage();
+        }
+    }
 }

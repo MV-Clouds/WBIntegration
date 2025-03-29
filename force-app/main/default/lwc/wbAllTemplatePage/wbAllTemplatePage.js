@@ -1,4 +1,4 @@
-/**
+show/**
  * Component Name: WbAllTemplatePage
  * @description: Used LWC components to show all templates record.
  * Date: 25/11/2024

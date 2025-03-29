@@ -38,6 +38,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track fieldNames = [];
     @track isImgSelected = false;
     @track isVidSelected = false;
+    @track isDocSelected = false;
     @track IsHeaderText = true;
     @track options = [
         { label: 'Contact', value: 'Contact', isSelected: true }
@@ -300,6 +301,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         this.tempHeader = doc.documentElement.textContent || "";
                         console.log(this.tempHeader);
                     }
+                    else if(result.template.Header_Type__c=='Document'){
+                        console.log('Here document');
+                        
+                        this.isDocSelected = result.isImgUrl;
+                        console.log(result.isImgUrl);
+                        
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(this.originalHeader, "text/html");
+                        this.tempHeader = doc.documentElement.textContent || "";
+                        console.log(this.tempHeader);
+                    }
                     else{
                         this.tempHeader = this.originalHeader ||'';
                     }
@@ -392,6 +404,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     if(templateData.headerParams) this.headerParams = templateData.headerParams;
                     if(templateData.bodyParams) this.bodyParams = templateData.bodyParams;
                 }
+                console.log('Template body ::: ');
+                console.log(templateData);
+                
+                console.log(templateData.bodyParams);
+                
                
             })
             .catch(e => {
@@ -420,16 +437,25 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 this.isLoading = false;
                 return;
             }
+            console.log("This template ::: ",this.template);
+            
+            const buttonValue = JSON.parse(this.template.Button_Body__c) != undefined?JSON.parse(this.template.Button_Body__c) : '';
+            console.log(buttonValue);
+            
             const templatePayload = this.createJSONBody(phonenum, "template", {
                 templateName: this.template.Template_Name__c,
                 languageCode: this.template.Language__c,
                 headerImageURL: this.template.WBHeader_Body__c,
                 headerType:this.template.Header_Type__c,
                 headerParameters: this.headerParams,
-                bodyParameters: this.bodyParams,
-                buttonLabel: this.template.Button_Label__c,
-                buttonType: this.template.Button_Type__c
+                bodyParameters: this.bodyParams || '',
+                buttonLabel: this.template.Button_Label__c || '',
+                buttonType: this.template.Button_Type__c || '',
+                buttonValue : buttonValue
             });
+
+            console.log('Template Pay load ::: ',templatePayload);
+            
     
             sendPreviewTemplate({ jsonData: templatePayload })
                 .then((result) => {
@@ -448,56 +474,146 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 });
     
         } catch (e) {
-            console.error('Error in function sendTemplatePreview:', e.message);
+            console.error('Error in function sendTemplatePreview:', e.message+' --- '+e);
             this.isLoading = false; 
         }
     }    
     
-
-    createJSONBody(to, type, data){
+    createJSONBody(to, type, data) {
         try {
-                let payload = `{ "messaging_product": "whatsapp", "to": "${to}", "type": "${type}"`;
-                payload += `, "template": { 
-                    "name": "${data.templateName}",
-                    "language": { "code": "${data.languageCode}" }`;
-                let components = [];
-                if (data.headerParameters && data.headerParameters.length > 0) {
-                    let headerParams = data.headerParameters.map(
-                        (param) => `{ "type": "text", "text": "${param}" }`
-                    ).join(", ");
-                    components.push(`{ 
-                        "type": "header", 
-                        "parameters": [ ${headerParams} ] 
-                    }`);
+            console.log('Data ::: ', data);
+    
+            let payload = {
+                messaging_product: "whatsapp",
+                to: to,
+                type: type,
+                template: {
+                    name: data.templateName,
+                    language: {
+                        code: data.languageCode
+                    }
                 }
-                if(data.headerType=='Image' && data.headerImageURL){
-                    components.push(`{ 
-                        "type": "header", 
-                        "parameters": [ { "type": "image", "image": { "link":"${data.headerImageURL}" } } ] 
-                    }`);
+            };
+    
+            let components = [];
+    
+            // Header Parameters (Text)
+            if (data.headerParameters && data.headerParameters.length > 0) {
+                let headerParams = data.headerParameters.map((param) => ({
+                    type: "text",
+                    text: param
+                }));
+    
+                components.push({
+                    type: "header",
+                    parameters: headerParams
+                });
+            }
+    
+            // Header Type (Image)
+            if (data.headerType === 'Image' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "image",
+                            image: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+    
+            // Body Parameters
+            if (data.bodyParameters && data.bodyParameters.length > 0) {
+                let bodyParams = data.bodyParameters.map((param) => ({
+                    type: "text",
+                    text: param
+                }));
+    
+                components.push({
+                    type: "body",
+                    parameters: bodyParams
+                });
+            }
+    
+            // Button Handling
+            if (data.buttonValue && data.buttonValue.length > 0) {
+                let buttons = data.buttonValue.map((button, index) => {
+                    switch (button.type.toUpperCase()) {
+                        case "PHONE_NUMBER":
+                            return {
+                                type: "button",
+                                sub_type: "phone_number",
+                                index: index,
+                                parameters: [
+                                    {
+                                        type: "text",
+                                        text: button.phone_number
+                                    }
+                                ]
+                            };
+                        case "URL":
+                            return {
+                                type: "button",
+                                sub_type: "url",
+                                index: index,
+                                parameters: [
+                                    {
+                                        type: "text",
+                                        text: button.url
+                                    }
+                                ]
+                            };
+                        case 'copy_code' :
+                        case "COPY_CODE":
+                            return {
+                                type: "button",
+                                sub_type: "copy_code",
+                                index: index,
+                                parameters: [
+                                    {
+                                        type: "coupon_code",
+                                        coupon_code: button.example
+                                    }
+                                ]
+                            };
+                        case "QUICK_REPLY":
+                            return {
+                                type: "button",
+                                sub_type: "quick_reply",
+                                index: index,
+                                parameters: [
+                                    {
+                                        type: "payload",
+                                        payload: button.text
+                                    }
+                                ]
+                            };
+                        default:
+                            console.warn(`Unknown button type: ${button.type}`);
+                            return null;
+                    }
+                }).filter((button) => button !== null);
+    
+                if (buttons.length > 0) {
+                    components.push(...buttons);
                 }
-                if (data.bodyParameters && data.bodyParameters.length > 0) {
-                    let bodyParams = data.bodyParameters.map(
-                        (param) => `{ "type": "text", "text": "${param}" }`
-                    ).join(", ");
-                    components.push(`{ 
-                        "type": "body", 
-                        "parameters": [ ${bodyParams} ] 
-                    }`);
-                }
-                if (components.length > 0) {
-                    payload += `, "components": [ ${components.join(", ")} ]`;
-                }
-                payload += ` }`; 
-                payload += ` }`;
-            
-                return payload;
+            }
+    
+            // Add components if available
+            if (components.length > 0) {
+                payload.template.components = components;
+            }
+    
+            // Convert the object to a JSON string
+            return JSON.stringify(payload);
         } catch (e) {
             console.log('Error in function createJSONBody:::', e.message);
         }
     }
-
-    closePreview() {
+        closePreview() {
         this.dispatchEvent(new CustomEvent('closepopup'));
     }
 

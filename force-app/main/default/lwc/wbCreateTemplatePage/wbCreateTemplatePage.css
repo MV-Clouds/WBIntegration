@@ -1506,7 +1506,7 @@ textarea {
 .button-label-preview {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     width: auto; 
     font-size: 12px;
     cursor: pointer;
@@ -1516,6 +1516,7 @@ textarea {
     padding: 2%;
     margin-top:6px;
     background-color: white;
+    color:#4194C2;
 }
 .image {
     border-radius: 5px;

@@ -110,7 +110,7 @@ public without sharing class CreateTemplateController {
             Http http = new Http();
             HttpResponse res = http.send(req);
             System.debug('Response Body ==>' + res.getBody());
-
+        
             if (res.getStatusCode() == 200) {
                 CreateTemplateWrapper.handleSuccessResponse(res, payload, response,templateWrapper);
             } else {
