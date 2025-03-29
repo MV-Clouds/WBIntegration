@@ -16,7 +16,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
     }
 
     get totalItems() {
-        return this.data.length;
+        return this.filteredData.length;
     }
     
     get totalPages() {
@@ -94,11 +94,11 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
         this.isLoading = true;
         getBroadcastGroups()
             .then(result => {
-                console.log({result});
                 this.data = result.map((item, index) => ({
                     ...item,
                     index : index + 1,
                 }));
+                this.filteredData = [...this.data];
                 this.updateShownData();
             })
             .catch(error => {
@@ -113,8 +113,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
         try {
             const startIndex = (this.currentPage - 1) * this.pageSize;
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
-            this.paginatedData = this.data.slice(startIndex, endIndex);
-            console.log(this.paginatedData);
+            this.paginatedData = this.filteredData.slice(startIndex, endIndex);
         } catch (error) {
             console.log('Error updateShownData->' + error);
         }
@@ -122,10 +121,12 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
 
     handleSearch(event) {
         try {
-            this.data = this.data.filter(item => 
-                item.Broadcast_Group__r && 
-                item.Broadcast_Group__r.Name.toLowerCase().includes(event.detail.value.toLowerCase())
+
+            this.filteredData = this.data.filter((item) => 
+                (item.Name?.toLowerCase() ?? '').includes(
+                    (event.detail.value.toLowerCase() ?? ''))
             );
+            
             this.updateShownData();
         } catch (error) {
             console.error('Error in search: ' + error.stack);

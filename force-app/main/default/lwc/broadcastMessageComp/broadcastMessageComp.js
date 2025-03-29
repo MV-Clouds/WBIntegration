@@ -26,6 +26,8 @@ export default class BroadcastMessage extends LightningElement {
     @track messageText = '';
     @track selectedTemplate = '';
     @track broadcastGroupName = '';
+    @track isCreateBroadcastComp = true;
+    @track isAllBroadcastPage = false;
 
 
     get dynamicFieldNames() {
@@ -469,6 +471,8 @@ export default class BroadcastMessage extends LightningElement {
             name: this.broadcastGroupName
         };
 
+        this.isLoading = true;
+
         // Call the Apex method
         processBroadcastMessageWithObject({ request: messageData })
         .then(() => {
@@ -479,7 +483,12 @@ export default class BroadcastMessage extends LightningElement {
         })
         .catch(error => {
             this.showToast('Error', error.body?.message || 'Failed to process broadcast', 'error');
-        });
+        })
+        .finally(() => {
+            this.isLoading = false;
+            this.isCreateBroadcastComp = false;
+            this.isAllBroadcastPage = true;
+        });;
     }
 
     showToast(title, message, variant){
@@ -491,4 +500,3 @@ export default class BroadcastMessage extends LightningElement {
     }
 
 }
-
