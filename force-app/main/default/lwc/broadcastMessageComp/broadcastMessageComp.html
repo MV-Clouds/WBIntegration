@@ -141,17 +141,7 @@
                                     <div class="modal-body-content">
     
                                         <lightning-input type="text" label="Name" name="name" onchange={handleInputChange} value={broadcastGroupName} class="slds-m-bottom_medium" required message-when-value-missing=" "></lightning-input>
-    
-                                        <lightning-combobox
-                                            name="template"
-                                            label="Select Template"
-                                            options={templateOptions}
-                                            onchange={handleInputChange}
-                                            value={selectedTemplate}
-                                            required
-                                            message-when-value-missing=" "
-                                            class="slds-m-bottom_medium">
-                                        </lightning-combobox>
+
                                         <lightning-textarea 
                                             name="message"
                                             label="Message"

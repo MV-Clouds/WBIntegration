@@ -135,7 +135,6 @@ public with sharing class BroadcastMessageController {
                 String.isBlank(request.objectApiName) || 
                 request.phoneNumbers == null || request.phoneNumbers.isEmpty() || 
                 String.isBlank(request.description) || 
-                String.isBlank(request.templateId) || 
                 String.isBlank(request.name)) { // Added validation for name
                 throw new AuraHandledException('All fields in the request are required, including the broadcast group name');
             }
@@ -189,7 +188,6 @@ public with sharing class BroadcastMessageController {
         @AuraEnabled public String listViewName { get; set; }
         @AuraEnabled public List<String> phoneNumbers { get; set; }
         @AuraEnabled public String description { get; set; }
-        @AuraEnabled public String templateId { get; set; }
         @AuraEnabled public String name { get; set; } // Added name field
     }
 

@@ -161,8 +161,18 @@
                             <template if:false={popUpFirstPage}>
                                 <div class="popUpBody slds-p-around--large">
                                     <div>
-                                        <!-- <lightning-record-picker variant="label-hidden" placeholder="Search template records here..." object-api-name={field.relatedObject} 
-                                                    value={field.value} data-field={field.apiName} onchange={handleRecordSelection}></lightning-record-picker> -->
+                                         
+                                        <lightning-combobox
+                                            name="template"
+                                            label="Select Template"
+                                            options={templateOptions}
+                                            onchange={handleInputChange}
+                                            value={selectedTemplate}
+                                            required
+                                            message-when-value-missing=" "
+                                            class="slds-m-bottom_medium">
+                                        </lightning-combobox>
+                                        
                                     </div>
                                 </div>
                                 <div class="popUpFooter slds-p-bottom--large slds-text-align--center">

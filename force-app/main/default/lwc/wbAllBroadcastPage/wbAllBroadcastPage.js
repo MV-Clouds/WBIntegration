@@ -2,6 +2,7 @@ import { LightningElement, track } from 'lwc';
 import getBroadcastRecs from '@salesforce/apex/BroadcastMessageController.getBroadcastRecs';
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 
 export default class WbAllBroadcastPage extends LightningElement {
     @track data = [];
@@ -10,6 +11,9 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track broadcastGroups = [];
     @track filteredGroups = [];
     @track selectedGroupIds = [];
+    @track templateOptions = []; // Will store the processed template options
+    @track templateMap = new Map(); // Store the raw Map from Apex
+    selectedTemplate = '';
     currentPage = 1;
     pageSize = 10;
     visiblePages = 5;
@@ -103,6 +107,52 @@ export default class WbAllBroadcastPage extends LightningElement {
     
     connectedCallback() {
         this.loadBroadcastGroups();
+        this.loadAllTemplates(); // Load templates on component initialization
+    }
+
+    // Load all templates once during initialization
+    loadAllTemplates() {
+        this.isLoading = true;
+        getTemplatesByObject()
+            .then(result => {
+                // Convert the Apex Map to JavaScript Map
+                this.templateMap = new Map(Object.entries(result));
+                this.updateTemplateOptions(); // Update options based on selected object
+            })
+            .catch(error => {
+                console.error('Error loading templates:', error);
+                this.showToast('Error', 'Failed to load templates', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+    }
+
+    updateTemplateOptions() {
+        if (!this.selectedObjectName || this.templateMap.size === 0) {
+            this.templateOptions = [];
+            return;
+        }
+
+        let combinedTemplates = [];
+
+        // Add object-specific templates
+        if (this.templateMap.has(this.selectedObjectName)) {
+            combinedTemplates = [...this.templateMap.get(this.selectedObjectName)];
+        }
+
+        // Add Generic templates
+        if (this.templateMap.has('Generic')) {
+            combinedTemplates = [...combinedTemplates, ...this.templateMap.get('Generic')];
+        }
+
+        // Convert to combobox options format
+        this.templateOptions = combinedTemplates.map(template => ({
+            label: template.Template_Name__c,
+            value: template.Id
+        }));
+
+        
     }
 
     loadBroadcastGroups() {
@@ -246,11 +296,22 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.showToast('Error!', 'Please select groups with the same object name', 'error');
                 return;
             }
+
+            this.updateTemplateOptions();
     
             this.popupHeader = 'Choose Template'
             this.popUpFirstPage = false;
         } catch (error) {
             console.error('Error in next click: ' + error);
+        }
+    }
+
+    handleInputChange(){
+        const { name, value } = event.target;
+        switch(name) {
+            case 'template':
+                this.selectedTemplate = value;
+                break;
         }
     }
 
@@ -260,6 +321,7 @@ export default class WbAllBroadcastPage extends LightningElement {
 
     handlePreviousOnPopup(){
         this.popupHeader = 'Choose Broadcast Groups';
+        this.selectedTemplate = '';
         this.popUpFirstPage = true;
     }
 
