@@ -9,10 +9,11 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
     @track pageSize = 10;
     @track visiblePages = 5;
     @track isLoading = false;
-    @track showPopup = false;
+    @track isNewBroadcast = false;
+    @track isAllGroupPage = true;
 
     get showNoRecordsMessage() {
-        return this.data.length === 0;
+        return this.filteredData.length === 0;
     }
 
     get totalItems() {
@@ -167,11 +168,9 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
         }
     } 
 
-    newBroadcastGroup(){
-        this.showPopup = true;
-    }
 
-    closePopUp(){
-        this.showPopup = false;
+    handleNewBroadcastCreation(){
+        this.isAllGroupPage = false;
+        this.isNewBroadcast = true;
     }
 }

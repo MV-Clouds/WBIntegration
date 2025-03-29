@@ -6,9 +6,10 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 export default class WbAllBroadcastPage extends LightningElement {
     @track data = [];
     @track paginatedData = [];
+    @track filteredData = [];
     @track broadcastGroups = [];
     @track filteredGroups = [];
-    selectedGroupIds = [];
+    @track selectedGroupIds = [];
     currentPage = 1;
     pageSize = 10;
     visiblePages = 5;
@@ -18,13 +19,15 @@ export default class WbAllBroadcastPage extends LightningElement {
     isPopupLoading = false;
     popUpFirstPage = true;
     popupHeader = 'Choose Broadcast Groups';
+    isCreateBroadcast = false;
+    isAllBroadcastPage = true;
 
     get showNoRecordsMessage() {
-        return this.data.length === 0;
+        return this.filteredData.length === 0;
     }
 
     get totalItems() {
-        return this.data.length;
+        return this.filteredData.length;
     }
     
     get totalPages() {
@@ -111,6 +114,8 @@ export default class WbAllBroadcastPage extends LightningElement {
                     ...item,
                     index : index + 1,
                 }));
+
+                this.filteredData = [...this.data];
                 this.updateShownData();
             })
             .catch(error => {
@@ -125,7 +130,7 @@ export default class WbAllBroadcastPage extends LightningElement {
         try {
             const startIndex = (this.currentPage - 1) * this.pageSize;
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
-            this.paginatedData = this.data.slice(startIndex, endIndex);
+            this.paginatedData = this.filteredData.slice(startIndex, endIndex);
             console.log(this.paginatedData);
         } catch (error) {
             console.error('Error updateShownData->' + error);
@@ -135,7 +140,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     handleSearch(event) {
         try {
             if(event.detail.value.trim().toLowerCase() != null) {
-                this.data = this.data.filter(item => 
+                this.filteredData = this.data.filter(item => 
                     item.Broadcast_Group__r && 
                     item.Broadcast_Group__r.Name.toLowerCase().includes(event.detail.value.trim().toLowerCase())
                 );
@@ -179,6 +184,11 @@ export default class WbAllBroadcastPage extends LightningElement {
             console.error('handlePageChange->'+error.stack);
         }
     } 
+
+    handleCreateNewGroup(){
+        this.isCreateBroadcast = true;
+        this.isAllBroadcastPage = false;
+    }
 
     newBroadcast(){
         this.showPopup = true;
