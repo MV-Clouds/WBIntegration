@@ -20,21 +20,9 @@
     z-index: 10;
 }
 
-.divcontainer{
-    height: -webkit-fill-available;
-    display: block;
-}
-
-.divcontainer2 {
-    width: 100%;
-    display: flex;
-    height: -webkit-fill-available;
-}
-
-.createtempdiv2 {
+.popUpBody {
     width: 100%;
     display: grid;
-    /* gap: 10rem; */
     height: -webkit-fill-available;
 }
 
@@ -45,11 +33,11 @@
     height: 100%;
     display: flex;
     justify-content: space-between;
-    /* gap: 5rem; */
     gap: 2rem;
     height: 450px;
     overflow: auto;
 }
+
 .templateContent3::-webkit-scrollbar {
     width: 9px; 
     height: 8px; 
