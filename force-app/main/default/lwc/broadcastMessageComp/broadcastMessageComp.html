@@ -126,7 +126,7 @@
             </template>
     
             <template if:true={paginatedData.length}>
-                <div class="footer-container">
+                <div class="create-btn">
                     <lightning-button label="Create Broadcast Group" variant="brand" onclick={handleModalOpen}></lightning-button>
                 </div>
             </template>
@@ -169,7 +169,7 @@
 
     </template>
 
-    <template if:true={isAllBroadcastPage}>
-        <c-wb-all-broadcast-page></c-wb-all-broadcast-page>
+    <template if:true={isAllBroadcastGroupPage}>
+        <c-wb-all-broadcast-group-page></c-wb-all-broadcast-group-page>
     </template>
 </template>

@@ -5,8 +5,7 @@
 
 .wrapper {
     background-color: #ffffff;
-    padding: 1rem 0rem;
-    padding-bottom: 1rem;
+    padding-top: 1rem;
     height: calc(100% + 1.5rem);
     margin-top: -0.8rem;
     width: calc(100% + 1.5rem);
@@ -133,7 +132,7 @@
 .table-container {
     border-radius: 0.4rem; 
     overflow: scroll !important; 
-    height: 90%;
+    height: 100%;
     scrollbar-width: none !important;
 }
 
@@ -188,9 +187,8 @@
     display: flex;
     align-items: center;
     font-size: 14px;
-    justify-content: center;
-    padding-top: 16px;
     padding-bottom: 16px;
+    justify-content: center;
 }
 
 .pagination-button {

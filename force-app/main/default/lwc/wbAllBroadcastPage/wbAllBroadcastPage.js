@@ -23,8 +23,6 @@ export default class WbAllBroadcastPage extends LightningElement {
     isPopupLoading = false;
     popUpFirstPage = true;
     popupHeader = 'Choose Broadcast Groups';
-    isCreateBroadcast = false;
-    isAllBroadcastPage = true;
 
     get showNoRecordsMessage() {
         return this.filteredData.length === 0;
@@ -234,12 +232,6 @@ export default class WbAllBroadcastPage extends LightningElement {
             console.error('handlePageChange->'+error.stack);
         }
     } 
-
-    handleCreateNewGroup(){
-        this.isCreateBroadcast = true;
-        this.isAllBroadcastPage = false;
-    }
-
     newBroadcast(){
         this.showPopup = true;
         this.isPopupLoading = true;

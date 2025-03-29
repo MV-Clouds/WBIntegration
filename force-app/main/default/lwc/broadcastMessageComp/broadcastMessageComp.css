@@ -38,10 +38,10 @@
 }
 
 .container{
-    height: 80%;
     overflow-y: scroll;
     overflow-x: hidden;
     padding: 2px;
+    height: 100%;
 }
 
 
@@ -110,6 +110,7 @@
     display: flex;
     align-items: center;
     font-size: 14px;
+    padding-bottom: 16px;
     justify-content: center;
 }
 
@@ -161,14 +162,9 @@ span {
     width: 40px;
 }
 
-.footer-container{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: sticky;
-    bottom: 0;
-    background-color: transparent;
-    padding-block: 1rem;
+.create-btn{
+    position: absolute;
+    right: 8px;
 }
 
 

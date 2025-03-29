@@ -3,6 +3,7 @@ import getObjectConfigs from '@salesforce/apex/BroadcastMessageController.getObj
 import getListViewsForObject from '@salesforce/apex/BroadcastMessageController.getListViewsForObject';
 import { getListUi } from 'lightning/uiListApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import processBroadcastMessageWithObject from '@salesforce/apex/BroadcastMessageController.processBroadcastMessageWithObject';
 export default class BroadcastMessage extends LightningElement {
     @track objectOptions = [];
@@ -20,10 +21,12 @@ export default class BroadcastMessage extends LightningElement {
     @track searchTerm = '';
     @track selectedRecords = new Set(); // Track selected record IDs
     @track isCreateBroadcastModalOpen = false;
+    @track templateOptions = []; // Will store the processed template options
+    @track templateMap = new Map(); // Store the raw Map from Apex
     @track messageText = '';
     @track broadcastGroupName = '';
     @track isCreateBroadcastComp = true;
-    @track isAllBroadcastPage = false;
+    @track isAllBroadcastGroupPage = false;
 
 
     get dynamicFieldNames() {
@@ -158,6 +161,25 @@ export default class BroadcastMessage extends LightningElement {
     
     connectedCallback() {
         this.loadConfigs();
+        this.loadAllTemplates(); // Load templates on component initialization
+    }
+
+    // Load all templates once during initialization
+    loadAllTemplates() {
+        this.isLoading = true;
+        getTemplatesByObject()
+            .then(result => {
+                // Convert the Apex Map to JavaScript Map
+                this.templateMap = new Map(Object.entries(result));
+                this.updateTemplateOptions(); // Update options based on selected object
+            })
+            .catch(error => {
+                console.error('Error loading templates:', error);
+                this.showToast('Error', 'Failed to load templates', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
     }
 
     loadConfigs() {
@@ -280,6 +302,36 @@ export default class BroadcastMessage extends LightningElement {
         this.currentPage = 1;
         this.selectedRecords.clear(); // Clear selections
         this.loadListViews();
+        this.updateTemplateOptions(); // Update template options when object changes
+    }
+
+    updateTemplateOptions() {
+        if (!this.selectedObject || this.templateMap.size === 0) {
+            this.templateOptions = [];
+            return;
+        }
+
+        let combinedTemplates = [];
+
+        // Add object-specific templates
+        if (this.templateMap.has(this.selectedObject)) {
+            combinedTemplates = [...this.templateMap.get(this.selectedObject)];
+        }
+
+        // Add Generic templates
+        if (this.templateMap.has('Generic')) {
+            combinedTemplates = [...combinedTemplates, ...this.templateMap.get('Generic')];
+        }
+
+        // Convert to combobox options format
+        this.templateOptions = combinedTemplates.map(template => ({
+            label: template.Template_Name__c,
+            value: template.Id
+        }));
+
+        console.log('templateOptions ==> ', this.templateOptions);
+        console.log('templateOptions ==> ', JSON.stringify(this.templateOptions));
+        
     }
 
     loadListViews() {
@@ -429,7 +481,7 @@ export default class BroadcastMessage extends LightningElement {
         .finally(() => {
             this.isLoading = false;
             this.isCreateBroadcastComp = false;
-            this.isAllBroadcastPage = true;
+            this.isAllBroadcastGroupPage = true;
         });;
     }
 
