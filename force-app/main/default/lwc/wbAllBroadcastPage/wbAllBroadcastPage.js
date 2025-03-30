@@ -3,6 +3,7 @@ import getBroadcastRecs from '@salesforce/apex/BroadcastMessageController.getBro
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
+import sendTemplateMessage from '@salesforce/apex/BroadcastMessageController.sendTemplateMessage';
 
 export default class WbAllBroadcastPage extends LightningElement {
     @track data = [];
@@ -13,14 +14,13 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track selectedGroupIds = [];
     @track templateOptions = []; // Will store the processed template options
     @track templateMap = new Map(); // Store the raw Map from Apex
-    selectedTemplate = '';
+    selectedTemplate = null;
     currentPage = 1;
     pageSize = 10;
     visiblePages = 5;
     isLoading = false;
     showPopup = false;
     selectedObjectName = '';
-    isPopupLoading = false;
     popUpFirstPage = true;
     popupHeader = 'Choose Broadcast Groups';
 
@@ -234,7 +234,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     } 
     newBroadcast(){
         this.showPopup = true;
-        this.isPopupLoading = true;
+        this.isLoading = true;
 
         getBroadcastGroups()
             .then(result => {
@@ -246,7 +246,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 console.error('Error loading records:', error);
             })
             .finally(() => {
-                this.isPopupLoading = false;
+                this.isLoading = false;
             });
     }
 
@@ -268,12 +268,20 @@ export default class WbAllBroadcastPage extends LightningElement {
                         ...this.selectedGroupIds,
                         { Id: groupId, ObjName: selectedGroup.Object_Name__c } // Store both Id and Name
                     ];
-                    this.selectedObjectName = this.selectedGroupIds[0].ObjName;
                 }
+
             } else {
                 // Remove group ID if unchecked
                 this.selectedGroupIds = this.selectedGroupIds.filter(group => group.Id !== groupId);
             }
+
+            this.selectedObjectName = this.selectedGroupIds[0].ObjName;
+
+            // Update filteredGroups to reflect selection
+            this.filteredGroups = this.filteredGroups.map(group => ({
+                ...group,
+                IsChecked: this.selectedGroupIds.some(selected => selected.Id === group.Id)
+            }));
         } catch (error) {
             console.error('Erorr in selection : ', error);
         }
@@ -298,12 +306,12 @@ export default class WbAllBroadcastPage extends LightningElement {
         }
     }
 
-    handleInputChange(){
+    handleInputChange(event){
         const { name, value } = event.target;
         switch(name) {
             case 'template':
                 this.selectedTemplate = value;
-                break;
+            break;
         }
     }
 
@@ -318,7 +326,18 @@ export default class WbAllBroadcastPage extends LightningElement {
     }
 
     handleSendOnPopup(){
-        this.isPopupLoading = true;
+        this.isLoading = true;
+        sendTemplateMessage()
+            .then(result => {
+                console.log(result);  
+            })
+            .catch(error => {
+                console.error('Error loading records:', error);
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+
     }
 
     showToast(title ,message, status){
