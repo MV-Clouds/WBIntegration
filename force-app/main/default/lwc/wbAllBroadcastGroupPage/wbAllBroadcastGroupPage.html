@@ -34,6 +34,9 @@
                                     <th>Group Name</th>
                                     <th>Count of Members</th>
                                     <th>Description</th>
+                                    <th>
+                                        <div class="slds-truncate">Actions</div>
+                                    </th>    
                                 </tr>
                             </thead>
                             <tbody>
@@ -43,6 +46,14 @@
                                         <td>{row.Name}</td>
                                         <td>{row.Count_of_Members__c}</td>
                                         <td>{row.Description__c}</td>
+                                        <td class="tableData tablebtns" data-label="Actions">
+                                            <button class="action-buttons">
+                                                <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={row.Id} onclick={handleEditGroup} >
+                                            </button>
+                                            <button class="action-buttons">
+                                                <img src="/resource/MVWB__trashIcon" class="action trash" alt="delete" data-id={row.Id} onclick={handleDeleteGroup}>
+                                            </button>
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>
