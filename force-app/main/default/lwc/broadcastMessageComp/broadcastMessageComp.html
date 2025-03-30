@@ -11,7 +11,7 @@
     
     
             <div class="heading-container">
-                <h1 class="heading">New Broadcast Group</h1>
+                <h1 class="heading">{broadcastHeading}</h1>
             </div>
     
             <div class="slds-m-around_medium container">
@@ -127,7 +127,7 @@
     
             <template if:true={paginatedData.length}>
                 <div class="create-btn">
-                    <lightning-button label="Create Broadcast Group" variant="brand" onclick={handleModalOpen}></lightning-button>
+                    <lightning-button label={createBtnLabel} variant="brand" onclick={handleModalOpen}></lightning-button>
                 </div>
             </template>
     
@@ -144,7 +144,7 @@
 
                                         <lightning-textarea 
                                             name="message"
-                                            label="Message"
+                                            label="Description"
                                             placeholder="Enter Descriptive Message Here"
                                             class="slds-m-bottom_medium"
                                             value={messageText}

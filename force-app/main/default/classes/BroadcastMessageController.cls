@@ -161,38 +161,99 @@ public with sharing class BroadcastMessageController {
                 String.isBlank(request.objectApiName) || 
                 request.phoneNumbers == null || request.phoneNumbers.isEmpty() || 
                 String.isBlank(request.description) || 
-                String.isBlank(request.name)) { // Added validation for name
+                String.isBlank(request.name)) { 
                 throw new AuraHandledException('All fields in the request are required, including the broadcast group name');
             }
-
-            // Create the master Broadcast_Group__c record
-            Broadcast_Group__c broadcastGroup = new Broadcast_Group__c();
-            broadcastGroup.Name = request.name; 
-            broadcastGroup.Description__c = request.description;
-            broadcastGroup.Object_Name__c = request.objectApiName;
-            broadcastGroup.List_View__c = request.listViewName;
-
-            // Insert the master record with security enforcement
-            Database.insert(broadcastGroup, false, AccessLevel.USER_MODE);
-
-            // Prepare child Broadcast_Group_Member__c records
-            List<Broadcast_Group_Member__c> groupMembersToInsert = new List<Broadcast_Group_Member__c>();
+    
+            Broadcast_Group__c broadcastGroup;
+            Boolean isUpdate = request.isUpdate;
             
-            for (String phoneNumber : request.phoneNumbers) {
-                if (String.isNotBlank(phoneNumber)) {
-                    Broadcast_Group_Member__c member = new Broadcast_Group_Member__c();
-                    member.Broadcast_Group_ID__c = broadcastGroup.Id; // Link to master record
-                    member.Phone_Number__c = phoneNumber; 
-                    
-                    groupMembersToInsert.add(member);
+            if (isUpdate && String.isNotBlank(request.broadcastGroupId)) {
+                // Fetch existing Broadcast Group
+                broadcastGroup = [SELECT Id, Name, Description__c, Object_Name__c, List_View__c 
+                                  FROM Broadcast_Group__c 
+                                  WHERE Id = :request.broadcastGroupId 
+                                  WITH SECURITY_ENFORCED 
+                                  LIMIT 1];
+    
+                // Update existing fields
+                broadcastGroup.Name = request.name;
+                broadcastGroup.Description__c = request.description;
+                broadcastGroup.Object_Name__c = request.objectApiName;
+                broadcastGroup.List_View__c = request.listViewName;
+    
+                // Use Database.update with false for partial success
+                Database.SaveResult updateResult = Database.update(broadcastGroup, false, AccessLevel.USER_MODE);
+                if (!updateResult.isSuccess()) {
+                    throw new AuraHandledException('Failed to update broadcast group.');
+                }
+    
+            } else {
+                // Create new Broadcast Group
+                broadcastGroup = new Broadcast_Group__c();
+                broadcastGroup.Name = request.name;
+                broadcastGroup.Description__c = request.description;
+                broadcastGroup.Object_Name__c = request.objectApiName;
+                broadcastGroup.List_View__c = request.listViewName;
+    
+                // Use Database.insert with false for partial success
+                Database.SaveResult insertResult = Database.insert(broadcastGroup, false, AccessLevel.USER_MODE);
+                if (!insertResult.isSuccess()) {
+                    throw new AuraHandledException('Failed to create broadcast group.');
                 }
             }
-
-            // Insert child records with security enforcement
-            if (!groupMembersToInsert.isEmpty()) {
-                Database.insert(groupMembersToInsert, false, AccessLevel.USER_MODE);
+    
+            // Fetch existing members if updating
+            Map<String, Broadcast_Group_Member__c> existingMembersMap = new Map<String, Broadcast_Group_Member__c>();
+            if (isUpdate) {
+                for (Broadcast_Group_Member__c member : [SELECT Id, Phone_Number__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c = :broadcastGroup.Id WITH SECURITY_ENFORCED ]) {
+                    existingMembersMap.put(member.Phone_Number__c, member);
+                }
             }
-
+    
+            // Prepare new members and track records to delete
+            List<Broadcast_Group_Member__c> newMembersToInsert = new List<Broadcast_Group_Member__c>();
+            Set<String> receivedPhoneNumbers = new Set<String>(request.phoneNumbers);
+            Set<String> existingPhoneNumbers = existingMembersMap.keySet();
+            
+            // Identify new members to insert
+            for (String phoneNumber : receivedPhoneNumbers) {
+                if (String.isNotBlank(phoneNumber) && !existingPhoneNumbers.contains(phoneNumber)) {
+                    Broadcast_Group_Member__c newMember = new Broadcast_Group_Member__c();
+                    newMember.Broadcast_Group_ID__c = broadcastGroup.Id;
+                    newMember.Phone_Number__c = phoneNumber;
+                    newMembersToInsert.add(newMember);
+                }
+            }
+    
+            // Identify members to delete (existing ones not in new list)
+            List<Broadcast_Group_Member__c> membersToDelete = new List<Broadcast_Group_Member__c>();
+            for (String existingPhone : existingPhoneNumbers) {
+                if (!receivedPhoneNumbers.contains(existingPhone)) {
+                    membersToDelete.add(existingMembersMap.get(existingPhone));
+                }
+            }
+    
+            // Use Database.insert for bulk inserts with false for partial success
+            if (!newMembersToInsert.isEmpty()) {
+                Database.SaveResult[] insertResults = Database.insert(newMembersToInsert, false, AccessLevel.USER_MODE);
+                for (Database.SaveResult result : insertResults) {
+                    if (!result.isSuccess()) {
+                        throw new AuraHandledException('Error inserting some broadcast group members.');
+                    }
+                }
+            }
+    
+            // Use Database.delete for bulk deletions with false for partial success
+            if (!membersToDelete.isEmpty()) {
+                Database.DeleteResult[] deleteResults = Database.delete(membersToDelete, false, AccessLevel.USER_MODE);
+                for (Database.DeleteResult result : deleteResults) {
+                    if (!result.isSuccess()) {
+                        throw new AuraHandledException('Error deleting some broadcast group members.');
+                    }
+                }
+            }
+    
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'BroadcastMessageController',
@@ -205,6 +266,51 @@ public with sharing class BroadcastMessageController {
                 'apiResponse' => null
             });
             throw new AuraHandledException('Error processing broadcast message: ' + e.getMessage());
+        }
+    }
+    
+
+    @AuraEnabled
+    public static Map<String, Object> getBroadcastGroupDetails(String groupId) {
+        try {
+            // Validate input
+            if (String.isBlank(groupId)) {
+                throw new AuraHandledException('Group ID is required');
+            }
+
+            // Fetch Broadcast Group
+            Broadcast_Group__c groupRecord = [
+                SELECT Id, Name, Description__c, Object_Name__c, List_View__c
+                FROM Broadcast_Group__c
+                WHERE Id = :groupId
+                WITH SECURITY_ENFORCED 
+                LIMIT 1
+            ];
+
+            // Fetch Group Members
+            List<Broadcast_Group_Member__c> groupMembers = [
+                SELECT Id, Phone_Number__c, Name
+                FROM Broadcast_Group_Member__c
+                WHERE Broadcast_Group_ID__c = :groupId
+                WITH SECURITY_ENFORCED 
+            ];
+
+            // Construct response
+            Map<String, Object> response = new Map<String, Object>();
+            response.put('group', groupRecord);
+            response.put('members', groupMembers);
+
+            return response;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'BroadcastMessageController',
+                'methodName' => 'getBroadcastGroupDetails',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'moreDetails' => e.getMessage()
+            });
+            throw new AuraHandledException('Error retrieving broadcast group details: ' + e.getMessage());
         }
     }
 
@@ -334,6 +440,8 @@ public with sharing class BroadcastMessageController {
         @AuraEnabled public List<String> phoneNumbers { get; set; }
         @AuraEnabled public String description { get; set; }
         @AuraEnabled public String name { get; set; } // Added name field
+        @AuraEnabled public Boolean isUpdate { get; set; } // Added name field
+        @AuraEnabled public String broadcastGroupId { get; set; } // Added name field
     }
 
 

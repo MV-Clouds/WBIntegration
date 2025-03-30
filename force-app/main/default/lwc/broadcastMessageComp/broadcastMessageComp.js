@@ -1,10 +1,10 @@
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
 import getObjectConfigs from '@salesforce/apex/BroadcastMessageController.getObjectConfigs';
 import getListViewsForObject from '@salesforce/apex/BroadcastMessageController.getListViewsForObject';
 import { getListUi } from 'lightning/uiListApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import processBroadcastMessageWithObject from '@salesforce/apex/BroadcastMessageController.processBroadcastMessageWithObject';
+import getBroadcastGroupDetails from '@salesforce/apex/BroadcastMessageController.getBroadcastGroupDetails';
 export default class BroadcastMessage extends LightningElement {
     @track objectOptions = [];
     @track listViewOptions = [];
@@ -21,13 +21,17 @@ export default class BroadcastMessage extends LightningElement {
     @track searchTerm = '';
     @track selectedRecords = new Set(); // Track selected record IDs
     @track isCreateBroadcastModalOpen = false;
-    @track templateOptions = []; // Will store the processed template options
-    @track templateMap = new Map(); // Store the raw Map from Apex
     @track messageText = '';
     @track broadcastGroupName = '';
     @track isCreateBroadcastComp = true;
     @track isAllBroadcastGroupPage = false;
+    @track isIntialRender = true;
+    @api broadcastGroupId;
+    @track groupMembers= [];
 
+
+    broadcastHeading = 'New Broadcast Group';
+    createBtnLabel= 'Create Broadcast Group'
 
     get dynamicFieldNames() {
         if (!this.selectedObject || !this.configMap[this.selectedObject]) {
@@ -161,26 +165,9 @@ export default class BroadcastMessage extends LightningElement {
     
     connectedCallback() {
         this.loadConfigs();
-        this.loadAllTemplates(); // Load templates on component initialization
+        this.fetchGroupDetails();
     }
 
-    // Load all templates once during initialization
-    loadAllTemplates() {
-        this.isLoading = true;
-        getTemplatesByObject()
-            .then(result => {
-                // Convert the Apex Map to JavaScript Map
-                this.templateMap = new Map(Object.entries(result));
-                this.updateTemplateOptions(); // Update options based on selected object
-            })
-            .catch(error => {
-                console.error('Error loading templates:', error);
-                this.showToast('Error', 'Failed to load templates', 'error');
-            })
-            .finally(() => {
-                this.isLoading = false;
-            });
-    }
 
     loadConfigs() {
         this.isLoading = true;
@@ -196,6 +183,42 @@ export default class BroadcastMessage extends LightningElement {
                 this.isLoading = false;
             });
     }
+
+        // Method to fetch group details (call this after your operations)
+        fetchGroupDetails() {
+
+
+            if (!this.broadcastGroupId) {
+                return;
+            }
+                
+            this.isLoading = true; // Show loading spinner
+    
+            getBroadcastGroupDetails({ groupId: this.broadcastGroupId })
+                .then((result) => {
+                    this.broadcastHeading = 'Edit Broadcast Group';
+                    this.createBtnLabel= 'Update Broadcast Group'
+                    let groupData = result.group || {};
+                    
+                    this.selectedObject = groupData.Object_Name__c || '';  // Set Object Name
+                    this.loadListViews();
+                    this.selectedListView = groupData.List_View__c || '';  // Set List View Name
+
+
+                    this.broadcastGroupName = groupData.Name;
+                    this.messageText = groupData.Description__c;
+                    console.log(JSON.stringify(result));
+
+                    this.groupMembers = result.members || [];
+
+                })
+                .catch(() => {
+                    console.error('Error fetching group details');
+                })
+                .finally(() => {
+                    this.isLoading = false; // Hide loading spinner
+                });
+        }
 
     /**
     * Method Name : updateShownData
@@ -302,37 +325,8 @@ export default class BroadcastMessage extends LightningElement {
         this.currentPage = 1;
         this.selectedRecords.clear(); // Clear selections
         this.loadListViews();
-        this.updateTemplateOptions(); // Update template options when object changes
     }
 
-    updateTemplateOptions() {
-        if (!this.selectedObject || this.templateMap.size === 0) {
-            this.templateOptions = [];
-            return;
-        }
-
-        let combinedTemplates = [];
-
-        // Add object-specific templates
-        if (this.templateMap.has(this.selectedObject)) {
-            combinedTemplates = [...this.templateMap.get(this.selectedObject)];
-        }
-
-        // Add Generic templates
-        if (this.templateMap.has('Generic')) {
-            combinedTemplates = [...combinedTemplates, ...this.templateMap.get('Generic')];
-        }
-
-        // Convert to combobox options format
-        this.templateOptions = combinedTemplates.map(template => ({
-            label: template.Template_Name__c,
-            value: template.Id
-        }));
-
-        console.log('templateOptions ==> ', this.templateOptions);
-        console.log('templateOptions ==> ', JSON.stringify(this.templateOptions));
-        
-    }
 
     loadListViews() {
         this.isLoading = true;
@@ -367,6 +361,7 @@ export default class BroadcastMessage extends LightningElement {
     
         if (data) {
             const fields = this.configMap[this.selectedObject];
+            
             this.data = data.records.records.map((record, index) => ({
                 index : index + 1,
                 Id: record.id,
@@ -377,8 +372,26 @@ export default class BroadcastMessage extends LightningElement {
 
             this.filteredData = [...this.data];
             this.currentPage = 1;
-            this.selectedRecords.clear();
+            console.log(this.currentPage);
+
+            // Ensure this runs only on the first render and when group members exist
+            if (this.isIntialRender && this.broadcastGroupId && this.groupMembers.length > 0) {
+                this.isIntialRender = false; // Prevent future updates from modifying selection
+
+                const memberPhoneNumbers = new Set(this.groupMembers.map(member => member.Phone_Number__c));
+
+                this.data.forEach(record => {
+                    if (memberPhoneNumbers.has(record.phone)) {
+                        record.isSelected = true;
+                        this.selectedRecords.add(record.Id);
+                    }
+                });
+                this.filteredData = [...this.data];
+            } else {
+                this.selectedRecords.clear();
+            }
             this.updateShownData();
+
         } else if (error) {
             console.error('Error loading records:', error);
         }
@@ -437,8 +450,6 @@ export default class BroadcastMessage extends LightningElement {
     }
 
     closePopUp(){
-        this.broadcastGroupName = '';
-        this.messageText = '';
         this.isCreateBroadcastModalOpen = false;
 
     }
@@ -456,13 +467,19 @@ export default class BroadcastMessage extends LightningElement {
         })
         .filter(phone => phone !== null && phone !== '');
   
+            
+        const isUpdate = this.broadcastGroupId != null;
+        console.log(isUpdate);
+        
                 
         const messageData = {
             objectApiName: this.selectedObject,
             listViewName: this.selectedListView,
             phoneNumbers: phoneNumbers,
             description: this.messageText,
-            name: this.broadcastGroupName
+            name: this.broadcastGroupName,
+            isUpdate: isUpdate,
+            broadcastGroupId: this.broadcastGroupId
         };
 
         this.isLoading = true;
@@ -474,6 +491,7 @@ export default class BroadcastMessage extends LightningElement {
             this.closePopUp();
             this.selectedRecords.clear();
             this.updateShownData();
+
         })
         .catch(error => {
             this.showToast('Error', error.body?.message || 'Failed to process broadcast', 'error');

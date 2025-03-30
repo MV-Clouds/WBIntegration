@@ -13,6 +13,8 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
     @track isNewBroadcast = false;
     @track isAllGroupPage = true;
 
+    broadcastGroupId = null;
+
     get showNoRecordsMessage() {
         return this.filteredData.length === 0;
     }
@@ -171,10 +173,12 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
 
     handleEditGroup(event){
         const recordId = event.currentTarget.dataset.id;
-        console.log('recordId ==> ', recordId);
-        
+        this.broadcastGroupId = recordId;
+        this.isAllGroupPage = false;
+        this.isNewBroadcast = true;
 
     }
+
     handleDeleteGroup(event) {
         const recordId = event.currentTarget.dataset.id;
         this.isLoading = true; // Show spinner
