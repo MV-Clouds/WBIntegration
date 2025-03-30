@@ -1,0 +1,61 @@
+<template>
+    <div class="container">
+        <!-- Full-width header -->
+        <div class="header">{automation.name}</div>
+        
+        <div class="content">
+            <!-- Sidebar with buttons -->
+            <div class="sidebar">
+                <p class="sidebar-title">Template Buttons:</p>
+                <template if:true={quickReplyButtons.length}>
+                    <ul class="button-list">
+                        <template for:each={quickReplyButtons} for:item="btn">
+                            <li key={btn} data-name={btn} onclick={handleButtonClick}>{btn}</li>
+                        </template>
+                    </ul>
+                </template>
+                <template if:false={quickReplyButtons.length}>
+                    <li>No Quick Reply buttons found</li>
+                </template>
+            </div>
+            
+            <!-- Main content area -->
+            <div class="main-content">
+                <lightning-tabset>
+                    <template for:each={dynamicTabs} for:item="tab">
+                        <lightning-tab key={tab.id} label={tab.label}>
+                            <template if:true={tab.isTemplateList}>
+                                <template for:each={tab.content} for:item="template">
+                                    <div key={template.id} class="template-box" data-id={template.id} onclick={handleTemplateSelection}>
+                                        <p>{template.name}</p>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={tab.isTemplateList}>
+                                <p>{tab.content}</p>
+                            </template>
+                        </lightning-tab>
+                    </template>
+                </lightning-tabset>
+                
+                <input type="text" class="search-box" placeholder="Search Template"/>
+                
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" class="date-input"/>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select</label>
+                    <select class="select-box">
+                        <option>None</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="button-container">
+            <button class="btn cancel">Cancel</button>
+            <button class="btn save" onclick={handleSave}>Save</button>
+        </div>
+    </div>
+</template>

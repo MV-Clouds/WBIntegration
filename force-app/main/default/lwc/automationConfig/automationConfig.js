@@ -5,8 +5,9 @@ import saveAutomations from '@salesforce/apex/AutomationConfigController.saveAut
 import updateAutomations from '@salesforce/apex/AutomationConfigController.updateAutomations';
 import deleteAutomations from '@salesforce/apex/AutomationConfigController.deleteAutomations';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { NavigationMixin } from 'lightning/navigation';
 
-export default class AutomationConfig extends LightningElement {
+export default class AutomationConfig extends NavigationMixin(LightningElement) {
     @track automationData = [];
     @track originalAutomationData = [];
     @track isLoading = true;
@@ -38,8 +39,8 @@ export default class AutomationConfig extends LightningElement {
                     id: record.Id,
                     srNo: index + 1,
                     name: record.Name,
-                    description: record.MVWB__Description__c,
-                    template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : ''
+                    description: record.Description__c,
+                    template: record.WB_Template__r ? record.WB_Template__r.MVWB__Template_Name__c : ''
                 }));
                 this.originalAutomationData = [...this.automationData];
             })
@@ -50,14 +51,14 @@ export default class AutomationConfig extends LightningElement {
             .finally(() => {
                 this.isLoading = false;
             });
-    }      
+    }
 
     /** 
     * Method Name: fetchTemplates 
     * @description: fetches all templates for picklist  
     * Date: 27/03/2025
     * Created By: Kavya Trivedi
-    */ 
+    */
     fetchTemplates() {
         getTemplates()
             .then(data => {
@@ -103,8 +104,8 @@ export default class AutomationConfig extends LightningElement {
         const automationRecord = {
             Id: this.isEditMode ? this.recordId : undefined,
             Name: this.name,
-            MVWB__Description__c: this.description,
-            MVWB__WB_Template__c: this.selectedTemplateId
+            Description__c: this.description,
+            WB_Template__c: this.selectedTemplateId
         };
 
         const apexMethod = this.isEditMode ? updateAutomations : saveAutomations;
@@ -165,16 +166,26 @@ export default class AutomationConfig extends LightningElement {
     */
     handleEdit(event) {
         const recordId = event.currentTarget.dataset.id;
-        const selectedRecord = this.automationData.find(auto => auto.id === recordId);
+        // const selectedRecord = this.automationData.find(auto => auto.id === recordId);
 
-        if (selectedRecord) {
-            this.isEditMode = true;
-            this.isModalOpen = true;
-            this.recordId = recordId;
-            this.name = selectedRecord.name;
-            this.description = selectedRecord.description;
-            this.selectedTemplateId = this.templateOptions.find(option => option.label === selectedRecord.template)?.value || '';
-        }
+        // if (selectedRecord) {
+        //     this.isEditMode = true;
+        //     this.isModalOpen = true;
+        //     this.recordId = recordId;
+        //     this.name = selectedRecord.name;
+        //     this.description = selectedRecord.description;
+        //     this.selectedTemplateId = this.templateOptions.find(option => option.label === selectedRecord.template)?.value || '';
+        // }
+        console.log('Record ID:', recordId);
+        this[NavigationMixin.Navigate]({
+            type: 'standard__navItemPage',
+            attributes: {
+                apiName: 'Automation_Path'
+            },
+            state: {
+                c__recordId: recordId
+            }
+        });
     }
 
     /**

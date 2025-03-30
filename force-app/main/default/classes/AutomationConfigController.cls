@@ -11,7 +11,7 @@ public with sharing class AutomationConfigController {
     /**
     * Method Name : getAllAutomations
     * @description : Get all Automation records
-    * @return Automation__c records
+    * @return List of Automation__c records
     */
     @AuraEnabled
     public static List<Automation__c> getAllAutomations() {
@@ -40,7 +40,7 @@ public with sharing class AutomationConfigController {
     @AuraEnabled
     public static List<MVWB__Template__c> getTemplates() {
         try {
-            return [SELECT Id, MVWB__Template_Name__c FROM MVWB__Template__c WITH USER_MODE];
+            return [SELECT Id, MVWB__Template_Name__c, MVWB__Template_Type__c FROM MVWB__Template__c WITH USER_MODE];
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'AutomationConfigController',
@@ -181,6 +181,128 @@ public with sharing class AutomationConfigController {
                 'moreDetails' => e.getMessage(),
                 'apiResponse' => null
             });
+        }
+    }
+
+    /**
+    * Method Name : getAutomationsById
+    * @description : Get Automation records by Id
+    * @return Automation__c record
+    */
+    @AuraEnabled
+    public static Automation__c getAutomationById(Id recordId) {
+        try {
+            return [SELECT Id, Name, Description__c, WB_Template__r.MVWB__Template_Name__c, WB_Template__r.MVWB__Template_Type__c, WB_Template__r.Button_Body__c FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getAllAutomations',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
+        }
+    }
+
+    /**
+    * Method Name : getEmailTemplates
+    * @description : Get all Email Template records
+    * @return List of EmailTemplate records
+    */
+    @AuraEnabled
+    public static List<EmailTemplate> getEmailTemplates() {
+        try {
+            return [SELECT Id, Name FROM EmailTemplate WITH SECURITY_ENFORCED];
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getTemplates',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
+        }
+    }
+
+    /**
+    * Method Name : saveAutomationPaths
+    * @description : Save Automation Path records
+    * @param automationPaths List of Automation_Path__c records
+    * @return List of Automation_Path__c records
+    */
+    @AuraEnabled
+    public static List<Automation_Path__c> saveAutomationPaths(List<Automation_Path__c> automationPaths) {
+        try {
+            if (automationPaths == null || automationPaths.isEmpty()) {
+                return new List<Automation_Path__c>();
+            }
+            
+            if (Schema.sObjectType.Automation_Path__c.fields.Automation__c.IsCreateable() && Schema.sObjectType.Automation_Path__c.fields.Button_Value__c.isCreateable() && Schema.sObjectType.Automation_Path__c.fields.Action_Type__c.isCreateable() && Schema.sObjectType.Automation_Path__c.fields.Action_Template__c.isCreateable() && Schema.sObjectType.Automation_Path__c.fields.Action_Email_Template__c.isCreateable() && Schema.sObjectType.Automation_Path__c.fields.Object_Name__c.isCreateable() && Schema.sObjectType.Automation_Path__c.fields.Field_Mapping__c.isCreateable() && Schema.sObjectType.Automation_Path__c.fields.WB_Flow__c.isCreateable() && Schema.sObjectType.Automation_Path__c.fields.Automation__c.isUpdateable() && Schema.sObjectType.Automation_Path__c.fields.Button_Value__c.isUpdateable() && Schema.sObjectType.Automation_Path__c.fields.Action_Type__c.isUpdateable() && Schema.sObjectType.Automation_Path__c.fields.Action_Template__c.isUpdateable() && Schema.sObjectType.Automation_Path__c.fields.Action_Email_Template__c.isUpdateable() && Schema.sObjectType.Automation_Path__c.fields.Object_Name__c.isUpdateable() && Schema.sObjectType.Automation_Path__c.fields.Field_Mapping__c.isUpdateable() && Schema.sObjectType.Automation_Path__c.fields.WB_Flow__c.isUpdateable()) {
+                Set<Id> automationIds = new Set<Id>();
+                Set<String> buttonValues = new Set<String>();
+
+                for (Automation_Path__c path : automationPaths) {
+                    automationIds.add(path.Automation__c);
+                    buttonValues.add(path.Button_Value__c);
+                }
+
+                List<Automation_Path__c> existingRecords = [
+                    SELECT Id, Automation__c, Button_Value__c, Action_Type__c, Action_Template__c, 
+                        Action_Email_Template__c, Object_Name__c, Field_Mapping__c, WB_Flow__c
+                    FROM Automation_Path__c
+                    WHERE Automation__c IN :automationIds AND Button_Value__c IN :buttonValues
+                ];
+
+                Map<String, Automation_Path__c> existingRecordsMap = new Map<String, Automation_Path__c>();
+
+                for (Automation_Path__c record : existingRecords) {
+                    String key = record.Automation__c + '-' + record.Button_Value__c;
+                    existingRecordsMap.put(key, record);
+                }
+
+                List<Automation_Path__c> recordsToUpsert = new List<Automation_Path__c>();
+
+                for (Automation_Path__c path : automationPaths) {
+                    String key = path.Automation__c + '-' + path.Button_Value__c;
+
+                    if (existingRecordsMap.containsKey(key)) {
+                        Automation_Path__c existingRecord = existingRecordsMap.get(key);
+                        existingRecord.Action_Type__c = path.Action_Type__c;
+                        existingRecord.Action_Template__c = path.Action_Template__c;
+                        existingRecord.Action_Email_Template__c = path.Action_Email_Template__c;
+                        existingRecord.Object_Name__c = path.Object_Name__c;
+                        existingRecord.Field_Mapping__c = path.Field_Mapping__c;
+                        existingRecord.WB_Flow__c = path.WB_Flow__c;
+
+                        recordsToUpsert.add(existingRecord);
+                    } else {
+                        recordsToUpsert.add(path);
+                    }
+                }
+
+                upsert recordsToUpsert;
+            }
+            return automationPaths;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'saveAutomationPaths',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
         }
     }
 }
