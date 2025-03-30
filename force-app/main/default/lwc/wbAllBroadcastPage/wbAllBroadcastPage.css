@@ -238,14 +238,10 @@ span {
 .popUpBody {
     width: 100%;
     height: 100%;
-    display: grid;
-    flex: 1; /* Take remaining space */
-    overflow-y: auto; /* Enable vertical scrolling */
-    padding: 1rem;
-    background: #f4f6f9;
-    padding-bottom: 100px;
-    display: flex;
-    flex-direction: column;
+    background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-repeat: no-repeat;
+    background-size: cover;
+ 
 }
 
 .pop-heading{
@@ -261,19 +257,21 @@ span {
     background: #0077B6;
 }
 
-.popUpHeader {
-    position: sticky;
-    z-index: 9;
-    background: #f4f6f9;
-    padding: 1rem 0rem 1rem 0rem;
-    border-bottom: 1px solid #d8dde6;
+.box-container{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    max-height: 20rem;
+    overflow: scroll;
+    padding: 10px;
+    scrollbar-width: none;
 }
 
-.slds-box {
-    background: #ffffff;
-    border: 1px solid #d8dde6;
-    border-radius: 4px;
-    overflow-y: scroll;
+.box-data{
+    display: flex;
+    gap: 6px;
+    padding: 10px;
+    box-shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px;
 }
 
 .slds-text-heading_small {
@@ -293,8 +291,5 @@ lightning-button.slds-button_brand:hover {
 .popUpFooter{
     position: sticky;
     bottom: 0;
-    background: #f4f6f9;
-    padding: 1rem;
-    border-top: 1px solid #d8dde6;
-    z-index: 9;
+    padding-top: 1rem;
 }

@@ -112,9 +112,9 @@
                             {popupHeader}
                         </div>
                         <template if:true={popUpFirstPage}>
-                            <div class="popUpBody slds-p-around--large">
+                            <div class="popUpBody slds-p-around--medium">
                                 <!-- Header Section: Search and Create New Group Button -->
-                                <div class="popUpHeader slds-m-bottom_medium">
+                                <div class="slds-m-bottom_medium">
                                     <div class="slds-grid slds-gutters">
                                         <div class="slds-col slds-size_8-of-12">
                                             <lightning-input type="search" label="Search by Name" variant="label-hidden" placeholder="Enter group name..." onchange={handleSearchPopup}>
@@ -124,16 +124,16 @@
                                 </div>
 
                                 <!-- Groups List -->
-                                <div class="slds-box slds-theme_default">
+                                <div class="box-container">
                                     <template if:true={filteredGroups.length}>
                                         <template for:each={filteredGroups} for:item="group">
-                                            <div key={group.Id} class="slds-box slds-theme_default">
-                                                <div class="slds-grid slds-gutters">
-                                                    <div class="slds-col slds-size_1-of-12">
+                                            <div key={group.Id} class="">
+                                                <div class="box-data">
+                                                    <div>
                                                         <lightning-input type="checkbox" label="Select" variant="label-hidden" data-id={group.Id} onchange={handleGroupSelection} checked={group.IsChecked}>
                                                         </lightning-input>
                                                     </div>
-                                                    <div class="slds-col slds-size_11-of-12">
+                                                    <div class="">
                                                         <h3 class="slds-text-heading_small">{group.Name}</h3>
                                                         <p><strong>Members:</strong> {group.Count_of_Members__c}</p>
                                                         <p><strong>Object of Group Members:</strong> {group.Object_Name__c}</p>
@@ -143,14 +143,23 @@
                                             </div>
                                         </template>
                                     </template>
-                                    <template if:false={filteredGroups.length}>
-                                        <p>No groups found.</p>
-                                    </template>
                                 </div>
-                            </div>
-                            <div class="popUpFooter slds-p-bottom--large slds-text-align--center">
-                                <lightning-button variant="brand-outline" onclick={handleCloseOnPopup} label="Close" class="slds-m-left_x-small"></lightning-button>
-                                <lightning-button variant="brand" label="Next" onclick={handleNextOnPopup} class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
+
+                                <template if:true={filteredGroups.length}>
+                                    <div class="popUpFooter slds-text-align--center">
+                                        <lightning-button variant="brand-outline" onclick={handleCloseOnPopup} label="Close" class="slds-m-left_x-small"></lightning-button>
+                                        <lightning-button variant="brand" label="Next" onclick={handleNextOnPopup} class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
+                                    </div>
+                                </template>
+
+                                <template if:false={filteredGroups.length}>
+                                    <div class="empty-state__content">
+                                        <div class="empty-state__icon">
+                                            <img src="/resource/emptyState" alt="" draggable="false">
+                                        </div>
+                                        <div class="empty-state__message">No Data Available to Show.</div>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                         <template if:false={popUpFirstPage}>
@@ -168,7 +177,7 @@
                                     </lightning-combobox>
                                 </div>
                             </div>
-                            <div class="popUpFooter slds-p-bottom--large slds-text-align--center">
+                            <div class="popUpFooter slds-text-align--center">
                                 <lightning-button variant="brand-outline" onclick={handlePreviousOnPopup} label="Previous" class="slds-m-left_x-small"></lightning-button>
                                 <lightning-button variant="brand" label="Send" onclick={handleSendOnPopup} class="slds-m-left_x-small"></lightning-button>
                             </div>
