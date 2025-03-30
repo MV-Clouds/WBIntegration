@@ -6,6 +6,7 @@
 .wrapper {
     background-color: #ffffff;
     padding-top: 1rem;
+    padding-bottom: 1rem;
     height: calc(100% + 1.5rem);
     margin-top: -0.8rem;
     width: calc(100% + 1.5rem);
@@ -193,7 +194,7 @@ span {
 }
 
 .modal-body{
-    padding: 1rem 1rem 0 1rem;    ;
+    padding: 1rem 1rem 0 1rem;
 }
 
 .modal-body-content {

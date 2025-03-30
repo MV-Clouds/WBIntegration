@@ -6,6 +6,7 @@
 .wrapper {
     background-color: #ffffff;
     padding-top: 1rem;
+    padding-bottom: 1rem;
     height: calc(100% + 1.5rem);
     margin-top: -0.8rem;
     width: calc(100% + 1.5rem);
@@ -70,7 +71,7 @@
 }
 
 .search-div {
-    width: 20rem;
+    width: 50%;
 }
 
 .empty-state {
@@ -241,7 +242,6 @@ span {
     background-image: url('/resource/MVWB__wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
- 
 }
 
 .pop-heading{
