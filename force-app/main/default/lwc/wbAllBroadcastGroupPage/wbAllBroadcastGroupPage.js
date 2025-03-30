@@ -1,6 +1,7 @@
 import { LightningElement, track } from 'lwc';
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
-
+import deleteBroadcastGroup from '@salesforce/apex/BroadcastMessageController.deleteBroadcastGroup';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 export default class WbAllBroadcastGroupPage extends LightningElement {
     @track data = [];
     @track filteredData = [];
@@ -168,9 +169,48 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
         }
     } 
 
+    handleEditGroup(event){
+        const recordId = event.currentTarget.dataset.id;
+        console.log('recordId ==> ', recordId);
+        
+
+    }
+    handleDeleteGroup(event) {
+        const recordId = event.currentTarget.dataset.id;
+        this.isLoading = true; // Show spinner
+    
+        deleteBroadcastGroup({ groupId: recordId })
+            .then(() => {
+                this.showToast('Success', 'Broadcast Group deleted successfully', 'success');
+    
+                // Remove the deleted record from both lists
+                this.data = this.data.filter(item => item.Id !== recordId);
+                this.filteredData = this.filteredData.filter(item => item.Id !== recordId);
+    
+                // Update paginatedData to reflect the changes
+                this.updateShownData();
+            })
+            .catch(error => {
+                console.error('Error deleting record:', error);
+                this.showToast('Error', 'Failed to delete Broadcast Group', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false; // Hide spinner
+            });
+    }
+
 
     handleNewBroadcastCreation(){
         this.isAllGroupPage = false;
         this.isNewBroadcast = true;
+    }
+
+    showToast(title, message, variant) {
+        const event = new ShowToastEvent({
+            title: title,
+            message: message,
+            variant: variant
+        });
+        this.dispatchEvent(event);
     }
 }
