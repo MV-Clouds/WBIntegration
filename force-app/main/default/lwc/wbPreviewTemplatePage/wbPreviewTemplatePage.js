@@ -431,7 +431,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 : (this.selectedCountryType && this.phoneNumber && this.phoneNumber.length >= 10) 
                     ? `${this.selectedCountryType}${this.phoneNumber}`
                     : null;
-    
+            
             if (!phonenum || isNaN(Number(phonenum))) {
                 this.showToast('Warning', 'Invalid country code or phone number', 'warning');
                 this.isLoading = false;
@@ -524,6 +524,33 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     ]
                 });
             }
+            else if (data.headerType === 'Document' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "document",
+                            document: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            else if (data.headerType === 'Video' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "video",
+                            video: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            
     
             // Body Parameters
             if (data.bodyParameters && data.bodyParameters.length > 0) {
@@ -539,73 +566,152 @@ export default class WbPreviewTemplatePage extends LightningElement {
             }
     
             // Button Handling
+            // if (data.buttonValue && data.buttonValue.length > 0) {
+            //     console.log(data.buttonValue[0].type);
+                
+            //     let buttons = data.buttonValue
+            //         .map((button, index) => {
+            //             switch (button.type.toUpperCase()) {
+            //                 case "PHONE_NUMBER":
+            //                     return {
+            //                         type: "phone_number",
+            //                         index: index,
+            //                         phone_number: button.phone_number,
+            //                         text: button.text || "Call"
+            //                     };
+            //                 case "URL":
+            //                     return {
+            //                         type: "url",
+            //                         index: index,
+            //                         url: button.url,
+            //                         text: button.text || "Visit"
+            //                     };
+            //                 case "OTP":
+            //                     console.log(button);
+                                
+            //                     if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE" && button.otp_code) {
+            //                         console.log('Here otp');
+                                    
+            //                         return {
+            //                             type: "text",
+            //                             code: button.otp_code,
+            //                             text: button.text || "Copy Code"
+            //                         };
+            //                     } else {
+            //                         console.warn(`OTP button at index ${index} missing otp_code parameter.`);
+            //                         return null;
+            //                     }
+            //                 case "COPY_CODE":
+            //                 case "COPYCODE":
+            //                 case "COUPON_CODE":
+            //                     return {
+            //                         type: "copy_code",
+            //                         index: index,
+            //                         code: button.example,
+            //                         text: button.text || "Copy Code"
+            //                     };
+            //                 case "QUICK_REPLY":
+            //                     return {
+            //                         type: "quick_reply",
+            //                         index: index,
+            //                         payload: button.payload || button.text,
+            //                         text: button.text || "Reply"
+            //                     };
+            //                 default:
+            //                     console.warn(`Unknown button type: ${button.type}`);
+            //                     return null;
+            //             }
+            //         })
+            //         .filter((button) => button !== null);
+            
+            //     if (buttons.length > 0) {
+            //         components.push({
+            //             type: "button",
+            //             parameters: buttons,
+            //         });
+            //     }
+            // }
+
             if (data.buttonValue && data.buttonValue.length > 0) {
-                let buttons = data.buttonValue.map((button, index) => {
-                    switch (button.type.toUpperCase()) {
-                        case "PHONE_NUMBER":
-                            return {
-                                type: "button",
-                                sub_type: "phone_number",
-                                index: index,
-                                parameters: [
-                                    {
-                                        type: "text",
-                                        text: button.phone_number
-                                    }
-                                ]
-                            };
-                        case "URL":
-                            return {
-                                type: "button",
-                                sub_type: "url",
-                                index: index,
-                                parameters: [
-                                    {
-                                        type: "text",
-                                        text: button.url
-                                    }
-                                ]
-                            };
-                        case 'copy_code' :
-                        case "COPY_CODE":
-                            return {
-                                type: "button",
-                                sub_type: "copy_code",
-                                index: index,
-                                parameters: [
-                                    {
-                                        type: "coupon_code",
-                                        coupon_code: button.example
-                                    }
-                                ]
-                            };
-                        case "QUICK_REPLY":
-                            return {
-                                type: "button",
-                                sub_type: "quick_reply",
-                                index: index,
-                                parameters: [
-                                    {
-                                        type: "payload",
-                                        payload: button.text
-                                    }
-                                ]
-                            };
-                        default:
-                            console.warn(`Unknown button type: ${button.type}`);
-                            return null;
-                    }
-                }).filter((button) => button !== null);
+                let buttons = data.buttonValue
+                    .map((button, index) => {
+                        switch (button.type.toUpperCase()) {
+                            case "PHONE_NUMBER":
+                                components.push( {
+                                    type: "button",
+                                    sub_type: "voice_call",
+                                    index: index,
+                                    parameters: [
+                                        {
+                                            type: "text",
+                                            text: button.phone_number
+                                        }
+                                    ]
+                                });
+                                break;
+                            case "URL":
+                                // components.push( {
+                                //     type: "button",
+                                //     sub_type: "url",
+                                //     index: index
+                                // });
+                                break;
+                            case "QUICK_REPLY":
+                                // components.push( {
+                                //     type: "button",
+                                //     sub_type: "quick_reply",
+                                //     index: index
+                                // });
+                                break;
+                            case 'copy_code' :
+                            case "COPY_CODE":
+                            case "COUPON_CODE":
+                                components.push( {
+                                    type: "button",
+                                    sub_type: "copy_code",
+                                    index: index,
+                                    parameters: [
+                                        {
+                                            type :'coupon_code',
+                                            coupon_code : '123456'
+                                        }
+                                    ]
+                                }); 
+                                break;
+                            case "OTP":
+                                if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE") {
+                                    components.push( {
+                                        type: "button",
+                                        sub_type: "url",
+                                        index: index,
+                                        parameters: [
+                                            {
+                                                type :'text',
+                                                text :'123456'
+                                            }
+                                            
+                                        ]
+                                    });
+                                } else {
+                                    console.warn(`OTP button at index ${index} missing otp_code parameter.`);
+                                    return null;
+                                }
+                                break;
+                            default:
+                                console.warn(`Unknown button type: ${button.type}`);
+                                return null;
+                        }
+                    })
+                    .filter((button) => button !== null);
     
-                if (buttons.length > 0) {
-                    components.push(...buttons);
                 }
-            }
-    
+            
             // Add components if available
             if (components.length > 0) {
                 payload.template.components = components;
             }
+            console.log("Payload ::: ",payload.template);
+            
     
             // Convert the object to a JSON string
             return JSON.stringify(payload);
