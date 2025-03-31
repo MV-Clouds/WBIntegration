@@ -312,29 +312,85 @@ public with sharing class BroadcastMessageController {
             });
             throw new AuraHandledException('Error retrieving broadcast group details: ' + e.getMessage());
         }
-    }
+    } 
 
     @AuraEnabled
-    public static void sendTemplateMessage(String templateId, List<String> phoneNumbers, String objectApiName) {
+    public static String createChatRecods(String templateId, String jsonData, List<String> groupIds, Boolean isScheduled, String timeOfMessage) {
         try {
-            System.debug('Sending WhatsApp Template Message...');
-            
-            // Fetch the metadata configuration
-            List<WBConnect_Configuration__mdt> wbConfig = WBConnect_Configuration__mdt.getAll().values();
-            if (wbConfig == null || wbConfig.isEmpty()) {
-                System.debug('Error: METADATA_ERROR - No WhatsApp configuration found.');
-                return;
+            Broadcast__c broadcast = new Broadcast__c();
+            broadcast.Template__c = templateId;
+            broadcast.Status__c = 'Pending';
+            insert broadcast;
+
+            List<Chat__c> chatRecs = new List<Chat__c>();
+            if(groupIds.size() > 0) {
+                List<Broadcast_Group_Member__c> groupMembers = new List<Broadcast_Group_Member__c>();
+                groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupIds];
+
+                List<String> phoneList = new List<String>();
+                if(groupMembers.size() > 0 ){
+                    for(Broadcast_Group_Member__c member: groupMembers){
+                        if(member.Phone_Number__c != null || member.Phone_Number__c != ''){
+                            phoneList.add(member.Phone_Number__c);
+                            Chat__c newChat = new Chat__c();
+                            newChat.Whatsapp_Template__c = templateId;
+                            newChat.Phone__c = member.Phone_Number__c;
+                            newChat.Type_of_Message__c = 'OutBound Messages';
+                            newChat.Message_Status__c = null;
+                            newChat.Message_Type__c = 'Template';
+                            newChat.WB_Broadcast__c = broadcast.Id;
+                            chatRecs.add(newChat);
+                        }
+                    }
+                }
+
+                if(chatRecs.size() > 0){
+                    insert chatRecs;
+                }
             }
+
+            if(isScheduled == false){   
+                sendTemplateMessage(jsonData, chatRecs, broadcast.Id);
+            } else {
+                timeOfMessage = timeOfMessage.replace('T', ' ').replace('Z', '');
+
+                DateTime scheduledDateTime = DateTime.valueOf(timeOfMessage);
+                String formattedTime = scheduledDateTime.format('hh:mm a');
+
+                String cronExpression = getCronExpression(scheduledDateTime);
     
-            String accessToken = wbConfig[0].Access_Token__c;
-            String phoneNumberId = wbConfig[0].Phone_Number_Id__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + phoneNumberId + '/messages';
+                WhatsAppMessageBatchSchedulable batchSchedular = new WhatsAppMessageBatchSchedulable(chatRecs, jsonData, broadcast.Id);
+                
+                String jobName = 'BroadcastSchedule_' + System.currentTimeMillis();
+                System.schedule(jobName, cronExpression, batchSchedular);
+            }
+            return 'Success';
+        } catch (Exception e) {
+            System.debug('Error in sendTemplateMessage: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+            throw new AuraHandledException('Error in sendTemplateMessage: ' + e.getMessage());
+        }
+    }  
+
+    public static String getCronExpression(DateTime dt) {
+        String cronExpression = '0 ' + 
+                            dt.minute() + ' ' + 
+                            dt.hour() + ' ' + 
+                            dt.day() + ' ' + 
+                            dt.month() + ' ' + 
+                            '?' + ' ' +  
+                            dt.year();
+        return cronExpression;
+    }
     
-    
+    @AuraEnabled
+    public static void sendTemplateMessage(String jsonData, List<Chat__c> chats, String broadcastId) {
+        try {
+            WhatsAppMessageBatch batchJob = new WhatsAppMessageBatch(chats, jsonData, broadcastId);
+            Database.executeBatch(batchJob, 1);
         } catch (Exception e) {
             System.debug('Error in sendTemplateMessage: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
         }
-    }    
+    }
 
     @AuraEnabled
     public static Map<String, object> getTemplateData(String templateId, String recordId, String objectApiName){

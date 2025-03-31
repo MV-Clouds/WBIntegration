@@ -4,6 +4,7 @@ import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getB
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import sendTemplateMessage from '@salesforce/apex/BroadcastMessageController.sendTemplateMessage';
+import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
 
 export default class WbAllBroadcastPage extends LightningElement {
     @track data = [];
@@ -15,6 +16,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track templateOptions = []; // Will store the processed template options
     @track templateMap = new Map(); // Store the raw Map from Apex
     selectedTemplate = null;
+    selectedDateTime;
     currentPage = 1;
     pageSize = 10;
     visiblePages = 5;
@@ -22,6 +24,9 @@ export default class WbAllBroadcastPage extends LightningElement {
     showPopup = false;
     selectedObjectName = '';
     popUpFirstPage = true;
+    popUpSecondpage = false;
+    popUpLastPage = false;
+    @track jsonData;
     popupHeader = 'Choose Broadcast Groups';
 
     get showNoRecordsMessage() {
@@ -301,6 +306,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     
             this.popupHeader = 'Choose Template'
             this.popUpFirstPage = false;
+            this.popUpSecondpage = true;
         } catch (error) {
             console.error('Error in next click: ' + error);
         }
@@ -312,32 +318,103 @@ export default class WbAllBroadcastPage extends LightningElement {
             case 'template':
                 this.selectedTemplate = value;
             break;
+            case 'dateTime':
+                this.selectedDateTime = value;
+                console.log('selectedDateTime ==> ', this.selectedDateTime);
+                
+            break;
         }
     }
 
     handleCloseOnPopup(){
         this.showPopup = false;
+        this.popUpFirstPage = true;
+        this.popUpSecondpage = false;
+        this.popUpLastPage = false;
+        this.popupHeader = 'Select Groups';
+        this.selectedGroupIds = [];
+        this.selectedTemplate = '';
+        this.selectedDateTime = '';
+
     }
 
     handlePreviousOnPopup(){
         this.popupHeader = 'Choose Broadcast Groups';
         this.selectedTemplate = '';
         this.popUpFirstPage = true;
+        this.popUpSecondpage = false;
     }
 
-    handleSendOnPopup(){
-        this.isLoading = true;
-        sendTemplateMessage()
+    handleSchedulePopup(){
+
+        if(this.selectedTemplate === '' || this.selectedTemplate === null){
+            this.showToast('Error!', 'Please select template', 'error');
+            return;
+        }
+
+        this.popupHeader = 'Select Date and Time'
+
+        this.popUpFirstPage = false;
+        this.popUpSecondpage = false;
+        this.popUpLastPage = true;
+    }
+
+    handlePreviousLastpage(){
+        this.popupHeader = 'Choose Template';
+        this.popUpFirstPage = false;
+        this.popUpSecondpage = true;
+        this.popUpLastPage = false;
+
+    }
+
+    handleSchedule(){
+        console.log('here');
+
+        if(this.selectedDateTime === '' || this.selectedDateTime === null){
+            this.showToast('Error!', 'Please select date and time', 'error');
+            return;
+        }
+
+        createChatRecods({templateId: this.selectedTemplate, jsonData: this.jsonData, groupIds: this.selectedGroupIds, isScheduled: true, timeOfMessage: this.selectedDateTime})
             .then(result => {
-                console.log(result);  
+                if(result == 'Success'){
+                    this.showToast('Success', 'Broadcast sent successfully', 'success');
+                } else {
+                    this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
+                }
             })
             .catch(error => {
-                console.error('Error loading records:', error);
+                console.error('Error in send click: ' + error);
             })
             .finally(() => {
                 this.isLoading = false;
             });
+        
+    }
 
+    handleSendOnPopup(){
+
+        if(this.selectedTemplate === '' || this.selectedTemplate === null){
+            this.showToast('Error!', 'Please select template', 'error');
+            return;
+        }
+
+        this.isLoading = true;
+
+        createChatRecods({templateId: this.selectedTemplate, jsonData: this.jsonData, groupIds: this.selectedGroupIds, isScheduled: false, timeOfMessage: ''})
+            .then(result => {
+                if(result == 'Success'){
+                    this.showToast('Success', 'Broadcast sent successfully', 'success');
+                } else {
+                    this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error in send click: ' + error);
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
     }
 
     showToast(title ,message, status){
