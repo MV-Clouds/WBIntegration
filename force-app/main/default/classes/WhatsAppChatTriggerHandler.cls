@@ -43,6 +43,11 @@ public with sharing class WhatsAppChatTriggerHandler {
                                                FROM Broadcast__c 
                                                WHERE Id IN :broadcastIds
                                                WITH SECURITY_ENFORCED]) {
+                    broadcast.Total_Sent__c = broadcast.Total_Sent__c == null ? 0 : broadcast.Total_Sent__c;
+                    broadcast.Total_Delivered__c = broadcast.Total_Delivered__c == null ? 0 : broadcast.Total_Delivered__c;
+                    broadcast.Total_Read__c = broadcast.Total_Read__c == null ? 0 : broadcast.Total_Read__c;
+                    broadcast.Total_Failed__c = broadcast.Total_Failed__c == null ? 0 : broadcast.Total_Failed__c;
+                                
                     broadcastsToUpdate.put(broadcast.Id, broadcast);
                 }
             }
