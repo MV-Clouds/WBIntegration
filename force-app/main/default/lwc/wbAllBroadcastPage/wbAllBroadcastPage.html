@@ -32,7 +32,7 @@
                         <thead>
                             <tr>
                                 <th class="sr-no">Sr. No</th>
-                                <th>Group Name</th>
+                                <th>Name</th>
                                 <th>Recipient Count</th>
                                 <th>Status</th>
                                 <th>Total Sent</th>
@@ -45,7 +45,7 @@
                             <template for:each={paginatedData} for:item="row">
                                 <tr key={row.Id}>
                                     <td class="sr-no">{row.index}</td>
-                                    <td>{row.Broadcast_Group__r.Name}</td>
+                                    <td>{row.Name}</td>
                                     <td>{row.Recipient_Count__c}</td>
                                     <td>{row.Status__c}</td>
                                     <td>{row.Total_Sent__c}</td>

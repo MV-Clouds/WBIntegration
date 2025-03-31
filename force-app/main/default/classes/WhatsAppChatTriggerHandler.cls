@@ -62,8 +62,10 @@ public with sharing class WhatsAppChatTriggerHandler {
                         Total_Failed__c = 0
                     ));
                 }
-    
+                
+                System.debug(broadcastsToUpdate);
                 Broadcast__c broadcast = broadcastsToUpdate.get(chat.WB_Broadcast__c);
+                System.debug(broadcast);
     
                 // Increment the appropriate counter
                 if (chat.Message_Status__c == 'Sent') {
@@ -80,10 +82,13 @@ public with sharing class WhatsAppChatTriggerHandler {
             // Perform bulk update
             if (!broadcastsToUpdate.isEmpty()) {
                 List<Broadcast__c> broadcastList = new List<Broadcast__c>(broadcastsToUpdate.values()); // Convert map values to list
-                Database.update(broadcastList, false, AccessLevel.USER_MODE); // Use the list in Database.update()
+                // Database.update(broadcastList, false, AccessLevel.USER_MODE); // Use the list in Database.update()
+                Database.update(broadcastList); // Use the list in Database.update()
             }
         }
         catch(Exception e){
+            System.debug(e.getMessage());
+            System.debug(e.getLineNumber());
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => CLASS_NAME,
                 'methodName' => 'updateBroadcastCounts',

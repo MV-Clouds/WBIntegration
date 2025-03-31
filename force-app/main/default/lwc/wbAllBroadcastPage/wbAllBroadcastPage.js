@@ -3,7 +3,6 @@ import getBroadcastRecs from '@salesforce/apex/BroadcastMessageController.getBro
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
-import sendTemplateMessage from '@salesforce/apex/BroadcastMessageController.sendTemplateMessage';
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
 
 export default class WbAllBroadcastPage extends LightningElement {
@@ -26,7 +25,6 @@ export default class WbAllBroadcastPage extends LightningElement {
     popUpFirstPage = true;
     popUpSecondpage = false;
     popUpLastPage = false;
-    @track jsonData;
     popupHeader = 'Choose Broadcast Groups';
 
     get showNoRecordsMessage() {
@@ -194,8 +192,8 @@ export default class WbAllBroadcastPage extends LightningElement {
         try {
             if(event.detail.value.trim().toLowerCase() != null) {
                 this.filteredData = this.data.filter(item => 
-                    item.Broadcast_Group__r && 
-                    item.Broadcast_Group__r.Name.toLowerCase().includes(event.detail.value.trim().toLowerCase())
+                    item.Name &&
+                    item.Name.toLowerCase().includes(event.detail.value.trim().toLowerCase())
                 );
                 this.updateShownData();
             }
@@ -375,7 +373,7 @@ export default class WbAllBroadcastPage extends LightningElement {
             return;
         }
 
-        createChatRecods({templateId: this.selectedTemplate, jsonData: this.jsonData, groupIds: this.selectedGroupIds, isScheduled: true, timeOfMessage: this.selectedDateTime})
+        createChatRecods({templateId: this.selectedTemplate, groupIds: this.selectedGroupIds, isScheduled: true, timeOfMessage: this.selectedDateTime})
             .then(result => {
                 if(result == 'Success'){
                     this.showToast('Success', 'Broadcast sent successfully', 'success');
@@ -400,8 +398,11 @@ export default class WbAllBroadcastPage extends LightningElement {
         }
 
         this.isLoading = true;
+        console.log(this.selectedTemplate);
+        let grpIdList = this.selectedGroupIds.map(record => record.Id);
+        console.log(grpIdList);
 
-        createChatRecods({templateId: this.selectedTemplate, jsonData: this.jsonData, groupIds: this.selectedGroupIds, isScheduled: false, timeOfMessage: ''})
+        createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: false, timeOfMessage: ''})
             .then(result => {
                 if(result == 'Success'){
                     this.showToast('Success', 'Broadcast sent successfully', 'success');
@@ -410,7 +411,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 }
             })
             .catch(error => {
-                console.error('Error in send click: ' + error);
+                console.error('Error in send click: ' , error);
             })
             .finally(() => {
                 this.isLoading = false;
