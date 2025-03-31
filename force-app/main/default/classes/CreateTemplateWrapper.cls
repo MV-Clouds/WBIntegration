@@ -149,9 +149,18 @@
                 bodyComponent = new Map<String, Object>{
                     'type' => 'BODY'
                 };
-                String randomCode = String.valueOf(Math.floor(Math.random() * 900000) + 100000);
-                templateWrapper.varAlternateTexts.add(randomCode);
-                templateWrapper.templateBodyText = new List<String>{'{{'+randomCode+'}}'};
+                // String randomCode = String.valueOf(Math.floor(Math.random() * 900000) + 100000);
+                // templateWrapper.varAlternateTexts.add(randomCode);
+                // templateWrapper.templateBodyText = new List<String>{'{{'+randomCode+'}}'};
+                // Generate a 6-digit random number
+                Integer randomCode = (Integer) Math.floor(Math.random() * 900000) + 100000;
+
+                // Convert Integer to String
+                String randomCodeStr = String.valueOf(randomCode);
+
+                // Add the string to templateWrapper
+                templateWrapper.varAlternateTexts.add(randomCodeStr);
+                templateWrapper.templateBodyText = new List<String>{'{{' + randomCodeStr + '}}'};
     
             } else {
                 bodyComponent = new Map<String, Object>{
@@ -289,6 +298,9 @@
                 } else if ('QUICK_REPLY'.equals(customActionType) || 'Marketing opt-out'.equals(customActionType)) {
                     buttonComponent.put('type', 'QUICK_REPLY');
                     buttonComponent.put('text', (String) button.get('Cbtntext'));
+                    if('Marketing opt-out'.equals(customActionType)){
+                        templateWrapper.marketingOptText = (String) button.get('Cbtntext');
+                    }
                 } else if ('URL'.equals(actionType)) {
                     buttonComponent.put('type', 'URL');
                     buttonComponent.put('text', (String) button.get('btntext'));
@@ -388,7 +400,8 @@
             whatsAppTemplate.Language__c = (String) payloadMap.get('language');
             whatsAppTemplate.Template_Type__c = templateWrapper.templateType;
             // whatsAppTemplate.Template_SubCatagory__c = templateWrapper.templateType;
-
+            System.debug('Temp Misss data ::: '+templateWrapper.templateMiscellaneousData);
+            whatsAppTemplate.Template_Miscellaneous_Data__c = templateWrapper.templateMiscellaneousData;
 
             // Initialize variables for components
             List<Template_Variable__c> variableRecords = new List<Template_Variable__c>();
@@ -420,6 +433,12 @@
                 if(whatsAppTemplate.Template_Category__c == 'Authentication'){
                     component.put('text',templateWrapper.templateBody);
                 }
+
+                // System.debug('Is Marketing ::: '+templateWrapper.ismarketingOpt);
+
+                // if(templateWrapper.ismarketingOpt == 1){
+                //     component.put('ismarketingOpt',true);
+                // }
     
                 // HEADER Component
                 if (type == 'HEADER') {
@@ -532,6 +551,21 @@
                 }
                 // BUTTONS Component
                 else if (type == 'BUTTONS') {
+                    System.debug('Marketing text  ::: '+templateWrapper.marketingOptText);
+                    List<Object> buttons = (List<Object>) component.get('buttons');
+                    for (Object buttonObj : buttons) {
+                        if (buttonObj instanceof Map<String, Object>) {
+                            Map<String, Object> button = (Map<String, Object>) buttonObj;
+                            String buttonType = (String) button.get('type');
+                            String buttonText = (String) button.get('text');
+        
+                            // ✅ Correct check for marketing opt-out
+                            if (buttonText == templateWrapper.marketingOptText) {
+                                button.put('isMarketingOpt', true);
+                                System.debug('Added isMarketingOpt to button: ' + button);
+                            }
+                        }
+                    }
                     System.debug('Buttons:'+component);
                     buttonDetails = handleButtonComponent(component);
                     whatsAppTemplate.Button_Body__c = buttonDetails;
@@ -742,6 +776,9 @@
         @AuraEnabled public Boolean autofillCheck;  // ✅ Added
         @AuraEnabled public List<String> packagename;  // ✅ Added
         @AuraEnabled public List<String> signaturename;  // ✅ Added
+        @AuraEnabled public String marketingOptText;  // ✅ Added
+        @AuraEnabled public String templateMiscellaneousData;
+        
     }
 
 }

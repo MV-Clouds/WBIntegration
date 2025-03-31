@@ -183,7 +183,7 @@
             List<Template__c> templates = [
                 SELECT Id, Name,Template_Name__c, Button_Body__c, Status__c,WBImage_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
                     WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, 
-                    Template_Category__c, Template_Type__c
+                    Template_Category__c, Template_Type__c , Template_Miscellaneous_Data__c
                 FROM Template__c 
                 WHERE Id = :templateId WITH SECURITY_ENFORCED
                 ORDER BY LastModifiedDate DESC
@@ -304,7 +304,7 @@
             List<Template__c> templates = [SELECT Id, Name,Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c,WBImage_Header_Handle__c, 
                                                 WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c,File_Name__c, 
                                                 WBTemplate_Body__c, Template_Category__c, 
-                                                Template_Type__c, Template_Variable__c, 
+                                                Template_Type__c, Template_Variable__c, Template_Miscellaneous_Data__c,
                                                 (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c 
                                                     FROM WB_Template_Variables__r ORDER BY Name ASC) 
                                             FROM Template__c 
@@ -461,7 +461,7 @@
             }
 
             CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
-            System.debug('Deserialized TemplateWrapper: ' + x);
+            System.debug('Deserialized TemplateWrapper: ' + templateWrapper);
 
             Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
             endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS.MVWB__Business_Account_Id__c+'/message_templates';

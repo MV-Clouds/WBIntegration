@@ -130,7 +130,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track headerHandle ='';
     @track isfilename=false;
     @track NoFileSelected=true;
-    @track isImgSelected = false;
+
     @track filePreview='';
     @track languageOptions=[];
     @track countryType=[];
@@ -630,18 +630,63 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.tempBody = template.WBTemplate_Body__c || 'Hello';
                     
                     this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
+                    
+                    
+                    
+                    try{
+                        const templateMiscellaneousData = JSON.parse(template.Template_Miscellaneous_Data__c);
+                        console.log("Template dataaa ::: ",templateMiscellaneousData);
+                        this.contentVersionId = templateMiscellaneousData.contentVersionId
+                        this.isImageFile = templateMiscellaneousData.isImageFile
+                        console.log('OUTPUT : ',templateMiscellaneousData.isImgSelected);
+                        this.isImgSelected = templateMiscellaneousData.isImgSelected
+                        this.isDocSelected = templateMiscellaneousData.isDocSelected
+                        this.isVidSelected = templateMiscellaneousData.isVidSelected
+                        this.IsHeaderText = templateMiscellaneousData.isHeaderText
+                        this.addHeaderVar = templateMiscellaneousData.addHeaderVar
+                        this.addMedia = templateMiscellaneousData.addMedia
+                        this.isImageFileUploader = templateMiscellaneousData.isImageFileUploader
+                        this.isVideoFileUploader = templateMiscellaneousData.isVideoFileUploader
+                        this.isDocFileUploader = templateMiscellaneousData.isDocFileUploader
+                        this.isVideoFile = templateMiscellaneousData.isVideoFile
+                        this.isDocFile = templateMiscellaneousData.isDocFile
+
+                        console.log(this.contentVersionId);
+                        console.log(this.isImgSelected+ ' -- '+this.isImageFile+' -- '+this.isImageFileUploader);
+                        
+                    }
+                    catch(error){
+                        console.log('Miss Error ::: ',error)
+                    }
+                    
+
                     // const parser = new DOMParser();
                     // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
                     // this.previewHeader = doc.documentElement.textContent;
-                    if(template.Header_Type__c=='Image'){
+                    if(template.Header_Type__c=='Image' || template.Header_Type__c=='Video' || template.Header_Type__c=='Document'){
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
                         this.previewHeader = doc.documentElement.textContent||"";
+                        
+                        this.fileName = template.File_Name__c;
+                        this.fileType = template.Header_Type__c;
+                        console.log(this.fileType);
+                        
+                        // this.fileSize = file.size;
+                        console.log(template.WBHeader_Body__c);
+                        
+                        this.filePreview = template.WBHeader_Body__c;
+                        console.log(this.filePreview);
+                        
                     }else{
                         this.previewHeader= this.formatText(headerBody) ||'';
                     }
+                    console.log("File type ::: ",this.fileType);
+                    
+                    
                     // this.previewHeader= this.formatText(headerBody) ||'';
                     this.selectedContentType=template.Header_Type__c || 'None';
+                    console.log('OUTPUT headertype : ',this.selectedContentType);
                     this.btntext = template.Button_Label__c || '';
                     let tvs =templateVariables.map(tv=>{
                         let temp = {
@@ -667,54 +712,116 @@ export default class WbCreateTemplatePage extends LightningElement {
                     }                
                     // if(this.addVar) this.isBodyVariableLoad=true;
                     
-                    if(template.Button_Type__c && template.Button_Label__c){
-                        let newButton = {
-                            id: this.buttonList.length + 1,
-                            selectedActionType: template.Button_Type__c,
-                            iconName: this.getButtonIcon(template.Button_Type__c),
-                            btntext: template.Button_Label__c,
-                            webURL: template.Button_Body__c,
-                            phonenum: template.Button_Body__c?.split(' ')[1],
-                            offercode: template.Button_Body__c,
-                            selectedUrlType: 'Static',
-                            selectedCountryType: template.Button_Body__c?.split(' ')[0],
-                            isCallPhone: false,
-                            isVisitSite: false,
-                            isOfferCode: false,
-                            hasError: false,  
-                            errorMessage: ''   
-                        };
+                    // if(template.Button_Type__c && template.Button_Label__c){
+                    //     let newButton = {
+                    //         id: this.buttonList.length + 1,
+                    //         selectedActionType: template.Button_Type__c,
+                    //         iconName: this.getButtonIcon(template.Button_Type__c),
+                    //         btntext: template.Button_Label__c,
+                    //         webURL: template.Button_Body__c,
+                    //         phonenum: template.Button_Body__c?.split(' ')[1],
+                    //         offercode: template.Button_Body__c,
+                    //         selectedUrlType: 'Static',
+                    //         selectedCountryType: template.Button_Body__c?.split(' ')[0],
+                    //         isCallPhone: false,
+                    //         isVisitSite: false,
+                    //         isOfferCode: false,
+                    //         hasError: false,  
+                    //         errorMessage: ''   
+                    //     };
                         
-                        this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
+                    //     this.handleMenuSelect({currentTarget:{dataset:{value:template.Button_Type__c,buttonData:newButton}}});
+                    // }
+                    if (template.Button_Body__c) {
+                        // Parse JSON from Button_Body__c
+                        let buttonDataList = JSON.parse(template.Button_Body__c);
+                    
+                        // Clear existing button and custom button lists before populating
+                        this.buttonList = [];
+                        this.customButtonList = [];
+                        this.callPhoneNumber = 0;
+                        this.visitWebsiteCount = 0;
+                        this.copyOfferCode = 0;
+                        this.marketingOpt = 0;
+                    
+                        buttonDataList.forEach((button, index) => {
+                            if (button.type === 'QUICK_REPLY' || button.type === 'Marketing opt-out') {
+                                // Handle custom buttons
+                                // this.isCustom = true;
+                                // this.createCustomButton(button.type, button.text);
+                                try{
+                                    if(button.isMarketingOpt){
+                                        button.type = 'Marketing opt-out';
+                                    }
+                                }
+                                catch(error){
+                                    console.log(error);
+                                }
+                                let buttonData = {
+                                    btntext : button.text
+                                }
+                                
+                                this.handleMenuSelect({
+                                    currentTarget: {
+                                        dataset: {
+                                            value: button.type,
+                                            buttonData: buttonData
+                                        }
+                                    }
+                                });
+                            } else {
+                                // Handle regular buttons
+                                let newButton = {
+                                    id: index + 1, // Unique ID for button
+                                    selectedActionType: button.type || '',
+                                    iconName: this.getButtonIcon(button.type),
+                                    btntext: button.text || '',
+                                    webURL: button.url || '',
+                                    phonenum: button.phone_number || '',
+                                    offercode: button.example || '',
+                                    selectedUrlType: button.type === 'URL' ? 'Static' : '',
+                                    selectedCountryType: button.phone_number ? button.phone_number.split(' ')[0] : '',
+                                    isCallPhone: button.type === 'PHONE_NUMBER',
+                                    isVisitSite: button.type === 'URL',
+                                    isOfferCode: button.type === 'COPY_CODE',
+                                    hasError: false,
+                                    errorMessage: ''
+                                };
+                    
+                                // Call handleMenuSelect() to process button creation correctly
+                                this.handleMenuSelect({
+                                    currentTarget: {
+                                        dataset: {
+                                            value: button.type,
+                                            buttonData: newButton
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    
+                        console.log('Button List after edit load:', this.buttonList);
+                        console.log('Custom Button List after edit load:', this.customButtonList);
                     }
-                    this.handleContentType({target:{value:template.Header_Type__c ||'None'}});
-    
-                    if(headerType.toLowerCase()=='image'){
-                        this.isImageFile=true;
-                        this.isfilename=true;
-                        this.isImgSelected=false;
-                        this.fileName=template.File_Name__c;
-                        this.filePreview=headerBody;
-                        this.imageurl=template.WBHeader_Body__c;
+                    
+                    //this.handleContentType({target:{value:template.Header_Type__c ||'None'}});
+                    
+                    if(headerType.toLowerCase()=='image' || headerType.toLowerCase() == 'video'){
                         this.headerHandle=template.WBImage_Header_Handle__c;
-                        this.NoFileSelected = false;
-                    }
-                    else if(headerType.toLowerCase()=='video'){
-                        this.isVideoFile=true;
-                        this.isfilename=true;
-                        this.isVidSelected=false;
-                        this.fileName=template.File_Name__c;
-                        this.filePreview=headerBody;
                         this.imageurl=template.WBHeader_Body__c;
-                        this.headerHandle=template.WBImage_Header_Handle__c;
                         this.NoFileSelected = false;
+                        this.isfilename=true;
+                        this.fileName=template.File_Name__c;
+                        this.fileType = template.Header_Type__c.toLowerCase();
+                        // this.generatePreview(headerBody.replace('/sfc/p/#', '/sfc/p/'));
+                        
+                            this.filePreview=headerBody;
                     }
                     // else if(headerType.toLowerCase()=='application'){
                     //     this.isVideoFile=true;
                     //     this.isfilename=true;
                     //     this.isVidSelected=false;
                     //     this.fileName=template.File_Name__c;
-                    //     this.filePreview=headerBody;
                     //     this.imageurl=template.WBHeader_Body__c;
                     //     this.headerHandle=template.WBImage_Header_Handle__c;
                     //     this.NoFileSelected = false;
@@ -900,6 +1007,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             alert('Unsupported file type! Please select an image, PDF, or video.');
         }
         
+        console.log('OUTPUT2 : ',this.isImgSelected);
         this.isfilename = true;
         this.NoFileSelected = false;
     }
@@ -954,7 +1062,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.fileName = null;
         this.fileData = null;
         this.filePreview = null;
-        console.log(this.isImgSelected +' '+ this.isVidSelected + ' ' + this.isDocSelected);
+        console.log('OUTPUT3 : ',this.isImgSelected +' '+ this.isVidSelected + ' ' + this.isDocSelected);
         
         if(this.isImgSelected){
             this.isImageFile = true;
@@ -1378,14 +1486,12 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.NoFileSelected=true;
             this.isfilename=false;
             this.selectedContentType = event.target.value;
-            console.log(this.selectedContentType);
 
             if (this.selectedContentType == 'Text') {
                 this.IsHeaderText = true;
             } else {
                 this.IsHeaderText = false;
             }
-            console.log(this.selectedContentType);
             
         //     if (this.selectedContentType == 'Image' || this.selectedContentType == 'Video' || this.selectedContentType == 'Document' || this.selectedContentType == 'Location') {
         //     if (this.selectedContentType == 'Image') {
@@ -1452,6 +1558,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 this.addMedia = false;
             }
             
+            console.log('OUTPUT4 : ',this.isImgSelected);
         }
         else{
             this.isImageFile = false;
@@ -1465,6 +1572,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.isVidSelected = false;
             this.isLocation=false;
         }
+            console.log('OUTPUT5 : ',this.isImgSelected);
 
         } catch (error) {
             console.error('Something wrong while selecting content type: ', JSON.stringify(error));
@@ -1774,6 +1882,9 @@ export default class WbCreateTemplatePage extends LightningElement {
             switch (selectedValue) {
                 case 'QUICK_REPLY':
                     this.isCustom = true;
+                    console.log(this.isCustom);
+                    console.log('QUICK REPLYYY');
+                    
                     const quickReplyText = buttonData && buttonData.btntext ? buttonData.btntext : 'Quick reply';
                     this.createCustomButton('QUICK_REPLY', quickReplyText);
                     this.isStopMarketing = false;
@@ -1781,6 +1892,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 case 'Marketing opt-out':
                     if (this.marketingOpt < 1) {
                         this.isCustom = true;
+                        
                         this.isStopMarketing = true;
                         const stopPromoText = buttonData && buttonData.btntext ? buttonData.btntext : 'Stop promotions';
                         this.createCustomButton('Marketing opt-out', stopPromoText);
@@ -1884,7 +1996,9 @@ export default class WbCreateTemplatePage extends LightningElement {
     createCustomButton(btnType, btnText) {
         try {
             const btnTextExists = this.customButtonList.some(button => button.Cbtntext === btnText);
-    
+            
+            console.log("Button Type :: ",btnType);
+            
             let newCustomButton = {
                 id: this.customButtonList.length + 1,
                 selectedCustomType: btnType,
@@ -1905,6 +2019,9 @@ export default class WbCreateTemplatePage extends LightningElement {
             }
     
             this.customButtonList.push(newCustomButton);
+            this.customButtonList = [...this.customButtonList]
+            console.log(...this.customButtonList);
+            
             this.totalButtonsCount++;
     
             this.updateButtonErrors(true);
@@ -2739,8 +2856,19 @@ export default class WbCreateTemplatePage extends LightningElement {
             }
 
             if (this.customButtonList && this.customButtonList.length > 0) {
+                // this.customButtonList.forEach((button) => {
+                //     if (
+                //         button.selectedCustomType === "Marketing opt-out" &&
+                //         !button.Cbtntext.includes("YOMaRkeTingOptOuTT")
+                //     ) {
+                //         button.Cbtntext += "YOMaRkeTingOptOuTT";
+                //     }
+                // });
                 buttonData.push(...this.customButtonList);
             }
+            // Cbtntext: btnType === "Marketing opt-out"
+            //     ? btnText + "@#$*_*@$#Marketing"
+            //     : btnText,
             let fileUrl = null;
                 if (this.filePreview) {
                     fileUrl = this.filePreview; // Use ContentVersion if available
@@ -2760,6 +2888,27 @@ export default class WbCreateTemplatePage extends LightningElement {
                 console.log(this.tempBody);
                 
             }
+
+            const templateMiscellaneousData = {
+                contentVersionId : this.contentVersionId ,
+                isImageFile : this.isImageFile,
+                isImgSelected : this.isImgSelected,
+                isDocSelected : this.isDocSelected,
+                isVidSelected : this.isVidSelected,
+                isHeaderText : this.IsHeaderText,
+                addHeaderVar : this.addHeaderVar,
+                addMedia: this.addMedia,
+                isImageFileUploader : this.isImageFileUploader,
+                isVideoFileUploader : this.isVideoFileUploader,
+                isDocFileUploader : this.isDocFileUploader,
+                isVideoFile : this.isVideoFile,
+                isDocFile : this.isDocFile,
+
+            }
+
+            
+          console.log("Temp misss data :: ",templateMiscellaneousData);
+          
             
             // varAlternateTexts: this.variables.map(varItem => varItem.alternateText || null),
             const template = {
@@ -2785,11 +2934,13 @@ export default class WbCreateTemplatePage extends LightningElement {
                 autofillCheck: this.isautofillChecked ? this.isautofillChecked : null,
                 expireTime: this.expirationTime ? this.expirationTime : 300,
                 packagename: formData.length > 0 ? formData.map(pkg => pkg.packagename) : null,
-                signaturename: formData.length > 0 ? formData.map(pkg => pkg.signaturename) : null
+                signaturename: formData.length > 0 ? formData.map(pkg => pkg.signaturename) : null,
+                templateMiscellaneousData : templateMiscellaneousData ? JSON.stringify(templateMiscellaneousData) : null
 
             };
             // Change
-
+            // ,
+            // templateMiscellaneousData : templateMiscellaneousData ? templateMiscellaneousData : null
 
             console.log('TEmplateeee ::: ',template);
             

@@ -54,6 +54,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track isFieldDisabled=false;
     @track isSendDisabled=false;
     @track sendButtonClass;
+    @track bodyParaCode = '';
 
     get contactFields() {
         return Object.entries(this.contactDetails)
@@ -406,7 +407,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 }
                 console.log('Template body ::: ');
                 console.log(templateData);
-                
+                this.bodyParaCode = templateData.bodyParams;
                 console.log(templateData.bodyParams);
                 
                
@@ -631,10 +632,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
             //         });
             //     }
             // }
-
+            console.log("Button value :: ",...data.buttonValue);
+            
             if (data.buttonValue && data.buttonValue.length > 0) {
                 let buttons = data.buttonValue
                     .map((button, index) => {
+                        
+                    console.log("Button  :: ",button);
                         switch (button.type.toUpperCase()) {
                             case "PHONE_NUMBER":
                                 components.push( {
@@ -673,13 +677,16 @@ export default class WbPreviewTemplatePage extends LightningElement {
                                     parameters: [
                                         {
                                             type :'coupon_code',
-                                            coupon_code : '123456'
+                                            coupon_code : button.example
                                         }
                                     ]
                                 }); 
                                 break;
                             case "OTP":
                                 if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE") {
+
+                                    // console.log(button);
+                                    
                                     components.push( {
                                         type: "button",
                                         sub_type: "url",
@@ -687,7 +694,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                                         parameters: [
                                             {
                                                 type :'text',
-                                                text :'123456'
+                                                text :this.bodyParaCode[0]
                                             }
                                             
                                         ]

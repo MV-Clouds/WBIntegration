@@ -1,4 +1,4 @@
- <!--
+<!--
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
@@ -321,14 +321,23 @@
                                             <span class="seg-opt">Optional</span>
                                         </div>
                                         <div class="contentType">
-                                            <select class="conInput" onchange={handleContentType}>
-                                                <template for:each={typeOptions} for:item="option">
+                                            <!-- <select class="conInput" onchange={handleContentType}>
+                                                <template for:each={typeOptions} name="contentType" for:item="option">
                                                     <option key={option.value} class="contentOption"
                                                         value={option.value} disabled={option.isDisabled}>
                                                         {option.label}
                                                     </option>
                                                 </template>
-                                            </select>
+                                            </select> -->
+                                            <lightning-combobox 
+                                                    class="conInput"
+                                                    name="progress"
+                                                    label="Status"
+                                                    value={selectedContentType}
+                                                    placeholder="Select Progress"
+                                                    options={typeOptions}
+                                                    onchange={handleContentType} ></lightning-combobox>
+
                                         </div>
                                         <template if:true={addMedia}>
                                             <div class="add-variable">
@@ -1267,6 +1276,12 @@
                                         </div>
                                     </div> -->
                                     <div class="PreviewtemplateWP">
+
+                                        {isImageFile}
+                                        {isImageFileUploader}
+                                        {isImgSelected}
+                                        {filePreview}
+
                                         <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
                                             <template if:true={IsHeaderText}>
                                                 <div class="TextHeadingWP">
@@ -1280,6 +1295,7 @@
                                             </template>
                                             <template if:true={isImgSelected}>
                                                 <div>
+                                                    {filePreview}
                                                     <img src={filePreview} alt="File Preview" style="max-width: 100%; height: auto;" />
                                                 </div>
                                             </template>
