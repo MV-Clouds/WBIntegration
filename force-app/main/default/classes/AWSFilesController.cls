@@ -96,7 +96,6 @@ public with sharing class AWSFilesController {
             return headers;
         } catch (Exception e) {
             System.debug('Error: ' + e.getMessage());
-            System.debug('Line: ' + e.getLineNumber());
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AWSFilesController', 'methodName' => 'generateAWSUploadHeaders', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
@@ -144,7 +143,6 @@ public with sharing class AWSFilesController {
             }
         } catch (Exception e) {
             System.debug('Error: ' + e.getMessage());
-            System.debug('Error: ' + e.getLineNumber());
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AWSFilesController', 'methodName' => 'deleteImagesFromS3', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     }
@@ -195,7 +193,6 @@ public with sharing class AWSFilesController {
             return headers;
         } catch (Exception e) {
             System.debug('Error: ' + e.getMessage());
-            System.debug('Error: ' + e.getLineNumber());
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AWSFilesController', 'methodName' => 'generateAWSHeaders', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
@@ -210,7 +207,6 @@ public with sharing class AWSFilesController {
             return kSigning;
         } catch (Exception e) {
             System.debug('Error: ' + e.getMessage());
-            System.debug('Error: ' + e.getLineNumber());
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AWSFilesController', 'methodName' => 'getSignatureKey', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }

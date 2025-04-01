@@ -459,6 +459,7 @@ public with sharing class ChatWindowController {
 
             String message = chatData.get('message');
             String fileName = chatData.get('fileName');
+            String mimeType = chatData.get('mimeType');
             String messageType = chatData.get('messageType');
             String recordId = chatData.get('recordId');
             String replyToChatId = chatData.get('replyToChatId');
@@ -471,7 +472,7 @@ public with sharing class ChatWindowController {
             chat.Message_Status__c = null;
             chat.Message_Type__c = messageType;
             chat.Reply_To__c = replyToChatId;
-            Map<String, Object> fileData = new Map<String, Object>{ 'fileName' => fileName };
+            Map<String, Object> fileData = new Map<String, Object>{ 'fileName' => fileName, 'mimeType' => mimeType };
             chat.File_Data__c = JSON.serialize(fileData);
 
             insert as user chat;
@@ -479,9 +480,6 @@ public with sharing class ChatWindowController {
 
             return chat;
         } catch (Exception e) {
-            if(e.getMessage().contains('STORAGE_LIMIT_EXCEEDED')){
-                throw new AuraHandledException('STORAGE_LIMIT_EXCEEDED');
-            }
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
             return null;
         }
