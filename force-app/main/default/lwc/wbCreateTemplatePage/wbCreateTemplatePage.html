@@ -96,6 +96,17 @@
                                                         </div>
                                                     </label>
                                                 </div>
+                                                <div class="radio2">
+                                                    <label class="slds-radio radiobtn">
+                                                        <input type="radio" name="templateOptions" value="flow"
+                                                            onchange={handleRadioChange} />
+                                                        <span class="slds-radio_faux"></span>
+                                                        <div class="txtwithlabel">
+                                                            <p class="slds-form-element__label radiolabel">Flows</p>
+                                                            <p class="radio-description radiodescription">Send a form to capture customer interests, appointment requests or run surveys.</p>
+                                                        </div>
+                                                    </label>
+                                                </div>
             
                                                 
                                             </div>
@@ -126,6 +137,17 @@
                                                             <p class="radio-description radiodescription">Send messages to tell
                                                                 customers about the progress of their orders.
                                                             </p>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                <div class="radio3">
+                                                    <label class="slds-radio radiobtn">
+                                                        <input type="radio" name="templateOptions" value="flowutility"
+                                                            onchange={handleRadioChange} />
+                                                        <span class="slds-radio_faux"></span>
+                                                        <div class="txtwithlabel">
+                                                            <p class="slds-form-element__label radiolabel">Flows</p>
+                                                            <p class="radio-description radiodescription">Send a form to collect feedback, send reminders or manage orders.</p>
                                                         </div>
                                                     </label>
                                                 </div>
@@ -164,6 +186,56 @@
                             
                         </div>
                         <div class="creattempdiv3">
+                            <template if:true={isFlowMarketing}>
+                                <div class="slds-box slds-theme_default templatePreviewmain">
+                                    <div class="templatehead">
+                                        <p class="previewtext"><b>Template Preview</b></p>
+                                    </div>
+                                    <div class="templatePreview">
+                                        <div class="slds-box slds-theme_default previewchild chat-bubble">
+                                            <!-- <img class="image" src="/resource/marketingFlowPreivew" alt=""> -->
+                                            <div class="paratext">
+                                                <p class="hey">Make dinner with Jaspher Market</p>
+                                                <p class="code">Our free online course will be available soon! Sign up today to reserve a spot</p>
+                                                <p class="time">11:59</p>
+                                            </div>
+                                        </div>
+                                        <div class="codelink">
+                                            <p class="shoplink">Sign up</p>
+                                        </div>
+                                    </div>
+                                    <p class="templatefootertxt1 firsttxt">This template is good for</p>
+                                    <p class="templatefootertxt2 secondtxt">Sign-ups, promotions, surveys, appointments
+                                    </p>
+                                    <p class="templatefootertxt1">Template areas that you can customise</p>
+                                    <p class="templatefootertxt2">Form, body, button</p>
+                                </div>
+                            </template>
+                            <template if:true={isFlowUtility}>
+                                <div class="slds-box slds-theme_default templatePreviewmain">
+                                    <div class="templatehead">
+                                        <p class="previewtext"><b>Template Preview</b></p>
+                                    </div>
+                                    <div class="templatePreview">
+                                        <div class="slds-box slds-theme_default previewchild chat-bubble">
+                                            <!-- <img class="image" src="/resource/marketingFlowPreivew" alt=""> -->
+                                            <div class="paratext">
+                                                <p class="hey">We have delivered your order!</p>
+                                                <p class="code">Your feedback ensures we continually improve. Please share your thoughts on your recent order</p>
+                                                <p class="time">11:59</p>
+                                            </div>
+                                        </div>
+                                        <div class="codelink">
+                                            <p class="shoplink">Share feedback</p>
+                                        </div>
+                                    </div>
+                                    <p class="templatefootertxt1 firsttxt">This template is good for</p>
+                                    <p class="templatefootertxt2 secondtxt">Sign-ups, promotions, surveys, appointments
+                                    </p>
+                                    <p class="templatefootertxt1">Template areas that you can customise</p>
+                                    <p class="templatefootertxt2">Form, body, button</p>
+                                </div>
+                            </template>
                             <template if:true={defaultPreview}>
                                 <div class="slds-box slds-theme_default templatePreviewmain">
                                     <div class="templatehead">
@@ -307,6 +379,54 @@
                                 </template>
                             </div>
 
+                            <template if:true={flowBooleanCheck}>
+                                <div class="slds-box slds-theme_default authContent4">
+                                    <div class="tempHead">
+                                        <p class="content">Flow setup</p>
+                                    </div>
+                                    <div class="descp">
+                                        <p>Choose flow.</p>
+                                    </div>
+                                    <!-- <div class="tempHead">
+                                        <p class="content">Set custom validity period for your message
+                                        </p>
+                                    </div>
+                                    <div class="descp toggle">
+                                        <p>If you don't set a custom validity period, the standard 30 days WhatsApp message validity period will be applied.
+                                        </p>
+                                        <lightning-input type="toggle" name="toggle" onchange={handleInputChange}></lightning-input>
+        
+                                    </div> -->
+                                    <template if:false={isFlowSelected}>
+                                        <div class="chooseDoc">
+                                            <div class="custom-upload-button" onclick={openModal}>
+                                                <label class="upload-label">
+                                                    <img src="/resource/uploadDocIcon" alt="Upload Icon" class="upload-icon" />
+                                                    <template if:true={NoFileSelected}>
+                                                        <span>Choose Flow</span>
+                                                    </template>
+                                                    <!-- <template if:true={selectedFlowName}>
+                                                        <span>{selectedFlowName}</span>
+                                                    </template> -->
+                                                </label>
+                                            </div>
+                                        </div>
+                                    
+                                        <template if:true={isModalOpen}>
+                                            <c-flow-preview-model onclose={closeModal} onsubmit={handleFlowSelection}></c-flow-preview-model>
+                                        </template>
+                                    </template>
+                                    <template if:true={isFlowSelected}>
+                                        <div class="flow-details">
+                                            <p class='flow-name'></p>
+                                            <lightning-button label="Preview" title="previewFlow" onclick={handleClick} class="slds-m-left_x-small"></lightning-button>
+                                            <lightning-button label="Delete" title="deleteFlow" onclick={handleClick} class="slds-m-left_x-small"></lightning-button>
+                                        </div>
+                                    </template>
+
+                                
+                                </div>
+                            </template>
                             <template if:true={isDefault}>
                                 <div class="slds-box slds-theme_default templateContent4">
                                     <div class="tempHead">
@@ -520,7 +640,6 @@
                                                                 class="field-dropdown field-header-dd dropdown"
                                                                 data-id={varItem.id}
                                                                 value={selectedField}
-                                                                sele
                                                                 options={fields}
                                                                 onchange={handleFieldChange}>
                                                             </lightning-combobox>
@@ -672,6 +791,7 @@
                                         </div>
                                     </div>
                                 </div>
+
 
                                 <template if:true={showDefaultBtn}>
                                     <div class="slds-box slds-theme_default templateContent5">
@@ -940,6 +1060,28 @@
 
                                     </div>
                                 </template>
+                            </template>
+                            
+                            <template if:true={flowBooleanCheck}>
+                                <div class="slds-box slds-theme_default authContent4">
+                                    <div class="tempHead">
+                                        <p class="content">Button
+                                        </p>
+                                    </div>
+                                    <div class="descp">
+                                        <p>Edit label for the button that lets customers take an action.
+                                        </p>
+                                    </div>
+                                    <div style="width: 100%; display:flex;background-color:#F1F4F7;padding:10px;">
+                                        <lightning-icon icon-name="utility:light_bulb" alternative-text="Light Bulb" title="Light Bulb" size="small"></lightning-icon>
+                                        &nbsp;<p style="font-size: 16px;">Only one button is supported for this type of template.</p>
+                                    </div>
+                                    <div style="padding:6px;padding-left:10px;font-size:16px;">
+                                        <p style="font-weight: bold;">Button text</p>
+                                        
+
+                                    </div>
+                                </div>
                             </template>
                             <template if:true={ifAuthentication}>
                                 <div class="slds-box slds-theme_default authContent1">
@@ -1355,7 +1497,13 @@
                                                     </div> 
                                                 </template>                                
                                             </template>
+                                            <!-- <template if:true={isFlowMarketing}>
+                                                
+                                            </template>
                                           
+                                            <template if:true={isFlowUtility}>
+                                                <iframe src={flowPreviewURL} width="430" height="800" ></iframe>
+                                            </template> -->
             
                                             <div class="TextTimeWP">
                                                 <p class="timefooterWP">11:59</p>

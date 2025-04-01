@@ -84,7 +84,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isStopMarketing = false;
     @track buttonDisabled = false;
     @track isRefreshEnabled = true;
-    @track isDefault=false; // change
+    // @track isDefault=false; // change
     @track isLoading=false;
     @track templateExists=false;
     @track showEmojis = false;
@@ -206,6 +206,11 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track imageUploadPreview = imageUploadPreview;
     @track isFeatureEnabled = false;
     @track selectedTime = '5 minutes'; // Default value
+    @track isFlowMarketing = false;
+    @track isFlowUtility = false;
+    @track isFlowSelected = false;
+    @track isModalOpen = false;
+
 
 
     get expireTime() {
@@ -216,6 +221,21 @@ export default class WbCreateTemplatePage extends LightningElement {
             { label: '5 minutes', value: '5 minutes' },
             { label: '10 minutes', value: '10 minutes' }
         ];
+    }
+
+    openModal() {
+        this.isModalOpen = true;
+    }
+
+    closeModal() {
+        this.isModalOpen = false;
+    }
+
+    handleFlowSelection(event) {
+        const selectedFlow = event.detail;
+        this.selectedFlowName = selectedFlow ? selectedFlow : 'Choose Flow';
+        this.NoFileSelected = false;
+        this.isModalOpen = false;
     }
     
     
@@ -237,7 +257,10 @@ export default class WbCreateTemplatePage extends LightningElement {
         };
         return timeMap[label] || 300; // Default to 5 minutes if not found
     }
-    
+
+    get flowBooleanCheck() {
+        return this.isFlowMarketing || this.isFlowUtility;
+    }
     
 
     handleTabClick(event) {
@@ -250,24 +273,21 @@ export default class WbCreateTemplatePage extends LightningElement {
         // this.template.querySelectorAll('.section-tab-li').forEach(item => {
         //     item.classList.remove('active-tab');
         // })
-               
+        this.isFlowMarketing = false;
+        this.isFlowUtility = false;
+        this.showMsgValidity=false;
+        this.ifAuthentication=false;
+        this.isDefault=true;
         if (this.activeSection === 'section1') {
             this.isSection1Active = true;
             this.activeTab = 'Marketing';
             this.selectedOption='CustomMarketing';
-            this.ifAuthentication=false;
-            this.showMsgValidity=false;
-            this.isDefault=true;
         } else if (this.activeSection === 'section2') {
             this.isSection2Active = true;
             this.activeTab = 'Utility';
             this.selectedOption='Custom';
-            this.ifAuthentication=false;
             this.showMsgValidity=true;
-            this.isDefault=true;
-        } else if (this.activeSection === 'section3') {
-            console.log('ehere  sec 3');
-            
+        } else if (this.activeSection === 'section3') {            
             this.isSection3Active = true;
             this.ifAuthentication=true;
             this.showMsgValidity=true;
@@ -283,39 +303,42 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     handleDefaultValues(){
         console.log(this.selectedOption);
+        this.utilityOrderStatusSelected = false;
+        this.authenticationPasscodeSelected = false;
+        this.UtilityCustomSelected = false;
+        this.defaultPreview = false;
+        this.showDefaultBtn = false;
         
-        if(this.selectedOption =='ORDER_STATUS'){
-            this.utilityOrderStatusSelected = true;
-            this.authenticationPasscodeSelected = false;
-            this.UtilityCustomSelected = false;
-            this.defaultPreview = false;
-            this.showDefaultBtn=false;
-        }else if (this.selectedOption == 'One-time passcode'){
-            console.log('OTP default');
-            
-            this.authenticationPasscodeSelected = true;
-            this.utilityOrderStatusSelected = false;
-            this.UtilityCustomSelected = false;
-            this.defaultPreview = false;
-            this.showDefaultBtn=true;
-        }else if (this.selectedOption == 'Custom'){
-            this.UtilityCustomSelected = true;
-            this.authenticationPasscodeSelected = false;
-            this.utilityOrderStatusSelected = false;
-            this.defaultPreview = false;
-            this.showDefaultBtn=true;
-        }else if (this.selectedOption == 'CustomMarketing'){
-            this.UtilityCustomSelected = false;
-            this.authenticationPasscodeSelected = false;
-            this.utilityOrderStatusSelected = false;
-            this.defaultPreview = true;
-            this.showDefaultBtn=true;
-        } else {
-            this.defaultPreview = true;
-            this.authenticationPasscodeSelected = false;
-            this.utilityOrderStatusSelected = false;
-            this.UtilityCustomSelected = false;
-            this.showDefaultBtn=true;
+        this.isFlowMarketing = false;
+        this.isFlowUtility = false;
+        
+        switch (this.selectedOption) {
+            case 'ORDER_STATUS':
+                this.utilityOrderStatusSelected = true;
+                break;
+            case 'One-time passcode':
+                console.log('OTP default');
+                this.authenticationPasscodeSelected = true;
+                this.showDefaultBtn = true;
+                break;
+            case 'Custom':
+                this.UtilityCustomSelected = true;
+                this.showDefaultBtn = true;
+                break;
+            case 'CustomMarketing':
+                this.defaultPreview = true;
+                this.showDefaultBtn = true;
+                break;
+            case 'flow':
+                this.isFlowMarketing = true;
+                break;
+            case 'flowutility':
+                this.isFlowUtility = true;
+                break;
+            default:
+                this.defaultPreview = true;
+                this.showDefaultBtn = true;
+                break;
         }
         
     }
@@ -333,37 +356,42 @@ export default class WbCreateTemplatePage extends LightningElement {
     handleRadioChange(event) {
         this.selectedOption = event.target.value;
         console.log('selected option in function==> ', this.selectedOption);
-        if(this.selectedOption =='ORDER_STATUS'){
-            this.ifUtilty=true;
-            this.showDefaultBtn=false;
-            this.utilityOrderStatusSelected = true;
-            this.authenticationPasscodeSelected = false;
-            this.UtilityCustomSelected = false;
-            this.defaultPreview = false;
-        }else if (this.selectedOption == 'One-time passcode'){
-            this.ifUtilty=false;
-            this.authenticationPasscodeSelected = true;
-            this.utilityOrderStatusSelected = false;
-            this.UtilityCustomSelected = false;
-            this.defaultPreview = false;
-            // this.ifAuthentication = true;
-            this.showDefaultBtn=true;
-        }else if (this.selectedOption == 'Custom'){
-            this.ifUtilty=false;
-            this.UtilityCustomSelected = true;
-            this.authenticationPasscodeSelected = false;
-            this.utilityOrderStatusSelected = false;
-            this.defaultPreview = false;
-            this.showDefaultBtn=true;
 
-        } else {
-            this.defaultPreview = true;
-            this.authenticationPasscodeSelected = false;
-            this.utilityOrderStatusSelected = false;
-            this.UtilityCustomSelected = false;
-            this.showDefaultBtn=true;
+        
+        this.ifUtilty = false;
+        this.showDefaultBtn = false;
+        this.utilityOrderStatusSelected = false;
+        this.authenticationPasscodeSelected = false;
+        this.UtilityCustomSelected = false;
+        this.defaultPreview = false;
+        this.isFlowMarketing = false;
+        this.isFlowUtility = false;
 
+        switch(this.selectedOption) {
+            case 'ORDER_STATUS':
+                this.ifUtilty = true;
+                this.utilityOrderStatusSelected = true;
+                break;
+            case 'One-time passcode':
+                this.authenticationPasscodeSelected = true;
+                this.showDefaultBtn = true;
+                break;
+            case 'Custom':
+                this.UtilityCustomSelected = true;
+                this.showDefaultBtn = true;
+                break;
+            case 'flow':
+                this.isFlowMarketing = true;
+                break;
+                case 'flowutility' :
+                this.isFlowUtility = true;
+                break;
+            default:
+                this.defaultPreview = true;
+                this.showDefaultBtn = true;
+                break;
         }
+
     }
 
     
@@ -392,7 +420,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.showAuthBtn=true;
             this.showOneTap=false;
         }else if(this.value=='ONE_TAP'){
-            console.log();
+            // console.log();
             
             this.authZeroTab=false;
             this.isAppSetup=true;
