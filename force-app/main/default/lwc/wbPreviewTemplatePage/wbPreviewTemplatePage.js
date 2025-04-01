@@ -278,7 +278,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 if (result) {
                     console.log(result.template.Header_Type__c);
                     
-                    this.IsHeaderText = !result.isImgUrl;                    
+                    this.IsHeaderText = !result.isImgUrl;            
                     this.originalHeader = result.template.WBHeader_Body__c;
                     this.originalBody = result.template.WBTemplate_Body__c;
                     const variableMappings = result.templateVariables;
@@ -440,7 +440,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
             }
             console.log("This template ::: ",this.template);
             
-            const buttonValue = JSON.parse(this.template.Button_Body__c) != undefined?JSON.parse(this.template.Button_Body__c) : '';
+            const buttonValue = this.template.Button_Body__c != undefined?JSON.parse(this.template.Button_Body__c) : '';
             console.log(buttonValue);
             
             const templatePayload = this.createJSONBody(phonenum, "template", {
@@ -455,7 +455,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 buttonValue : buttonValue
             });
 
-            console.log('Template Pay load ::: ',templatePayload);
+            console.log('Template Pay load ::: ',...templatePayload);
             
     
             sendPreviewTemplate({ jsonData: templatePayload })

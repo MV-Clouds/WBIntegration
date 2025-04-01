@@ -153,10 +153,12 @@
                 // templateWrapper.varAlternateTexts.add(randomCode);
                 // templateWrapper.templateBodyText = new List<String>{'{{'+randomCode+'}}'};
                 // Generate a 6-digit random number
-                Integer randomCode = (Integer) Math.floor(Math.random() * 900000) + 100000;
+                // Generate a 6-digit random number
+                Integer randomCode = Integer.valueOf(String.valueOf(Math.floor(Math.random() * 900000) + 100000));
 
                 // Convert Integer to String
                 String randomCodeStr = String.valueOf(randomCode);
+                System.debug(randomCodeStr);
 
                 // Add the string to templateWrapper
                 templateWrapper.varAlternateTexts.add(randomCodeStr);
@@ -527,14 +529,25 @@
                             if (!processedBodyPlaceholders.contains(placeholder)) {
                                 processedBodyPlaceholders.add(placeholder);
                         
-                                if (variableIndex < varAlternateTexts.size()) {
-                                    Template_Variable__c bodyVariable = new Template_Variable__c(
-                                        Name = placeholder,
-                                        Object_Name__c = parsedFields[variableIndex].get('objectName'),
-                                        Field_Name__c = parsedFields[variableIndex].get('fieldName'), 
-                                        Type__c = 'Body',
-                                        Alternate_Text__c = varAlternateTexts[variableIndex]
-                                    );
+                                if ((variableIndex < varAlternateTexts.size())) {
+                                    Template_Variable__c bodyVariable ;
+                                    if(whatsAppTemplate.Template_Category__c == 'Authentication'){
+
+                                        bodyVariable = new Template_Variable__c(
+                                            Name = placeholder,
+                                            Type__c = 'Body',
+                                            Alternate_Text__c = varAlternateTexts[variableIndex]
+                                            );
+                                        }
+                                    else{
+                                            bodyVariable = new Template_Variable__c(
+                                                Name = placeholder,
+                                                Object_Name__c = parsedFields[variableIndex].get('objectName'),
+                                                Field_Name__c = parsedFields[variableIndex].get('fieldName'), 
+                                                Type__c = 'Body',
+                                                Alternate_Text__c = varAlternateTexts[variableIndex]
+                                            );
+                                    }
                                     variableRecords.add(bodyVariable);
                                 } else {
                                     System.debug('VariableIndex out of bounds: ' + variableIndex);

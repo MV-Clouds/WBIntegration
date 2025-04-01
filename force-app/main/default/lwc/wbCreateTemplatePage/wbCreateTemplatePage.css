@@ -371,6 +371,7 @@ textarea {
     display: flex;
     margin-top: 0.5rem;
     gap: 1rem;
+    align-items: center;
 }
 
 .var-input {
@@ -598,6 +599,7 @@ textarea {
     margin-top: 1rem;
     position: relative;
     gap: 1rem;
+    align-items: center;
 }
 
 .uploadlabel {
@@ -994,14 +996,23 @@ textarea {
 }
 
 .dropdown{
-    border: 1px solid #d3d1d1;
-    border-radius: 4px;
-    padding: 0.4rem;
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border-color: #80808087;
+    padding-left: 0.2rem;
+    padding-right: 0;
+}
+ .true-div > .var , .closeButton{
+    margin-top: 15px;
+    height:35px;
+    
 }
 
-.field-dropdown{
+/* .field-dropdown{
     width: 170px;
-}
+} */
+
 
 /* .footer{
     text-align: center;

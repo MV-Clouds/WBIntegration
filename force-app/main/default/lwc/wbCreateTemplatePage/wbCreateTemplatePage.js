@@ -1743,6 +1743,10 @@ export default class WbCreateTemplatePage extends LightningElement {
                 case 'autofill':
                     this.autofilLabel = value;
                     break;
+
+                case 'expirationTime':
+                    this.expirationTime = value;
+                    break;
                 
                 case 'selectedTime':
                     this.selectedTime = value;
@@ -3102,7 +3106,7 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     get quickReplyOptions() {
         return this.dropdownOptions
-            .filter(option => option.value === 'QUICK_REPLY' || option.value === 'Marketing opt-out')
+            .filter(option => this.activeTab == 'Utility' ? option.value === 'QUICK_REPLY' : option.value === 'QUICK_REPLY' || option.value === 'Marketing opt-out')
             .map(option => ({
                 ...option,
                 iconUrl: this.getButtonPath(option.iconName), 
