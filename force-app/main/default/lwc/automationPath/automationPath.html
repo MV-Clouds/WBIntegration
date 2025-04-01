@@ -1,61 +1,139 @@
 <template>
-    <div class="container">
-        <!-- Full-width header -->
-        <div class="header">{automation.name}</div>
-        
-        <div class="content">
-            <!-- Sidebar with buttons -->
-            <div class="sidebar">
-                <p class="sidebar-title">Template Buttons:</p>
-                <template if:true={quickReplyButtons.length}>
-                    <ul class="button-list">
-                        <template for:each={quickReplyButtons} for:item="btn">
-                            <li key={btn} data-name={btn} onclick={handleButtonClick}>{btn}</li>
-                        </template>
-                    </ul>
-                </template>
-                <template if:false={quickReplyButtons.length}>
-                    <li>No Quick Reply buttons found</li>
-                </template>
-            </div>
-            
-            <!-- Main content area -->
-            <div class="main-content">
-                <lightning-tabset>
-                    <template for:each={dynamicTabs} for:item="tab">
-                        <lightning-tab key={tab.id} label={tab.label}>
-                            <template if:true={tab.isTemplateList}>
-                                <template for:each={tab.content} for:item="template">
-                                    <div key={template.id} class="template-box" data-id={template.id} onclick={handleTemplateSelection}>
-                                        <p>{template.name}</p>
-                                    </div>
-                                </template>
-                            </template>
-                            <template if:false={tab.isTemplateList}>
-                                <p>{tab.content}</p>
-                            </template>
-                        </lightning-tab>
-                    </template>
-                </lightning-tabset>
-                
-                <input type="text" class="search-box" placeholder="Search Template"/>
-                
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" class="date-input"/>
-                </div>
-                
-                <div class="form-group">
-                    <label>Select</label>
-                    <select class="select-box">
-                        <option>None</option>
-                    </select>
-                </div>
-            </div>
+    <div class="automation-container slds-box slds-theme_default">
+        <div class="slds-p-vertical_medium slds-p-horizontal_large slds-text-heading_large header-background slds-text-color_inverse">
+            {automation.name}
         </div>
-        <div class="button-container">
-            <button class="btn cancel">Cancel</button>
-            <button class="btn save" onclick={handleSave}>Save</button>
+
+        <lightning-layout class="slds-p-around_medium">
+
+            <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                <p class="slds-text-title slds-m-bottom_small">Template Buttons:</p>
+                <lightning-layout vertical-align="stretch" multiple-rows="true">
+                    <template for:each={templateButtons} for:item="btn">
+                        <lightning-layout-item key={btn.id} size="12" padding="slds-vertical-xx-small">
+                             <button
+                                class={btn.computedClass}
+                                data-id={btn.id}
+                                onclick={handleTemplateButtonClick}>
+                                {btn.label}
+                             </button>
+                        </lightning-layout-item>
+                    </template>
+                </lightning-layout>
+            </lightning-layout-item>
+
+            <lightning-layout-item size="12" medium-device-size="9" padding="around-small">
+
+                <lightning-layout>
+                    <lightning-layout-item flexibility="grow">
+                        <lightning-button-group>
+                            <template if:false={isFlowTemplate}>
+                                <lightning-button label="Send WhatsApp Template" value="whatsapp" onclick={handleActionChange}></lightning-button>
+                                <lightning-button label="Send Email Template" value="email" onclick={handleActionChange}></lightning-button>
+                            </template>
+                            <template if:true={isFlowTemplate}>
+                                <lightning-button label="Create Records" value="create" onclick={handleActionChange}></lightning-button>
+                            </template>
+                        </lightning-button-group>
+                    </lightning-layout-item>
+                </lightning-layout>
+
+                <div class="slds-m-top_medium slds-box content-box">
+                    <!-- WhatsApp View -->
+                    <template if:true={isWhatsAppView}>
+                        <lightning-layout vertical-align="end">
+                            <lightning-layout-item flexibility="grow" padding="around-small">
+                                <lightning-input
+                                    label="Search Template"
+                                    variant="label-hidden"
+                                    placeholder="Search Template"
+                                    type="search"
+                                    value={searchTerm}
+                                    onchange={handleSearchChange}>
+                                </lightning-input>
+                            </lightning-layout-item>
+                        </lightning-layout>
+
+                        <div class="slds-m-top_small scrollable-list">
+                            <template for:each={filteredWhatsAppTemplates} for:item="template">
+                                <div key={template.Id}
+                                    class={template.computedClass}
+                                    data-id={template.Id}
+                                    onclick={handleTemplateSelect}>
+                                    {template.Name}
+                                </div>
+                            </template>
+                            <template if:false={hasFilteredTemplates}>
+                                <div class="slds-text-align_center slds-p-vertical_medium slds-text-color_weak">
+                                    No matching templates found.
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Create Records View -->
+                    <template if:true={isCreateView}>
+                        <div class="slds-text-align_center slds-p-vertical_large">
+                            <lightning-combobox
+                                name="Object"
+                                label="Object"
+                                value={value}
+                                placeholder="Select Object"
+                                options={options}
+                                onchange={handleChange}>
+                            </lightning-combobox>
+                        </div>
+                    </template>
+
+                    <!-- Email View -->
+                    <template if:true={isEmailView}>
+                        <lightning-layout vertical-align="end">
+                            <lightning-layout-item flexibility="grow" padding="around-small">
+                                <lightning-input
+                                    label="Search Template"
+                                    variant="label-hidden"
+                                    placeholder="Search Template"
+                                    type="search"
+                                    value={searchTerm}
+                                    onchange={handleSearchChange}>
+                                </lightning-input>
+                            </lightning-layout-item>
+                        </lightning-layout>
+
+                        <div class="slds-m-top_small scrollable-list">
+                            <template for:each={filteredWhatsAppTemplates} for:item="template">
+                                <div key={template.Id}
+                                    class={template.computedClass}
+                                    data-id={template.Id}
+                                    onclick={handleTemplateSelect}>
+                                    {template.Name}
+                                </div>
+                            </template>
+                            <template if:false={hasFilteredTemplates}>
+                                <div class="slds-text-align_center slds-p-vertical_medium slds-text-color_weak">
+                                    No matching templates found.
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+            </lightning-layout-item>
+
+        </lightning-layout>
+
+        <div class="slds-p-around_medium slds-text-align_right footer-border">
+             <lightning-button
+                label="Cancel"
+                variant="neutral"
+                onclick={handleCancel}
+                class="slds-m-right_small">
+            </lightning-button>
+            <lightning-button
+                label="Save"
+                variant="brand"
+                onclick={handleSave}>
+            </lightning-button>
         </div>
     </div>
 </template>

@@ -40,8 +40,10 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     srNo: index + 1,
                     name: record.Name,
                     description: record.Description__c,
-                    template: record.WB_Template__r ? record.WB_Template__r.MVWB__Template_Name__c : ''
+                    template: record.WB_Template__r ? record.WB_Template__r.MVWB__Template_Name__c : '',
+                    templateType: record.WB_Template__r ? record.WB_Template__r.MVWB__Template_Type__c : ''
                 }));
+                console.log('this.automationData =', JSON.stringify(this.automationData));
                 this.originalAutomationData = [...this.automationData];
             })
             .catch(error => {
@@ -166,6 +168,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     */
     handleEdit(event) {
         const recordId = event.currentTarget.dataset.id;
+        const templateType = event.currentTarget.dataset.templateType;
         // const selectedRecord = this.automationData.find(auto => auto.id === recordId);
 
         // if (selectedRecord) {
@@ -176,14 +179,20 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         //     this.description = selectedRecord.description;
         //     this.selectedTemplateId = this.templateOptions.find(option => option.label === selectedRecord.template)?.value || '';
         // }
-        console.log('Record ID:', recordId);
-        this[NavigationMixin.Navigate]({
-            type: 'standard__navItemPage',
+
+        let cmpDef = {
+            componentDef : 'c:automationPath',
             attributes: {
-                apiName: 'Automation_Path'
-            },
-            state: {
-                c__recordId: recordId
+                recordId: recordId,
+                templateType: templateType
+            }
+        };
+        console.log('Record ID:', recordId, 'Template Type:', templateType);
+        let encodedDef = btoa(JSON.stringify(cmpDef));
+        this[NavigationMixin.Navigate]({
+            type: "standard__webPage",
+            attributes: {
+                url: "/one/one.app#" + encodedDef
             }
         });
     }

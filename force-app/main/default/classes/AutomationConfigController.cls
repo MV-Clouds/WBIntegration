@@ -16,7 +16,7 @@ public with sharing class AutomationConfigController {
     @AuraEnabled
     public static List<Automation__c> getAllAutomations() {
         try {
-            return [SELECT Id, Name, Description__c, WB_Template__r.MVWB__Template_Name__c FROM Automation__c WITH SECURITY_ENFORCED];
+            return [SELECT Id, Name, Description__c, WB_Template__r.MVWB__Template_Name__c, WB_Template__r.MVWB__Template_Type__c FROM Automation__c WITH USER_MODE];
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'AutomationConfigController',
@@ -196,7 +196,7 @@ public with sharing class AutomationConfigController {
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'AutomationConfigController',
-                'methodName' => 'getAllAutomations',
+                'methodName' => 'getAutomationById',
                 'exceptionObj' => e,
                 'isApiException' => false,
                 'statusCode' => null,
@@ -304,5 +304,43 @@ public with sharing class AutomationConfigController {
             });
             return null;
         }
+    }
+
+    @AuraEnabled
+    public static List<String> getAvailableObjects() {
+        List<String> objectNames = new List<String>();
+        for (Schema.SObjectType obj : Schema.getGlobalDescribe().Values()) {
+            objectNames.add(obj.getDescribe().getName());
+        }
+        return objectNames;
+    }
+
+    @AuraEnabled
+    public static Map<String, String> getObjectFields(String objectName) {
+        Map<String, String> fieldMap = new Map<String, String>();
+        
+        if (String.isEmpty(objectName) || !Schema.getGlobalDescribe().containsKey(objectName)) {
+            return fieldMap; // Return empty map if object is not found
+        }
+
+        Schema.DescribeSObjectResult objDesc = Schema.getGlobalDescribe().get(objectName).getDescribe();
+        
+        for (String fieldName : objDesc.fields.getMap().keySet()) { 
+            Schema.DescribeFieldResult fieldDesc = objDesc.fields.getMap().get(fieldName).getDescribe();
+            fieldMap.put(fieldDesc.getName(), fieldDesc.getType().name()); 
+        }
+        return fieldMap;
+    }
+
+    @AuraEnabled
+    public static List<String> getFlowFields(String chatRecordId) {
+        MVWB__Chat__c chat = [SELECT Flow_Response_JSON__c FROM MVWB__Chat__c WHERE Id = :chatRecordId LIMIT 1];
+        
+        List<String> flowKeys = new List<String>();
+        if (String.isNotBlank(chat.Flow_Response_JSON__c)) {
+            Map<String, Object> flowData = (Map<String, Object>) JSON.deserializeUntyped(chat.Flow_Response_JSON__c);
+            flowKeys.addAll(flowData.keySet());
+        }
+        return flowKeys;
     }
 }
