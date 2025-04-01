@@ -364,10 +364,23 @@ public with sharing class BroadcastMessageController {
             } else {
                 timeOfMessage = timeOfMessage.replace('T', ' ').replace('Z', '');
 
-                DateTime scheduledDateTime = DateTime.valueOf(timeOfMessage);
-                String formattedTime = scheduledDateTime.format('hh:mm a');
+                DateTime utcDateTime = DateTime.valueOf(timeOfMessage);
 
-                String cronExpression = getCronExpression(scheduledDateTime);
+                // Convert UTC to user's timezone
+                TimeZone userTimeZone = UserInfo.getTimeZone();
+                DateTime userDateTime = utcDateTime.addSeconds(userTimeZone.getOffset(utcDateTime) / 1000);
+
+                // Validate that the scheduled time is in the future
+                if (userDateTime < DateTime.now()) {
+                    throw new AuraHandledException('Scheduled time must be in the future.');
+                }
+
+                String formattedTime = userDateTime.format('hh:mm a');
+
+                System.debug('formattedTime ==> ' + formattedTime);
+                System.debug('userDateTime ==> ' + userDateTime); 
+
+                String cronExpression = getCronExpression(userDateTime);
     
                 WhatsAppMessageBatchSchedulable batchSchedular = new WhatsAppMessageBatchSchedulable(templateId, chatRecs, broadcast.Id, objectApiName);
                 

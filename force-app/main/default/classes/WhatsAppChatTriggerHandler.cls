@@ -1,4 +1,4 @@
-public with sharing class WhatsAppChatTriggerHandler {
+public without sharing class WhatsAppChatTriggerHandler {
     private List<Chat__c> recordNewList = new List<Chat__c>();
     private List<Chat__c> recordOldList = new List<Chat__c>();
     private Map<Id, Chat__c> recordNewMap = new Map<Id, Chat__c>();
@@ -41,8 +41,7 @@ public with sharing class WhatsAppChatTriggerHandler {
             if (!broadcastIds.isEmpty()) {
                 for (Broadcast__c broadcast : [SELECT Id, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c 
                                                FROM Broadcast__c 
-                                               WHERE Id IN :broadcastIds
-                                               WITH SECURITY_ENFORCED]) {
+                                               WHERE Id IN :broadcastIds]) {
                     broadcast.Total_Sent__c = broadcast.Total_Sent__c == null ? 0 : broadcast.Total_Sent__c;
                     broadcast.Total_Delivered__c = broadcast.Total_Delivered__c == null ? 0 : broadcast.Total_Delivered__c;
                     broadcast.Total_Read__c = broadcast.Total_Read__c == null ? 0 : broadcast.Total_Read__c;
@@ -92,6 +91,7 @@ public with sharing class WhatsAppChatTriggerHandler {
             }
         }
         catch(Exception e){
+            System.debug(e.getMessage());
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => CLASS_NAME,
                 'methodName' => 'updateBroadcastCounts',

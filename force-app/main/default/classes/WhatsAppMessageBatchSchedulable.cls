@@ -1,19 +1,19 @@
-public with sharing class WhatsAppMessageBatchSchedulable implements Schedulable {
+global with sharing class WhatsAppMessageBatchSchedulable implements Schedulable {
 
-    public static String templateId;
-    public static List<Chat__c> chatRecs;
-    public static String broadcastId;
-    public static String objectApiName;
+    global String templateId;
+    global List<Chat__c> chatRecs;
+    global String broadcastId;
+    global String objectApiName;
     
-    public WhatsAppMessageBatchSchedulable(String tempId, List<Chat__c> chats, String broadcastRecId, String objName) {
-        templateId = tempId;
-        chatRecs = chats;
-        broadcastId = broadcastRecId;
-        objectApiName = objName;
+    global WhatsAppMessageBatchSchedulable(String tempId, List<Chat__c> chats, String broadcastRecId, String objName) {
+        this.templateId = tempId;
+        this.chatRecs = chats;
+        this.broadcastId = broadcastRecId;
+        this.objectApiName = objName;
     }
     
-    public void execute(SchedulableContext context){
-        WhatsAppMessageBatch batchJob = new WhatsAppMessageBatch(templateId, chatRecs, broadcastId, objectApiName);
+    global void execute(SchedulableContext context){
+        WhatsAppMessageBatch batchJob = new WhatsAppMessageBatch(this.templateId, this.chatRecs, this.broadcastId, this.objectApiName);
         Database.executeBatch(batchJob, 1);
     }
 }

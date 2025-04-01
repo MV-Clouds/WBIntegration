@@ -392,6 +392,7 @@ export default class WbAllBroadcastPage extends LightningElement {
             .then(result => {
                 if(result == 'Success'){
                     this.showToast('Success', 'Broadcast sent successfully', 'success');
+                    this.handleCloseOnPopup();
                 } else {
                     this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
                 }
