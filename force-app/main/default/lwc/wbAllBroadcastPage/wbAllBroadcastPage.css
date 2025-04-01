@@ -11,9 +11,6 @@
     margin-top: -0.8rem;
     width: calc(100% + 1.5rem);
     margin-left: -0.8rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
     overflow: hidden;
     background-image: url('/resource/MVWB__wbiTemplateBg');
     background-repeat: no-repeat;
@@ -22,11 +19,13 @@
 
 .container {
     height: 75%;
+    overflow: scroll;
 }
 
 .filterparent {
     display: flex;
     justify-content: space-between;
+    margin: 1rem;
 }
 
 .filterdiv {
@@ -132,7 +131,6 @@
 .table-container {
     border-radius: 0.4rem; 
     overflow: scroll !important; 
-    height: 100%;
     scrollbar-width: none !important;
 }
 
@@ -257,11 +255,10 @@ span {
 
 .box-container{
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     max-height: 20rem;
     overflow: scroll;
-    padding: 10px;
+    padding: 2px;
     scrollbar-width: none;
 }
 

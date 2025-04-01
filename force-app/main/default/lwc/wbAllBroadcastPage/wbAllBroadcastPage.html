@@ -10,7 +10,7 @@
 
         <h1 class="slds-text-align_center heading">Recent Broadcasts</h1>
 
-        <div class="slds-p-horizontal--medium filterparent">
+        <div class="filterparent">
             <div class="filterdiv">
                 <lightning-input variant="label-hidden" class="filter search-div" name="searchInput" type="search"
                     placeholder="Search by Group Name" onchange={handleSearch}></lightning-input>
@@ -150,7 +150,7 @@
                                                     <div class="">
                                                         <h3 class="slds-text-heading_small">{group.Name}</h3>
                                                         <p><strong>Members:</strong> {group.Count_of_Members__c}</p>
-                                                        <p><strong>Object of Group Members:</strong>
+                                                        <p><strong>Object of Group Members: </strong>
                                                             {group.Object_Name__c}</p>
                                                         <p><strong>Description:</strong> {group.Description__c}</p>
                                                     </div>

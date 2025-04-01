@@ -72,6 +72,10 @@ export default class BroadcastMessage extends LightningElement {
         return !this.selectedObject;
     }
 
+    get isBtnDisabled() {
+        return !this.paginatedData.length;
+    }
+
     /**
      * Getter Name : totalItems
      * @description : set the totalItems count.
@@ -291,6 +295,28 @@ export default class BroadcastMessage extends LightningElement {
         }
     }
 
+    handleBack() {
+        this.cleardata();
+        this.isCreateBroadcastComp = false;
+        this.isAllBroadcastGroupPage = true;
+        
+    }
+
+    cleardata() {
+        this.selectedObject = '';
+        this.selectedListView = '';
+        this.data = [];
+        this.filteredData = [];
+        this.paginatedData = [];
+        this.currentPage = 1;
+        this.selectedRecords.clear(); // Clear selections
+        this.broadcastGroupName = '';
+        this.messageText = '';
+        this.isCreateBroadcastModalOpen = false;
+        this.broadcastGroupId = null;
+        this.groupMembers = []; 
+        this.isIntialRender = true;
+    }        
 
     handleSearch(event) {
         this.searchTerm = event.target.value.toLowerCase();

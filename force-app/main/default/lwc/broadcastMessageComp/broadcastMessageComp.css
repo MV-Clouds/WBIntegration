@@ -38,6 +38,15 @@
     text-align: center;
 }
 
+.back-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .container{
     overflow-y: scroll;
     overflow-x: hidden;
@@ -162,12 +171,6 @@ span {
 .checkbox-column {
     width: 40px;
 }
-
-.create-btn{
-    position: absolute;
-    right: 8px;
-}
-
 
 /* Modal CSS */
 

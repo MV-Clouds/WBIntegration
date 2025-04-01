@@ -254,16 +254,25 @@ export default class WbAllBroadcastPage extends LightningElement {
     }
 
     handleSearchPopup(event) {
+        const searchValue = event.target.value.trim().toLowerCase();
+    
+        // Filter the broadcast groups based on the search value
         this.filteredGroups = this.broadcastGroups.filter(group =>
-            group.Name.toLowerCase().includes(event.target.value.trim().toLowerCase())
+            group.Name.toLowerCase().includes(searchValue)
         );
+    
+        // Ensure the IsChecked property is updated for filtered groups
+        this.filteredGroups = this.filteredGroups.map(group => ({
+            ...group,
+            IsChecked: this.selectedGroupIds.some(selected => selected.Id === group.Id)
+        }));
     }
-
     // Handle group selection
     handleGroupSelection(event) {
         try {
             const groupId = event.target.dataset.id;
             const selectedGroup = this.broadcastGroups.find(group => group.Id === groupId);
+    
             if (event.target.checked) {
                 // Add group ID to selected list if checked
                 if (!this.selectedGroupIds.some(group => group.Id === groupId)) {
@@ -272,21 +281,20 @@ export default class WbAllBroadcastPage extends LightningElement {
                         { Id: groupId, ObjName: selectedGroup.Object_Name__c } // Store both Id and Name
                     ];
                 }
-
             } else {
                 // Remove group ID if unchecked
                 this.selectedGroupIds = this.selectedGroupIds.filter(group => group.Id !== groupId);
             }
-
-            this.selectedObjectName = this.selectedGroupIds[0].ObjName;
-
+    
+            this.selectedObjectName = this.selectedGroupIds[0]?.ObjName || '';
+    
             // Update filteredGroups to reflect selection
             this.filteredGroups = this.filteredGroups.map(group => ({
                 ...group,
                 IsChecked: this.selectedGroupIds.some(selected => selected.Id === group.Id)
             }));
         } catch (error) {
-            console.error('Erorr in selection : ', error);
+            console.error('Error in selection: ', error);
         }
     }
 
@@ -324,16 +332,23 @@ export default class WbAllBroadcastPage extends LightningElement {
         }
     }
 
-    handleCloseOnPopup(){
+    handleCloseOnPopup() {
         this.showPopup = false;
         this.popUpFirstPage = true;
         this.popUpSecondpage = false;
         this.popUpLastPage = false;
         this.popupHeader = 'Select Groups';
+    
+        // Reset the selected values
         this.selectedGroupIds = [];
         this.selectedTemplate = '';
         this.selectedDateTime = '';
-
+    
+        // Reset the filteredGroups and update IsChecked property
+        this.filteredGroups = this.broadcastGroups.map(group => ({
+            ...group,
+            IsChecked: false
+        }));
     }
 
     handlePreviousOnPopup(){
@@ -406,6 +421,7 @@ export default class WbAllBroadcastPage extends LightningElement {
             .then(result => {
                 if(result == 'Success'){
                     this.showToast('Success', 'Broadcast sent successfully', 'success');
+                    this.handleCloseOnPopup();
                 } else {
                     this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
                 }

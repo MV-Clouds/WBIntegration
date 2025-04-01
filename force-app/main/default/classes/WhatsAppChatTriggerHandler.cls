@@ -92,8 +92,6 @@ public with sharing class WhatsAppChatTriggerHandler {
             }
         }
         catch(Exception e){
-            System.debug(e.getMessage());
-            System.debug(e.getLineNumber());
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => CLASS_NAME,
                 'methodName' => 'updateBroadcastCounts',
