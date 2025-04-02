@@ -78,6 +78,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isCallPhone = false;
     @track isOfferCode = false;
     @track isVisitSite = false;
+    @track isFlow = false;
     @track isCustom = false;
     @track createButton = false;
     @track isButtonDisabled = false;
@@ -200,6 +201,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isAddCallPhoneNumber = false;
     @track isAddVisitWebsiteCount = false;
     @track isAddCopyOfferCode = false;
+    @track isAddFlow = false;
     
     @track tempLocationIcon=tempLocationIcon;
     @track tempVideoIcon=tempVideoIcon;
@@ -210,7 +212,12 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isFlowUtility = false;
     @track isFlowSelected = false;
     @track isModalOpen = false;
-
+    @track selectedFlowId = ''; 
+    // @track allFlows ;
+    @track selectedFlow;
+    @track iframeSrc;
+    @track isModalPreview = false;
+    // @track NoFileSelected = true;
 
 
     get expireTime() {
@@ -229,13 +236,32 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     closeModal() {
         this.isModalOpen = false;
+        this.isModalPreview = false;
+    }
+    modalPreview(){
+        this.isModalPreview = true;
     }
 
     handleFlowSelection(event) {
-        const selectedFlow = event.detail;
-        this.selectedFlowName = selectedFlow ? selectedFlow : 'Choose Flow';
-        this.NoFileSelected = false;
-        this.isModalOpen = false;
+        const { selectedFlow, iframeSrc ,flows } = event.detail; // Destructure the received data
+    
+        this.selectedFlowId = selectedFlow; // Get selected Flow ID
+        this.iframeSrc = iframeSrc;
+        this.selectedFlow = flows; // Store the entire list of flows
+    
+        console.log('Selected Flow ID:', this.selectedFlowId);
+        console.log('All Flows:', this.selectedFlow);
+    
+        this.isFlowSelected = true; // Hide "Choose Flow" button after selection
+        this.NoFileSelected = false; // Hide text after selection
+        this.closeModal();
+    }
+
+    handleFlowDeleteClick(event){
+        this.isFlowSelected = false;
+        this.selectedFlowId = ''; // Get selected Flow ID
+        this.selectedFlow = '';
+        this.NoFileSelected = true;
     }
     
     
@@ -359,26 +385,27 @@ export default class WbCreateTemplatePage extends LightningElement {
 
         
         this.ifUtilty = false;
-        this.showDefaultBtn = false;
+        // this.showDefaultBtn = false;
         this.utilityOrderStatusSelected = false;
         this.authenticationPasscodeSelected = false;
         this.UtilityCustomSelected = false;
         this.defaultPreview = false;
         this.isFlowMarketing = false;
         this.isFlowUtility = false;
+        this.showDefaultBtn = true;
 
         switch(this.selectedOption) {
             case 'ORDER_STATUS':
                 this.ifUtilty = true;
                 this.utilityOrderStatusSelected = true;
+                this.showDefaultBtn = false;
                 break;
             case 'One-time passcode':
                 this.authenticationPasscodeSelected = true;
-                this.showDefaultBtn = true;
                 break;
             case 'Custom':
                 this.UtilityCustomSelected = true;
-                this.showDefaultBtn = true;
+                // this.showDefaultBtn = true;
                 break;
             case 'flow':
                 this.isFlowMarketing = true;
@@ -388,9 +415,21 @@ export default class WbCreateTemplatePage extends LightningElement {
                 break;
             default:
                 this.defaultPreview = true;
-                this.showDefaultBtn = true;
+                // this.showDefaultBtn = true;
                 break;
         }
+        // if(this.isFlowMarketing || this.isFlowUtility){
+        //     this.handleMenuSelect({
+        //         currentTarget: {
+        //             dataset: {
+        //                 value: 'Flow',
+        //                 buttonData: false
+        //             }
+        //         }
+        //     });
+        // }
+        console.log('Radio Change '+this.isFlowMarketing+' '+this.isFlowUtility);
+        
 
     }
 
@@ -468,10 +507,11 @@ export default class WbCreateTemplatePage extends LightningElement {
         return [
             { label: 'Call Phone Number', value: 'PHONE_NUMBER' },
             { label: 'Visit Website', value: 'URL' },
-            { label: 'Copy Offer Code', value: 'COPY_CODE' }
+            { label: 'Copy Offer Code', value: 'COPY_CODE' },
+            { label: 'Complete flow', value: 'Flow' }
         ];
     }
-
+    
     get customOption() {
         return [
             { label: 'Custom', value: 'QUICK_REPLY' },
@@ -812,6 +852,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                                     isCallPhone: button.type === 'PHONE_NUMBER',
                                     isVisitSite: button.type === 'URL',
                                     isOfferCode: button.type === 'COPY_CODE',
+                                    isFlow : button.type === 'Flow',
                                     hasError: false,
                                     errorMessage: ''
                                 };
@@ -1675,6 +1716,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.visitWebsiteCount = 0;
         this.callPhoneNumber = 0;
         this.copyOfferCode = 0;
+        this.flowCount = 0;
         this.marketingOpt = 0;
         this.selectContent='Add security recommendation';
         // this.isVideoFileUploader = false;
@@ -1862,6 +1904,9 @@ export default class WbCreateTemplatePage extends LightningElement {
             } else if (removedButton && removedButton.isOfferCode) {
                 this.copyOfferCode--;
             }
+            else if (removedButton && removedButton.isFlow) {
+                this.flowCount--;
+            }
             this.buttonList = this.buttonList.filter((_, i) => i !== parseInt(index));
             if (this.buttonList.length == 0) {
                 this.createButton = false;
@@ -1897,6 +1942,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 isCallPhone: false,
                 isVisitSite: false,
                 isOfferCode: false,
+                isFlow:false,
                 hasError: false,  
                 errorMessage: ''   
             };
@@ -1910,6 +1956,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.isAddCallPhoneNumber = false;
             this.isAddVisitWebsiteCount = false;
             this.isAddCopyOfferCode = false;
+            this.isAddFlow = false;
         
             switch (selectedValue) {
                 case 'QUICK_REPLY':
@@ -1967,6 +2014,21 @@ export default class WbCreateTemplatePage extends LightningElement {
                         this.isAddCopyOfferCode = true;
                     }
                     break;
+                    case 'Flow':
+                        if (this.flowCount < 1) {
+                            console.log('Copy Flow');
+                            
+                            this.createButton = true;
+                            newButton.isFlow = true;
+                            newButton.btntext = buttonData?.btntext || 'View flow';
+                            this.btntext = buttonData?.btntext || 'View flow';
+                            
+                            // newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
+                            // this.btntext = buttonData?.btntext || 'Copy Offer Code';
+                            this.flowCount++;
+                            this.isAddFlow = true;
+                        }
+                        break;
                 default:
                     newButton.btntext = 'Add Button';
             }
@@ -1981,7 +2043,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             }
         
             if (newButton.selectedActionType != 'QUICK_REPLY' && newButton.selectedActionType != 'Marketing opt-out') {
-                if(this.isAddCallPhoneNumber || this.isAddCopyOfferCode || this.isAddVisitWebsiteCount){
+                if(this.isAddCallPhoneNumber || this.isAddCopyOfferCode || this.isAddVisitWebsiteCount || this.isAddFlow){
                     console.log("new button ::: ",newButton);
                     
                     this.buttonList.push(newButton);
@@ -2102,7 +2164,8 @@ export default class WbCreateTemplatePage extends LightningElement {
             'Marketing opt-out': 'utility:reply',
             'PHONE_NUMBER': 'utility:call',
             'URL': 'utility:new_window',
-            'COPY_CODE': 'utility:copy'
+            'COPY_CODE': 'utility:copy',
+            'Flow':'utility:file'
         };
         return iconMap[type] || 'utility:question'; 
     }
@@ -3129,7 +3192,8 @@ export default class WbCreateTemplatePage extends LightningElement {
         { title: 'Marketing Opt-Out', value: 'Marketing opt-out', iconName: 'marketing',description:'Maximum 1 button can be added' },
         { title: 'Call Phone Number', value: 'PHONE_NUMBER', iconName: 'phone', description:'Maximum 1 button can be added'},
         { title: 'Visit Website', value: 'URL', iconName: 'site',description:'Maximum 2 button can be added' },
-        { title: 'Copy Offer Code', value: 'COPY_CODE', iconName: 'copy',description:'Maximum 1 button can be added' }
+        { title: 'Copy Offer Code', value: 'COPY_CODE', iconName: 'copy',description:'Maximum 1 button can be added' },
+        { title: 'Complete flow', value: 'Flow', iconName: 'flow',description:'Maximum 1 button can be added' }
     ];
 
     get quickReplyOptions() {
@@ -3144,7 +3208,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     
     get callToActionOptions() {
         return this.dropdownOptions
-            .filter(option => option.value === 'PHONE_NUMBER' || option.value === 'URL' || option.value === 'COPY_CODE')
+            .filter(option => option.value === 'PHONE_NUMBER' || option.value === 'URL' || option.value === 'Flow' || option.value === 'COPY_CODE')
             .map(option => ({
                 ...option,
                 iconUrl: this.getButtonPath(option.iconName), 

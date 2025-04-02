@@ -816,6 +816,44 @@
         return response;
     }
 
+    @AuraEnabled(cacheable=true)
+    public static List<Flow__c> getAllFlows() {
+        try {
+            return [SELECT Id,Flow_Id__c, Flow_Name__c,Flow_JSON__c, CreatedDate FROM Flow__c ORDER BY CreatedDate DESC];
+        } catch (Exception e) {
+            System.debug('Error fetching Flows: ' + e.getMessage());
+            return new List<Flow__c>();
+        }
+    }
+
+    @AuraEnabled
+    public static String getPreviewURLofWhatsAppFlow(String flowId) {
+        try {
+            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '?fields=preview.invalidate(false)';
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(endpoint);
+            request.setMethod('GET');
+            request.setHeader('Authorization', 'Bearer ' + accessToken);
+            Http http = new Http();
+            HttpResponse response = http.send(request);
+            
+            if (response.getStatusCode() == 200) {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+                Map<String, Object> previewMap = (Map<String, Object>) responseMap.get('preview');
+                String previewUrl = (String) previewMap.get('preview_url');
+                return previewUrl;
+            } else {
+                return 'failed';
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getPreviewURLofWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+            return 'failed';
+        }
+    }
+
     public class FileChunkWrapper {
         @AuraEnabled public String uploadSessionId;
         @AuraEnabled public String fileContent;

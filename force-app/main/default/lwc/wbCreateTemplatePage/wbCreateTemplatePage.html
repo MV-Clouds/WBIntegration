@@ -384,9 +384,7 @@
                                     <div class="tempHead">
                                         <p class="content">Flow setup</p>
                                     </div>
-                                    <div class="descp">
-                                        <p>Choose flow.</p>
-                                    </div>
+                                    
                                     <!-- <div class="tempHead">
                                         <p class="content">Set custom validity period for your message
                                         </p>
@@ -405,9 +403,7 @@
                                                     <template if:true={NoFileSelected}>
                                                         <span>Choose Flow</span>
                                                     </template>
-                                                    <!-- <template if:true={selectedFlowName}>
-                                                        <span>{selectedFlowName}</span>
-                                                    </template> -->
+                                                    
                                                 </label>
                                             </div>
                                         </div>
@@ -415,12 +411,14 @@
                                         <template if:true={isModalOpen}>
                                             <c-flow-preview-model onclose={closeModal} onsubmit={handleFlowSelection}></c-flow-preview-model>
                                         </template>
+                                        
+                                        
                                     </template>
                                     <template if:true={isFlowSelected}>
                                         <div class="flow-details">
-                                            <p class='flow-name'></p>
-                                            <lightning-button label="Preview" title="previewFlow" onclick={handleClick} class="slds-m-left_x-small"></lightning-button>
-                                            <lightning-button label="Delete" title="deleteFlow" onclick={handleClick} class="slds-m-left_x-small"></lightning-button>
+                                            <p class='flow-name'>{selectedFlow.name}</p>
+                                            <lightning-button label="Preview" title="previewFlow" onclick={modalPreview} class="slds-m-left_x-small"></lightning-button>
+                                            <lightning-button label="Delete" title="deleteFlow" onclick={handleFlowDeleteClick} class="slds-m-left_x-small"></lightning-button>
                                         </div>
                                     </template>
 
@@ -1078,7 +1076,30 @@
                                     </div>
                                     <div style="padding:6px;padding-left:10px;font-size:16px;">
                                         <p style="font-weight: bold;">Button text</p>
-                                        
+                                        <div class="btntxt">
+                                            <label for="btn-text">Button text</label>
+                                            <div class="count-input">
+                                                <input class="text-btn custom-btn" type="text"
+                                                    name="Cbtntext" value={button.Cbtntext}
+                                                    disabled={button.isDisabled} maxlength="25"
+                                                    data-index={index} oninput={handleCustomText} />
+                                                <p class="char-count btn-count">
+                                                    {button.Cbtntext.length}/{maxBtnTxt}</p>
+                                            </div>
+
+                                            <template if:true={button.hasError}>
+                                                <p class="slds-text-color_error">
+                                                    {button.errorMessage}</p>
+                                            </template>
+                                        </div>
+                                        <div class="remove-btn">
+                                            <button type="button" class="remove-button"
+                                                onclick={handleRemoveCustom} data-index={index}>
+                                                <lightning-icon icon-name="utility:delete"
+                                                    size="x-small" alternative-text="Delete icon"
+                                                    class="remove-icon"></lightning-icon>
+                                            </button>
+                                        </div>
 
                                     </div>
                                 </div>
@@ -1618,6 +1639,31 @@
     </template>
     <template if:true={isAllTemplate}>
         <c-wb-all-template-page ontemplateupdate={handleTemplateUpdate}></c-wb-all-template-page>
+    </template>
+    <template if:true={isModalPreview}>
+        <section class="slds-modal slds-fade-in-open" role="dialog" aria-labelledby="modal-heading">
+            <div class="slds-modal__container" style="width: 50%; max-width: 100%; height: auto;">
+                <!-- Modal Header -->
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading" class="slds-text-heading_medium">Select an existing flow</h2>
+                    <lightning-button-icon 
+                        icon-name="utility:close" 
+                        alternative-text="Close"
+                        class="slds-modal__close" 
+                        onclick={closeModal} 
+                        aria-label="Close modal">
+                    </lightning-button-icon>
+                </header>
+    
+                <!-- Modal Content -->
+                <div class="slds-modal__content slds-p-around_medium slds-grid slds-gutters" style="display: flex; justify-content: center; align-items: center;">
+                    <div class="preview-container" style="width: 280px; max-width: 100%; max-height: 700px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
+                        <iframe src={iframeSrc} class="iframe-preview" style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
 
 </template>
