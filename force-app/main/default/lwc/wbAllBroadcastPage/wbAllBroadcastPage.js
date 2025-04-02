@@ -17,7 +17,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     selectedTemplate = null;
     selectedDateTime;
     currentPage = 1;
-    pageSize = 10;
+    pageSize = 15;
     visiblePages = 5;
     isLoading = false;
     showPopup = false;
@@ -25,7 +25,10 @@ export default class WbAllBroadcastPage extends LightningElement {
     popUpFirstPage = true;
     popUpSecondpage = false;
     popUpLastPage = false;
+    isBroadcastReportComponent = false;
     popupHeader = 'Choose Broadcast Groups';
+    isbroadcastPage = true;
+    broadcastId = null;
 
     get showNoRecordsMessage() {
         return this.filteredData.length === 0;
@@ -107,6 +110,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     }
     
     connectedCallback() {
+
         this.loadBroadcastGroups();
         this.loadAllTemplates(); // Load templates on component initialization
     }
@@ -298,6 +302,13 @@ export default class WbAllBroadcastPage extends LightningElement {
         }
     }
 
+    handleBroadcastClick(event) {
+        const broadcastId = event.target.dataset.id;
+        this.broadcastId = broadcastId;
+        this.isBroadcastReportComponent = true;
+        this.isbroadcastPage = false;
+    }
+
     handleNextOnPopup() {
         try {
             const firstObjName = this.selectedGroupIds[0]?.ObjName;
@@ -388,17 +399,25 @@ export default class WbAllBroadcastPage extends LightningElement {
             return;
         }
 
-        createChatRecods({templateId: this.selectedTemplate, groupIds: this.selectedGroupIds, isScheduled: true, timeOfMessage: this.selectedDateTime})
+        console.log('selectedDateTime ==> ', this.selectedDateTime);
+        
+
+        let grpIdList = this.selectedGroupIds.map(record => record.Id);
+
+        createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: true, timeOfMessage: this.selectedDateTime, })
             .then(result => {
                 if(result == 'Success'){
                     this.showToast('Success', 'Broadcast sent successfully', 'success');
-                    this.handleCloseOnPopup();
                 } else {
                     this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error in send click: ' + error);
+                console.log(error.body.message);
+                console.log(JSON.stringify(error));
+                
+                
             })
             .finally(() => {
                 this.isLoading = false;
@@ -432,6 +451,30 @@ export default class WbAllBroadcastPage extends LightningElement {
             })
             .finally(() => {
                 this.isLoading = false;
+            });
+    }
+
+    handleSave(event) {
+        const { name, description, phone } = event.detail; // Include phone field
+        const request = {
+            name,
+            description,
+            phoneNumbers: [phone], // Pass phone as part of phoneNumbers array
+            objectApiName: this.selectedObjectName,
+            listViewName: this.selectedListView,
+            isUpdate: this.isUpdate,
+            broadcastGroupId: this.broadcastGroupId
+        };
+
+        // Call Apex method to save the broadcast group
+        saveBroadcastGroup({ request })
+            .then(() => {
+                this.showToast('Success', 'Broadcast group saved successfully', 'success');
+                this.loadBroadcastGroups(); // Reload groups after save
+            })
+            .catch((error) => {
+                console.error('Error saving broadcast group:', error);
+                this.showToast('Error', 'Failed to save broadcast group', 'error');
             });
     }
 

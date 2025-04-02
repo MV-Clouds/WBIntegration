@@ -18,7 +18,7 @@
 }
 
 .container {
-    height: 75%;
+    height: calc(100% - 10rem);
     overflow: scroll;
 }
 
@@ -152,6 +152,11 @@
 .table thead{
     position: sticky;
     top: 0;
+}
+
+.table-name{
+    cursor: pointer;
+    color: #0082c7 !important;
 }
 
 .table th {

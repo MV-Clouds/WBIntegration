@@ -6,13 +6,15 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
     global String objectApiName;
     global List<Chat__c> chatsToUpdate = new List<Chat__c>();
     global static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+    global String phoneField;
 
     // Constructor to pass Chat__c list and template data
-    global WhatsAppMessageBatch(String tempId, List<Chat__c> chats, String brId, String objName) {
+    global WhatsAppMessageBatch(String tempId, List<Chat__c> chats, String brId, String objName, String phoneFieldName) {
         this.chatsToProcess = chats;
         this.templateId = tempId;
         this.broadcastId = brId;
         this.objectApiName = objName;
+        this.phoneField = phoneFieldName;
     }
 
     global Database.QueryLocator start(Database.BatchableContext bc) {
@@ -42,7 +44,8 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             System.debug(chat);
             String phone = chat.Phone__c;
             
-            String query = 'SELECT ' + 'Id, Phone' + ' FROM ' + this.objectApiName + ' WHERE Phone =: phone LIMIT 1';
+            String query = 'SELECT Id, ' + this.phoneField + ' FROM ' + this.objectApiName + ' WHERE ' + this.phoneField + ' =: phone LIMIT 1';
+
             List<sObject> records = Database.query(String.escapeSingleQuotes(query));
             System.debug(records.size());
             if(records.size() > 0){
@@ -196,6 +199,9 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             }
             return createJSONBody(to, 'template', data);
         } catch (Exception e) {
+            System.debug('Error in generatePayloadFromTemplateData: ' + e.getMessage());
+            System.debug('Line' + e.getLineNumber());
+
             throw new AuraHandledException('Exception in generatePayloadFromTemplateData - ' + e.getMessage());
         }
     }

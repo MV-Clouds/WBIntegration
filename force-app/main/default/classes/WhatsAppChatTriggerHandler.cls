@@ -59,11 +59,7 @@ public without sharing class WhatsAppChatTriggerHandler {
     
                 if (!broadcastsToUpdate.containsKey(chat.WB_Broadcast__c)) {
                     broadcastsToUpdate.put(chat.WB_Broadcast__c, new Broadcast__c(
-                        Id = chat.WB_Broadcast__c,
-                        Total_Sent__c = 0,
-                        Total_Delivered__c = 0,
-                        Total_Read__c = 0,
-                        Total_Failed__c = 0
+                        Id = chat.WB_Broadcast__c, Total_Sent__c = 0, Total_Delivered__c = 0, Total_Read__c = 0,Total_Failed__c = 0
                     ));
                 }
                 
@@ -72,15 +68,19 @@ public without sharing class WhatsAppChatTriggerHandler {
                 System.debug(broadcast);
     
                 // Increment the appropriate counter
-                if (chat.Message_Status__c == 'Sent') {
-                    broadcast.Total_Sent__c += 1;
-                } else if (chat.Message_Status__c == 'Delivered') {
-                    broadcast.Total_Delivered__c += 1;
-                } else if (chat.Message_Status__c == 'Seen') {
-                    broadcast.Total_Read__c += 1;
-                } else if (chat.Message_Status__c == 'Failed') {
-                    broadcast.Total_Failed__c += 1;
-                }
+                // if (chat.Message_Status__c == 'Sent') {
+                //     broadcast.Total_Sent__c += 1;
+                // } else if (chat.Message_Status__c == 'Delivered') {
+                //     broadcast.Total_Delivered__c += 1;
+                // } else if (chat.Message_Status__c == 'Seen') {
+                //     broadcast.Total_Read__c += 1;
+                // } else if (chat.Message_Status__c == 'Failed') {
+                //     broadcast.Total_Failed__c += 1;
+                // }
+                broadcast.Total_Sent__c += chat.Message_Status__c == 'Sent' ? 1 : 0;
+                broadcast.Total_Delivered__c += chat.Message_Status__c == 'Delivered' ? 1 : 0;
+                broadcast.Total_Read__c += chat.Message_Status__c == 'Seen' ? 1 : 0;
+                broadcast.Total_Failed__c += chat.Message_Status__c == 'Failed' ? 1 : 0;
             }
     
             // Perform bulk update
@@ -92,16 +92,7 @@ public without sharing class WhatsAppChatTriggerHandler {
         }
         catch(Exception e){
             System.debug(e.getMessage());
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => CLASS_NAME,
-                'methodName' => 'updateBroadcastCounts',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => CLASS_NAME,'methodName' => 'updateBroadcastCounts','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     }
         

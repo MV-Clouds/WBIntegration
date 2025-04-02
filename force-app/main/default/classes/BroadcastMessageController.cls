@@ -37,16 +37,7 @@ public with sharing class BroadcastMessageController {
             return result;
     
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'BroadcastMessageController',
-                'methodName' => 'getObjectConfigs',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getObjectConfigs', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error fetching object configs: ' + e.getMessage());
         }
     }
@@ -63,7 +54,7 @@ public with sharing class BroadcastMessageController {
     @AuraEnabled
     public static List<Broadcast_Group__c> getBroadcastGroups(){
         try {
-            return [SELECT Id, Name, Count_of_Members__c, Description__c, Object_Name__c FROM Broadcast_Group__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
+            return [SELECT Id, Name, Count_of_Members__c, Description__c, Object_Name__c, Phone_Field__c FROM Broadcast_Group__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
@@ -98,7 +89,7 @@ public with sharing class BroadcastMessageController {
     @AuraEnabled
     public static List<Broadcast__c> getBroadcastRecs(){
         try {
-            return [SELECT Id, Name, Recipient_Count__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Failed__c FROM Broadcast__c WITH SECURITY_ENFORCED];
+            return [SELECT Id, Name, Recipient_Count__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c FROM Broadcast__c WITH SECURITY_ENFORCED];
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
@@ -138,16 +129,7 @@ public with sharing class BroadcastMessageController {
             }
     
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'BroadcastMessageController',
-                'methodName' => 'getTemplatesByObject',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getTemplatesByObject', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     
         return objectTemplateMap;
@@ -161,6 +143,7 @@ public with sharing class BroadcastMessageController {
                 String.isBlank(request.objectApiName) || 
                 request.phoneNumbers == null || request.phoneNumbers.isEmpty() || 
                 String.isBlank(request.description) || 
+                String.isBlank(request.phoneField) ||
                 String.isBlank(request.name)) { 
                 throw new AuraHandledException('All fields in the request are required, including the broadcast group name');
             }
@@ -170,7 +153,7 @@ public with sharing class BroadcastMessageController {
             
             if (isUpdate && String.isNotBlank(request.broadcastGroupId)) {
                 // Fetch existing Broadcast Group
-                broadcastGroup = [SELECT Id, Name, Description__c, Object_Name__c, List_View__c 
+                broadcastGroup = [SELECT Id, Name, Description__c, Object_Name__c, List_View__c, Phone_Field__c
                                   FROM Broadcast_Group__c 
                                   WHERE Id = :request.broadcastGroupId 
                                   WITH SECURITY_ENFORCED 
@@ -181,6 +164,7 @@ public with sharing class BroadcastMessageController {
                 broadcastGroup.Description__c = request.description;
                 broadcastGroup.Object_Name__c = request.objectApiName;
                 broadcastGroup.List_View__c = request.listViewName;
+                broadcastGroup.Phone_Field__c = request.phoneField;
     
                 // Use Database.update with false for partial success
                 Database.SaveResult updateResult = Database.update(broadcastGroup, false, AccessLevel.USER_MODE);
@@ -195,6 +179,7 @@ public with sharing class BroadcastMessageController {
                 broadcastGroup.Description__c = request.description;
                 broadcastGroup.Object_Name__c = request.objectApiName;
                 broadcastGroup.List_View__c = request.listViewName;
+                broadcastGroup.Phone_Field__c = request.phoneField;
     
                 // Use Database.insert with false for partial success
                 Database.SaveResult insertResult = Database.insert(broadcastGroup, false, AccessLevel.USER_MODE);
@@ -255,16 +240,7 @@ public with sharing class BroadcastMessageController {
             }
     
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'BroadcastMessageController',
-                'methodName' => 'processBroadcastMessageWithObject',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'processBroadcastMessageWithObject', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error processing broadcast message: ' + e.getMessage());
         }
     }
@@ -280,7 +256,7 @@ public with sharing class BroadcastMessageController {
 
             // Fetch Broadcast Group
             Broadcast_Group__c groupRecord = [
-                SELECT Id, Name, Description__c, Object_Name__c, List_View__c
+                SELECT Id, Name, Description__c, Object_Name__c, List_View__c, Phone_Field__c
                 FROM Broadcast_Group__c
                 WHERE Id = :groupId
                 WITH SECURITY_ENFORCED 
@@ -302,14 +278,7 @@ public with sharing class BroadcastMessageController {
 
             return response;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'BroadcastMessageController',
-                'methodName' => 'getBroadcastGroupDetails',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'moreDetails' => e.getMessage()
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastGroupDetails', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error retrieving broadcast group details: ' + e.getMessage());
         }
     } 
@@ -320,25 +289,30 @@ public with sharing class BroadcastMessageController {
             Broadcast__c broadcast = new Broadcast__c();
             broadcast.Template__c = templateId;
             broadcast.Status__c = 'Pending';
-            insert broadcast;
+            broadcast.Broadcast_Group_IDs__c = String.join(groupIds, ','); // Save all group IDs as a comma-separated string
 
             String objectApiName = '';
+            String phoneField = '';
             List<Chat__c> chatRecs = new List<Chat__c>();
 
-            if(groupIds.size() > 0) {
-                List<Broadcast_Group__c> brGroupRecs = [SELECT Id, Name, Object_Name__c FROM Broadcast_Group__c WHERE Id IN :groupIds];
-                if(brGroupRecs.size() > 0){
+            if (groupIds.size() > 0) {
+                List<Broadcast_Group__c> brGroupRecs = [SELECT Id, Name, Object_Name__c, Phone_Field__c FROM Broadcast_Group__c WHERE Id IN :groupIds];
+                if (brGroupRecs.size() > 0) {
                     objectApiName = brGroupRecs[0].Object_Name__c;
+                    phoneField = brGroupRecs[0].Phone_Field__c;
                 }
                 System.debug(objectApiName);
 
                 List<Broadcast_Group_Member__c> groupMembers = new List<Broadcast_Group_Member__c>();
                 groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupIds];
+                broadcast.Recipient_Count__c = groupMembers.size();
+                insert broadcast; // Insert broadcast after setting all required fields
+
                 System.debug(groupMembers.size());
                 List<String> phoneList = new List<String>();
-                if(groupMembers.size() > 0 ){
-                    for(Broadcast_Group_Member__c member: groupMembers){
-                        if(member.Phone_Number__c != null || member.Phone_Number__c != ''){
+                if (groupMembers.size() > 0) {
+                    for (Broadcast_Group_Member__c member : groupMembers) {
+                        if (member.Phone_Number__c != null || member.Phone_Number__c != '') {
                             phoneList.add(member.Phone_Number__c);
                             Chat__c newChat = new Chat__c();
                             newChat.Whatsapp_Template__c = templateId;
@@ -353,13 +327,13 @@ public with sharing class BroadcastMessageController {
                 }
 
                 System.debug(chatRecs.size());
-                if(chatRecs.size() > 0){
+                if (chatRecs.size() > 0) {
                     insert chatRecs;
                 }
             }
 
-            if(isScheduled == false){   
-                WhatsAppMessageBatch batchJob = new WhatsAppMessageBatch(templateId, chatRecs, broadcast.Id, objectApiName);
+            if (isScheduled == false) {
+                WhatsAppMessageBatch batchJob = new WhatsAppMessageBatch(templateId, chatRecs, broadcast.Id, objectApiName, phoneField);
                 Database.executeBatch(batchJob, 1);
             } else {
                 timeOfMessage = timeOfMessage.replace('T', ' ').replace('Z', '');
@@ -378,12 +352,16 @@ public with sharing class BroadcastMessageController {
                 String formattedTime = userDateTime.format('hh:mm a');
 
                 System.debug('formattedTime ==> ' + formattedTime);
-                System.debug('userDateTime ==> ' + userDateTime); 
+                System.debug('userDateTime ==> ' + userDateTime);
 
                 String cronExpression = getCronExpression(userDateTime);
-    
-                WhatsAppMessageBatchSchedulable batchSchedular = new WhatsAppMessageBatchSchedulable(templateId, chatRecs, broadcast.Id, objectApiName);
-                
+
+                WhatsAppMessageBatchSchedulable batchSchedular = new WhatsAppMessageBatchSchedulable(templateId, chatRecs, broadcast.Id, objectApiName, phoneField);
+
+                Broadcast__c br = new Broadcast__c(Id = broadcast.Id);
+                br.Schedule_DateTime__c = userDateTime;
+                update br;
+
                 String jobName = 'BroadcastSchedule_' + System.currentTimeMillis();
                 System.schedule(jobName, cronExpression, batchSchedular);
             }
@@ -399,6 +377,40 @@ public with sharing class BroadcastMessageController {
         return cronExpression;
     }
 
+    @AuraEnabled
+    public static List<Broadcast_Group__c> getBroadcastGroupsByBroadcastId(String broadcastId) {
+        try {
+            if (String.isBlank(broadcastId)) {
+                throw new AuraHandledException('Broadcast ID is required');
+            }
+
+            // Fetch the Broadcast record
+            Broadcast__c broadcast = [
+                SELECT Broadcast_Group_IDs__c 
+                FROM Broadcast__c 
+                WHERE Id = :broadcastId 
+                WITH SECURITY_ENFORCED 
+                LIMIT 1
+            ];
+
+            if (broadcast.Broadcast_Group_IDs__c == null) {
+                return new List<Broadcast_Group__c>();
+            }
+
+            // Split the comma-separated group IDs and fetch related groups
+            List<String> groupIds = broadcast.Broadcast_Group_IDs__c.split(',');
+            return [
+                SELECT Id, Name, Count_of_Members__c, Description__c, Object_Name__c, Phone_Field__c
+                FROM Broadcast_Group__c 
+                WHERE Id IN :groupIds 
+                WITH SECURITY_ENFORCED
+            ];
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastGroupsByBroadcastId', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+            throw new AuraHandledException('Error fetching broadcast groups: ' + e.getMessage());
+        }
+    }
+
     // Wrapper class for the broadcast message data
     public class BroadcastMessageRequest {
         @AuraEnabled public String objectApiName { get; set; }
@@ -408,5 +420,6 @@ public with sharing class BroadcastMessageController {
         @AuraEnabled public String name { get; set; } // Added name field
         @AuraEnabled public Boolean isUpdate { get; set; } // Added name field
         @AuraEnabled public String broadcastGroupId { get; set; } // Added name field
+        @AuraEnabled public String phoneField { get; set; } // Added name field
     }
 }

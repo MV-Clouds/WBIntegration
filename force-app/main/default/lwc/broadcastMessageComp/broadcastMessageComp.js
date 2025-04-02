@@ -5,7 +5,7 @@ import { getListUi } from 'lightning/uiListApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import processBroadcastMessageWithObject from '@salesforce/apex/BroadcastMessageController.processBroadcastMessageWithObject';
 import getBroadcastGroupDetails from '@salesforce/apex/BroadcastMessageController.getBroadcastGroupDetails';
-export default class BroadcastMessage extends LightningElement {
+export default class BroadcastMessageComp extends LightningElement {
     @track objectOptions = [];
     @track listViewOptions = [];
     @track selectedObject = '';
@@ -477,6 +477,8 @@ export default class BroadcastMessage extends LightningElement {
 
     closePopUp(){
         this.isCreateBroadcastModalOpen = false;
+        this.broadcastGroupName = '';
+        this.messageText = '';
 
     }
 
@@ -497,7 +499,8 @@ export default class BroadcastMessage extends LightningElement {
         const isUpdate = this.broadcastGroupId != null;
         console.log(isUpdate);
         
-                
+        const phoneField = this.configMap[this.selectedObject]?.phoneField || '';
+
         const messageData = {
             objectApiName: this.selectedObject,
             listViewName: this.selectedListView,
@@ -505,7 +508,8 @@ export default class BroadcastMessage extends LightningElement {
             description: this.messageText,
             name: this.broadcastGroupName,
             isUpdate: isUpdate,
-            broadcastGroupId: this.broadcastGroupId
+            broadcastGroupId: this.broadcastGroupId,
+            phoneField: phoneField
         };
 
         this.isLoading = true;
