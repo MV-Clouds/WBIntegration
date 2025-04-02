@@ -667,6 +667,19 @@ export default class WbPreviewTemplatePage extends LightningElement {
                                 //     index: index
                                 // });
                                 break;
+                            case "FLOW":
+                                components.push( {
+                                        type: "button",
+                                        sub_type: "flow",
+                                        index: index,
+                                        parameters: [
+                                            {
+                                                "type": "payload",
+                                                "payload": "PAYLOAD"
+                                            }
+                                        ]   
+                                    });
+                                break;
                             case 'copy_code' :
                             case "COPY_CODE":
                             case "COUPON_CODE":

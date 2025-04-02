@@ -286,12 +286,23 @@
 
                 System.debug('Button item ::: ');
                 System.debug(item);
-    
+                Map<String,Object> selectedFlowMap= new Map<String,Object>();
+                try {
+                    selectedFlowMap = (Map<String,Object>) JSON.deserializeUntyped(templateWrapper.selectedFlow);
+                    System.debug(templateWrapper);
+                    System.debug('Selected Id ::: '+templateWrapper.selectedFlow);
+                    System.debug('Selected Id ::: '+selectedFlowMap);
+                    System.debug('Selected Id ::: '+selectedFlowMap.get('id'));
+                } catch (Exception exp) {
+                    System.debug(exp.getMessage());
+                }
+                
                 Map<String, Object> button = (Map<String, Object>) item;
+                System.debug('Button ::: '+button);
                 String actionType = (String) button.get('selectedActionType');
                 String customActionType = (String) button.get('selectedCustomType');
                 String phoneNumber = (String) button.get('selectedCountryType') + ' ' + (String) button.get('phonenum');
-    
+                System.debug('Action Type ::: ' + actionType);
                 Map<String, Object> buttonComponent = new Map<String, Object>();
                 if ('PHONE_NUMBER'.equals(actionType)) {
                     buttonComponent.put('type', 'PHONE_NUMBER');
@@ -313,10 +324,17 @@
                     buttonComponent.put('example', (String) button.get('offercode'));
                     // buttonComponent.put('coupon_code', (String) button.get('offercode'));
                 }
-    
+                else if ('Flow'.equals(actionType)) {
+                    System.debug('In Flow');
+                    buttonComponent.put('type', 'FLOW');
+                    buttonComponent.put('text', (String) button.get('btntext'));
+                    buttonComponent.put('flow_id', (String) selectedFlowMap.get('id'));
+                    // buttonComponent.put('coupon_code', (String) button.get('offercode'));
+                }
                 if (!buttonComponent.isEmpty()) {
                     buttonComponents.add(buttonComponent);
                 }
+                System.debug('Button Component ::: '+buttonComponents);
             }
     
         } catch (Exception e) {
@@ -791,6 +809,8 @@
         @AuraEnabled public List<String> signaturename;  // ✅ Added
         @AuraEnabled public String marketingOptText;  // ✅ Added
         @AuraEnabled public String templateMiscellaneousData;
+        
+        @AuraEnabled public String selectedFlow;
         
     }
 

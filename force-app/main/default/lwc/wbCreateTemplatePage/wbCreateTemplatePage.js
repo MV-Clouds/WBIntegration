@@ -54,6 +54,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track visitWebsiteCount = 0;
     @track callPhoneNumber = 0;
     @track copyOfferCode = 0;
+    @track flowCount = 0;
     @track marketingOpt = 0;
     @track isAllTemplate = false;
     @track iseditTemplatevisible = true;
@@ -117,8 +118,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track selectedCountryType = '+91';  
     @track originalTempBody = '';
     @track placeholderMap = {};
-    @track buttonList = [];
-    @track customButtonList = [];  
+    buttonList = [];
+    customButtonList = [];  
     @track emojis;
     @track originalHeader = '';
     @track menuButtonSelected;    
@@ -214,7 +215,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isModalOpen = false;
     @track selectedFlowId = ''; 
     // @track allFlows ;
-    @track selectedFlow;
+    @track selectedFlow = null;
     @track iframeSrc;
     @track isModalPreview = false;
     // @track NoFileSelected = true;
@@ -333,27 +334,27 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.authenticationPasscodeSelected = false;
         this.UtilityCustomSelected = false;
         this.defaultPreview = false;
-        this.showDefaultBtn = false;
         
         this.isFlowMarketing = false;
         this.isFlowUtility = false;
+        this.showDefaultBtn = true;
         
         switch (this.selectedOption) {
             case 'ORDER_STATUS':
                 this.utilityOrderStatusSelected = true;
+                this.showDefaultBtn = false;
                 break;
             case 'One-time passcode':
                 console.log('OTP default');
                 this.authenticationPasscodeSelected = true;
-                this.showDefaultBtn = true;
+                // this.showDefaultBtn = true;
                 break;
             case 'Custom':
                 this.UtilityCustomSelected = true;
-                this.showDefaultBtn = true;
+                // this.showDefaultBtn = true;
                 break;
             case 'CustomMarketing':
                 this.defaultPreview = true;
-                this.showDefaultBtn = true;
                 break;
             case 'flow':
                 this.isFlowMarketing = true;
@@ -363,7 +364,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 break;
             default:
                 this.defaultPreview = true;
-                this.showDefaultBtn = true;
+                // this.showDefaultBtn = true;
                 break;
         }
         
@@ -380,6 +381,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
     
     handleRadioChange(event) {
+        this.selectedOption = '';
         this.selectedOption = event.target.value;
         console.log('selected option in function==> ', this.selectedOption);
 
@@ -409,9 +411,25 @@ export default class WbCreateTemplatePage extends LightningElement {
                 break;
             case 'flow':
                 this.isFlowMarketing = true;
+                this.handleMenuSelect({
+                    currentTarget: {
+                        dataset: {
+                            value: 'Flow',
+                            buttonData: false
+                        }
+                    }
+                });
                 break;
                 case 'flowutility' :
                 this.isFlowUtility = true;
+                this.handleMenuSelect({
+                    currentTarget: {
+                        dataset: {
+                            value: 'Flow',
+                            buttonData: false
+                        }
+                    }
+                });
                 break;
             default:
                 this.defaultPreview = true;
@@ -419,14 +437,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                 break;
         }
         // if(this.isFlowMarketing || this.isFlowUtility){
-        //     this.handleMenuSelect({
-        //         currentTarget: {
-        //             dataset: {
-        //                 value: 'Flow',
-        //                 buttonData: false
-        //             }
-        //         }
-        //     });
+            
+            
         // }
         console.log('Radio Change '+this.isFlowMarketing+' '+this.isFlowUtility);
         
@@ -552,6 +564,9 @@ export default class WbCreateTemplatePage extends LightningElement {
         return this.copyOfferCode >= 1;
     }
 
+    get flowDisabled(){
+        return this.flowCount>=1;
+    }
     get marketingOptDisabled() {
         return this.marketingOpt >= 1;
     }
@@ -594,6 +609,9 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
     
     renderedCallback() {
+        // if(!this.isStage2){
+        //     this.buttonList = [];
+        // }
         loadStyle(this, wbCreateTempStyle).then(() => {
             try {
                 console.log("Loaded Successfully");
@@ -810,6 +828,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                         this.callPhoneNumber = 0;
                         this.visitWebsiteCount = 0;
                         this.copyOfferCode = 0;
+                        this.flowCount = 0;
                         this.marketingOpt = 0;
                     
                         buttonDataList.forEach((button, index) => {
@@ -1651,6 +1670,9 @@ export default class WbCreateTemplatePage extends LightningElement {
     handleNextclick() {
         this.iscreatetemplatevisible = false;
         this.iseditTemplatevisible = true;
+        
+        
+        console.log('Next Data  ',this.buttonList);
         if(this.isStage1){
             this.isStage1 = false;
             this.isStage2=true ;
@@ -1669,6 +1691,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.iseditTemplatevisible = true;
         this.clearEditTemplateData();
         
+        console.log('Clear Data  ',this.buttonList);
         if(this.isStage2){
             this.isStage2 = false;
             this.isStage1=true ;
@@ -1693,6 +1716,28 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     clearEditTemplateData() {
+        switch (this.activeTab) {
+            case 'Marketing':
+                this.selectedOption = 'custom';
+                break;
+                case 'Utility':
+                    this.selectedOption = 'Custom';
+                    
+                    break;
+                case 'Authentication':
+                this.selectedOption = 'One-time passcode';
+                
+                break;
+            
+            default:
+                break;
+        }
+
+        
+        this.handleRadioChange({ target: { value: this.selectedOption } });
+       
+        console.log('Clear Data  ',this.buttonList);
+        
         this.templateName = ''; 
         this.selectedContentType = 'None';
         this.header = ''; 
@@ -1701,7 +1746,8 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.tempBody = 'Hello';  
         this.addVar=false;
         this.footer='';
-        this.buttonList = [];
+        var tempList = [];
+        this.buttonList = tempList;
         this.customButtonList = [];
         this.variables = [];
         this.header_variables = [];
@@ -1716,7 +1762,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.visitWebsiteCount = 0;
         this.callPhoneNumber = 0;
         this.copyOfferCode = 0;
-        this.flowCount = 0;
+        this.flowCount = 0 ;
         this.marketingOpt = 0;
         this.selectContent='Add security recommendation';
         // this.isVideoFileUploader = false;
@@ -1725,6 +1771,9 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.isDocSelected = false;
         this.isVidSelected = false;
         this.isImgSelected = false;
+        // this.isFlowMarketing = false;
+        // this.isFlowUtility = false;
+        this.isFlowSelected = false;
         
         this.isautofillChecked=false;
         this.isExpiration = false;
@@ -1732,6 +1781,8 @@ export default class WbCreateTemplatePage extends LightningElement {
         if (headerInput) {
             headerInput.value = '';  
         }
+        
+        console.log('Clear Data  ',this.buttonList);
     }
  
     handlediscardclick() {
@@ -1944,7 +1995,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 isOfferCode: false,
                 isFlow:false,
                 hasError: false,  
-                errorMessage: ''   
+                errorMessage: '' 
             };
 
             console.log(newButton);
@@ -2015,6 +2066,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                     }
                     break;
                     case 'Flow':
+                        console.log('In flow Case1');
+                        
                         if (this.flowCount < 1) {
                             console.log('Copy Flow');
                             
@@ -2783,7 +2836,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         const currentTemplate = this.activeTab; 
     
         const areButtonFieldsFilled = this.buttonList.every(button => 
-            button.btntext && (button.webURL || button.phonenum || button.offercode)
+            button.btntext && (button.webURL || button.phonenum || button.offercode || button.isFlow)
         );
         const areCustomButtonFilled = this.customButtonList.every(button => button.Cbtntext);
 
@@ -2807,10 +2860,22 @@ export default class WbCreateTemplatePage extends LightningElement {
         }
 
         const result = (() => {
-        switch (currentTemplate) {
-            case 'Marketing':
-                return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
+            
+            switch (currentTemplate) {
+                case 'Marketing':
+                    if(this.flowBooleanCheck){
+                        console.log('M'+this.isFlowSelected);
+                        
+                        return !(this.isFlowSelected && this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
+                    }
+                        return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
+                    
                 case 'Utility':
+                    if(this.flowBooleanCheck){
+                        console.log('U'+this.isFlowSelected);
+                        
+                        return !(this.isFlowSelected && this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
+                    }
                     return !(this.templateName && this.tempBody && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
                     // break;
                 case 'Authentication':
@@ -3004,6 +3069,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             
           console.log("Temp misss data :: ",templateMiscellaneousData);
           
+        console.log('Selcted flow b template ::: ',this.selectedFlow);
             
             // varAlternateTexts: this.variables.map(varItem => varItem.alternateText || null),
             const template = {
@@ -3030,6 +3096,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 expireTime: this.expirationTime ? this.expirationTime : 300,
                 packagename: formData.length > 0 ? formData.map(pkg => pkg.packagename) : null,
                 signaturename: formData.length > 0 ? formData.map(pkg => pkg.signaturename) : null,
+                selectedFlow : this.selectedFlow ? JSON.stringify(this.selectedFlow) : null,
                 templateMiscellaneousData : templateMiscellaneousData ? JSON.stringify(templateMiscellaneousData) : null
 
             };

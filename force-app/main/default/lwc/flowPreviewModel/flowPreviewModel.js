@@ -89,12 +89,22 @@ export default class FlowPreviewModel extends LightningElement {
     }
 
     handleSubmit() {
+        console.log(
+            'Selected Flow ID:',
+            this.selectedFlow,
+            'Selected Flow:',
+            this.flows.find(flow => flow.id === this.selectedFlow));
+            console.log(typeof(this.selectedFlow));
+            
+        
         const selectedFlowData = {
             selectedFlow: this.selectedFlow, // Selected flow ID,
             iframeSrc : this.iframeSrc, // URL of WhatsApp preview
             flows: this.flows.find(flow => flow.id === this.selectedFlow)// Entire list of flows
         };
     
+        console.log("Selcted flow data ::: ",selectedFlowData);
+        
         this.dispatchEvent(new CustomEvent('submit', { detail: selectedFlowData })); // Dispatch event to parent
     }
     
