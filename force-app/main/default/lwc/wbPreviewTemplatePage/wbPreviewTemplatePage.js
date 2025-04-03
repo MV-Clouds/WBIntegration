@@ -18,7 +18,7 @@ import sendPreviewTemplate from '@salesforce/apex/WBTemplateController.sendPrevi
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
-import CountryJson from '@salesforce/resourceUrl/CountryJson';
+import CountryJson from '@salesforce/resourceUrl/MVWB__CountryJson';
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;
@@ -276,73 +276,52 @@ export default class WbPreviewTemplatePage extends LightningElement {
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
-                    console.log(result.template.Header_Type__c);
                     
                     this.IsHeaderText = !result.isImgUrl;            
-                    this.originalHeader = result.template.WBHeader_Body__c;
-                    this.originalBody = result.template.WBTemplate_Body__c;
+                    this.originalHeader = result.template.MVWB__WBHeader_Body__c;
+                    this.originalBody = result.template.MVWB__WBTemplate_Body__c;
                     const variableMappings = result.templateVariables;
                     
-                    if(result.template.Header_Type__c=='Image'){
+                    if(result.template.MVWB__Header_Type__c=='Image'){
                         this.isImgSelected = result.isImgUrl;
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(this.originalHeader, "text/html");
                         this.tempHeader = doc.documentElement.textContent || "";
-                        console.log(this.tempHeader);
                         
                     }
-                    else if(result.template.Header_Type__c=='Video'){
-                        console.log('Here vedio');
+                    else if(result.template.MVWB__Header_Type__c=='Video'){
                         
                         this.isVidSelected = result.isImgUrl;
-                        console.log(result.isImgUrl);
                         
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(this.originalHeader, "text/html");
                         this.tempHeader = doc.documentElement.textContent || "";
-                        console.log(this.tempHeader);
                     }
-                    else if(result.template.Header_Type__c=='Document'){
-                        console.log('Here document');
+                    else if(result.template.MVWB__Header_Type__c=='Document'){
                         
                         this.isDocSelected = result.isImgUrl;
-                        console.log(result.isImgUrl);
                         
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(this.originalHeader, "text/html");
                         this.tempHeader = doc.documentElement.textContent || "";
-                        console.log(this.tempHeader);
                     }
                     else{
                         this.tempHeader = this.originalHeader ||'';
                     }
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
-                    this.tempFooter = result.template.WBFooter_Body__c;
+                    this.tempFooter = result.template.MVWB__WBFooter_Body__c;
 
-                    this.isSendDisabled = result.template.Status__c !== 'Active-Quality Pending';
+                    this.isSendDisabled = result.MVWB__template.Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    // const buttonLabels = result.template.Button_Label__c ? result.template.Button_Label__c.split(',') : [];
-                    // const buttonTypes = result.template.Button_Type__c ? result.template.Button_Type__c.split(',') : [];
-        
-                    // this.buttonList = buttonLabels.map((label, index) => {
-                    //     const type = buttonTypes[index]?.trim() || 'default';
-                    //     return {
-                    //         id: index,
-                    //         btntext: label.trim(),
-                    //         btnType: type,
-                    //         iconName: this.getIconName(type) 
-                    //     };
-                    // });
-                    const buttonBody = result.template.Button_Body__c
-                    ? JSON.parse(result.template.Button_Body__c)
+                    const buttonBody = result.MVWB__template.Button_Body__c
+                    ? JSON.parse(result.MVWB__template.Button_Body__c)
                     : []
                   
                   this.buttonList = buttonBody.map((buttonLabel, index) => {
-                    console.log(buttonLabel)
                   
                     const type = buttonLabel.type
                     return {
@@ -405,10 +384,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     if(templateData.headerParams) this.headerParams = templateData.headerParams;
                     if(templateData.bodyParams) this.bodyParams = templateData.bodyParams;
                 }
-                console.log('Template body ::: ');
-                console.log(templateData);
                 this.bodyParaCode = templateData.bodyParams;
-                console.log(templateData.bodyParams);
                 
                
             })
@@ -438,24 +414,21 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 this.isLoading = false;
                 return;
             }
-            console.log("This template ::: ",this.template);
             
-            const buttonValue = this.template.Button_Body__c != undefined?JSON.parse(this.template.Button_Body__c) : '';
-            console.log(buttonValue);
+            const buttonValue = this.template.MVWB__Button_Body__c != undefined?JSON.parse(this.template.MVWB__Button_Body__c) : '';
             
             const templatePayload = this.createJSONBody(phonenum, "template", {
-                templateName: this.template.Template_Name__c,
-                languageCode: this.template.Language__c,
-                headerImageURL: this.template.WBHeader_Body__c,
-                headerType:this.template.Header_Type__c,
-                headerParameters: this.headerParams,
-                bodyParameters: this.bodyParams || '',
-                buttonLabel: this.template.Button_Label__c || '',
-                buttonType: this.template.Button_Type__c || '',
+                templateName: this.template.MVWB__Template_Name__c,
+                languageCode: this.template.MVWB__Language__c,
+                headerImageURL: this.template.MVWB__WBHeader_Body__c,
+                headerType:this.template.MVWB__Header_Type__c,
+                headerParameters: this.MVWB__headerParams,
+                bodyParameters: this.MVWB__bodyParams || '',
+                buttonLabel: this.template.MVWB__Button_Label__c || '',
+                buttonType: this.template.MVWB__Button_Type__c || '',
                 buttonValue : buttonValue
             });
 
-            console.log('Template Pay load ::: ',...templatePayload);
             
     
             sendPreviewTemplate({ jsonData: templatePayload })
@@ -482,7 +455,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
     
     createJSONBody(to, type, data) {
         try {
-            console.log('Data ::: ', data);
     
             let payload = {
                 messaging_product: "whatsapp",
@@ -567,78 +539,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
             }
     
             // Button Handling
-            // if (data.buttonValue && data.buttonValue.length > 0) {
-            //     console.log(data.buttonValue[0].type);
-                
-            //     let buttons = data.buttonValue
-            //         .map((button, index) => {
-            //             switch (button.type.toUpperCase()) {
-            //                 case "PHONE_NUMBER":
-            //                     return {
-            //                         type: "phone_number",
-            //                         index: index,
-            //                         phone_number: button.phone_number,
-            //                         text: button.text || "Call"
-            //                     };
-            //                 case "URL":
-            //                     return {
-            //                         type: "url",
-            //                         index: index,
-            //                         url: button.url,
-            //                         text: button.text || "Visit"
-            //                     };
-            //                 case "OTP":
-            //                     console.log(button);
-                                
-            //                     if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE" && button.otp_code) {
-            //                         console.log('Here otp');
-                                    
-            //                         return {
-            //                             type: "text",
-            //                             code: button.otp_code,
-            //                             text: button.text || "Copy Code"
-            //                         };
-            //                     } else {
-            //                         console.warn(`OTP button at index ${index} missing otp_code parameter.`);
-            //                         return null;
-            //                     }
-            //                 case "COPY_CODE":
-            //                 case "COPYCODE":
-            //                 case "COUPON_CODE":
-            //                     return {
-            //                         type: "copy_code",
-            //                         index: index,
-            //                         code: button.example,
-            //                         text: button.text || "Copy Code"
-            //                     };
-            //                 case "QUICK_REPLY":
-            //                     return {
-            //                         type: "quick_reply",
-            //                         index: index,
-            //                         payload: button.payload || button.text,
-            //                         text: button.text || "Reply"
-            //                     };
-            //                 default:
-            //                     console.warn(`Unknown button type: ${button.type}`);
-            //                     return null;
-            //             }
-            //         })
-            //         .filter((button) => button !== null);
-            
-            //     if (buttons.length > 0) {
-            //         components.push({
-            //             type: "button",
-            //             parameters: buttons,
-            //         });
-            //     }
-            // }
-            console.log("Button value :: ",...data.buttonValue);
             
             if (data.buttonValue && data.buttonValue.length > 0) {
                 let buttons = data.buttonValue
                     .map((button, index) => {
                         
-                    console.log("Button  :: ",button);
                         switch (button.type.toUpperCase()) {
                             case "PHONE_NUMBER":
                                 components.push( {
@@ -654,18 +559,10 @@ export default class WbPreviewTemplatePage extends LightningElement {
                                 });
                                 break;
                             case "URL":
-                                // components.push( {
-                                //     type: "button",
-                                //     sub_type: "url",
-                                //     index: index
-                                // });
+                                
                                 break;
                             case "QUICK_REPLY":
-                                // components.push( {
-                                //     type: "button",
-                                //     sub_type: "quick_reply",
-                                //     index: index
-                                // });
+                                
                                 break;
                             case "FLOW":
                                 components.push( {
@@ -698,7 +595,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
                             case "OTP":
                                 if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE") {
 
-                                    // console.log(button);
                                     
                                     components.push( {
                                         type: "button",
@@ -730,13 +626,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
             if (components.length > 0) {
                 payload.template.components = components;
             }
-            console.log("Payload ::: ",payload.template);
             
     
             // Convert the object to a JSON string
             return JSON.stringify(payload);
         } catch (e) {
-            console.log('Error in function createJSONBody:::', e.message);
+            console.error('Error in function createJSONBody:::', e.message);
         }
     }
         closePreview() {

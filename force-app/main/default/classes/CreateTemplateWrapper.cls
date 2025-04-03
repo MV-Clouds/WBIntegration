@@ -149,11 +149,6 @@
                 bodyComponent = new Map<String, Object>{
                     'type' => 'BODY'
                 };
-                // String randomCode = String.valueOf(Math.floor(Math.random() * 900000) + 100000);
-                // templateWrapper.varAlternateTexts.add(randomCode);
-                // templateWrapper.templateBodyText = new List<String>{'{{'+randomCode+'}}'};
-                // Generate a 6-digit random number
-                // Generate a 6-digit random number
                 Integer randomCode = Integer.valueOf(String.valueOf(Math.floor(Math.random() * 900000) + 100000));
 
                 // Convert Integer to String
@@ -193,64 +188,6 @@
     @return          : buttonComponents - {Map<String, Object>} - Return buttons use to create payload.
     ********************************************************
     */
-    // private static List<Map<String, Object>> buildButtonComponent(TemplateWrapper templateWrapper) {
-    //     List<Map<String, Object>> buttonComponents = new List<Map<String, Object>>();
-    
-    //     try {
-    //         if (String.isBlank(templateWrapper.typeOfButton)) {
-    //             return buttonComponents;
-    //         }
-    
-    //         List<Object> untypedList;
-    //         try {
-    //             untypedList = (List<Object>) JSON.deserializeUntyped(templateWrapper.typeOfButton);
-    //         } catch (Exception e) {
-    //             throw new IllegalArgumentException('Invalid JSON format for typeOfButton: ' + e.getMessage());
-    //         }
-    
-    //         for (Object item : untypedList) {
-    //             Map<String, Object> button = (Map<String, Object>) item;
-    
-    //             String actionType = (String) button.get('selectedActionType');
-    //             String customActionType = (String) button.get('selectedCustomType');
-    //             String phoneNumber = (String) button.get('selectedCountryType') +' '+ (String) button.get('phonenum');
-    
-    //             Map<String, Object> buttonComponent = new Map<String, Object>();
-    //             if ('PHONE_NUMBER'.equals(actionType)) {
-    //                 buttonComponent.put('type', 'PHONE_NUMBER');
-    //                 buttonComponent.put('text', (String) button.get('btntext'));
-    //                 buttonComponent.put('phone_number', phoneNumber);
-    //             } else if ('QUICK_REPLY'.equals(customActionType) || 'Marketing opt-out'.equals(customActionType)) {
-    //                 buttonComponent.put('type', 'QUICK_REPLY');
-    //                 buttonComponent.put('text', (String) button.get('Cbtntext'));
-    //             } else if ('URL'.equals(actionType)) {
-    //                 buttonComponent.put('type', 'URL');
-    //                 buttonComponent.put('text', (String) button.get('btntext'));
-    //                 buttonComponent.put('url', (String) button.get('webURL'));
-    //             } else if ('COPY_CODE'.equals(actionType)) {
-    //                     buttonComponent.put('type', 'COPY_CODE');
-    //                     buttonComponent.put('text', 'Copy offer code');
-    //                     buttonComponent.put('example', (String) button.get('offercode'));
-    //                     buttonComponent.put('example', (String) button.get('offercode'));
-    //                     // String offerCode = (String) button.get('offercode');
-    
-    //                 // if (String.isNotBlank(offerCode)) {
-    //                 //     buttonComponent.put('example', offerCode); // Correctly set example here
-    //                 // } else {
-    //                 //     throw new AuraHandledException('Coupon code cannot be empty for COPY_CODE button.');
-    //                 // }
-    //             }
-    
-    //             if (!buttonComponent.isEmpty()) {
-    //                 buttonComponents.add(buttonComponent);
-    //             }
-    //         }
-    
-    //     } catch (Exception e) {
-    //         ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildButtonComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-    //     }
-    //     return buttonComponents;
-    // }
     private static List<Map<String, Object>> buildButtonComponent(TemplateWrapper templateWrapper) {
         List<Map<String, Object>> buttonComponents = new List<Map<String, Object>>();
     
@@ -601,11 +538,7 @@
                     buttonDetails = handleButtonComponent(component);
                     whatsAppTemplate.Button_Body__c = buttonDetails;
                     System.debug(whatsAppTemplate.Button_Body__c);
-                    // for (Map<String, String> button : buttonDetails) {
-                    //     whatsAppTemplate.Button_Type__c = button.get('type');
-                    //     whatsAppTemplate.Button_Label__c = button.get('text');
-                    //     whatsAppTemplate.Button_Body__c = String.isNotBlank(button.get('value')) ? button.get('value') : button.get('text');
-                    // }
+                    
                 }
             }
     
@@ -711,9 +644,7 @@
     @return          : buttonDetails - contain type ,label and value of different buttons.
     ********************************************************
     */
-    // private static List<Map<String, String>> handleButtonComponent(Map<String, Object> component) {
     private static String handleButtonComponent(Map<String, Object> component) {
-        // List<Map<String, String>> buttonDetails = new List<Map<String, String>>();
         String buttonList = '';
         try {
             List<Object> buttons = (List<Object>) component.get('buttons');
@@ -721,33 +652,7 @@
     
             if (buttons != null) {
                 buttonList = (String) JSON.serialize(buttons);
-                // buttonDetails.add(new Map<String, String>{;
-                // for (Object buttonObj : buttons) {
-                //     if (buttonObj instanceof Map<String, Object>) {
-                //         Map<String, Object> button = (Map<String, Object>) buttonObj;
-                //         String buttonType = (String) button.get('type');
-                //         String buttonText = (String) button.get('text');
-                //         String buttonValue = '';
-    
-                //         if (buttonType == 'COPY_CODE') {
-                //             buttonValue = (String) button.get('example');
-                //             buttonText = 'Copy offer code';
-                //         } else if(buttonType == 'URL'){
-                //             buttonValue = (String) button.get('url'); 
-                //         } else if(buttonType == 'PHONE_NUMBER'){
-                //             buttonValue = (String) button.get('phone_number'); 
-                //         }
-    
-                //         buttonDetails.add(new Map<String, String>{
-                //             'type' => buttonType,
-                //             'text' => buttonText,
-                //             'value' => buttonValue
-                //         });
-                //     } else {
-                //         System.debug('Expected button to be a Map<String, Object>, found: ' + buttonObj);
-                //     }
-                // }
-
+                
             } else {
                 System.debug('No buttons found in component: ' + component);
             }
@@ -783,7 +688,6 @@
         @AuraEnabled public String templateType;
         @AuraEnabled public String tempHeaderFormat;
         @AuraEnabled public String tempHeaderHandle;
-        // @AuraEnabled public String tempContentDocId;
         @AuraEnabled public String tempLanguage;
         @AuraEnabled public String tempHeaderText;
         @AuraEnabled public List<String> tempHeaderExample;
@@ -793,21 +697,16 @@
         @AuraEnabled public List<String> templateBodyText;
         @AuraEnabled public String tempFooterText;
         @AuraEnabled public String typeOfButton;
-        // @AuraEnabled public String buttonPhoneText;
-        @AuraEnabled public String phoneNumber;
-        // @AuraEnabled public String buttonURLText;
         @AuraEnabled public String url;
-        // @AuraEnabled public String quickText;
-        // @AuraEnabled public String copyCode;
         @AuraEnabled public String tempImgUrl;
         @AuraEnabled public String tempImgName;
         @AuraEnabled public String tempImgId;
         @AuraEnabled public Integer expireTime;
         
-        @AuraEnabled public Boolean autofillCheck;  // ✅ Added
-        @AuraEnabled public List<String> packagename;  // ✅ Added
-        @AuraEnabled public List<String> signaturename;  // ✅ Added
-        @AuraEnabled public String marketingOptText;  // ✅ Added
+        @AuraEnabled public Boolean autofillCheck;  
+        @AuraEnabled public List<String> packagename;  
+        @AuraEnabled public List<String> signaturename;  
+        @AuraEnabled public String marketingOptText;  
         @AuraEnabled public String templateMiscellaneousData;
         
         @AuraEnabled public String selectedFlow;

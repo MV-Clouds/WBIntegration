@@ -21,7 +21,7 @@ export default class FlowPreviewModel extends LightningElement {
                 this.flows = data.map(flow => ({
                     id: flow.Flow_Id__c,
                     name: flow.Flow_Name__c,
-                    date: this.formatDate(flow.CreatedDate),
+                    date: this.formatDate(flow.LastModifiedDate),
                     isSelected: false
                 }));
                 this.filteredFlows = [...this.flows]; // Initialize search-filtered list
@@ -53,7 +53,6 @@ export default class FlowPreviewModel extends LightningElement {
         // Check if URL is cached
         if (this.cachedPreviewURLs.has(selectedId)) {
             this.iframeSrc = this.cachedPreviewURLs.get(selectedId);
-            console.log('Using Cached URL:', this.iframeSrc);
         } else {
             // Fetch preview URL from Apex
             getPreviewURLofWhatsAppFlow({ flowId: selectedId })
@@ -89,13 +88,7 @@ export default class FlowPreviewModel extends LightningElement {
     }
 
     handleSubmit() {
-        console.log(
-            'Selected Flow ID:',
-            this.selectedFlow,
-            'Selected Flow:',
-            this.flows.find(flow => flow.id === this.selectedFlow));
-            console.log(typeof(this.selectedFlow));
-            
+        
         
         const selectedFlowData = {
             selectedFlow: this.selectedFlow, // Selected flow ID,
@@ -103,7 +96,6 @@ export default class FlowPreviewModel extends LightningElement {
             flows: this.flows.find(flow => flow.id === this.selectedFlow)// Entire list of flows
         };
     
-        console.log("Selcted flow data ::: ",selectedFlowData);
         
         this.dispatchEvent(new CustomEvent('submit', { detail: selectedFlowData })); // Dispatch event to parent
     }

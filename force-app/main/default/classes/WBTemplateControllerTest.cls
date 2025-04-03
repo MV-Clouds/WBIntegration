@@ -61,11 +61,45 @@ public class WBTemplateControllerTest {
                 Email = 'john.doe@example.com'
             );
             insert contact;
+            
+            List<Flow__c> testFlows = new List<Flow__c>();
+            for (Integer i = 0; i < 5; i++) {
+                testFlows.add(new Flow__c(
+                    Flow_Id__c = 'Flow' + i,
+                    Flow_Name__c = 'Test Flow ' + i,
+                    Flow_JSON__c = '{"key": "value"}',
+                    Status__c = 'Published'
+                ));
+            }
+            insert testFlows;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'setup', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
+    
+    @isTest
+    static void testGetAllFlows() {
+        Test.startTest();
+        List<Flow__c> flows = WBTemplateController.getAllFlows();
+        Test.stopTest();
 
+        System.assertNotEquals(0, flows.size(), 'Flows should be retrieved');
+        for (Flow__c flow : flows) {
+            System.assertEquals('Published', flow.Status__c, 'Only Published flows should be returned');
+        }
+        System.debug('Flow Id : '+flows[0]);
+        
+        
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
+        String response = WBTemplateController.getPreviewURLofWhatsAppFlow(flows[0].id);
+        
+        
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(400));
+        String responsefail = WBTemplateController.getPreviewURLofWhatsAppFlow(flows[0].id);
+        
+    }
+    
+    
     @isTest
     static void testFetchWhatsAppTemplates() {
         try{
@@ -96,7 +130,21 @@ public class WBTemplateControllerTest {
 
       @isTest
     static void testGetDynamicObjectData_Success() {
+        
+        List<Template__c> templatesToInsert = new List<Template__c>{
+            new Template__c(
+                Template_Name__c = 'Template6',
+                Template_Category__c = 'Marketing',
+                Status__c = 'Active-Quality Pending',
+                Template_Id__c = 'testId',
+                Header_Type__c = 'Image'
+                )
+            };
+            
         Template__c template = [SELECT Id FROM Template__c LIMIT 1];
+
+        insert templatesToInsert;
+
 
         Test.startTest();
         WBTemplateController.TemplateDataWrapper result = WBTemplateController.getDynamicObjectData(template.Id);
@@ -154,23 +202,6 @@ public class WBTemplateControllerTest {
 
         Map<String, Object> result2 = WBTemplateController.getTemplateDataWithReplacement(template.Id, null);
 
-        // Validate the result
-        // System.assert(result.containsKey('template'), 'Result should contain the template');
-        // System.assert(result.containsKey('headerParams'), 'Result should contain headerParams');
-        // System.assert(result.containsKey('bodyParams'), 'Result should contain bodyParams');
-
-        // List<Object> headerParams = (List<Object>) result.get('headerParams');
-        // List<Object> bodyParams = (List<Object>) result.get('bodyParams');
-        // Template__c resultTemplate = (Template__c) result.get('template');
-
-        // System.assertEquals(1, headerParams.size(), 'Header params size should be 1');
-        // System.assertEquals('John Doe', headerParams[0], 'Header param should match the contact name');
-
-        // System.assertEquals(1, bodyParams.size(), 'Body params size should be 1');
-        // System.assertEquals('10000.0', bodyParams[0], 'Body param should match the account revenue');
-
-        // System.assert(resultTemplate.Header_Body__c.contains('John Doe'), 'Header body should replace {{ContactName}}');
-        // System.assert(resultTemplate.Template_Body__c.contains('10000.0'), 'Template body should replace {{AccountBalance}}');
     }
 
     @isTest
@@ -222,6 +253,28 @@ public class WBTemplateControllerTest {
         Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper);
         Test.stopTest();
     }
+
+    @isTest
+    static void testCreateWhatsappTemplate_Exception() {
+        // Creating a mock TemplateWrapper
+        CreateTemplateWrapper.TemplateWrapper mockTemplateWrapper = new CreateTemplateWrapper.TemplateWrapper();
+        mockTemplateWrapper.templateName = 'Test Template';
+        mockTemplateWrapper.tempLanguage = 'en';
+        String serializedWrapper = JSON.serialize(mockTemplateWrapper);
+
+        // Mock HTTP callout to return an error response
+        
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(500));
+
+        Test.startTest();
+        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper);
+        Test.stopTest();
+
+        // Assert that the error is caught and logged correctly
+        System.assertEquals('error', response.get('status'));
+        System.assertNotEquals(null, response.get('message'));
+    }
+
 
      @isTest
     static void testCreateTemplateFailed() {
@@ -404,4 +457,6 @@ public class WBTemplateControllerTest {
         System.assertNotEquals(null, response.get('message'));
 
     }
+    
+    
 }
