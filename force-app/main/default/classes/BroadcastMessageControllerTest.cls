@@ -42,21 +42,44 @@ private class BroadcastMessageControllerTest {
             WBTemplate_Body__c = 'Hello, {{1}}!',
             Header_Type__c = 'text',
             WBHeader_Body__c = 'Header Text',
-            Template_Id__c	= 'testId'
+            Template_Id__c	= 'testId',
+            Button_Body__c	= '[{"type":"COPY_CODE","example":"AADDFCGOP"}]'
         );
 
-        insert template;
+
+        Template__c template2 = new Template__c(
+            Template_Name__c = 'Test_Template2',
+            Status__c = 'Active-Quality Pending',
+            Language__c = 'en',
+            WBTemplate_Body__c = 'Hello, {{1}}!',
+            Header_Type__c = 'text',
+            WBHeader_Body__c = 'Header Text',
+            Template_Id__c	= 'testId2',
+            Button_Body__c	= '[{"type":"OTP","text":"Verify Code","otp_type":"COPY_CODE"}]'
+        );
+
+        insert new List<Template__c>{template, template2};
 
         Template_Variable__c templateVariable = new Template_Variable__c(
             Name = 'Test Variable',
             Field_Name__c = 'LastName',
             Object_Name__c = 'Contact',
-            Type__c = 'Body',
             Alternate_Text__c = 'Alternate Text',
-            Template__c = template.Id
+            Template__c = template.Id,
+            Type__c = 'Header'
         );
 
-        insert templateVariable;
+
+        Template_Variable__c templateVariable2 = new Template_Variable__c(
+            Name = 'Test Variable',
+            Field_Name__c = 'LastName',
+            Object_Name__c = 'Contact',
+            Alternate_Text__c = 'Alternate Text',
+            Template__c = template2.Id,
+            Type__c = 'Body'
+        );
+
+        insert new List<Template_Variable__c>{templateVariable, templateVariable2};
 
         // Create a Broadcast record with no group IDs
         Broadcast__c broadcast = new Broadcast__c(
@@ -199,7 +222,29 @@ private class BroadcastMessageControllerTest {
         MockHttpResponseGenerator mock = new MockHttpResponseGenerator(mockResponse);
         Test.setMock(HttpCalloutMock.class, mock);
 
-        Template__c testTemplate = [SELECT Id, Name FROM Template__c LIMIT 1];
+        Template__c testTemplate = [SELECT Id, Name, Template_Id__c FROM Template__c WHERE Template_Id__c = 'testId' LIMIT 1];
+        Broadcast_Group__c tempGroup = [SELECT Id, Name FROM Broadcast_Group__c LIMIT 1];
+
+        Test.startTest();
+        String result = BroadcastMessageController.createChatRecods(testTemplate.Id, new List<String>{tempGroup.Id}, false, '');
+        Test.stopTest();
+        
+        System.assertEquals('Success', result, 'Method should return Success');
+        List<Broadcast__c> broadcasts = [SELECT Id FROM Broadcast__c];
+        System.assert(broadcasts.size() > 0, 'Broadcast record should be created');
+        
+        List<Chat__c> chats = [SELECT Id FROM Chat__c];
+        System.assert(chats.size() > 0, 'Chat records should be created');
+    }
+
+    @isTest
+    static void testCreateChatRecods_ImmediateExecutionWitBody() {
+
+        HttpResponse mockResponse = createMockResponse('200', '{"messages":[{"id":"wamid.HBgLMjM0NTY3ODkwVBIJDQAAAB"}]}');
+        MockHttpResponseGenerator mock = new MockHttpResponseGenerator(mockResponse);
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        Template__c testTemplate = [SELECT Id, Name, Template_Id__c FROM Template__c WHERE Template_Id__c = 'testId2' LIMIT 1];
         Broadcast_Group__c tempGroup = [SELECT Id, Name FROM Broadcast_Group__c LIMIT 1];
 
         Test.startTest();

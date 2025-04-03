@@ -25,10 +25,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     popUpFirstPage = true;
     popUpSecondpage = false;
     popUpLastPage = false;
-    isBroadcastReportComponent = false;
     popupHeader = 'Choose Broadcast Groups';
-    isbroadcastPage = true;
-    broadcastId = null;
 
     get showNoRecordsMessage() {
         return this.filteredData.length === 0;
@@ -302,13 +299,6 @@ export default class WbAllBroadcastPage extends LightningElement {
         }
     }
 
-    handleBroadcastClick(event) {
-        const broadcastId = event.target.dataset.id;
-        this.broadcastId = broadcastId;
-        this.isBroadcastReportComponent = true;
-        this.isbroadcastPage = false;
-    }
-
     handleNextOnPopup() {
         try {
             const firstObjName = this.selectedGroupIds[0]?.ObjName;
@@ -404,7 +394,7 @@ export default class WbAllBroadcastPage extends LightningElement {
 
         let grpIdList = this.selectedGroupIds.map(record => record.Id);
 
-        createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: true, timeOfMessage: this.selectedDateTime, })
+        createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: true, timeOfMessage: this.selectedDateTime})
             .then(result => {
                 if(result == 'Success'){
                     this.showToast('Success', 'Broadcast sent successfully', 'success');
@@ -451,30 +441,6 @@ export default class WbAllBroadcastPage extends LightningElement {
             })
             .finally(() => {
                 this.isLoading = false;
-            });
-    }
-
-    handleSave(event) {
-        const { name, description, phone } = event.detail; // Include phone field
-        const request = {
-            name,
-            description,
-            phoneNumbers: [phone], // Pass phone as part of phoneNumbers array
-            objectApiName: this.selectedObjectName,
-            listViewName: this.selectedListView,
-            isUpdate: this.isUpdate,
-            broadcastGroupId: this.broadcastGroupId
-        };
-
-        // Call Apex method to save the broadcast group
-        saveBroadcastGroup({ request })
-            .then(() => {
-                this.showToast('Success', 'Broadcast group saved successfully', 'success');
-                this.loadBroadcastGroups(); // Reload groups after save
-            })
-            .catch((error) => {
-                console.error('Error saving broadcast group:', error);
-                this.showToast('Error', 'Failed to save broadcast group', 'error');
             });
     }
 

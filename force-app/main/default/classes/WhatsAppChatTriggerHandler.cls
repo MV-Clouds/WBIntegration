@@ -66,17 +66,7 @@ public without sharing class WhatsAppChatTriggerHandler {
                 System.debug(broadcastsToUpdate);
                 Broadcast__c broadcast = broadcastsToUpdate.get(chat.WB_Broadcast__c);
                 System.debug(broadcast);
-    
-                // Increment the appropriate counter
-                // if (chat.Message_Status__c == 'Sent') {
-                //     broadcast.Total_Sent__c += 1;
-                // } else if (chat.Message_Status__c == 'Delivered') {
-                //     broadcast.Total_Delivered__c += 1;
-                // } else if (chat.Message_Status__c == 'Seen') {
-                //     broadcast.Total_Read__c += 1;
-                // } else if (chat.Message_Status__c == 'Failed') {
-                //     broadcast.Total_Failed__c += 1;
-                // }
+
                 broadcast.Total_Sent__c += chat.Message_Status__c == 'Sent' ? 1 : 0;
                 broadcast.Total_Delivered__c += chat.Message_Status__c == 'Delivered' ? 1 : 0;
                 broadcast.Total_Read__c += chat.Message_Status__c == 'Seen' ? 1 : 0;

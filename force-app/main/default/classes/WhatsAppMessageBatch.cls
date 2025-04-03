@@ -192,8 +192,19 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             data.put('headerType', template.Header_Type__c);
             data.put('headerParameters', (List<Object>)templateData.get('headerParams'));
             data.put('bodyParameters', (List<Object>)templateData.get('bodyParams'));
+
             if(template.Button_Body__c != null){
-                data.put('buttonValue', (List<Map<String, Object>>)JSON.deserializeUntyped(template.Button_Body__c));
+                Object rawData = JSON.deserializeUntyped(template.Button_Body__c);
+                List<Object> dataList = (List<Object>) rawData;
+
+                // Convert each entry to a Map<String, Object>
+                List<Map<String, Object>> finalList = new List<Map<String, Object>>();
+                for (Object item : dataList) {
+                    finalList.add((Map<String, Object>) item);
+                }
+
+                System.debug(finalList);
+                data.put('buttonValue', finalList);
             } else {
                 data.put('buttonValue', null);
             }
