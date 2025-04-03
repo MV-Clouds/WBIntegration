@@ -216,9 +216,6 @@
                 // if (buttonComponents.size() >= 1) {
                 //     break; // Limit to 1 button if required
                 // }
-
-                Map<String,Object> selectedFlowMap= new Map<String,Object>();
-                selectedFlowMap = (Map<String,Object>) JSON.deserializeUntyped(templateWrapper.selectedFlow);
                 
                 
                 Map<String, Object> button = (Map<String, Object>) item;
@@ -246,6 +243,8 @@
                     buttonComponent.put('example', (String) button.get('offercode'));
                 }
                 else if ('Flow'.equals(actionType)) {
+                    Map<String,Object> selectedFlowMap= new Map<String,Object>();
+                    selectedFlowMap = (Map<String,Object>) JSON.deserializeUntyped(templateWrapper.selectedFlow);
                     buttonComponent.put('type', 'FLOW');
                     buttonComponent.put('text', (String) button.get('btntext'));
                     buttonComponent.put('flow_id', (String) selectedFlowMap.get('id'));
