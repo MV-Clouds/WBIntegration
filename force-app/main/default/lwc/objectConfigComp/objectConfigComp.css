@@ -17,6 +17,8 @@ th, td {
     border-radius: 5px;
     background-image: url('/resource/wbiTemplateBg');
     background-color: #ffffff;
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 .heading {
