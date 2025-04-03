@@ -23,7 +23,6 @@
     */
     public static Map<String, Object> buildPayload(TemplateWrapper templateWrapper) {
         try {
-            System.debug('Template Wrapper is :: ' + templateWrapper);
             Map<String, Object> payload = new Map<String, Object>();
             payload.put('name', templateWrapper.templateName);
             payload.put('language', templateWrapper.tempLanguage);
@@ -42,7 +41,6 @@
                     payload.put('message_send_ttl_seconds', 300); // Default to 5 mins if not set
                 }
             }
-            System.debug('Final Payload: ' + JSON.serialize(payload));
             return payload;
 
         } catch (Exception e) {
@@ -67,7 +65,6 @@
             }
     
             if ((templateWrapper.templateBody != null ) ) {
-                System.debug('templateWrapper.templateBody: ' + templateWrapper.templateBody);
                 
                 components.add(buildBodyComponent(templateWrapper));
             }
@@ -144,7 +141,6 @@
         try {
 
             Map<String, Object> bodyComponent;
-            System.debug('Template bodyyy ::: '+templateWrapper.templateBody);
             if (templateWrapper.templateCategory == 'Authentication') {
                 bodyComponent = new Map<String, Object>{
                     'type' => 'BODY'
@@ -153,7 +149,6 @@
 
                 // Convert Integer to String
                 String randomCodeStr = String.valueOf(randomCode);
-                System.debug(randomCodeStr);
 
                 // Add the string to templateWrapper
                 templateWrapper.varAlternateTexts.add(randomCodeStr);
@@ -167,7 +162,7 @@
                     };
             }
     
-            if ((templateWrapper.templateBodyText != null && templateWrapper.templateBodyText.size() > 0)) {
+            if ((templateWrapper.templateBodyText != null) && (templateWrapper.templateBodyText.size() > 0)) {
                 
                 bodyComponent.put('example', new Map<String, Object>{
                     'body_text' => new List<List<String>>{templateWrapper.templateBodyText}
@@ -212,34 +207,24 @@
             try {
                 untypedList = (List<Object>) JSON.deserializeUntyped(templateWrapper.typeOfButton);
             } catch (Exception e) {
+                
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'handleSuccessResponse','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
                 throw new IllegalArgumentException('Invalid JSON format for typeOfButton: ' + e.getMessage());
             }
-            System.debug('untypedList ::: ' + untypedList);
             // Loop through buttons for non-Authentication categories
             for (Object item : untypedList) {
                 // if (buttonComponents.size() >= 1) {
                 //     break; // Limit to 1 button if required
                 // }
 
-                System.debug('Button item ::: ');
-                System.debug(item);
                 Map<String,Object> selectedFlowMap= new Map<String,Object>();
-                try {
-                    selectedFlowMap = (Map<String,Object>) JSON.deserializeUntyped(templateWrapper.selectedFlow);
-                    System.debug(templateWrapper);
-                    System.debug('Selected Id ::: '+templateWrapper.selectedFlow);
-                    System.debug('Selected Id ::: '+selectedFlowMap);
-                    System.debug('Selected Id ::: '+selectedFlowMap.get('id'));
-                } catch (Exception exp) {
-                    System.debug(exp.getMessage());
-                }
+                selectedFlowMap = (Map<String,Object>) JSON.deserializeUntyped(templateWrapper.selectedFlow);
+                
                 
                 Map<String, Object> button = (Map<String, Object>) item;
-                System.debug('Button ::: '+button);
                 String actionType = (String) button.get('selectedActionType');
                 String customActionType = (String) button.get('selectedCustomType');
                 String phoneNumber = (String) button.get('selectedCountryType') + ' ' + (String) button.get('phonenum');
-                System.debug('Action Type ::: ' + actionType);
                 Map<String, Object> buttonComponent = new Map<String, Object>();
                 if ('PHONE_NUMBER'.equals(actionType)) {
                     buttonComponent.put('type', 'PHONE_NUMBER');
@@ -259,32 +244,19 @@
                     buttonComponent.put('type', 'COPY_CODE');
                     buttonComponent.put('text', 'Copy offer code');
                     buttonComponent.put('example', (String) button.get('offercode'));
-                    // buttonComponent.put('coupon_code', (String) button.get('offercode'));
                 }
                 else if ('Flow'.equals(actionType)) {
-                    System.debug('In Flow');
                     buttonComponent.put('type', 'FLOW');
                     buttonComponent.put('text', (String) button.get('btntext'));
                     buttonComponent.put('flow_id', (String) selectedFlowMap.get('id'));
-                    // buttonComponent.put('coupon_code', (String) button.get('offercode'));
                 }
                 if (!buttonComponent.isEmpty()) {
                     buttonComponents.add(buttonComponent);
                 }
-                System.debug('Button Component ::: '+buttonComponents);
             }
     
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'CreateTemplateWrapper',
-                'methodName' => 'buildButtonComponent',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'buildButtonComponent','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     
         return buttonComponents;
@@ -301,10 +273,6 @@
 
     public static Id handleSuccessResponse(HttpResponse res, Map<String, Object> payload, Map<String, Object> response, TemplateWrapper templateWrapper) {
         Id templateId = null;
-                System.debug('Res is :: '+ res);
-                System.debug('payload is :: '+ payload);
-                System.debug('response is :: '+ response);
-                System.debug('templateWrapper is :: '+ templateWrapper);
         try {
             // Deserialize the response and payload
             Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
@@ -328,7 +296,6 @@
                 }
             }
 
-            System.debug(whatsAppTemplateList);
 
             if (whatsAppTemplateList.isEmpty()) {
                 whatsAppTemplate = new Template__c();
@@ -339,7 +306,6 @@
                 }
             }
             
-            System.debug('Handleeeee Successsss Template Type : '+templateWrapper.templateType);
             // Populate Template__c fields dynamically
             String status = (String) responseMap.get('status');
             whatsAppTemplate.Template_Id__c = (String) responseMap.get('id') != null ? (String) responseMap.get('id') : whatsAppTemplate.Template_Id__c;
@@ -350,8 +316,6 @@
             whatsAppTemplate.Template_Category__c = (String) payloadMap.get('category');
             whatsAppTemplate.Language__c = (String) payloadMap.get('language');
             whatsAppTemplate.Template_Type__c = templateWrapper.templateType;
-            // whatsAppTemplate.Template_SubCatagory__c = templateWrapper.templateType;
-            System.debug('Temp Misss data ::: '+templateWrapper.templateMiscellaneousData);
             whatsAppTemplate.Template_Miscellaneous_Data__c = templateWrapper.templateMiscellaneousData;
 
             // Initialize variables for components
@@ -360,7 +324,6 @@
             List<String> headAlternateTexts = templateWrapper.headAlternateTexts; 
             List<String> varAlternateTexts = templateWrapper.varAlternateTexts;   
 
-            System.debug('Variable alternate text ::: '+varAlternateTexts);
             Integer headerIndex = 0;
             Integer variableIndex = 0; 
             String headerMergeText = '';
@@ -371,8 +334,6 @@
                     continue;
                 }
                 Map<String, Object> component = (Map<String, Object>) comp;
-                System.debug('COmponentssss ::::: ');
-                System.debug(component);
                 String type = (String) component.get('type');
                 Map<String, Object> example = (Map<String, Object>) component.get('example');
 
@@ -427,9 +388,7 @@
                                         );
                                         variableRecords.add(headerVariable);
                                         headerIndex++;
-                                    } else {
-                                        System.debug('HeaderIndex out of bounds: ' + headerIndex);
-                                    }                                 
+                                    }                           
                                    
                                     headerIndex++;
                                 }
@@ -440,10 +399,8 @@
                 // BODY Component
                 else if (type == 'BODY') {
                     Map<String, Object> result = handleBodyComponent(whatsAppTemplate.Template_Category__c, component, example);
-                    System.debug('Boddyyyy textt ::: ');
-                    System.debug(((String) result.get('bodyText')));
-                    if((((String) result.get('bodyText')) != null)){
-                        System.debug('In null');
+                    
+                    if(((String) result.get('bodyText')) != null){
                         whatsAppTemplate.WBTemplate_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
     
                         List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
@@ -490,8 +447,6 @@
                                             );
                                     }
                                     variableRecords.add(bodyVariable);
-                                } else {
-                                    System.debug('VariableIndex out of bounds: ' + variableIndex);
                                 }
                                 variableIndex++; 
                             }
@@ -505,7 +460,6 @@
                 }
                 // BUTTONS Component
                 else if (type == 'BUTTONS') {
-                    System.debug('Marketing text  ::: '+templateWrapper.marketingOptText);
                     List<Object> buttons = (List<Object>) component.get('buttons');
                     for (Object buttonObj : buttons) {
                         if (buttonObj instanceof Map<String, Object>) {
@@ -516,14 +470,11 @@
                             // ✅ Correct check for marketing opt-out
                             if (buttonText == templateWrapper.marketingOptText) {
                                 button.put('isMarketingOpt', true);
-                                System.debug('Added isMarketingOpt to button: ' + button);
                             }
                         }
                     }
-                    System.debug('Buttons:'+component);
                     buttonDetails = handleButtonComponent(component);
                     whatsAppTemplate.Button_Body__c = buttonDetails;
-                    System.debug(whatsAppTemplate.Button_Body__c);
                     
                 }
             }
@@ -547,16 +498,7 @@
             // Error response handling
             response.put('success', false);
             response.put('errorMessage', e.getMessage());
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'CreateTemplateWrapper',
-                'methodName' => 'handleSuccessResponse',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'handleSuccessResponse','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
         return templateId; 
     }
@@ -572,7 +514,6 @@
         Map<String, Object> result = new Map<String, Object>(); 
         try {
             String bodyText = (String) component.get('text');
-            System.debug('Bodyyyy component ::: '+bodyText);
             String bodyMergeText = '';  
             List<Map<String, String>> parsedFields = new List<Map<String, String>>(); 
     
@@ -634,13 +575,10 @@
         String buttonList = '';
         try {
             List<Object> buttons = (List<Object>) component.get('buttons');
-            System.debug(buttons) ;
     
             if (buttons != null) {
                 buttonList = (String) JSON.serialize(buttons);
                 
-            } else {
-                System.debug('No buttons found in component: ' + component);
             }
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleButtonComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});

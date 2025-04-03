@@ -21,8 +21,6 @@ public class CreateTemplateWrapperTest{
         templateWrapper.url = 'http://example.com';
         templateWrapper.tempImgUrl = 'http://example.com/image.png';
         
-        // Debug statement to confirm field values
-        System.debug('TemplateWrapper: ' + templateWrapper);
         Map<String, Object> result = CreateTemplateWrapper.buildPayload(templateWrapper);
 
         templateWrapper.tempHeaderFormat = 'Image';

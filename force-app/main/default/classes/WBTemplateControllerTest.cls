@@ -87,7 +87,6 @@ public class WBTemplateControllerTest {
         for (Flow__c flow : flows) {
             System.assertEquals('Published', flow.Status__c, 'Only Published flows should be returned');
         }
-        System.debug('Flow Id : '+flows[0]);
         
         
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));

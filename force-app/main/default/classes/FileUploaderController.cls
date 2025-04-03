@@ -18,7 +18,6 @@ public with sharing class FileUploaderController {
     @AuraEnabled
     public static String deleteFile(String contentVersionId) {
         try {
-            System.debug('Deleting ContentVersion with Id: ' + contentVersionId);
 
             // Get related ContentDocument
             List<ContentDocument> docs = [
@@ -27,27 +26,22 @@ public with sharing class FileUploaderController {
                 WHERE LatestPublishedVersionId = :contentVersionId
                 LIMIT 1
             ];
-            System.debug(docs.size());
             if (!docs.isEmpty()) {
                 Id contentDocumentId = docs[0].Id;
                 
-                System.debug(contentDocumentId);
                 // Delete the ContentDocument (deletes related ContentVersion)
                 delete docs;
-                System.debug('File deleted successfully.');
                 return 'File deleted successfully!';
             } else {
                 return 'No file found to delete.';
             }
         } catch (Exception e) {
-            System.debug('Error deleting file: ' + e.getMessage());
             throw new AuraHandledException('Error deleting file: ' + e.getMessage());
         }
     }
     @AuraEnabled
     public static String getPublicLink(String contentVersionId) {
         try {
-            System.debug(contentVersionId);
             // Get the related ContentDocument Id
             ContentVersion contentVersion = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :contentVersionId LIMIT 1];
             
@@ -69,7 +63,8 @@ public with sharing class FileUploaderController {
          // Return the public URL
             return distribution.ContentDownloadUrl;
         } catch (Exception e) {
-            System.debug('❌ Error while creating public link: ' + e.getMessage());
+
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'FileUploaderController', 'methodName' => 'getPublicLink', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return 'Error: ' + e.getMessage();
         }
     }
