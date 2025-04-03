@@ -89,7 +89,7 @@ export default class WbAllBroadcastPage extends LightningElement {
             }
             return pages;
         } catch (error) {
-            console.error('Error pageNumbers->' + error);
+            this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
     }
@@ -122,7 +122,6 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.updateTemplateOptions(); // Update options based on selected object
             })
             .catch(error => {
-                console.error('Error loading templates:', error);
                 this.showToast('Error', 'Failed to load templates', 'error');
             })
             .finally(() => {
@@ -150,7 +149,7 @@ export default class WbAllBroadcastPage extends LightningElement {
 
         // Convert to combobox options format
         this.templateOptions = combinedTemplates.map(template => ({
-            label: template.Template_Name__c,
+            label: template.MVWB__Template_Name__c,
             value: template.Id
         }));
 
@@ -161,7 +160,6 @@ export default class WbAllBroadcastPage extends LightningElement {
         this.isLoading = true;
         getBroadcastRecs()
             .then(result => {
-                console.log({result});
                 this.data = result.map((item, index) => ({
                     ...item,
                     index : index + 1,
@@ -171,7 +169,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.updateShownData();
             })
             .catch(error => {
-                console.error('Error loading records:', error);
+                this.showToast('Error', 'Failed to load broadcast groups', 'error');
             })
             .finally(() => {
                 this.isLoading = false;
@@ -183,9 +181,8 @@ export default class WbAllBroadcastPage extends LightningElement {
             const startIndex = (this.currentPage - 1) * this.pageSize;
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredData.slice(startIndex, endIndex);
-            console.log(this.paginatedData);
         } catch (error) {
-            console.error('Error updateShownData->' + error);
+            this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
 
@@ -199,7 +196,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.updateShownData();
             }
         } catch (error) {
-            console.error('Error in search: ' + error.stack);
+            this.showToast('Error', 'Error searching', 'error');
         }
     }
     
@@ -210,7 +207,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.error('handlePrevious->'+error.stack);
+            this.showToast('Error', 'Error navigating to previous page', 'error');
         }
     }
     
@@ -221,7 +218,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.error('handleNext->'+error.stack);
+            this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
     
@@ -233,7 +230,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.error('handlePageChange->'+error.stack);
+            this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 
     newBroadcast(){
@@ -242,12 +239,11 @@ export default class WbAllBroadcastPage extends LightningElement {
 
         getBroadcastGroups()
             .then(result => {
-                console.log({result});
                 this.broadcastGroups = result;
                 this.filteredGroups = [...this.broadcastGroups];
             })
-            .catch(error => {
-                console.error('Error loading records:', error);
+            .catch(() => {
+                this.showToast('Error', 'Error fetching broadcast groups', 'error');
             })
             .finally(() => {
                 this.isLoading = false;
@@ -279,7 +275,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 if (!this.selectedGroupIds.some(group => group.Id === groupId)) {
                     this.selectedGroupIds = [
                         ...this.selectedGroupIds,
-                        { Id: groupId, ObjName: selectedGroup.Object_Name__c } // Store both Id and Name
+                        { Id: groupId, ObjName: selectedGroup.MVWB__Object_Name__c } // Store both Id and Name
                     ];
                 }
             } else {
@@ -295,7 +291,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 IsChecked: this.selectedGroupIds.some(selected => selected.Id === group.Id)
             }));
         } catch (error) {
-            console.error('Error in selection: ', error);
+            this.showToast('Error', 'Error handling group selection', 'error');
         }
     }
 
@@ -315,7 +311,7 @@ export default class WbAllBroadcastPage extends LightningElement {
             this.popUpFirstPage = false;
             this.popUpSecondpage = true;
         } catch (error) {
-            console.error('Error in next click: ' + error);
+            this.showToast('Error!', 'Please select template', 'error');
         }
     }
 
@@ -326,9 +322,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.selectedTemplate = value;
             break;
             case 'dateTime':
-                this.selectedDateTime = value;
-                console.log('selectedDateTime ==> ', this.selectedDateTime);
-                
+                this.selectedDateTime = value;                
             break;
         }
     }
@@ -382,15 +376,11 @@ export default class WbAllBroadcastPage extends LightningElement {
     }
 
     handleSchedule(){
-        console.log('here');
 
         if(this.selectedDateTime === '' || this.selectedDateTime === null){
             this.showToast('Error!', 'Please select date and time', 'error');
             return;
-        }
-
-        console.log('selectedDateTime ==> ', this.selectedDateTime);
-        
+        }        
 
         let grpIdList = this.selectedGroupIds.map(record => record.Id);
 
@@ -403,11 +393,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 }
             })
             .catch(error => {
-                console.error('Error in send click: ' + error);
-                console.log(error.body.message);
-                console.log(JSON.stringify(error));
-                
-                
+                this.showToast('Error', `Broadcast sent failed - ${error}`, 'error');
             })
             .finally(() => {
                 this.isLoading = false;
@@ -423,9 +409,7 @@ export default class WbAllBroadcastPage extends LightningElement {
         }
 
         this.isLoading = true;
-        console.log(this.selectedTemplate);
         let grpIdList = this.selectedGroupIds.map(record => record.Id);
-        console.log(grpIdList);
 
         createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: false, timeOfMessage: ''})
             .then(result => {
@@ -437,7 +421,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 }
             })
             .catch(error => {
-                console.error('Error in send click: ' , error);
+                this.showToast('Error', `Broadcast sent failed - ${error}`, 'error');
             })
             .finally(() => {
                 this.isLoading = false;

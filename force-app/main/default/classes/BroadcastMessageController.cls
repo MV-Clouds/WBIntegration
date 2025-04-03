@@ -1,12 +1,29 @@
+/**
+* Class Name: BroadcastMessageController
+* Test Class: BroadcastMessageControllerTest
+* Description: This class is responsible for handling broadcast messages and managing broadcast groups.
+* Created Date: 03 April 2025
+* Created By: Rachit Shah
+*--------------------------------------------------------------------------------
+**/
+
+
 public with sharing class BroadcastMessageController {
 
+    /*
+    *********************************************************
+    @description     : get the object configs from metadata
+    @param           : None
+    @return          : result - contain the object options and config map
+    ********************************************************
+    */
     @AuraEnabled
     public static Map<String, Object> getObjectConfigs() {
         try {
             Map<String, Object> result = new Map<String, Object>();
-            List<Object_Config__mdt> objectConfigList = [
-                SELECT ChatWindowConfigInfo__c 
-                FROM Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1
+            List<MVWB__Object_Config__mdt> objectConfigList = [
+                SELECT MVWB__ChatWindowConfigInfo__c 
+                FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1
             ];
     
             if (objectConfigList.isEmpty()) {
@@ -42,6 +59,13 @@ public with sharing class BroadcastMessageController {
         }
     }
 
+    /*
+    *********************************************************
+    @description     : get the list views for the object
+    @param           : objectApiName - API name of the object
+    @return          : List of ListView records for the specified object
+    ********************************************************
+    */
     @AuraEnabled
     public static List<ListView> getListViewsForObject(String objectApiName) {
         try {
@@ -51,15 +75,32 @@ public with sharing class BroadcastMessageController {
         }
     }
 
+    /*
+    *********************************************************
+    @description     : get all broadcast groups
+    @param           : None
+    @return          : List of Broadcast_Group__c records
+    ********************************************************
+    */
+
     @AuraEnabled
     public static List<Broadcast_Group__c> getBroadcastGroups(){
+        List<Broadcast_Group__c> broadcastGroups = new List<Broadcast_Group__c>();
         try {
-            return [SELECT Id, Name, Count_of_Members__c, Description__c, Object_Name__c, Phone_Field__c FROM Broadcast_Group__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
+            broadcastGroups = [SELECT Id, Name, Count_of_Members__c, Description__c, Object_Name__c, Phone_Field__c FROM Broadcast_Group__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
         } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastGroups', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
+        return broadcastGroups;
     }
 
+    /*
+    *********************************************************
+    @description     : delete a broadcast group
+    @param           : groupId - Id of the Broadcast_Group__c record
+    @return          : void
+    ********************************************************
+    */
     @AuraEnabled
     public static void deleteBroadcastGroup(Id groupId) {
         try {
@@ -82,19 +123,36 @@ public with sharing class BroadcastMessageController {
             
             delete groupToDelete;
         } catch (Exception e) {
-            throw new AuraHandledException('An unexpected error occurred: ' + e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'deleteBroadcastGroup', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     }
 
+    /*
+    *********************************************************
+    @description     : get all broadcast records
+    @param           : None
+    @return          : List of Broadcast__c records
+    ********************************************************
+    */
     @AuraEnabled
     public static List<Broadcast__c> getBroadcastRecs(){
+        List<Broadcast__c> broadcastRecs = new List<Broadcast__c>();
         try {
-            return [SELECT Id, Name, Recipient_Count__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c FROM Broadcast__c WITH SECURITY_ENFORCED];
+            broadcastRecs =  [SELECT Id, Name, Recipient_Count__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c FROM Broadcast__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];        
         } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastRecs', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
+
+        return broadcastRecs;
     }
 
+    /*
+    *********************************************************
+    @description     : get all templates by object
+    @param           : None
+    @return          : Map of object names to lists of Template__c records
+    ********************************************************
+    */
     @AuraEnabled
     public static Map<String, List<Template__c>> getTemplatesByObject() {
         Map<String, List<Template__c>> objectTemplateMap = new Map<String, List<Template__c>>();
@@ -134,6 +192,14 @@ public with sharing class BroadcastMessageController {
     
         return objectTemplateMap;
     }    
+
+    /*
+    *********************************************************
+    @description     : Insert or Update the broadcast group and its members
+    @param           : request - BroadcastMessageRequest object containing the details
+    @return          : void
+    ********************************************************
+    */
 
     @AuraEnabled
     public static void processBroadcastMessageWithObject(BroadcastMessageRequest request) {
@@ -246,6 +312,14 @@ public with sharing class BroadcastMessageController {
     }
     
 
+    /*
+    *********************************************************
+    @description     : get the details of a broadcast group
+    @param           : groupId - Id of the Broadcast_Group__c record
+    @return          : Map containing the group record and its members
+    ********************************************************
+    */
+
     @AuraEnabled
     public static Map<String, Object> getBroadcastGroupDetails(String groupId) {
         try {
@@ -283,6 +357,13 @@ public with sharing class BroadcastMessageController {
         }
     } 
 
+    /*
+    *********************************************************
+    @description     : Create chat records and run batch class to send it at that time or schedule batch job if needed
+    @param           : groupId - Id of the Broadcast_Group__c record
+    @return          : String indicating success or failure
+    ********************************************************
+    */
     @AuraEnabled
     public static String createChatRecods(String templateId, List<String> groupIds, Boolean isScheduled, String timeOfMessage) {
         try {
@@ -304,9 +385,9 @@ public with sharing class BroadcastMessageController {
                 System.debug(objectApiName);
 
                 List<Broadcast_Group_Member__c> groupMembers = new List<Broadcast_Group_Member__c>();
-                groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupIds];
+                groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupIds WITH SECURITY_ENFORCED];
                 broadcast.Recipient_Count__c = groupMembers.size();
-                insert broadcast; // Insert broadcast after setting all required fields
+                Database.insert(broadcast, false, AccessLevel.USER_MODE);
 
                 System.debug(groupMembers.size());
                 List<String> phoneList = new List<String>();
@@ -328,7 +409,7 @@ public with sharing class BroadcastMessageController {
 
                 System.debug(chatRecs.size());
                 if (chatRecs.size() > 0) {
-                    insert chatRecs;
+                    Database.insert(chatRecs, false, AccessLevel.USER_MODE);
                 }
             }
 
@@ -360,7 +441,7 @@ public with sharing class BroadcastMessageController {
 
                 Broadcast__c br = new Broadcast__c(Id = broadcast.Id);
                 br.Schedule_DateTime__c = userDateTime;
-                update br;
+                Database.SaveResult updateResult = Database.update(br, false, AccessLevel.USER_MODE);
 
                 String jobName = 'BroadcastSchedule_' + System.currentTimeMillis();
                 System.schedule(jobName, cronExpression, batchSchedular);
@@ -372,10 +453,25 @@ public with sharing class BroadcastMessageController {
         }
     }  
 
+    /*
+    *********************************************************
+    @description     : Generate a cron expression based on the provided DateTime
+    @param           : dt - DateTime object
+    @return          : String representing the cron expression
+    ********************************************************
+    */
     public static String getCronExpression(DateTime dt) {
         String cronExpression = '0 ' + dt.minute() + ' ' + dt.hour() + ' ' + dt.day() + ' ' + dt.month() + ' ' + '?' + ' ' +  dt.year();
         return cronExpression;
     }
+
+    /*
+    *********************************************************
+    @description     : Get broadcast groups by broadcast ID
+    @param           : broadcastId - ID of the broadcast
+    @return          : List of Broadcast_Group__c records associated with the broadcast
+    ********************************************************
+    */
 
     @AuraEnabled
     public static List<Broadcast_Group__c> getBroadcastGroupsByBroadcastId(String broadcastId) {

@@ -1,3 +1,12 @@
+/**
+* Class Name: WhatsAppChatTriggerHandler
+* Test Class: BroadcastMessageControllerTest
+* Description: This class is used to handle the WhatsApp chat records and update broadcast records for total count.
+* Created Date: 03 April 2025
+* Created By: Rachit Shah
+*--------------------------------------------------------------------------------
+**/
+
 public without sharing class WhatsAppChatTriggerHandler {
     private List<Chat__c> recordNewList = new List<Chat__c>();
     private List<Chat__c> recordOldList = new List<Chat__c>();
@@ -20,9 +29,25 @@ public without sharing class WhatsAppChatTriggerHandler {
         this.isUndelete = isUndelete;
     }
 
+    
+    /*
+    *********************************************************
+    @description     : This method is used to update the broadcast records for total counts.
+    @param           :  None
+    @return          : void
+    ********************************************************
+    */
     public void handleAfterUpdateOrInsert() {
         updateBroadcastCounts();
     }
+
+    /*
+    *********************************************************
+    @description     : This method is used to update the broadcast records for total counts.
+    @param           :  None
+    @return          : void
+    ********************************************************
+    */
 
     private void updateBroadcastCounts() {
 
@@ -63,9 +88,7 @@ public without sharing class WhatsAppChatTriggerHandler {
                     ));
                 }
                 
-                System.debug(broadcastsToUpdate);
                 Broadcast__c broadcast = broadcastsToUpdate.get(chat.WB_Broadcast__c);
-                System.debug(broadcast);
 
                 broadcast.Total_Sent__c += chat.Message_Status__c == 'Sent' ? 1 : 0;
                 broadcast.Total_Delivered__c += chat.Message_Status__c == 'Delivered' ? 1 : 0;
@@ -76,12 +99,10 @@ public without sharing class WhatsAppChatTriggerHandler {
             // Perform bulk update
             if (!broadcastsToUpdate.isEmpty()) {
                 List<Broadcast__c> broadcastList = new List<Broadcast__c>(broadcastsToUpdate.values()); // Convert map values to list
-                // Database.update(broadcastList, false, AccessLevel.USER_MODE); // Use the list in Database.update()
-                Database.update(broadcastList); // Use the list in Database.update()
+                Database.update(broadcastList, false); // Use the list in Database.update()
             }
         }
         catch(Exception e){
-            System.debug(e.getMessage());
             ExceptionHandler.logException(new Map<String, Object>{'className' => CLASS_NAME,'methodName' => 'updateBroadcastCounts','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     }

@@ -1,3 +1,12 @@
+/**
+* Class Name: WhatsAppMessageBatchSchedulable
+* Test Class: BroadcastMessageControllerTest
+* Description: This class is used to schedule the batch process.
+* Created Date: 03 April 2025
+* Created By: Harsh gandhi
+*--------------------------------------------------------------------------------
+**/
+
 global with sharing class WhatsAppMessageBatchSchedulable implements Schedulable {
 
     global String templateId;
@@ -14,6 +23,13 @@ global with sharing class WhatsAppMessageBatchSchedulable implements Schedulable
         this.phoneField = phoneFieldName;
     }
     
+    /*
+    *********************************************************
+    @description     : This method is used to execute the batch process.
+    @param           : bc - Batchable context
+    @param           : scope - Scope of the batch process
+    ********************************************************
+    */
     global void execute(SchedulableContext context){
         WhatsAppMessageBatch batchJob = new WhatsAppMessageBatch(this.templateId, this.chatRecs, this.broadcastId, this.objectApiName, this.phoneField);
         Database.executeBatch(batchJob, 1);

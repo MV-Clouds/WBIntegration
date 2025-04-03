@@ -77,7 +77,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
             }
             return pages;
         } catch (error) {
-            console.log('Error pageNumbers->' + error);
+            this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
     }
@@ -105,8 +105,8 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })
-            .catch(error => {
-                console.error('Error loading records:', error);
+            .catch(() => {
+                this.showToast('Error', 'Error loading records', 'error');
             })
             .finally(() => {
                 this.isLoading = false;
@@ -119,7 +119,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredData.slice(startIndex, endIndex);
         } catch (error) {
-            console.log('Error updateShownData->' + error);
+            this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
 
@@ -133,7 +133,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
             
             this.updateShownData();
         } catch (error) {
-            console.error('Error in search: ' + error.stack);
+            this.showToast('Error', 'Error searching records', 'error');
         }
     }
     
@@ -144,7 +144,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.log('handlePrevious->'+error.stack);
+            this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
     
@@ -155,7 +155,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.log('handleNext->'+error.stack);
+            this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
     
@@ -167,7 +167,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.log('handlePageChange->'+error.stack);
+            this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 
 
@@ -194,8 +194,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 // Update paginatedData to reflect the changes
                 this.updateShownData();
             })
-            .catch(error => {
-                console.error('Error deleting record:', error);
+            .catch(() => {
                 this.showToast('Error', 'Failed to delete Broadcast Group', 'error');
             })
             .finally(() => {

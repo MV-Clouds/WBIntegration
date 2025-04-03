@@ -26,13 +26,20 @@ export default class BroadcastMessageComp extends LightningElement {
     @track isCreateBroadcastComp = true;
     @track isAllBroadcastGroupPage = false;
     @track isIntialRender = true;
-    @api broadcastGroupId;
     @track groupMembers= [];
-
+    
+    @api broadcastGroupId;
 
     broadcastHeading = 'New Broadcast Group';
     createBtnLabel= 'Create Broadcast Group'
 
+
+    /**
+    * Getter Name : dynamicFieldNames
+    * @description : return dynamic field names based on selected object
+    * Date: 03/04/2025
+    * Created By: Rachit Shah
+    */
     get dynamicFieldNames() {
         if (!this.selectedObject || !this.configMap[this.selectedObject]) {
             return [];
@@ -45,16 +52,16 @@ export default class BroadcastMessageComp extends LightningElement {
     }
 
     /**
-     * Getter for select all checkbox state
+    * Getter Name : isAllSelected
+    * @description : return true if all records are selected
+    * Date: 03/04/2025
+    * Created By: Rachit Shah
     */
     get isAllSelected() {
         return this.paginatedData.length > 0 && 
                 this.paginatedData.every(record => this.selectedRecords.has(record.Id));
     }
 
-    /**
-     * Getter for indeterminate state of select all checkbox
-     */
     get isIndeterminate() {
         return this.paginatedData.some(record => this.selectedRecords.has(record.Id)) && 
                 !this.isAllSelected;
@@ -146,7 +153,7 @@ export default class BroadcastMessageComp extends LightningElement {
             }
             return pages;
         } catch (error) {
-            console.log('Error pageNumbers->' + error);
+            this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
     }
@@ -181,7 +188,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 this.configMap = result.configMap;
             })
             .catch(error => {
-                console.error('Error loading configs:', error);
+                this.showToast('Error', 'Error loading configs', 'error');
             })
             .finally(() => {
                 this.isLoading = false;
@@ -190,7 +197,6 @@ export default class BroadcastMessageComp extends LightningElement {
 
         // Method to fetch group details (call this after your operations)
         fetchGroupDetails() {
-
 
             if (!this.broadcastGroupId) {
                 return;
@@ -204,20 +210,19 @@ export default class BroadcastMessageComp extends LightningElement {
                     this.createBtnLabel= 'Update Broadcast Group'
                     let groupData = result.group || {};
                     
-                    this.selectedObject = groupData.Object_Name__c || '';  // Set Object Name
+                    this.selectedObject = groupData.MVWB__Object_Name__c || '';  // Set Object Name
                     this.loadListViews();
-                    this.selectedListView = groupData.List_View__c || '';  // Set List View Name
+                    this.selectedListView = groupData.MVWB__List_View__c || '';  // Set List View Name
 
 
                     this.broadcastGroupName = groupData.Name;
-                    this.messageText = groupData.Description__c;
-                    console.log(JSON.stringify(result));
+                    this.messageText = groupData.MVWB__Description__c;
 
                     this.groupMembers = result.members || [];
 
                 })
                 .catch(() => {
-                    console.error('Error fetching group details');
+                    this.showToast('Error', 'Error fetching group details', 'error');
                 })
                 .finally(() => {
                     this.isLoading = false; // Hide loading spinner
@@ -239,7 +244,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 isSelected: this.selectedRecords.has(record.Id)
             }));
         } catch (error) {
-            console.log('Error updateShownData->' + error);
+            this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
 
@@ -256,7 +261,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.log('handlePrevious->'+error.stack);
+            this.showToast('Error', 'Error handling previous button click', 'error');
         }
     }
 
@@ -273,7 +278,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.log('handleNext->'+error.stack);
+            this.showToast('Error', 'Error handling next button click', 'error');
         }
     }
 
@@ -291,7 +296,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.log('handlePageChange->'+error.stack);
+            this.showToast('Error', 'Error handling page change', 'error');
         }
     }
 
@@ -363,8 +368,8 @@ export default class BroadcastMessageComp extends LightningElement {
                     value: lv.Id
                 }));
             })
-            .catch(error => {
-                console.error('Error loading list views:', error);
+            .catch(() => {
+                this.showToast('Error', 'Error loading list views', 'error');
             })
             .finally(() => {
                 this.isLoading = false;
@@ -398,13 +403,12 @@ export default class BroadcastMessageComp extends LightningElement {
 
             this.filteredData = [...this.data];
             this.currentPage = 1;
-            console.log(this.currentPage);
 
             // Ensure this runs only on the first render and when group members exist
             if (this.isIntialRender && this.broadcastGroupId && this.groupMembers.length > 0) {
                 this.isIntialRender = false; // Prevent future updates from modifying selection
 
-                const memberPhoneNumbers = new Set(this.groupMembers.map(member => member.Phone_Number__c));
+                const memberPhoneNumbers = new Set(this.groupMembers.map(member => member.MVWB__Phone_Number__c));
 
                 this.data.forEach(record => {
                     if (memberPhoneNumbers.has(record.phone)) {
@@ -419,7 +423,7 @@ export default class BroadcastMessageComp extends LightningElement {
             this.updateShownData();
 
         } else if (error) {
-            console.error('Error loading records:', error);
+            this.showToast('Error', 'Error loading records', 'error');
         }
     }
     /**
@@ -497,7 +501,6 @@ export default class BroadcastMessageComp extends LightningElement {
   
             
         const isUpdate = this.broadcastGroupId != null;
-        console.log(isUpdate);
         
         const phoneField = this.configMap[this.selectedObject]?.phoneField || '';
 

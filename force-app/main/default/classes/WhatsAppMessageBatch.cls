@@ -1,3 +1,12 @@
+/**
+* Class Name: WhatsAppMessageBatch
+* Test Class: BroadcastMessageControllerTest
+* Description: This class is used to send WhatsApp messages in bulk using a batch process.
+* Created Date: 03 April 2025
+* Created By: Harsh gandhi
+*--------------------------------------------------------------------------------
+**/
+
 global with sharing class WhatsAppMessageBatch implements Database.Batchable<SObject>, Database.AllowsCallouts, Database.Stateful {
     
     global String templateId;
@@ -17,73 +26,90 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
         this.phoneField = phoneFieldName;
     }
 
+    /*
+    *********************************************************
+    @description     : This method is used to start the batch process and send whatsapp message.
+    @param           : bc - Batchable context 
+    @return          : Database.QueryLocator - query to fetch all the chat records
+    ********************************************************
+    */
     global Database.QueryLocator start(Database.BatchableContext bc) {
         try {
             List<Id> chatIds = new List<Id>();
             for (Chat__c chat : this.chatsToProcess) {
                 chatIds.add(chat.Id);
             }
-            System.debug(chatIds.size());
     
             return Database.getQueryLocator([SELECT Id, Phone__c, WhatsAppMessageId__c, Message_Status__c FROM Chat__c WHERE Id IN :chatIds]);
         } catch (Exception e) {
-            System.debug('Error in start: ' + e.getMessage());
             return Database.getQueryLocator([SELECT Id FROM Chat__c WHERE Id = null]);
         }
     }
 
+    /*
+    *********************************************************
+    @description     : This method is used to execute the batch process.
+    @param           : bc - Batchable context
+    @param           : scope - Scope of the batch process
+    ********************************************************
+    */
     global void execute(Database.BatchableContext bc, List<Chat__c> chatList) {
         try {
-            System.debug(chatList);
-            System.debug(chatList.size());
-            System.debug(bc);
             Chat__c chat = new Chat__c();
             if(chatList.size() > 0){
                 chat = chatList[0];
             }
-            System.debug(chat);
             String phone = chat.Phone__c;
             
             String query = 'SELECT Id, ' + this.phoneField + ' FROM ' + this.objectApiName + ' WHERE ' + this.phoneField + ' =: phone LIMIT 1';
 
             List<sObject> records = Database.query(String.escapeSingleQuotes(query));
-            System.debug(records.size());
             if(records.size() > 0){
                 Map<String, object> tempData = getTemplateData(this.templateId, records[0].Id, this.objectApiName);
-                System.debug(tempData);
                 String jsonData = generatePayloadFromTemplateData(tempData, chat.Phone__c);
-                System.debug(jsonData);
                 List<Chat__c> cht = sendWhatsAppMessage(chat.Id, jsonData);
-                System.debug(cht.size());
                 if(cht.size() > 0){
                     this.chatsToUpdate.add(cht[0]);
-                    System.debug(this.chatsToUpdate.size());
                 }
             }
         } catch (Exception e) {
-            System.debug('Error in execute : ' + e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'finish' => 'execute', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
         }
     }
 
+    /*
+    *********************************************************
+    @description     : This method is used to finish the batch process and update the chat records.
+    @param           : bc - Batchable context
+    @return          : void
+    ********************************************************
+    */
+    
     global void finish(Database.BatchableContext bc) {
         try {
-            System.debug(this.chatsToUpdate);
-            System.debug(this.chatsToUpdate.size());
             if (this.chatsToUpdate.size() > 0) {
-                System.debug('in update');
-                update this.chatsToUpdate;
+                Database.update(this.chatsToUpdate, false, AccessLevel.USER_MODE);
             }
     
             if(broadcastId != null){
                 Broadcast__c br = new Broadcast__c(Id = this.broadcastId);
                 br.Status__c = 'Completed';
-                update br;
+                Database.update(br, false, AccessLevel.USER_MODE);
             }
         } catch (Exception e) {
-            System.debug('Error in finish : ' + e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'finish' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
         }
     }
 
+    /*
+    *********************************************************
+    @description     : This method is used to get the template data for the given templateId and recordId.
+    @param           : templateId - Id of the template
+    @param           : recordId - Id of the record
+    @param           : objectApiName - API name of the object
+    @return          : Map<String, object> - template data
+    ********************************************************
+    */
     @AuraEnabled
     global static Map<String, object> getTemplateData(String templateId, String recordId, String objectApiName){
         try {
@@ -119,12 +145,7 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                         // If the object matches the queried object, add only the field name
                         fieldSelectionCause.add(tv.Field_Name__c);
                     } else {
-                        try {
-                            // Check if the object supports relationships before adding related fields
-                            fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
-                        } catch (Exception ex) {
-                            System.debug('Invalid relationship: ' + tv.Object_Name__c + ' for ' + objectApiName);
-                        }
+                        fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
                     }
                 }
                 
@@ -150,7 +171,6 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                                 SObject relatedRecord = record.getSObject(tv.Object_Name__c);  
                                 valueToReplace = (relatedRecord != null) ? relatedRecord.get(tv.Field_Name__c) : null;  
                             } catch (Exception ex) {  
-                                System.debug('Invalid relationship: ' + tv.Object_Name__c + ' for ' + objectApiName);  
                                 valueToReplace = null;  
                             }  
                         }
@@ -175,12 +195,19 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                 return null;
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
         }
         return null;
     }
 
-    // Method to Call createJSONBody Using Template Data
+    /*
+    *********************************************************
+    @description     : This method is used to generate the JSON payload for the WhatsApp message.
+    @param           : templateData - Map of template data
+    @param           : to - Phone number to send the message
+    @return          : String - JSON payload
+    ********************************************************
+    */
     global static String generatePayloadFromTemplateData(Map<String, Object> templateData, String to) {
         try {
             Template__c template = (Template__c)templateData.get('template'); // Cast to Template__c
@@ -203,20 +230,26 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                     finalList.add((Map<String, Object>) item);
                 }
 
-                System.debug(finalList);
                 data.put('buttonValue', finalList);
             } else {
                 data.put('buttonValue', null);
             }
             return createJSONBody(to, 'template', data);
         } catch (Exception e) {
-            System.debug('Error in generatePayloadFromTemplateData: ' + e.getMessage());
-            System.debug('Line' + e.getLineNumber());
-
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'generatePayloadFromTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => '', 'chatId' => null, 'moreDetails' => '', 'apiResponse' => '' });
             throw new AuraHandledException('Exception in generatePayloadFromTemplateData - ' + e.getMessage());
         }
     }
 
+    /*
+    *********************************************************
+    @description     : This method is used to create the JSON body for the WhatsApp message.
+    @param           : to - Phone number to send the message
+    @param           : type - Type of the message
+    @param           : data - Map of data to be included in the message
+    @return          : String - JSON body
+    ********************************************************
+    */
     global static String createJSONBody(String to, String type, Map<String, Object> data) {
         try {
             // Base Payload Structure
@@ -233,8 +266,6 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
 
             // Header Parameters (Text)
             List<Object> headerParameters = (List<Object>)data.get('headerParameters');
-            System.debug(headerParameters);
-            System.debug(headerParameters.size());
             if (headerParameters != null && !headerParameters.isEmpty()) {
                 List<Map<String, Object>> headerParams = new List<Map<String, Object>>();
                 
@@ -308,9 +339,6 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                                 });
                             }
                         }
-                        when else {
-                            System.debug('Unknown button type: ' + buttonType);
-                        }
                     }
                     index++;
                 }
@@ -324,12 +352,19 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             payload.put('template', template);
             return JSON.serialize(payload);
         } catch (Exception e) {
-            System.debug('Error in createJSONBody: ' + e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'createJSONBody', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => '', 'chatId' => null, 'moreDetails' => '', 'apiResponse' => '' });
             return null;
         }
     }
 
-    // @future(callout=true)
+    /*
+    *********************************************************
+    @description     : This method is used to send the WhatsApp message using the WhatsApp Business API.
+    @param           : chatId - Id of the chat record
+    @param           : jsonBody - JSON body to be sent
+    @return          : List<Chat__c> - List of chat records
+    ********************************************************
+    */
     global static List<Chat__c> sendWhatsAppMessage(String chatId, String jsonBody) {
         try {
             List<Chat__c> chat = [SELECT Id, Phone__c, WhatsAppMessageId__c, Message_Status__c FROM Chat__c WHERE Id = :chatId LIMIT 1];
@@ -351,20 +386,14 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                 List<Object> messages = (List<Object>)jsonMap.get('messages');
                 Map<String, Object> firstMessage = (Map<String, Object>)messages[0];
                 String whatsAppMessageID = (String) firstMessage.get('id');
-                System.debug('WhatsApp Message ID: ' + whatsAppMessageID);
-                // Update the chat record
                 chat[0].WhatsAppMessageId__c = whatsAppMessageID;
                 chat[0].Message_Status__c = 'Sent';
             }else{
-                System.debug('Error sending WhatsApp Message: '+response.getBody());
                 chat[0].Message_Status__c = 'Failed';
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'sendWhatsAppMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
             return chat;
-            // chatsToUpdate.add(chat);
-            // System.debug(chatsToUpdate.size());
         } catch (Exception e) {
-            System.debug('Error in sendWhatsAppMessage - ' + e.getMessage());
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'sendWhatsAppMessage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => '', 'chatId' => chatId, 'moreDetails' => '', 'apiResponse' => '' });
             return null;
         }
