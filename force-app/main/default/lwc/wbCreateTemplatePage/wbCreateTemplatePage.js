@@ -668,10 +668,8 @@ export default class WbCreateTemplatePage extends LightningElement {
                  
                  // Pass this mock event to handleTabClick()
                  this.handleTabClick(event);
-                // this.handleTabClick({ target: { dataset:{ tab : sec} } });
                 this.handleRadioChange({ target: { value: this.selectedOption } });
                 this.handleNextclick();
-                // this.handleDefaultValues();
 
                 setTimeout(() => {
                     
@@ -756,7 +754,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.addHeaderVar=this.header_variables?.length>0?true:false;
                     this.addVar=this.variables?.length>0?true:false;
                     if (this.addHeaderVar) {
-                        // this.isHeaderVariableLoad = true;
                         this.buttonDisabled = true;
                     }  
                     if (template.MVWB__Button_Body__c) {
@@ -775,8 +772,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                         buttonDataList.forEach((button, index) => {
                             if (button.type === 'QUICK_REPLY' || button.type === 'Marketing opt-out') {
                                 // Handle custom buttons
-                                // this.isCustom = true;
-                                // this.createCustomButton(button.type, button.text);
                                 try{
                                     if(button.isMarketingOpt){
                                         button.type = 'Marketing opt-out';
@@ -831,7 +826,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                     
                     }
                     
-                    //this.handleContentType({target:{value:template.Header_Type__c ||'None'}});
                     
                     if(headerType.toLowerCase()=='image' || headerType.toLowerCase() == 'video'){
                         this.headerHandle=template.MVWB__WBImage_Header_Handle__c;
@@ -840,7 +834,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                         this.isfilename=true;
                         this.fileName=template.MVWB__File_Name__c;
                         this.fileType = template.MVWB__Header_Type__c.toLowerCase();
-                        // this.generatePreview(headerBody.replace('/sfc/p/#', '/sfc/p/'));
                         
                             this.filePreview=headerBody;
                     }
@@ -976,8 +969,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.isImgSelected = false;
             this.isVidSelected = false;
             this.isDocFile = false;
-            // this.filePreview = URL.createObjectURL(file);
-            // this.filePreview = `/sfc/servlet.shepherd/version/preview/${fileId}`;
             this.filePreview = publicUrl;
         }
          else {
@@ -986,7 +977,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             this.isVidSelected = false;
             
             this.showToastError('Unsupported file type! Please select an image, PDF, or video.');
-            // alert('Unsupported file type! Please select an image, PDF, or video.');
         }
         
         this.isfilename = true;
@@ -1000,7 +990,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             uploadFile({ base64Data: this.fileData, fileName: this.fileName })
                 .then((result) => {
                     this.contentVersionId = result; // Store the returned ContentVersion Id
-                    // alert('File uploaded successfully!'+this.contentVersionId);
                     getPublicLink({ contentVersionId: this.contentVersionId })
                     .then((publicUrl) => {
                         this.generatePreview(publicUrl.replace('/sfc/p/#', '/sfc/p/'));
@@ -1030,13 +1019,11 @@ export default class WbCreateTemplatePage extends LightningElement {
         if (this.contentVersionId) {
             deleteFile({ contentVersionId: this.contentVersionId })
                 .then((result) => {
-                    // alert(result);
                     this.showToastSuccess('File deleted successfully');
                     this.resetFileData(); // Reset file data after deletion
                 })
                 .catch((error) => {
                     console.error('Error deleting file: ', error);
-                    // alert('Error deleting file!');
                     this.showToastError('Error deleting file!');
 
                     
@@ -1068,7 +1055,6 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.isfilename = false;
         this.NoFileSelected = true;
         this.contentVersionId = null;
-        // this.isDocFile = false;
     }
 
     uploadFile() {
@@ -1130,7 +1116,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                             if (result) {
                                 let serializeResult = JSON.parse(result); 
                                 this.headerHandle = serializeResult.headerHandle;
-                                // this.imageurl = serializeResult.imageurl;
                                 this.contentDocumentId =serializeResult.contentDocumentId;
 
                                 chunkStart += this.chunkSize;
@@ -1448,7 +1433,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                         this.updatePreviewContent(this.header, 'header');
                     }
                 
-                    // this.updatePreviewContent(this.header,'header');
                     break;
                 default:
                     break;
@@ -2326,7 +2310,6 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     handleConfirm(){
-        // this.iseditTemplatevisible=false
         this.showReviewTemplate=true;
     }
     handleCloseTemplate(){
@@ -2517,19 +2500,9 @@ export default class WbCreateTemplatePage extends LightningElement {
             }
 
             if (this.customButtonList && this.customButtonList.length > 0) {
-                // this.customButtonList.forEach((button) => {
-                //     if (
-                //         button.selectedCustomType === "Marketing opt-out" &&
-                //         !button.Cbtntext.includes("YOMaRkeTingOptOuTT")
-                //     ) {
-                //         button.Cbtntext += "YOMaRkeTingOptOuTT";
-                //     }
-                // });
+                
                 buttonData.push(...this.customButtonList);
             }
-            // Cbtntext: btnType === "Marketing opt-out"
-            //     ? btnText + "@#$*_*@$#Marketing"
-            //     : btnText,
             let fileUrl = null;
                 if (this.filePreview) {
                     fileUrl = this.filePreview; // Use ContentVersion if available
@@ -2537,9 +2510,6 @@ export default class WbCreateTemplatePage extends LightningElement {
             
             
             // Change
-            // tempImgId:this.contentDocumentId ? this.contentDocumentId : null,
-                
-            // tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
             if(this.activeTab=='Authentication'){
                 
                 this.tempBody = '{{1}} is your verification code';
@@ -2565,7 +2535,6 @@ export default class WbCreateTemplatePage extends LightningElement {
 
             
             
-            // varAlternateTexts: this.variables.map(varItem => varItem.alternateText || null),
             const template = {
                 templateName: this.templateName ? this.templateName : null,
                 templateCategory: this.activeTab ? this.activeTab : null,
@@ -2645,7 +2614,6 @@ export default class WbCreateTemplatePage extends LightningElement {
                         const templateId = result.templateId;  
                         this.templateId = templateId;
                         this.fetchUpdatedTemplates();
-                        // this.clearWrapper();
                     } else {
                         const errorResponse = JSON.parse(result.errorMessage); 
                         const errorMsg = errorResponse.error.error_user_msg || errorResponse.error.message || 'Due to unknown error'; 

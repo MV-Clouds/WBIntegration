@@ -61,10 +61,6 @@ public with sharing class FileUploaderController {
                 distribution.PreferencesPasswordRequired=false;
                 distribution.PreferencesAllowOriginalDownload= true;
 
-
-
-
-
             insert distribution;
             
             // Query the created ContentDistribution to get the public URL

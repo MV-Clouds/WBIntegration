@@ -22,19 +22,6 @@
     public static String endpoint;
     public static String uploadEndpoint;
 
-   // static {
-   //     try {
-   //         SETTINGS[0] = [
-   //             SELECT MVWB__Access_Token__c, MVWB__Application_Id__c, MVWB__Phone_Number_Id__c,MVWB__Business_Account_Id__c	
-   //             FROM MVWB__WBConnect_Configuration__mdt WITH SECURITY_ENFORCED
-   //             LIMIT 1
-   //         ];
-         
-   //         accessToken = SETTINGS[0].MVWB__Access_Token__c;
-   //     } catch (Exception e) {
-   //         ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'static', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-   //     }
-   // }
 
      /*
    *********************************************************

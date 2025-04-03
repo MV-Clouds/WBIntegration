@@ -611,13 +611,6 @@ textarea {
     margin-top: 0.4rem;
 }
 
-/* .customtext {
-    padding: 1rem;
-    border: 2px solid rgb(241 241 241);
-    background-color: #F5F5F5;
-    border-radius: 5px;
-} */
-
 .quicktext {
     display: flex;
     border-radius: 5px;
@@ -944,15 +937,6 @@ textarea {
     margin-right: 1rem;
 }
 
-/* .button-label-preview {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: auto; 
-    font-size: 12px;
-    cursor: pointer;
-} */
-
 
 .btn-custom-icon {
     --sds-c-icon-color-foreground-default: #03b1eb;
@@ -961,10 +945,6 @@ textarea {
 
 .main-container {
     position: relative;
-    /* height: calc(100% + 1.5rem); */
-    /* margin-top: -0.75rem;
-    width: calc(100% + 1.5rem);
-    margin-left: -0.75rem; */
 }
 
 .spinner-overlay {
@@ -992,28 +972,6 @@ textarea {
     height:35px;
     
 }
-
-/* .field-dropdown{
-    width: 170px;
-} */
-
-
-/* .footer{
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.close-btn{
-    border: 1px solid #c7c7c7;
-    border-radius: 3px;
-    color: black;
-    padding: 0.3rem;
-    padding-left: 0.7rem;
-    padding-right: 0.7rem;
-    font-size: 14px;
-    background: white;
-    font-weight: 500;
-} */
 
 .preview-head{
     display: flex;
@@ -1103,9 +1061,6 @@ textarea {
     margin-right: 0.2rem;
     /* width: 32px; */
 }
-/* .code{
-    width: 20px;
-} */
 
 /* Custom dropdown styling */
 .custom-dropdown {
@@ -1388,10 +1343,6 @@ textarea {
     width: 21rem;
 }
 
-/* .createtempdivOption2{
-    height:100%;
-    width: 100%;
-} */
 
 
 .templatebtns {
@@ -1414,19 +1365,6 @@ textarea {
     padding-right: 20%;
 }
 
-/* .divcontainer {
-    width: 100%;
-    display: flex;
-} */
-
-/* .creattempdiv3 {
-    width: 25%;
-    margin-top: 1%;
-} */
-
-/* .createtempdiv1 {
-    width: 128%;
-} */
 
 .previewchild {
     height: fit-content;

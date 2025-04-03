@@ -315,12 +315,6 @@
             String templatename = (String) payloadMap.get('name');
             Template__c whatsAppTemplate;
 
-            // List<Template__c> whatsAppTemplateList = [
-            //     SELECT Id,Name,Template_Name__c, Template_Id__c 
-            //     FROM Template__c 
-            //     WHERE Template_Name__c = :(String) payloadMap.get('name') WITH SECURITY_ENFORCED
-            //     LIMIT 1
-            // ];
 
             List<Template__c> allTemplates = [
                 SELECT Id, Name, Template_Name__c, Template_Id__c 
@@ -382,20 +376,12 @@
                 String type = (String) component.get('type');
                 Map<String, Object> example = (Map<String, Object>) component.get('example');
 
-                // if (example == null) {
-                //     example = new Map<String, Object>();
-                // }
-                
+            
 
                 if(whatsAppTemplate.Template_Category__c == 'Authentication'){
                     component.put('text',templateWrapper.templateBody);
                 }
 
-                // System.debug('Is Marketing ::: '+templateWrapper.ismarketingOpt);
-
-                // if(templateWrapper.ismarketingOpt == 1){
-                //     component.put('ismarketingOpt',true);
-                // }
     
                 // HEADER Component
                 if (type == 'HEADER') {
@@ -670,17 +656,6 @@
     ********************************************************
     */
     
-    // public static String convertMarkdownToHtml(String bodyText) {
-    //     System.debug(bodyText);
-    //     bodyText = bodyText.replaceAll('\\*{1,2}([^*]+)\\*{1,2}', '<strong>$1</strong>');
-    //     bodyText = bodyText.replaceAll('_([^_]+)_', '<em>$1</em>');        
-    //     bodyText = bodyText.replaceAll('~([^~]+)~', '<s>$1</s>');        
-    //     bodyText = bodyText.replaceAll('```([^`]+)```', '<code>$1</code>');        
-    //     bodyText = bodyText.replaceAll('\n', '<br/>');
-    //     bodyText = bodyText.replaceAll(' ', '&nbsp;');
-        
-    //     return bodyText;
-    // }
 
     public class TemplateWrapper {      
         @AuraEnabled public String templateName;
