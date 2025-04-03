@@ -313,7 +313,7 @@ public with sharing class ObjectConfigController {
         try {
             // Check if any record already exists
             List<MVWB__Object_Config__mdt> existingConfigs = [SELECT Id FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
-            if (!existingConfigs.isEmpty()) {
+            if (!existingConfigs.isEmpty() && !Test.isRunningTest()) {
                 return;
             }
 

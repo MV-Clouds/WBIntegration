@@ -15,6 +15,8 @@ global without sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
+    public static List<AWS_Config__c> configList = [SELECT Id, AWS_Access_Key__c, AWS_Secret_Access_Key__c, S3_Bucket_Name__c, S3_Region_Name__c, CreatedDate, LastModifiedDate FROM AWS_Config__c WITH SECURITY_ENFORCED LIMIT 1];
+    public static AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;
 
     @HttpGet // GET
     global static void doGet(){
@@ -310,10 +312,17 @@ global without sharing class WhatsAppWebhook{
                         Blob documentBody = handleMediaAttachment(imageId);
                         Map<String, Object> filedata = new Map<String, Object>();
                         if (documentBody != null){
-                            filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                            if(configData != null) {
+                                String fileUrl = AWSFilesController.uploadFileToS3(fileName, documentBody, mimeType);
+                                whatsappChat.Message__c = fileUrl;
+                                fileData = new Map<String, Object>{ 'fileName' => filename, 'mimeType' => mimeType };
+                                whatsappChat.File_Data__c = JSON.serialize(filedata);
+                            } else {
+                                filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                                whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
+                                whatsappChat.File_Data__c = JSON.serialize(fileData);
+                            }
                         }
-                        whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
-                        whatsappChat.File_Data__c = JSON.serialize(fileData);
                     }
                     if (messageType.equalsIgnoreCase('document')){
                         Map<String, Object> document = (Map<String, Object>)message.get('document');
@@ -328,10 +337,17 @@ global without sharing class WhatsAppWebhook{
     
                         Map<String, Object> filedata = new Map<String, Object>();
                         if (documentBody != null){
-                            filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                            if(configData != null) {
+                                String fileUrl = AWSFilesController.uploadFileToS3(fileName, documentBody, mimeType);
+                                whatsappChat.Message__c = fileUrl;
+                                fileData = new Map<String, Object>{ 'fileName' => filename, 'mimeType' => mimeType };
+                                whatsappChat.File_Data__c = JSON.serialize(filedata);
+                            } else {
+                                filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                                whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
+                                whatsappChat.File_Data__c = JSON.serialize(fileData);
+                            }
                         }
-                        whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
-                        whatsappChat.File_Data__c = JSON.serialize(fileData);
                     }
                     if (messageType.equalsIgnoreCase('video')){
                         Map<String, Object> video = (Map<String, Object>) message.get('video');
@@ -345,10 +361,17 @@ global without sharing class WhatsAppWebhook{
                         Blob documentBody = handleMediaAttachment(videoId);
                         Map<String, Object> filedata = new Map<String, Object>();
                         if (documentBody != null){
-                            filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                            if(configData != null) {
+                                String fileUrl = AWSFilesController.uploadFileToS3(fileName, documentBody, mimeType);
+                                whatsappChat.Message__c = fileUrl;
+                                fileData = new Map<String, Object>{ 'fileName' => filename, 'mimeType' => mimeType };
+                                whatsappChat.File_Data__c = JSON.serialize(filedata);
+                            } else {
+                                filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                                whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
+                                whatsappChat.File_Data__c = JSON.serialize(fileData);
+                            }
                         }
-                        whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
-                        whatsappChat.File_Data__c = JSON.serialize(fileData);
                     }
                     if (messageType.equalsIgnoreCase('audio')){
                         Map<String, Object> video = (Map<String, Object>) message.get('audio');
@@ -362,10 +385,17 @@ global without sharing class WhatsAppWebhook{
                         Blob documentBody = handleMediaAttachment(audioId);
                         Map<String, Object> filedata = new Map<String, Object>();
                         if (documentBody != null){
-                            filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                            if(configData != null) {
+                                String fileUrl = AWSFilesController.uploadFileToS3(fileName, documentBody, mimeType);
+                                whatsappChat.Message__c = fileUrl;
+                                fileData = new Map<String, Object>{ 'fileName' => filename, 'mimeType' => mimeType };
+                                whatsappChat.File_Data__c = JSON.serialize(filedata);
+                            } else {
+                                filedata = saveMediaToSalesforce(documentBody, filename, mimeType, recordId, objectApiName);
+                                whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
+                                whatsappChat.File_Data__c = JSON.serialize(fileData);
+                            }
                         }
-                        whatsappChat.Message__c = '/sfc/servlet.shepherd/version/download/'+filedata.get('contentVersionId');
-                        whatsappChat.File_Data__c = JSON.serialize(fileData);
                     }
                     if (messageType.equalsIgnoreCase('button')){
                         Map<String, Object> button = (Map<String, Object>)message.get('button');
