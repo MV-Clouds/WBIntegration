@@ -702,6 +702,7 @@
            req.setHeader('Authorization', 'Bearer ' + accessToken);
            req.setBody(JSON.serialize(payload));
    
+
            Http http = new Http();
            HttpResponse res = http.send(req);
 
@@ -790,4 +791,5 @@
        @AuraEnabled public List<Map<String, String>> templateVariables; 
        @AuraEnabled public Boolean isImgUrl;
    }
+   
 }

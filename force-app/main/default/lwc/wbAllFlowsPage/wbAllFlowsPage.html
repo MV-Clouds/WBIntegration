@@ -1,0 +1,126 @@
+<template>
+    <template if:true={isFlowVisible}>
+        <div class="slds-theme_default main">
+            <template if:true={isLoading}>
+                <div class="spinner-overlay">
+                    <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+                </div>
+            </template>
+            <div class="slds-grid slds-grid_vertical">
+                <div class="heading">
+                    <p class="txt">WhatsApp Flows</p>
+                </div>
+
+                <div class="filterparent">
+                    <div class="filterdiv">
+                        <lightning-input variant="label-hidden" class="filter search-div" type="search" placeholder="Search Name" onchange={handleSearchInputChange}></lightning-input>
+                        <lightning-combobox variant="label-hidden" class="filter" value={statusValues} placeholder="Status" options={statusOptions} onchange={handleStatusChange}></lightning-combobox>
+                    </div>
+
+                    <div class="btns">
+                        <button class="custom-button cus-btns" onclick={showCreateFlow}>
+                            <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small" class="left-icon"></lightning-icon>
+                            <span>Create Flow</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="datatable">
+                <div class="table-container">
+                    <table class="slds-table">
+                        <thead>
+                            <tr class="tablerow">
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Flow Name</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Flow ID</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Status</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Last Updated</div>
+                                </th>
+                                <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Actions</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template if:true={filteredRecords.length}>
+                                <template for:each={filteredRecords} for:item="record">
+                                    <tr class="tablerow" key={record.Id}>
+                                        <td class="tableData" data-label="Flow Name">
+                                            <div class="slds-truncate">{record.MVWB__Flow_Name__c}</div>
+                                        </td>
+                                        <td class="tableData" data-label="Flow ID">
+                                            <div class="slds-truncate">{record.MVWB__Flow_Id__c}</div>
+                                        </td>
+                                        <td class="tableData" data-label="Status">
+                                            <div class="slds-truncate"><p class={record.Status__c}>{record.MVWB__Status__c}</p></div>
+                                        </td>
+                                        <td class="tableData" data-label="LastModifiedDate">
+                                            <div class="slds-truncate">{record.LastModifiedDate}</div>
+                                        </td>
+                                        <td class="tableData tablebtns" data-label="Actions">
+                                            <template if:false={record.isDeprecated}>
+                                                <button class="action-buttons slds-m-right--x-small">
+                                                    <img src="/resource/MVWB__previewIcon" class="action" title="preview" alt="preview" data-id={record.MVWB__Flow_Id__c} onclick={previewTemplate}>
+                                                </button>
+                                            </template>
+                                            <!-- <button disabled={record.isButtonDisabled} class="action-buttons slds-m-horizontal--x-small">
+                                                <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
+                                            </button> -->
+                                            <button class="action-buttons slds-m-horizontal--x-small">
+                                                <template if:true={record.isPublished}>
+                                                    <img src="/resource/MVWB__trashIcon" class="action trash" title="Deprecate" alt="Deprecate" data-id={record.MVWB__Flow_Id__c} data-status={record.MVWB__Status__c} onclick={deprecateFlow}>
+                                                </template>
+                                                <template if:true={record.isDraft}>
+                                                    <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete" alt="deDeletelete" data-id={record.MVWB__Flow_Id__c} data-status={record.MVWB__Status__c} onclick={deleteFlow}>
+                                                </template>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </template>
+                            <template if:false={filteredRecords.length}>
+                                <tr>
+                                    <td class="slds-text-align_center" colspan="5">
+                                        No records found.
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>                    
+                    </table>
+                </div>
+            </div>
+
+            <template if:true={showPopup}>
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container preview-container">
+                        <div class="slds-modal__content slds-p-around_medium flow-preview" id="modal-content-id-2">
+                            <p class="preview-heading">Flow Preview</p>
+                            <template if:true={isFlowDraft}>
+                                <div class="slds-text-align--right slds-m-horizontal--medium slds-m-top--medium">
+                                    <button class="publish-btn" onclick={publishFlow}>Publish Flow</button>
+                                </div>
+                            </template>
+                            <div class="previewContainer slds-m-top--medium">
+                                <iframe src={flowPreviewURL} width="430" height="800"></iframe>
+                            </div>
+                            <div class="footer">
+                                <button class="close-btn" onclick={closePopup}>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open" onclick={closePopup}></div>
+            </template>
+        </div>
+    </template>
+    <template if:true={iscreateflowvisible}>
+        <c-wb-create-flow-page></c-wb-create-flow-page>        
+    </template>
+</template>

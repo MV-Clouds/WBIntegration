@@ -33,6 +33,19 @@
                                     <div if:true={chat.replyTo.isImage}>
                                         <img class="message-image" src={chat.replyTo.MVWB__Message__c} alt="Image" />
                                     </div>
+                                    <div if:true={chat.replyTo.isVideo}>
+                                        Video
+                                    </div>
+                                    <div if:true={chat.replyTo.isAudio}>
+                                        <div class="reply-audio">
+                                            {chat.replyTo.fileName}
+                                        </div>
+                                    </div>
+                                    <div if:true={chat.replyTo.isDoc}>
+                                        <div class="reply-audio">
+                                            {chat.replyTo.fileName}
+                                        </div>
+                                    </div>
                                     <div if:true={chat.replyTo.isOther}>
                                         <div class="message-other">{chat.replyTo.MVWB__Message_Type__c} shared by {chat.replyTo.messageBy}.</div>
                                     </div>
@@ -48,15 +61,84 @@
                                     <svg class="image-preview-close" data-action="close" onclick={handleToggleImagePreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="30" width="30"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
                                     <img class="message-image" src={chat.MVWB__Message__c} onerror={handleImageError} alt="Photo"/>
                                 </div>
+                                <div if:true={chat.isVideo}>
+                                    <video class="message-video" src={chat.MVWB__Message__c} onerror={handleImageError} alt="Video" controls></video>
+                                </div>
+                                <div if:true={chat.isDoc}>
+                                    <template if:false={chat.isAWSFile}>
+                                        <div class="doc-preview">
+                                            <div class="slds-file slds-file_card slds-has-title">
+                                                <figure>
+                                                    <a href={chat.filePreviewUrl} class="slds-file__crop" onclick={handlePreview}
+                                                       data-id={chat.contentDocumentId}>
+                                                        <img class="thumbnail" src={chat.fileThumbnail} alt="No Preview Available" onerror={handleDocError} />
+                                                    </a>
+                                                    <figcaption class="slds-file__title slds-file__title_card">
+                                                        <div class="slds-media__body">
+                                                            <p class="slds-truncate" title={chat.fileName}>
+                                                                {chat.fileName}
+                                                            </p>
+                                                        </div>
+                                                        <a href={chat.fileUrl} >
+                                                            <lightning-button-icon
+                                                                icon-name="utility:download"
+                                                                variant="bare"
+                                                                alternative-text="Download File">
+                                                            </lightning-button-icon>
+                                                        </a>
+                                                    </figcaption>
+                                                </figure>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div if:true={chat.isAWSFile} class="slds-file slds-file_card slds-has-title preview-container">
+                                        <figure>
+                                            <!-- Iframe Preview Container -->
+                                            <div>
+                                                <div if:true={chat.isPreviewable} data-action="open" onclick={handleTogglePDFPreview}>
+                                                    <svg class="pdf-preview-close" data-action="close" onclick={handleTogglePDFPreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="30" width="30">
+                                                        <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                                                    </svg>
+                                                    <iframe src={chat.MVWB__Message__c} class="doc-preview-aws" data-action="open" onclick={handleTogglePDFPreview}></iframe>
+                                                </div>
+                                                <div if:false={chat.isPreviewable}>
+                                                    <img class="doc-preview-aws" src={NoPreviewAvailable} alt="No Preview Available"/>
+                                                </div>
+                                            </div>
+                                    
+                                            <!-- File Title and Download -->
+                                            <figcaption class="slds-file__title slds-file__title_card">
+                                                <div class="slds-media__body">
+                                                    <p class="slds-truncate" title={chat.fileName}>
+                                                        {chat.fileName}
+                                                    </p>
+                                                </div>
+                                                <a href="javascript:void(0)" onclick={downloadRowImage} data-name={chat.fileName}>
+                                                    <lightning-button-icon icon-name="utility:download" variant="bare" alternative-text="Download File"></lightning-button-icon>
+                                                </a>
+                                            </figcaption>
+                                        </figure>
+                                    </div>
+                                </div>
+                                <div if:true={chat.isAudio}>
+                                    <div class="audio-div">
+                                        <div class="headphone" data-url={chat.MVWB__Message__c} onclick={handleToggleAudioPreview}>
+                                            <img src={headphone} class="audio-icon" alt="audioIcon">
+                                        </div>
+                                        <!-- <div>
+                                            <a href={chat.fileUrl} target="_blank" style="position: absolute; bottom: 6px; right: 10px;">
+                                                <lightning-button-icon class="download-btn" icon-name="utility:download" variant="bare" alternative-text="Download File"></lightning-button-icon>
+                                            </a>
+                                        </div> -->
+                                        <div class="audio-name">
+                                            <p title={chat.fileName} >{chat.fileName}</p>
+                                        </div>                                                    
+                                    </div>
+                                </div>
                                 <div class="other-message-div" if:true={chat.isOther}>
                                     <div class="other-message-text">Shared {chat.MVWB__Message_Type__c} With You.</div>
                                     <div class="other-message-sub-text">You can not view this media due to limitation of your plan.</div>
                                 </div>
-                                <!-- <div class="video-message-div" if:true={chat.isVideo}>
-                                    <video controls>
-                                        <source src={chat.MVWB__Message__c} >
-                                    </video>
-                                </div> -->
                                 <div class="template-message-div" if:true={chat.isTemplate}>
                                     <c-template-preview template-id={chat.MVWB__Whatsapp_Template__c} record-id={recordId} object-api-name={objectApiName}></c-template-preview>
                                 </div>
@@ -140,15 +222,27 @@
         </div>
         <div class="popup-div" if:true={showPopup}>
             <div class="files-uploader-div" if:true={showFileUploader}>
-                <lightning-file-upload
-                    class="file-uploader"
-                    label={uploadLabel}
-                    name="fileUploader"
-                    accept={acceptedFormats}
-                    record-id={recordId}
-                    onuploadfinished={handleUploadFinished}
-                    variant="label-hidden"
-              ></lightning-file-upload>
+                <template if:false={isAWSEnabled}>
+                    <lightning-file-upload class="file-uploader" label={uploadLabel} name="fileUploader" accept={acceptedFormats}
+                        record-id={recordId} onuploadfinished={handleUploadFinished} variant="label-hidden"></lightning-file-upload>
+                </template>
+                <template if:true={isAWSEnabled}>
+                    <div class="upload-container">
+                        <label class="custom-file-upload">
+                            <lightning-icon icon-name="utility:upload" alternative-text="Upload Icon" size="x-small"></lightning-icon>
+                            <span class="slds-p-left--medium slds-text-color_success">Choose Files</span>
+                            <input type="file" class="file-input" onchange={handleSelectedFiles} accept={acceptedFormats} disabled={selectedFileName}/>
+                        </label>
+                
+                        <template if:true={selectedFileName}>
+                            <div class="file-details">
+                                <span class="file-name">{selectedFileName}</span>
+                                <lightning-icon icon-name="utility:delete" alternative-text="Remove File" size="x-small" class="remove-icon" onclick={removeFile}></lightning-icon>
+                            </div>
+                            <button class="upload-button" onclick={handleUploadClick}>Send</button>
+                        </template>
+                    </div>
+                </template>
             </div>
             <template lwc:if={showTemplateSelection}>
                 <div class="template-select-div">
@@ -193,6 +287,15 @@
                     <div class="image-reply-to" if:true={replyToMessage.isImage}>
                         <img class="message-image-for-reply" src={replyToMessage.MVWB__Message__c} alt="Image" />
                     </div>
+                    <div class="image-reply-to" if:true={replyToMessage.isVideo}>
+                        Video
+                    </div>
+                    <div class="image-reply-to" if:true={replyToMessage.isDoc}>
+                        {replyToMessage.fileName}
+                    </div>
+                    <div class="image-reply-to" if:true={replyToMessage.isAudio}>
+                        {replyToMessage.fileName}
+                    </div>
                     <div class="template-reply-to" if:true={replyToMessage.isTemplate}>
                         <div class="reply-to-template-message-div">{replyToTemplateId}</div>
                     </div>
@@ -224,12 +327,12 @@
                         </textarea>
                         <div class="attachment-options-div"> 
                             <div class="all-attachment-options">
-                                <div class="document attachment-options">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="20" width="20" fill="#ff6347"><path d="M448 480L64 480c-35.3 0-64-28.7-64-64L0 192l512 0 0 224c0 35.3-28.7 64-64 64zm64-320L0 160 0 96C0 60.7 28.7 32 64 32l128 0c20.1 0 39.1 9.5 51.2 25.6l19.2 25.6c6 8.1 15.5 12.8 25.6 12.8l160 0c35.3 0 64 28.7 64 64z"/></svg>
-                                    <div class="attachment-type">Documents</div>
-                                    <div class="upgrade-icon">
+                                <div class="document attachment-options" data-media="Document" onclick={handleAttachmentOptionClick}>
+                                    <svg data-media="Document" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="20" width="20" fill="#ff6347"><path d="M448 480L64 480c-35.3 0-64-28.7-64-64L0 192l512 0 0 224c0 35.3-28.7 64-64 64zm64-320L0 160 0 96C0 60.7 28.7 32 64 32l128 0c20.1 0 39.1 9.5 51.2 25.6l19.2 25.6c6 8.1 15.5 12.8 25.6 12.8l160 0c35.3 0 64 28.7 64 64z"/></svg>
+                                    <div data-media="Document" class="attachment-type">Documents</div>
+                                    <!-- <div class="upgrade-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height="20" width="20" fill="#FFD43B"><path d="M372.2 52c0 20.9-12.4 39-30.2 47.2L448 192l104.4-20.9c-5.3-7.7-8.4-17.1-8.4-27.1c0-26.5 21.5-48 48-48s48 21.5 48 48c0 26-20.6 47.1-46.4 48L481 442.3c-10.3 23-33.2 37.7-58.4 37.7l-205.2 0c-25.2 0-48-14.8-58.4-37.7L46.4 192C20.6 191.1 0 170 0 144c0-26.5 21.5-48 48-48s48 21.5 48 48c0 10.1-3.1 19.4-8.4 27.1L192 192 298.1 99.1c-17.7-8.3-30-26.3-30-47.1c0-28.7 23.3-52 52-52s52 23.3 52 52z"/></svg>
-                                    </div>
+                                    </div> -->
                                 </div>
                                 <div class="image attachment-options" data-media="Image" onclick={handleAttachmentOptionClick}>
                                     <svg data-media="Image" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" height="20" width="20" fill="#B758E6">
@@ -237,27 +340,27 @@
                                     </svg>
                                     <div data-media="Image" class="attachment-type">Photos</div>
                                 </div>
-                                <div class="video attachment-options">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" height="20" width="20" fill="#049A8E"><path d="M0 128C0 92.7 28.7 64 64 64l256 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2l0 256c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1l0-17.1 0-128 0-17.1 14.2-9.5 96-64c9.8-6.5 22.4-7.2 32.9-1.6z"/></svg>
-                                    <div class="attachment-type">Videos</div>
-                                    <div class="upgrade-icon">
+                                <div class="video attachment-options" data-media="Video" onclick={handleAttachmentOptionClick}>
+                                    <svg data-media="Video" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" height="20" width="20" fill="#049A8E"><path d="M0 128C0 92.7 28.7 64 64 64l256 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2l0 256c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1l0-17.1 0-128 0-17.1 14.2-9.5 96-64c9.8-6.5 22.4-7.2 32.9-1.6z"/></svg>
+                                    <div data-media="Video" class="attachment-type">Videos</div>
+                                    <!-- <div class="upgrade-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height="20" width="20" fill="#FFD43B"><path d="M372.2 52c0 20.9-12.4 39-30.2 47.2L448 192l104.4-20.9c-5.3-7.7-8.4-17.1-8.4-27.1c0-26.5 21.5-48 48-48s48 21.5 48 48c0 26-20.6 47.1-46.4 48L481 442.3c-10.3 23-33.2 37.7-58.4 37.7l-205.2 0c-25.2 0-48-14.8-58.4-37.7L46.4 192C20.6 191.1 0 170 0 144c0-26.5 21.5-48 48-48s48 21.5 48 48c0 10.1-3.1 19.4-8.4 27.1L192 192 298.1 99.1c-17.7-8.3-30-26.3-30-47.1c0-28.7 23.3-52 52-52s52 23.3 52 52z"/></svg>
-                                    </div>
+                                    </div> -->
                                 </div>
-                                <div class="audio attachment-options">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="20" width="20" fill="#049A8E"><path d="M499.1 6.3c8.1 6 12.9 15.6 12.9 25.7l0 72 0 264c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6L448 147 192 223.8 192 432c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6L128 200l0-72c0-14.1 9.3-26.6 22.8-30.7l320-96c9.7-2.9 20.2-1.1 28.3 5z"/></svg>
-                                    <div class="attachment-type">Audio</div>
-                                    <div class="upgrade-icon">
+                                <div class="audio attachment-options" data-media="Audio" onclick={handleAttachmentOptionClick}>
+                                    <svg data-media="Audio" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="20" width="20" fill="#049A8E"><path d="M499.1 6.3c8.1 6 12.9 15.6 12.9 25.7l0 72 0 264c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6L448 147 192 223.8 192 432c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6L128 200l0-72c0-14.1 9.3-26.6 22.8-30.7l320-96c9.7-2.9 20.2-1.1 28.3 5z"/></svg>
+                                    <div data-media="Audio" class="attachment-type">Audio</div>
+                                    <!-- <div class="upgrade-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height="20" width="20" fill="#FFD43B"><path d="M372.2 52c0 20.9-12.4 39-30.2 47.2L448 192l104.4-20.9c-5.3-7.7-8.4-17.1-8.4-27.1c0-26.5 21.5-48 48-48s48 21.5 48 48c0 26-20.6 47.1-46.4 48L481 442.3c-10.3 23-33.2 37.7-58.4 37.7l-205.2 0c-25.2 0-48-14.8-58.4-37.7L46.4 192C20.6 191.1 0 170 0 144c0-26.5 21.5-48 48-48s48 21.5 48 48c0 10.1-3.1 19.4-8.4 27.1L192 192 298.1 99.1c-17.7-8.3-30-26.3-30-47.1c0-28.7 23.3-52 52-52s52 23.3 52 52z"/></svg>
-                                    </div>
+                                    </div> -->
                                 </div>
-                                <div class="poll attachment-options">
+                                <!-- <div class="poll attachment-options">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" height="20" width="20" fill="#ff7d4d"><path d="M0 96C0 60.7 28.7 32 64 32l448 0c35.3 0 64 28.7 64 64l0 320c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM128 288a32 32 0 1 0 0-64 32 32 0 1 0 0 64zm32-128a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zM128 384a32 32 0 1 0 0-64 32 32 0 1 0 0 64zm96-248c-13.3 0-24 10.7-24 24s10.7 24 24 24l224 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-224 0zm0 96c-13.3 0-24 10.7-24 24s10.7 24 24 24l224 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-224 0zm0 96c-13.3 0-24 10.7-24 24s10.7 24 24 24l224 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-224 0z"/></svg>
                                     <div class="attachment-type">Poll</div>
                                     <div class="upgrade-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height="20" width="20" fill="#FFD43B"><path d="M372.2 52c0 20.9-12.4 39-30.2 47.2L448 192l104.4-20.9c-5.3-7.7-8.4-17.1-8.4-27.1c0-26.5 21.5-48 48-48s48 21.5 48 48c0 26-20.6 47.1-46.4 48L481 442.3c-10.3 23-33.2 37.7-58.4 37.7l-205.2 0c-25.2 0-48-14.8-58.4-37.7L46.4 192C20.6 191.1 0 170 0 144c0-26.5 21.5-48 48-48s48 21.5 48 48c0 10.1-3.1 19.4-8.4 27.1L192 192 298.1 99.1c-17.7-8.3-30-26.3-30-47.1c0-28.7 23.3-52 52-52s52 23.3 52 52z"/></svg>
                                     </div>
-                                </div>
+                                </div> -->
                                 <div class="template attachment-options" data-media="Template" onclick={handleAttachmentOptionClick}>
                                     <svg data-media="Template" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="20" width="20" fill="#00bfff">
                                         <path data-media="Template" d="M0 128C0 92.7 28.7 64 64 64l384 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zm64 32l0 64c0 17.7 14.3 32 32 32l320 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L96 128c-17.7 0-32 14.3-32 32zM80 320c-13.3 0-24 10.7-24 24s10.7 24 24 24l56 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-56 0zm136 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l48 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0z"/>
@@ -289,5 +392,13 @@
                 </div>
             </div>
         </div>
+        <template if:true={audioPreview}>
+            <div class="audio-preview">
+                <div class="audio-player">
+                    <svg class="audio-preview-close" onclick={handleToggleAudioPreview} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" height="30" width="30"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
+                    <audio controls src={audioURL}></audio>
+                </div>
+            </div>
+        </template>
     </div>
 </template>

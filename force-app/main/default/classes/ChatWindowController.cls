@@ -16,6 +16,8 @@
 * 06 Dec, 2024  - Kevin Suvagiya - Added implementation for the theme preference logic
 * 09 Dec, 2024  - Kevin Suvagiya - Added method to send the message to the user with http request
 * 11 Dec, 2024  - Kevin Suvagiya - Added a method to fetch the full template data with replaced variables
+* 19 Mar, 2025  - Harsh Gandhi - Updated dynamic Name & Phone field from custom metadata and Logic for only object related templates are visible for sending Updated methods getCombinedData & getTemplateData
+* 26 Mar, 2025  - Harsh Gandhi - Updated Conditions to handle multiple media types in createChat method
 **/
 public with sharing class ChatWindowController {
 
@@ -48,11 +50,31 @@ public with sharing class ChatWindowController {
             User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
             String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
 
+            // Fetch metadata record from Object_Config__mdt
+            List<MVWB__Object_Config__mdt> objectConfigList = [SELECT Id, MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt LIMIT 1];
+            String phoneField = '';
+            String nameField = '';
+            if(objectConfigList.size() <= 0) {
+                System.debug('Object Config not found!');
+            } else {
+                // Deserialize the JSON string from ChatWindowConfigInfo__c
+                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].MVWB__ChatWindowConfigInfo__c);
+                Map<String, Object> chatConfig = (Map<String, Object>) chatConfigData.get(objectApiName);
+                phoneField = (String) chatConfig.get('phoneField');
+                nameField = (String) chatConfig.get('nameField');
+            }
+
+            sObject recordData;
+            String phoneNumber = '';
+            String recordName = '';
             // recordData = [SELECT Id, Name, Phone FROM Contact WHERE Phone =:contactId WITH SECURITY_ENFORCED LIMIT 1];
-            String query = 'SELECT Id, Name, Phone FROM ' + objectApiName + ' WHERE Id =: contactId LIMIT 1';
-            sObject recordData = Database.query(query);
-            String phoneNumber = (String) recordData.get('Phone');
-            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, Phone__c FROM Chat__c WHERE Phone__c =:phoneNumber WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
+            if(nameField != '' && phoneField != '') {
+                String query = 'SELECT Id, ' +  nameField + ', ' +  phoneField + ' FROM ' + objectApiName + ' WHERE Id =: contactId LIMIT 1';
+                recordData = Database.query(query);
+                phoneNumber = (String) recordData.get(phoneField);
+                recordName = (String) recordData.get(nameField);
+            }
+            chats = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, Phone__c, File_Data__c FROM Chat__c WHERE Phone__c =:phoneNumber WITH SECURITY_ENFORCED ORDER BY CreatedDate asc];
             //templates = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
             // Step 1: Get template IDs with matching child variables
             Set<Id> matchingTemplateIds = new Set<Id>();
@@ -78,6 +100,7 @@ public with sharing class ChatWindowController {
             combinedData.put('templates', templates);
             combinedData.put('record', recordData);
             combinedData.put('phoneNumber', phoneNumber);
+            combinedData.put('recordName', recordName);
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'fetchAllChats', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
@@ -115,7 +138,7 @@ public with sharing class ChatWindowController {
             chat.Message_Type__c = messageType;
             chat.Reply_To__c = replyToChatId;
 
-            if(messageType == 'Image'){
+            if(messageType == 'Image' || messageType == 'Document' || messageType == 'Video' || messageType == 'Audio'){
                 List<ContentVersion> cv = [SELECT Id, ContentSize, Title, ContentDocumentId FROM ContentVersion WHERE Id =: message WITH SECURITY_ENFORCED];
                 if(cv.size() < 1) {return null;}
                 if(cv[0].ContentSize > 5000000){
@@ -134,9 +157,11 @@ public with sharing class ChatWindowController {
                 insert as user cd;
 
                 chat.Message__c = [SELECT ContentDownloadUrl FROM ContentDistribution WHERE Id=:cd.Id].ContentDownloadUrl;
+                Map<String, Object> fileData = new Map<String, Object>{ 'fileName' => cv[0].Title, 'documentId' => cv[0].ContentDocumentId, 'contentVersionId' => message };
+                chat.File_Data__c = JSON.serialize(fileData);
             }
             insert as user chat;
-            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, File_Data__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             return chat;
         } catch (Exception e) {
             if(e.getMessage().contains('STORAGE_LIMIT_EXCEEDED')){
@@ -181,7 +206,7 @@ public with sharing class ChatWindowController {
     public static Boolean updateThemePreference(String theme) {
         Boolean isSuccess = false;
         try {
-            MVWB__User_Theme_Preference__c userPreference = new MVWB__User_Theme_Preference__c();
+            User_Theme_Preference__c userPreference = new User_Theme_Preference__c();
             if (userPreferences.isEmpty()) {
                 userPreference.SetupOwnerId = UserInfo.getUserId();
             }else{
@@ -418,6 +443,45 @@ public with sharing class ChatWindowController {
             update as user chats;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowController', 'methodName' => 'updateStatus', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null,'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+    }
+
+    /*
+    *********************************************************
+    @description     : Method is used to create a new chat message for the Files which are stored in AWS
+    @param           : chatData - {Map<String, String>} - Map containing all the data to create a new chat
+    @return          : chat - {Chat__c} - the newly created chat
+    ********************************************************
+    */
+    @AuraEnabled
+    public static Chat__c createChatForAWSFiles(Map<String, String> chatData ){
+        try {
+
+            String message = chatData.get('message');
+            String fileName = chatData.get('fileName');
+            String mimeType = chatData.get('mimeType');
+            String messageType = chatData.get('messageType');
+            String recordId = chatData.get('recordId');
+            String replyToChatId = chatData.get('replyToChatId');
+            String phoneNumber = chatData.get('phoneNumber');
+
+            Chat__c chat = new Chat__c();
+            chat.Message__c = message;
+            chat.Phone__c = phoneNumber;
+            chat.Type_of_Message__c	= 'OutBound Messages';
+            chat.Message_Status__c = null;
+            chat.Message_Type__c = messageType;
+            chat.Reply_To__c = replyToChatId;
+            Map<String, Object> fileData = new Map<String, Object>{ 'fileName' => fileName, 'mimeType' => mimeType };
+            chat.File_Data__c = JSON.serialize(fileData);
+
+            insert as user chat;
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, File_Data__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
+
+            return chat;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
+            return null;
         }
     }
 

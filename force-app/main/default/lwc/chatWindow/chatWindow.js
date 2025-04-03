@@ -2,15 +2,22 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { CurrentPageReference } from 'lightning/navigation';
 import getCombinedData from '@salesforce/apex/ChatWindowController.getCombinedData';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
+import createChatForAWSFiles from '@salesforce/apex/ChatWindowController.createChatForAWSFiles';
 import updateReaction from '@salesforce/apex/ChatWindowController.updateReaction';
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { NavigationMixin } from 'lightning/navigation';
 import updateThemePreference from '@salesforce/apex/ChatWindowController.updateThemePreference';
 import updateStatus from '@salesforce/apex/ChatWindowController.updateStatus';
+import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
+import whatsappAudioIcon from '@salesforce/resourceUrl/MVWB__whatsAppAudioIcon';
+import { loadScript } from 'lightning/platformResourceLoader';
+import AWS_SDK from "@salesforce/resourceUrl/MVWB__AWSSDK";
+import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import { subscribe} from 'lightning/empApi';
 
-export default class ChatWindow extends LightningElement {
+export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     //Data Variables
     @api recordId;
@@ -44,10 +51,21 @@ export default class ChatWindow extends LightningElement {
     @track showTemplateSelection = false;
     @track showTemplatePreview = false;
     @track uploadFileType = null;
+    @track NoPreviewAvailable = NoPreviewAvailable;
+    @track headphone = whatsappAudioIcon;
+    audioPreview = false;
+    audioURL = '';
+    isAWSEnabled = false;
+    @track confData;
+    @track s3;
+    @track isAwsSdkInitialized = true;
+    @track selectedFilesToUpload = [];
+    selectedFileName;
 
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
     @track phoneNumber;
+    @track recordName;
 
     replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
 
@@ -62,11 +80,11 @@ export default class ChatWindow extends LightningElement {
         return `toggle-button moon-icon ${this.isLightMode ? "hide" : "show"}`;
     }
     get showPopup(){
-        return this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview;
+        return this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview || this.audioPreview;
     }
     
     get displayBackDrop(){
-        return this.showEmojiPicker || this.showAttachmentOptions || this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview;
+        return this.showEmojiPicker || this.showAttachmentOptions || this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview || this.audioPreview;
     }
 
     get uploadLabel(){
@@ -79,7 +97,6 @@ export default class ChatWindow extends LightningElement {
     }
 
     get recordMobileNumber(){
-        // return this.recordData.Phone;
         return this.phoneNumber;
     }
 
@@ -92,13 +109,13 @@ export default class ChatWindow extends LightningElement {
             if(this.pageRef){
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
-            // console.log('recordId ', this.recordId, ' objectAPIName', this.objectApiName);
             this.configureHeight();
+            this.getS3ConfigDataAsync();
             this.getInitialData();
             this.generateEmojiCategories();
             this.handleSubscribe();
         } catch (e) {
-            console.log('Error in connectedCallback:::', e.message);
+            console.error('Error in connectedCallback:::', e.message);
         }
     }
 
@@ -111,8 +128,19 @@ export default class ChatWindow extends LightningElement {
                 }
                 this.scrollBottom = false;
             }
+            if (this.isAwsSdkInitialized) {
+                Promise.all([loadScript(this, AWS_SDK)])
+                    .then(() => {
+                        console.log('Script loaded successfully');
+                    })
+                    .catch((error) => {
+                        console.error("error -> ", error);
+                    });
+
+                this.isAwsSdkInitialized = false;
+            }
         } catch (e) {
-            console.log('Error in function renderedCallback:::', e.message);
+            console.error('Error in function renderedCallback:::', e.message);
         }
     }
 
@@ -180,12 +208,12 @@ export default class ChatWindow extends LightningElement {
                 }
 
                 if(combinedData.record){
-                    if(!combinedData.record.Phone){
+                    if(!combinedData.phoneNumber){
                         this.showToast('Something went wrong!', 'The record does not have a mobile number.', 'error');
                         this.showSpinner = false;
                         return;
                     }
-                    combinedData.record.Phone = combinedData.record.Phone.replaceAll(' ', '').replace('+', '');
+                    combinedData.phoneNumber = combinedData.phoneNumber.replaceAll(' ', '');
                     this.recordData = combinedData.record;
                 }else{
                     this.showToast('Something went wrong!', 'Couldn\'t fetch data of record', 'error');
@@ -197,6 +225,7 @@ export default class ChatWindow extends LightningElement {
                 
                 this.chats = JSON.parse(JSON.stringify(combinedData.chats));
                 this.phoneNumber = combinedData.phoneNumber;
+                this.recordName = combinedData.recordName;
                 this.showSpinner = false;
                 this.processChats(true);
                 
@@ -212,7 +241,7 @@ export default class ChatWindow extends LightningElement {
             });
         } catch (e) {
             this.showSpinner = false;
-            console.log('Error in function getInitialData:::', e.message);
+            console.error('Error in function getInitialData:::', e.message);
         }
     }
 
@@ -227,9 +256,38 @@ export default class ChatWindow extends LightningElement {
             this.chats = this.chats?.map(ch => {
                 ch.isText = ch.MVWB__Message_Type__c == 'Text';
                 ch.isImage = ch.MVWB__Message_Type__c == 'Image';
-                ch.isOther = !['Text', 'Image', 'Template'].includes(ch.MVWB__Message_Type__c) ;
+                ch.isVideo = ch.MVWB__Message_Type__c == 'Video';
+                ch.isAudio = ch.MVWB__Message_Type__c == 'Audio';
+                ch.isDoc = ch.MVWB__Message_Type__c == 'Document';
+                ch.isOther = !['Text', 'Image', 'Template', 'Video', 'Document', 'Audio'].includes(ch.MVWB__Message_Type__c) ;
                 ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
-                ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordData.Name;
+                ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordName;
+                if ((ch.isDoc || ch.isAudio) && ch.MVWB__File_Data__c) {
+                    if(ch.MVWB__Message__c.includes('amazonaws.com') && ch.isDoc){
+                        ch.isAWSFile = true;
+                        const fileData = JSON.parse(ch.MVWB__File_Data__c);
+                        const fileName = fileData?.fileName;
+                        const mimeType = fileData?.mimeType;
+                        ch.fileName = fileName;
+                        if(mimeType.includes('pdf')){
+                            ch.isPreviewable = true;
+                        } else {
+                            ch.isPreviewable = false;
+                        }
+                    } else {
+                        ch.isAWSFile = false;
+                        try {
+                            const fileData = JSON.parse(ch.MVWB__File_Data__c);
+                            const fileName = fileData?.fileName;
+                            ch.fileName = fileName;
+                            ch.contentDocumentId = fileData?.documentId;
+                            ch.fileUrl = `/sfc/servlet.shepherd/version/download/${fileData?.contentVersionId}?as=${fileName}`;
+                            ch.fileThumbnail = `/sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=${fileData?.contentVersionId}`;
+                        } catch (error) {
+                            console.error("Error parsing File_Data__c:", error);
+                        }
+                    }
+                }
                 return ch;
             });
 
@@ -280,7 +338,7 @@ export default class ChatWindow extends LightningElement {
             if(needToScroll) this.scrollBottom = true;
             this.checkLastMessage();
         } catch (e) {
-            console.log('Error in function processChats:::', e.message);
+            console.error('Error in function processChats:::', e.message);
             this.showSpinner = false;
         }
     }
@@ -310,7 +368,7 @@ export default class ChatWindow extends LightningElement {
             this.showSpinner = false;
         } catch (e) {
             this.showSpinner = false;
-            console.log('Error in function checkLastMessage:::', e.message);
+            console.error('Error in function checkLastMessage:::', e.message);
         }
     }
 
@@ -324,7 +382,7 @@ export default class ChatWindow extends LightningElement {
             let randomIndex = Math.floor(Math.random() * this.replyBorderColors.length);
             this.template.host.style.setProperty('--reply-to-received-border-color', this.replyBorderColors[randomIndex]);
         } catch (e) {
-            console.log('Error in function configureHeight:::', e.message);
+            console.error('Error in function configureHeight:::', e.message);
         }
     }
 //Handling the Backdrop
@@ -342,8 +400,13 @@ export default class ChatWindow extends LightningElement {
             this.showEmojiPicker = false;
             this.showAttachmentOptions = false;
             this.selectedTemplate = null;
+            this.audioPreview = false;
+            this.audioURL = '';
+            this.selectedFileName = null;
+            this.selectedFilesToUpload = [];
+            this.template.querySelector('input[type="file"]').value = null;
         } catch (e) {
-            console.log('Error in function handleBackDropClick:::', e.message);
+            console.error('Error in function handleBackDropClick:::', e.message);
         }
     }
     
@@ -360,11 +423,11 @@ export default class ChatWindow extends LightningElement {
                 }
             })
             .catch((e) => {
-                console.log('Failed to update theme preference!.', e.message);
+                console.error('Failed to update theme preference!.', e.message);
                 
             });
         }catch(e){
-            console.log('Error in toggleTheme:::', e.message);
+            console.error('Error in toggleTheme:::', e.message);
         }
     }
 
@@ -380,7 +443,7 @@ export default class ChatWindow extends LightningElement {
         try {
             event.currentTarget.classList.toggle('show-options');
         } catch (e) {
-            console.log('Error in function handleToggleActions:::', e.message);
+            console.error('Error in function handleToggleActions:::', e.message);
         }
     }
 
@@ -388,7 +451,7 @@ export default class ChatWindow extends LightningElement {
         try {
             event.currentTarget?.querySelector('.action-options-btn')?.classList.remove('show-options');
         } catch (e) {
-            console.log('Error in function handleHideActions:::', e.message);
+            console.error('Error in function handleHideActions:::', e.message);
         }
     }
 
@@ -412,7 +475,7 @@ export default class ChatWindow extends LightningElement {
                 this.showReactEmojiPicker = false;
             }
         } catch (e) {
-            console.log('Error in function handleReply:::', e.message);
+            console.error('Error in function handleReply:::', e.message);
         }
     }
 
@@ -426,7 +489,7 @@ export default class ChatWindow extends LightningElement {
                 this.updateMessageReaction(chat);
             }
         } catch (e) {
-            console.log('Error in function handleReactWithEmoji:::', e.message);
+            console.error('Error in function handleReactWithEmoji:::', e.message);
         }
     }
 
@@ -436,7 +499,7 @@ export default class ChatWindow extends LightningElement {
             chat.MVWB__Reaction__c = chat.MVWB__Reaction__c?.slice(chat.MVWB__Reaction__c.indexOf('<|USER|>'));
             this.updateMessageReaction(chat);
         } catch (e) {
-            console.log('Error in function handleRemoveReaction:::', e.message);
+            console.error('Error in function handleRemoveReaction:::', e.message);
         }
     }
 
@@ -475,7 +538,7 @@ export default class ChatWindow extends LightningElement {
             observer.observe(replyToChatEle);
             
         } catch (e) {
-            console.log('Error in function handleReplyMessageClick:::', e.message);
+            console.error('Error in function handleReplyMessageClick:::', e.message);
         }
     }
     handleToggleImagePreview(event){
@@ -493,7 +556,32 @@ export default class ChatWindow extends LightningElement {
                 event.stopPropagation()
             }
         } catch (e) {
-            console.log('Error in function handleToggleImagePreview:::', e.message);
+            console.error('Error in function handleToggleImagePreview:::', e.message);
+        }
+    }
+
+    handleToggleAudioPreview(event){
+        let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
+        if(isMobileDevice){
+            return;
+        }
+        let audioURL = event.currentTarget.dataset.url;
+        this.audioPreview = !this.audioPreview;
+        this.audioURL = audioURL;
+    }
+
+    handleTogglePDFPreview(event){
+        let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
+        if(isMobileDevice){
+            return;
+        }
+        let action = event.currentTarget.dataset.action;
+        
+        if(action == 'open'){
+            event.currentTarget.classList.add('pdf-preview');
+        }else if(action == 'close'){
+            this.template.querySelector('.pdf-preview').classList.remove('pdf-preview');
+            event.stopPropagation()
         }
     }
 
@@ -516,9 +604,9 @@ export default class ChatWindow extends LightningElement {
                 );
                 this.emojiCategories = groupedEmojis;
             })
-            .catch((e) => console.log('There was an error fetching the emoji.', e));
+            .catch((e) => console.error('There was an error fetching the emoji.', e));
         }catch(e){
-            console.log('Error in generateEmojiCategories', e);
+            console.error('Error in generateEmojiCategories', e);
             
         }
     }
@@ -532,7 +620,7 @@ export default class ChatWindow extends LightningElement {
                 this.template.querySelector('.emoji-picker-div').scrollTop = 0;
             }
         } catch (e) {
-            console.log('Error in function handleEmojiButtonClick:::', e.message);
+            console.error('Error in function handleEmojiButtonClick:::', e.message);
         }
     }
 
@@ -545,7 +633,7 @@ export default class ChatWindow extends LightningElement {
             textareaMessageElement.focus();
             textareaMessageElement.setSelectionRange(curPos + event.target.innerText.length,curPos + event.target.innerText.length); 
         } catch (e) {
-            console.log('Error in function handleEmojiClick:::', e.message);
+            console.error('Error in function handleEmojiClick:::', e.message);
         }
     }
     handleMessageTextChange(event) {
@@ -566,7 +654,7 @@ export default class ChatWindow extends LightningElement {
             this.showAttachmentOptions = false;
             this.template.host.style.setProperty("--max-height-for-attachment-options","0rem");
         } catch (e) {
-            console.log('Error in function handleMessageTextChange:::', e.message);
+            console.error('Error in function handleMessageTextChange:::', e.message);
         }
     }
     
@@ -577,7 +665,7 @@ export default class ChatWindow extends LightningElement {
             this.closeAllPopups();
             this.template.host.style.setProperty("--max-height-for-attachment-options",this.showAttachmentOptions ? "13rem" : "0rem");
         } catch (e) {
-            console.log('Error in function handleAttachmentButtonClick:::', e.message);
+            console.error('Error in function handleAttachmentButtonClick:::', e.message);
         }
     }
 
@@ -601,6 +689,21 @@ export default class ChatWindow extends LightningElement {
                     this.acceptedFormats = ['.jpg', '.png', '.jpeg', '.jpe'];
                     this.uploadFileType = 'Image';
                     break;
+                case 'Document':
+                    this.showFileUploader = true;
+                    this.acceptedFormats = ['.txt', '.xls', '.xlsx', '.doc', '.docx', '.ppt', '.pptx', '.pdf'];
+                    this.uploadFileType = 'Document';
+                    break;
+                case 'Video':
+                    this.showFileUploader = true;
+                    this.acceptedFormats = ['.3gp', '.mp4'];
+                    this.uploadFileType = 'Video';
+                    break;
+                case 'Audio':
+                    this.showFileUploader = true;
+                    this.acceptedFormats = ['.aac', '.amr', '.mp3', '.m4a', '.ogg'];
+                    this.uploadFileType = 'Audio';
+                    break;
                 default:
                     this.showToast('Something went wrong!', 'Could not process request, please try again.', 'error');
                     break;
@@ -619,15 +722,25 @@ export default class ChatWindow extends LightningElement {
                 this.showSpinner = false;
                 return;
             }
-            createChat({chatData: {message: event.detail.files[0].contentVersionId, templateId: this.selectedTemplate, messageType: 'Image', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
+            var messageType = '';
+            if(event.detail.files[0].mimeType.includes('image/')){
+                messageType = 'Image';
+            } else if (event.detail.files[0].mimeType.includes('application/') || event.detail.files[0].mimeType.includes('text/')){
+                messageType = 'Document';
+            } else if (event.detail.files[0].mimeType.includes('audio/')){
+                messageType = 'Audio';
+            } else if(event.detail.files[0].mimeType.includes('video/')){
+                messageType = 'Video';
+            }
+            createChat({chatData: {message: event.detail.files[0].contentVersionId, templateId: this.selectedTemplate, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
                     this.chats.push(chat);
                     this.processChats(true);
                     
-                    let imagePayload = this.createJSONBody(this.recordData.Phone, "image", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    let imagePayload = this.createJSONBody(this.phoneNumber, messageType, this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         link: chat.MVWB__Message__c,
-                        fileName: event.detail.files[0].name || 'whatsapp image'
+                        fileName: event.detail.files[0].name || 'whatsapp file'
                     });
                     sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
                     .then(result => {
@@ -641,23 +754,23 @@ export default class ChatWindow extends LightningElement {
                         this.template.querySelector('.message-input').value = '';
                         this.replyToMessage = null;
                         this.showSpinner = false;
-                        this.processChats();
+                        this.processChats(true);
                     })
                     .catch((e) => {
                         this.showSpinner = false;
-                        console.log('Error in handleUploadFinished > sendWhatsappMessage :: ', e);
+                        console.error('Error in handleUploadFinished > sendWhatsappMessage :: ', e);
                     })
                     this.handleBackDropClick();
                 }else{
                     this.showSpinner = false;
                     this.showToast('Something went wrong!', 'The photo is not sent, please make sure image size does not exceed 5MB.', 'error');
-                    console.log('there was some error sending the message!');
+                    console.error('there was some error sending the message!');
                 }
             })
             .catch((e) => {
                 this.showSpinner = false;
                 this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
-                console.log('Error in handleUploadFinished > createChat :: ', e);
+                console.error('Error in handleUploadFinished > createChat :: ', e);
             })
             this.uploadFileType = null;
             this.showFileUploader = false;
@@ -665,8 +778,26 @@ export default class ChatWindow extends LightningElement {
         } catch (e) {
             this.showSpinner = false;
             this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
-            console.log('Error in function handleUploadFinished:::', e.message);
+            console.error('Error in function handleUploadFinished:::', e.message);
         }
+    }
+
+    handlePreview(event) {
+        const contentDocumentId = event.target.dataset.id;
+        this[NavigationMixin.Navigate]({
+            type: 'standard__namedPage',
+            attributes: {
+                pageName: 'filePreview'
+            },
+            state: {
+                selectedRecordId: contentDocumentId
+            }
+        });
+    }
+
+    handleDocError(event){
+        event.target.onerror=null; 
+        event.target.src = this.NoPreviewAvailable;
     }
     
     handleImageError(event){
@@ -674,7 +805,7 @@ export default class ChatWindow extends LightningElement {
             event.currentTarget.src = "/resource/MVWB__Alt_Image";
             event.currentTarget.parentNode.classList.add('not-loaded-image');
         } catch (e) {
-            console.log('Error in function handleImageError:::', e.message);
+            console.error('Error in function handleImageError:::', e.message);
         }
     }
 
@@ -682,7 +813,7 @@ export default class ChatWindow extends LightningElement {
         try {
             this.templateSearchKey = event.target.value || null;
         } catch (e) {
-            console.log('Error in function handleSearchTemplate:::', e.message);
+            console.error('Error in function handleSearchTemplate:::', e.message);
         }
     }
 
@@ -694,7 +825,7 @@ export default class ChatWindow extends LightningElement {
                 this.showTemplatePreview = true;
             }
         } catch (e) {
-            console.log('Error in function handleShowTemplatePreview:::', e.message);
+            console.error('Error in function handleShowTemplatePreview:::', e.message);
         }
     }
 
@@ -704,7 +835,7 @@ export default class ChatWindow extends LightningElement {
             this.showTemplatePreview = false;
             this.showTemplateSelection = true;
         } catch (e) {
-            console.log('Error in function handleBackToList:::', e.message);
+            console.error('Error in function handleBackToList:::', e.message);
         }
     }
 
@@ -718,7 +849,7 @@ export default class ChatWindow extends LightningElement {
             this.showSpinner = false;
             this.processChats(true);
         } catch (e) {
-            console.log('Error in function handleTemplateSent:::', e.message);
+            console.error('Error in function handleTemplateSent:::', e.message);
         }
     }
 
@@ -731,10 +862,24 @@ export default class ChatWindow extends LightningElement {
             
                 if (type === "text") {
                     payload += `, "text": { "body": "${data.textBody.replace(/\n/g, "\\n")}" }`;
-                } else if (type === "image") {
+                } else if (type === "Image") {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(data.link, "text/html");
                     payload += `, "image": { "link": "${doc.documentElement.textContent}" } `;
+                }
+                else if (type === "Video") {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.link, "text/html");
+                    payload += `, "video": { "link": "${doc.documentElement.textContent}" } `;
+                }
+                else if (type === "Document") {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.link, "text/html");
+                    payload += `, "document": { "link": "${doc.documentElement.textContent}", "filename": "${data.fileName}" } `;
+                } else if (type === "Audio") {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.link, "text/html");
+                    payload += `, "audio": { "link": "${doc.documentElement.textContent}" } `;
                 } else if (type === "reaction"){
                     payload += `, "reaction": { 
                         "message_id": "${data.reactToId}",
@@ -742,12 +887,10 @@ export default class ChatWindow extends LightningElement {
                         }`;
                 }
                 payload += ` }`;
-            
-                // console.log('The Payload is ::: ', payload);
                 
                 return payload;
         } catch (e) {
-            console.log('Error in function createJSONBody:::', e.message);
+            console.error('Error in function createJSONBody:::', e.message);
         }
     }
 
@@ -758,7 +901,7 @@ export default class ChatWindow extends LightningElement {
     //         this.closeAllPopups();
     //         this.template.host.style.setProperty("--max-height-for-send-options",this.showSendOptions ? "7rem" : "0rem");
     //     } catch (e) {
-    //         console.log('Error in function handleOpenSendOptions:::', e.message);
+    //         console.error('Error in function handleOpenSendOptions:::', e.message);
     //     }
     // }
 
@@ -769,11 +912,10 @@ export default class ChatWindow extends LightningElement {
             .then(ch => {
                 // this.showSpinner = false;
                 this.processChats();
-                let reactPayload = this.createJSONBody(this.recordData.Phone, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                let reactPayload = this.createJSONBody(this.phoneNumber, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                     reactToId : chat.MVWB__WhatsAppMessageId__c,
                     emoji: chat.MVWB__Reaction__c?.split('<|USER|>')[0]
                 });
-                console.log('ReactPayload :: ', reactPayload);
                 
                 sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true, reaction: chat.MVWB__Reaction__c})
                 .then(result => {
@@ -787,18 +929,18 @@ export default class ChatWindow extends LightningElement {
                 })
                 .catch((e) => {
                     // this.showSpinner = false;
-                    console.log('Error in updateMessageReaction > sendWhatsappMessage :: ', e);
+                    console.error('Error in updateMessageReaction > sendWhatsappMessage :: ', e);
                 })
             })
             .catch((e) => {
                 // this.showSpinner = false;
                 this.showToast('Something went wrong!', 'The reaction could not be updated, please try again.', 'error');
-                console.log('Error in updateMessageReaction > updateReaction :: ', e);
+                console.error('Error in updateMessageReaction > updateReaction :: ', e);
             })
         } catch (e) {
             // this.showSpinner = false;
             this.showToast('Something went wrong!', 'The reaction could not be updated, please try again.', 'error');
-            console.log('Error in function updateMessageReaction:::', e.message);
+            console.error('Error in function updateMessageReaction:::', e.message);
         }
     }
 
@@ -826,7 +968,7 @@ export default class ChatWindow extends LightningElement {
             createChat({chatData: {message: this.messageText, templateId: this.selectedTemplate, messageType: 'text', recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
-                    let textPayload = this.createJSONBody(this.recordData.Phone, "text", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                    let textPayload = this.createJSONBody(this.phoneNumber, "text", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                         textBody: this.messageText
                     });
                     let textareaMessageElement = this.template.querySelector('.message-input');
@@ -852,23 +994,23 @@ export default class ChatWindow extends LightningElement {
                     })
                     .catch((e) => {
                         this.showSpinner = false;
-                        console.log('Error in handleSendMessage > sendWhatsappMessage :: ', e);
+                        console.error('Error in handleSendMessage > sendWhatsappMessage :: ', e);
                     })
                 }else{
                     this.showSpinner = false;
                     this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
-                    console.log('there was some error sending the message!');
+                    console.error('there was some error sending the message!');
                 }
             })
             .catch((e) => {
                 this.showToast('Something went wrong!', (e.body.message == 'STORAGE_LIMIT_EXCEEDED' ? 'Storage Limit Exceeded, please free up space and try again.' : 'Message could not be sent, please try again.'), 'error');
                 this.showSpinner = false;
-                console.log('Error in handleSendMessage > createChat :: ', e);
+                console.error('Error in handleSendMessage > createChat :: ', e);
             })
         } catch (e) {
             this.showSpinner = false;
             this.showToast('Something went wrong!', 'Message could not be sent, please try again.', 'error');
-            console.log('Error in handleSendMessage:::', e.message);
+            console.error('Error in handleSendMessage:::', e.message);
         }
     }
     
@@ -876,7 +1018,209 @@ export default class ChatWindow extends LightningElement {
         try {
             this.template.querySelector('.dropdown-menu').classList.add('hidden');
         } catch (e) {
-            console.log('Error in function handleScheduleMessage:::', e.message);
+            console.error('Error in function handleScheduleMessage:::', e.message);
+        }
+    }
+
+    getS3ConfigDataAsync() {
+        try {
+            getS3ConfigSettings()
+                .then(result => {
+                    console.log('result--> ', result);
+                    if (result != null) {
+                        this.confData = result;
+                        this.isAWSEnabled = true;
+                    }
+                }).catch(error => {
+                    console.error('error in apex -> ', error.stack);
+                });
+        } catch (error) {
+            console.error('error in getS3ConfigDataAsync -> ', error.stack);
+        }
+    }
+
+    async handleSelectedFiles(event) {
+        try {
+            const file = event.target.files[0];
+            if (file) {
+                let fileType = file.type;
+                let fileSizeMB = Math.floor(file.size / (1024 * 1024));
+                let isValid = false;
+                let maxSize = 0;
+                console.log(fileType, fileSizeMB);
+    
+                if (fileType.includes('image/')) {
+                    maxSize = 5;
+                    isValid = fileSizeMB <= maxSize;
+                } else if (fileType.includes('video/') || fileType.includes('audio/')) {
+                    maxSize = 16;
+                    isValid = fileSizeMB <= maxSize;
+                } else if (fileType.includes('application/') || fileType.includes('text/')) {
+                    maxSize = 100;
+                    isValid = fileSizeMB <= maxSize;
+                }
+    
+                if (isValid) {
+                    this.selectedFilesToUpload.push(file);
+                    this.selectedFileName = file.name;
+                } else {
+                    this.showToast('Error', `${file.name} exceeds the ${maxSize}MB limit`, 'error');
+                }
+            }
+        } catch (error) {
+            console.error('Error in file upload:', error);
+        }
+    }
+
+    removeFile() {
+        this.selectedFileName = null;
+        this.selectedFilesToUpload = [];
+        this.template.querySelector('input[type="file"]').value = null;
+    }
+
+    async handleUploadClick(){
+        if(this.selectedFilesToUpload.length > 0){
+            this.showSpinner = true;
+            await this.uploadToAWS(this.selectedFilesToUpload);
+        }
+    }
+
+    async uploadToAWS() {
+        try {
+            this.showSpinner = true;
+            this.initializeAwsSdk(this.confData);
+            const uploadPromises = this.selectedFilesToUpload.map(async (file) => {
+                this.showSpinner = true;
+                let objKey = this.renameFileName(this.selectedFileName);
+
+                let params = {
+                    Key: objKey,
+                    ContentType: file.type,
+                    Body: file,
+                    ACL: "public-read"
+                };
+
+                let upload = this.s3.upload(params);
+
+                return await upload.promise();
+            });
+            // Wait for all uploads to complete
+            const results = await Promise.all(uploadPromises);
+            results.forEach((result) => {
+                if (result) {
+                    let bucketName = this.confData.S3_Bucket_Name__c;
+                    let objKey = result.Key;
+                    let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
+
+                    var messageType = '';
+                    if(this.selectedFilesToUpload[0].type.includes('image/')){
+                        messageType = 'Image';
+                    } else if (this.selectedFilesToUpload[0].type.includes('application/') || this.selectedFilesToUpload[0].type.includes('text/')){
+                        messageType = 'Document';
+                    } else if (this.selectedFilesToUpload[0].type.includes('audio/')){
+                        messageType = 'Audio';
+                    } else if(this.selectedFilesToUpload[0].type.includes('video/')){
+                        messageType = 'Video';
+                    }
+                    createChatForAWSFiles({chatData: {message: awsFileUrl, fileName: objKey, mimeType: this.selectedFilesToUpload[0].type, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
+                        .then(chat => {
+                            if(chat){
+                                this.chats.push(chat);
+                                this.processChats(true);
+                                
+                                let imagePayload = this.createJSONBody(this.phoneNumber, messageType, this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
+                                    link: chat.MVWB__Message__c,
+                                    fileName: objKey || 'whatsapp file'
+                                });
+                                sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
+                                    .then(result => {
+                                        if(result.errorMessage == 'METADATA_ERROR'){
+                                            this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
+                                        }
+                                        let resultChat = result.chat;
+                                        this.chats.find(ch => ch.Id === chat.Id).MVWB__Message_Status__c = resultChat.MVWB__Message_Status__c;
+                                        this.chats.find(ch => ch.Id === chat.Id).MVWB__WhatsAppMessageId__c = resultChat?.MVWB__WhatsAppMessageId__c;
+                                        this.messageText = '';
+                                        this.template.querySelector('.message-input').value = '';
+                                        this.replyToMessage = null;
+                                        this.showSpinner = false;
+                                        this.processChats(true);
+                                    })
+                                    .catch((e) => {
+                                        this.showSpinner = false;
+                                        console.error('Error in handleUploadFinished > sendWhatsappMessage :: ', e);
+                                    })
+                                this.handleBackDropClick();
+                            }else{
+                                this.showSpinner = false;
+                                this.showToast('Something went wrong!', 'The photo is not sent, please make sure image size does not exceed 5MB.', 'error');
+                                console.error('there was some error sending the message!');
+                            }
+                        })
+                        .catch((e) => {
+                            this.showSpinner = false;
+                            this.showToast('Something went wrong!', 'The photo could not be sent, please try again.', 'error');
+                            console.error('Error in handleUploadFinished > createChat :: ', e);
+                        })
+                    this.uploadFileType = null;
+                    this.showFileUploader = false;
+                    this.acceptedFormats = [];
+                    this.removeFile();
+                }
+            });
+
+        } catch (error) {
+            this.showSpinner = false;
+            console.error("Error in uploadToAWS: ", error);
+        }
+    }
+
+    initializeAwsSdk(confData) {
+        try {
+            let AWS = window.AWS;
+
+            AWS.config.update({
+                accessKeyId: confData.AWS_Access_Key__c,
+                secretAccessKey: confData.AWS_Secret_Access_Key__c
+            });
+
+            AWS.config.region = confData.S3_Region_Name__c;
+
+            this.s3 = new AWS.S3({
+                apiVersion: "2006-03-01",
+                params: {
+                    Bucket: confData.S3_Bucket_Name__c
+                }
+            });
+
+        } catch (error) {
+            console.error("error initializeAwsSdk ", error);
+        }
+    }
+
+    renameFileName(filename) {
+        try {
+            let originalFileName = filename;
+            let extensionIndex = originalFileName.lastIndexOf('.');
+            let baseFileName = originalFileName.substring(0, extensionIndex);
+            let extension = originalFileName.substring(extensionIndex + 1);
+            
+            let objKey = `${baseFileName}.${extension}`
+                .replace(/\s+/g, "_");
+            return objKey;
+        } catch (error) {
+            console.error('error in renameFileName -> ', error.stack);            
+        }
+    }
+
+    downloadRowImage(event) {
+        try {
+            const fileName = event.currentTarget.dataset.name;
+            const vfPageUrl = `/apex/FileDownloadVFPage?fileName=${encodeURIComponent(fileName)}`;
+            window.open(vfPageUrl, '_blank');
+        } catch (error) {
+            this.showSpinner = false;
+            console.error('Error downloading file:', error.stack);
         }
     }
 
@@ -891,7 +1235,7 @@ export default class ChatWindow extends LightningElement {
             });
             this.dispatchEvent(evt);
         } catch (e) {
-            console.log('Error in function showToast:::', e.message);
+            console.error('Error in function showToast:::', e.message);
         }
     }
 }

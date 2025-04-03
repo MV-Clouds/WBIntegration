@@ -238,6 +238,32 @@ public class ChatWindowControllerTest {
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testUpdateStatus', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
+
+    @isTest
+    static void testCreateChatForAWSFiles() {
+        try {
+            Contact testContact = [SELECT Id, Phone FROM Contact LIMIT 1];
+
+            Map<String, String> chatData = new Map<String, String>{
+                'message' => 'Hello!',
+                'fileName' => 'test.pdf',
+                'mimeType' => 'application/pdf',
+                'messageType' => 'Document',
+                'recordId' => testContact.Id,
+                'replyToChatId' => null,
+                'phoneNumber' => testContact.Phone
+            };
+
+            Test.startTest();
+            Chat__c newChat = ChatWindowController.createChatForAWSFiles(chatData);
+            Test.stopTest();
+
+            System.assertNotEquals(null, newChat, 'New chat should be created.');
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatWindowControllerTest', 'methodName' => 'testCreateChatForAWSFiles', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+        }
+    }
+
     public class TestSendMessage implements HttpCalloutMock {
 
         Integer statusCode;

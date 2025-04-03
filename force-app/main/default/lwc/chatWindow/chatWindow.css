@@ -272,7 +272,7 @@
     border-radius: 4px;
 }
 
-.show-image-preview{
+.show-image-preview, .audio-preview{
     position: fixed;
     z-index: 200;
     top: 0;
@@ -298,6 +298,13 @@
     cursor: pointer;
 }
 
+.audio-preview-close{
+    cursor: pointer;
+    position: fixed;
+    top: 14px;
+    right: 14px;
+}
+
 .image-preview-close:hover{
     scale: 1.1;
 }
@@ -308,6 +315,47 @@
     top: 14px;
     right: 14px;
     z-index: 30;
+}
+
+.thumbnail{
+    width: 100%;
+}
+
+.slds-file__title_card{
+    color: black;
+}
+
+.audio-div {
+    width: 14rem;
+    position: relative;
+    height: 2rem;
+    display: flex;
+    margin-top: 0.4rem;
+}
+
+.headphone {
+    border: 1px solid orange;
+    background: orange;
+    border-radius: 50%;
+    width: 2rem;
+    padding: 0.3rem;
+    cursor: pointer;
+}
+
+.audio-icon {
+    width: 1.1rem;
+    margin-left: 0.1rem;
+    margin-bottom: 0.1rem;
+}
+
+.audio-name p {
+    width: 11rem;
+    margin-left: 0.4rem;
+    margin-top: 0.5rem;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .other-message-sub-text{
@@ -379,6 +427,7 @@
     align-items: center;
     text-transform: uppercase;
     font-weight: 200;
+    padding-top: 0.4rem;
 }
 
 .status-icon {
@@ -592,6 +641,19 @@
     border-radius: 4px;
 }
 
+.message-video{
+    max-height: 10rem;
+    min-width: 15rem;
+    margin-top: 0.4rem;
+    margin-bottom: 0.3rem;
+}
+
+.doc-preview{
+    width: 14rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.3rem;
+}
+
 .message-draft-container {
     display: flex;
     width: 100%;
@@ -729,7 +791,7 @@
 }
 
 .files-uploader-div {
-    height: 8rem;
+    height: 12rem;
     display: flex;
     border-radius: 6px;
     align-items: center;
@@ -967,4 +1029,96 @@
 .send-template-button:hover{
     background-color: #00bfff20;
     border-color: #00bfff;
+}
+
+.upload-container {
+    padding: 10px;
+}
+
+.custom-file-upload {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #d8dde6;
+    border-radius: 5px;
+    background-color: #f4f6f9;
+    cursor: pointer;
+}
+
+.custom-file-upload input {
+    display: none;
+}
+
+.file-details {
+    margin-top: 10px;
+}
+
+.file-name {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.remove-icon {
+    cursor: pointer;
+    color: #ff5c5c;
+}
+
+.upload-button {
+    padding: 7px;
+    width: 75px;
+    margin-top: 10px;
+    background-color: #0176d3;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.upload-button:disabled {
+    background-color: #d8dde6;
+    cursor: not-allowed;
+}
+
+.preview-container{
+    margin-top: 0.4rem;
+}
+
+.doc-preview-aws{
+    width: 300px;
+    height: 150px;
+    border: 2px solid black;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.pdf-preview{
+    position: fixed;
+    z-index: 200;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    min-height: 100%;
+    height: 100% !important;
+    padding: 5rem;
+    background-color: #a9a9a970;
+    backdrop-filter: blur(6px);
+    cursor: default;
+}
+
+.pdf-preview iframe{
+    width: 85% !important;
+    height: 80% !important;
+    pointer-events: unset;
+    overflow: unset;
+}
+
+.pdf-preview-close{
+    display: block;
+    position: fixed;
+    cursor: pointer;
+    top: 0;
+    right: 0;
 }
