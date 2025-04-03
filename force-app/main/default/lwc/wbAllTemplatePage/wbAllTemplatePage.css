@@ -127,7 +127,9 @@
 }
 
 .table-container {
-    border-radius: 0.4rem; 
+    /* border-radius: 0.4rem;  */
+    border-top-left-radius: 0.4rem; 
+    border-top-right-radius: 0.4rem; 
     overflow: hidden; 
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
     border: 1px solid #dcdcdc; 
@@ -380,4 +382,54 @@ img {
 .edit{
 
     padding: 0.2rem;
+}
+.datatable-container {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    
+    overflow: hidden;
+    max-height: 57vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Fixed Header */
+.table-header {
+    background-color: #f3f3f3;
+    overflow: hidden;
+}
+
+/* Ensuring header doesn't scroll */
+.table-header table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+/* Scrollable Body */
+.table-body {
+    overflow-y: auto;
+    max-height: 54vh; /* Adjust height as needed */
+}
+
+/* Ensuring body width matches header */
+.table-body table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+/* Optional: Add border collapse */
+.slds-table {
+    border-collapse: collapse;
+}
+
+/* Optional: Styling for action buttons */
+.action-buttons {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.tableData {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
 }

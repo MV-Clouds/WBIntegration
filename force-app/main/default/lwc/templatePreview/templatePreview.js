@@ -134,57 +134,185 @@ export default class TemplatePreview extends LightningElement {
         }
     }
 
-    createJSONBody(to, type, data){
+    createJSONBody(to, type, data) {
         try {
-                let payload = `{ "messaging_product": "whatsapp", "to": "${to}", "type": "${type}"`;
-                payload += `, "template": { 
-                    "name": "${data.templateName}",
-                    "language": { "code": "${data.languageCode}" }`;
-                let components = [];
-                if (data.headerParameters && data.headerParameters.length > 0) {
-                    let headerParams = data.headerParameters.map(
-                        (param) => `{ "type": "text", "text": "${param}" }`
-                    ).join(", ");
-                    components.push(`{ 
-                        "type": "header", 
-                        "parameters": [ ${headerParams} ] 
-                    }`);
+    
+            let payload = {
+                messaging_product: "whatsapp",
+                to: to,
+                type: type,
+                template: {
+                    name: data.templateName,
+                    language: {
+                        code: data.languageCode
+                    }
                 }
-                if(data.isHeaderImage && data.headerImageURL){
-                    components.push(`{ 
-                        "type": "header", 
-                        "parameters": [ { "type": "image", "image": { "link":"${data.headerImageURL}" } } ] 
-                    }`);
-                }
-                if (data.bodyParameters && data.bodyParameters.length > 0) {
-                    let bodyParams = data.bodyParameters.map(
-                        (param) => `{ "type": "text", "text": "${param}" }`
-                    ).join(", ");
-                    components.push(`{ 
-                        "type": "body", 
-                        "parameters": [ ${bodyParams} ] 
-                    }`);
-                }
-                // if (data.buttonLabel && data.buttonType) {
-                //     components.push(`{ 
-                //         "type": "button", 
-                //         "sub_type": "${data.buttonType}", 
-                //         "index": 0, 
-                //         "parameters": [{ 
-                //             "type": "text", 
-                //             "text": "${data.buttonLabel}" 
-                //         }] 
-                //     }`);
-                // }
-                if (components.length > 0) {
-                    payload += `, "components": [ ${components.join(", ")} ]`;
-                }
-                payload += ` }`; 
-                payload += ` }`;
+            };
+    
+            let components = [];
+    
+            // Header Parameters (Text)
+            if (data.headerParameters && data.headerParameters.length > 0) {
+                let headerParams = data.headerParameters.map((param) => ({
+                    type: "text",
+                    text: param
+                }));
+    
+                components.push({
+                    type: "header",
+                    parameters: headerParams
+                });
+            }
+    
+            // Header Type (Image)
+            if (data.headerType === 'Image' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "image",
+                            image: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            else if (data.headerType === 'Document' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "document",
+                            document: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            else if (data.headerType === 'Video' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "video",
+                            video: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
             
-                return payload;
+    
+            // Body Parameters
+            if (data.bodyParameters && data.bodyParameters.length > 0) {
+                let bodyParams = data.bodyParameters.map((param) => ({
+                    type: "text",
+                    text: param
+                }));
+    
+                components.push({
+                    type: "body",
+                    parameters: bodyParams
+                });
+            }
+    
+            // Button Handling
+            
+            if (data.buttonValue && data.buttonValue.length > 0) {
+                let buttons = data.buttonValue
+                    .map((button, index) => {
+                        
+                        switch (button.type.toUpperCase()) {
+                            case "PHONE_NUMBER":
+                                components.push( {
+                                    type: "button",
+                                    sub_type: "voice_call",
+                                    index: index,
+                                    parameters: [
+                                        {
+                                            type: "text",
+                                            text: button.phone_number
+                                        }
+                                    ]
+                                });
+                                break;
+                            case "URL":
+                                
+                                break;
+                            case "QUICK_REPLY":
+                                
+                                break;
+                            case "FLOW":
+                                components.push( {
+                                        type: "button",
+                                        sub_type: "flow",
+                                        index: index,
+                                        parameters: [
+                                            {
+                                                "type": "payload",
+                                                "payload": "PAYLOAD"
+                                            }
+                                        ]   
+                                    });
+                                break;
+                            case 'copy_code' :
+                            case "COPY_CODE":
+                            case "COUPON_CODE":
+                                components.push( {
+                                    type: "button",
+                                    sub_type: "copy_code",
+                                    index: index,
+                                    parameters: [
+                                        {
+                                            type :'coupon_code',
+                                            coupon_code : button.example
+                                        }
+                                    ]
+                                }); 
+                                break;
+                            case "OTP":
+                                if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE") {
+
+                                    
+                                    components.push( {
+                                        type: "button",
+                                        sub_type: "url",
+                                        index: index,
+                                        parameters: [
+                                            {
+                                                type :'text',
+                                                text :this.bodyParaCode[0]
+                                            }
+                                            
+                                        ]
+                                    });
+                                } else {
+                                    console.warn(`OTP button at index ${index} missing otp_code parameter.`);
+                                    return null;
+                                }
+                                break;
+                            default:
+                                console.warn(`Unknown button type: ${button.type}`);
+                                return null;
+                        }
+                    })
+                    .filter((button) => button !== null);
+    
+                }
+            
+            // Add components if available
+            if (components.length > 0) {
+                payload.template.components = components;
+            }
+            
+    
+            // Convert the object to a JSON string
+            return JSON.stringify(payload);
         } catch (e) {
-            console.log('Error in function createJSONBody:::', e.message);
+            console.error('Error in function createJSONBody:::', e.message);
         }
     }
 }

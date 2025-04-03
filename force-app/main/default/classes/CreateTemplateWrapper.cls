@@ -23,7 +23,6 @@
     */
     public static Map<String, Object> buildPayload(TemplateWrapper templateWrapper) {
         try {
-            System.debug('Template Wrapper is :: ' + templateWrapper);
             Map<String, Object> payload = new Map<String, Object>();
             payload.put('name', templateWrapper.templateName);
             payload.put('language', templateWrapper.tempLanguage);
@@ -35,7 +34,13 @@
             if (!components.isEmpty()) {
                 payload.put('components', components);
             }
-            System.debug('Final Payload: ' + JSON.serialize(payload));
+            if(templateWrapper.templateCategory == 'Authentication' || templateWrapper.templateCategory == 'Utility'){
+                if (templateWrapper.expireTime != null) {
+                    payload.put('message_send_ttl_seconds', templateWrapper.expireTime);
+                } else {
+                    payload.put('message_send_ttl_seconds', 300); // Default to 5 mins if not set
+                }
+            }
             return payload;
 
         } catch (Exception e) {
@@ -59,7 +64,8 @@
                 components.add(headerComponent);
             }
     
-            if (templateWrapper.templateBody != null) {
+            if ((templateWrapper.templateBody != null ) ) {
+                
                 components.add(buildBodyComponent(templateWrapper));
             }
     
@@ -112,7 +118,7 @@
                 }
                 return headerComponent;
             }            
-            if (templateWrapper.tempHeaderFormat == 'Image' && templateWrapper.tempHeaderHandle != null) {
+            if (((templateWrapper.tempHeaderFormat == 'Image')||(templateWrapper.tempHeaderFormat == 'Video')||((templateWrapper.tempHeaderFormat == 'Document'))) && templateWrapper.tempHeaderHandle != null) {
                 headerComponent.put('example', new Map<String, Object>{
                     'header_handle' => templateWrapper.tempHeaderHandle
                 });
@@ -133,16 +139,36 @@
     */
     private static Map<String, Object> buildBodyComponent(TemplateWrapper templateWrapper) {
         try {
-            Map<String, Object> bodyComponent = new Map<String, Object>{
-                'type' => 'BODY',
-                'text' => templateWrapper.templateBody.replace('\\n', '\n')
-            };
+
+            Map<String, Object> bodyComponent;
+            if (templateWrapper.templateCategory == 'Authentication') {
+                bodyComponent = new Map<String, Object>{
+                    'type' => 'BODY'
+                };
+                Integer randomCode = Integer.valueOf(String.valueOf(Math.floor(Math.random() * 900000) + 100000));
+
+                // Convert Integer to String
+                String randomCodeStr = String.valueOf(randomCode);
+
+                // Add the string to templateWrapper
+                templateWrapper.varAlternateTexts.add(randomCodeStr);
+                templateWrapper.templateBodyText = new List<String>{'{{' + randomCodeStr + '}}'};
     
-            if (templateWrapper.templateBodyText != null && templateWrapper.templateBodyText.size() > 0) {
+            } else {
+                bodyComponent = new Map<String, Object>{
+                    'type' => 'BODY',
+                    'text' => templateWrapper.templateBody.replace('\\n', '\n')
+
+                    };
+            }
+    
+            if ((templateWrapper.templateBodyText != null) && (templateWrapper.templateBodyText.size() > 0)) {
+                
                 bodyComponent.put('example', new Map<String, Object>{
                     'body_text' => new List<List<String>>{templateWrapper.templateBodyText}
                 });
             }
+            
             return bodyComponent;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildBodyComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
@@ -161,6 +187,18 @@
         List<Map<String, Object>> buttonComponents = new List<Map<String, Object>>();
     
         try {
+            // Force OTP button for Authentication category
+            if (templateWrapper.templateCategory == 'Authentication') {
+                Map<String, Object> buttonComponent = new Map<String, Object>{
+                    'type' => 'OTP',
+                    'text' => 'Verify Code', // Plain text without variables or emojis
+                    'otp_type' => 'COPY_CODE' // Use 'COPY_CODE' or 'ONE_TAP' as needed
+                };
+                buttonComponents.add(buttonComponent);
+                return buttonComponents; // Return immediately to prevent adding other buttons
+            }
+    
+            // Handle other categories
             if (String.isBlank(templateWrapper.typeOfButton)) {
                 return buttonComponents;
             }
@@ -169,16 +207,21 @@
             try {
                 untypedList = (List<Object>) JSON.deserializeUntyped(templateWrapper.typeOfButton);
             } catch (Exception e) {
+                
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'handleSuccessResponse','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
                 throw new IllegalArgumentException('Invalid JSON format for typeOfButton: ' + e.getMessage());
             }
-    
+            // Loop through buttons for non-Authentication categories
             for (Object item : untypedList) {
+                // if (buttonComponents.size() >= 1) {
+                //     break; // Limit to 1 button if required
+                // }
+                
+                
                 Map<String, Object> button = (Map<String, Object>) item;
-    
                 String actionType = (String) button.get('selectedActionType');
                 String customActionType = (String) button.get('selectedCustomType');
-                String phoneNumber = (String) button.get('selectedCountryType') +' '+ (String) button.get('phonenum');
-    
+                String phoneNumber = (String) button.get('selectedCountryType') + ' ' + (String) button.get('phonenum');
                 Map<String, Object> buttonComponent = new Map<String, Object>();
                 if ('PHONE_NUMBER'.equals(actionType)) {
                     buttonComponent.put('type', 'PHONE_NUMBER');
@@ -187,25 +230,37 @@
                 } else if ('QUICK_REPLY'.equals(customActionType) || 'Marketing opt-out'.equals(customActionType)) {
                     buttonComponent.put('type', 'QUICK_REPLY');
                     buttonComponent.put('text', (String) button.get('Cbtntext'));
+                    if('Marketing opt-out'.equals(customActionType)){
+                        templateWrapper.marketingOptText = (String) button.get('Cbtntext');
+                    }
                 } else if ('URL'.equals(actionType)) {
                     buttonComponent.put('type', 'URL');
                     buttonComponent.put('text', (String) button.get('btntext'));
                     buttonComponent.put('url', (String) button.get('webURL'));
                 } else if ('COPY_CODE'.equals(actionType)) {
                     buttonComponent.put('type', 'COPY_CODE');
+                    buttonComponent.put('text', 'Copy offer code');
                     buttonComponent.put('example', (String) button.get('offercode'));
                 }
-    
+                else if ('Flow'.equals(actionType)) {
+                    Map<String,Object> selectedFlowMap= new Map<String,Object>();
+                    selectedFlowMap = (Map<String,Object>) JSON.deserializeUntyped(templateWrapper.selectedFlow);
+                    buttonComponent.put('type', 'FLOW');
+                    buttonComponent.put('text', (String) button.get('btntext'));
+                    buttonComponent.put('flow_id', (String) selectedFlowMap.get('id'));
+                }
                 if (!buttonComponent.isEmpty()) {
                     buttonComponents.add(buttonComponent);
                 }
             }
     
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildButtonComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'buildButtonComponent','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
+    
         return buttonComponents;
     }
+    
     
     /*
     *********************************************************
@@ -217,25 +272,16 @@
 
     public static Id handleSuccessResponse(HttpResponse res, Map<String, Object> payload, Map<String, Object> response, TemplateWrapper templateWrapper) {
         Id templateId = null;
-                System.debug('Res is :: '+ res);
-                System.debug('payload is :: '+ payload);
-                System.debug('response is :: '+ response);
-                System.debug('templateWrapper is :: '+ templateWrapper);
         try {
             // Deserialize the response and payload
             Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
             Map<String, Object> payloadMap = (Map<String, Object>) JSON.deserializeUntyped(JSON.serialize(payload));
             
-            List<Map<String, String>> buttonDetails;
+            // List<Map<String, String>> buttonDetails;
+            String buttonDetails;
             String templatename = (String) payloadMap.get('name');
             Template__c whatsAppTemplate;
 
-            // List<Template__c> whatsAppTemplateList = [
-            //     SELECT Id,Name,Template_Name__c, Template_Id__c 
-            //     FROM Template__c 
-            //     WHERE Template_Name__c = :(String) payloadMap.get('name') WITH SECURITY_ENFORCED
-            //     LIMIT 1
-            // ];
 
             List<Template__c> allTemplates = [
                 SELECT Id, Name, Template_Name__c, Template_Id__c 
@@ -249,7 +295,6 @@
                 }
             }
 
-            System.debug(whatsAppTemplateList);
 
             if (whatsAppTemplateList.isEmpty()) {
                 whatsAppTemplate = new Template__c();
@@ -259,7 +304,7 @@
                     whatsAppTemplate.Template_Id__c = (String) responseMap.get('id') != null ? (String) responseMap.get('id') : whatsAppTemplate.Template_Id__c;
                 }
             }
-    
+            
             // Populate Template__c fields dynamically
             String status = (String) responseMap.get('status');
             whatsAppTemplate.Template_Id__c = (String) responseMap.get('id') != null ? (String) responseMap.get('id') : whatsAppTemplate.Template_Id__c;
@@ -270,13 +315,14 @@
             whatsAppTemplate.Template_Category__c = (String) payloadMap.get('category');
             whatsAppTemplate.Language__c = (String) payloadMap.get('language');
             whatsAppTemplate.Template_Type__c = templateWrapper.templateType;
-            whatsAppTemplate.Template_SubCatagory__c = templateWrapper.templateType;
+            whatsAppTemplate.Template_Miscellaneous_Data__c = templateWrapper.templateMiscellaneousData;
 
             // Initialize variables for components
             List<Template_Variable__c> variableRecords = new List<Template_Variable__c>();
             List<Object> components = (List<Object>) payloadMap.get('components');
             List<String> headAlternateTexts = templateWrapper.headAlternateTexts; 
             List<String> varAlternateTexts = templateWrapper.varAlternateTexts;   
+
             Integer headerIndex = 0;
             Integer variableIndex = 0; 
             String headerMergeText = '';
@@ -289,11 +335,18 @@
                 Map<String, Object> component = (Map<String, Object>) comp;
                 String type = (String) component.get('type');
                 Map<String, Object> example = (Map<String, Object>) component.get('example');
+
+            
+
+                if(whatsAppTemplate.Template_Category__c == 'Authentication'){
+                    component.put('text',templateWrapper.templateBody);
+                }
+
     
                 // HEADER Component
                 if (type == 'HEADER') {
                     whatsAppTemplate.Header_Type__c = (String) component.get('format');
-                    if ((String) component.get('format') == 'IMAGE') {
+                    if (((String) component.get('format') == 'IMAGE')||(((String) component.get('format') == 'VIDEO'))||(((String) component.get('format') == 'DOCUMENT'))) {
                         whatsAppTemplate.WBHeader_Body__c = templateWrapper.tempImgUrl;
                         whatsAppTemplate.File_Name__c = templateWrapper.tempImgName;
                         whatsAppTemplate.WBImage_Header_Handle__c = templateWrapper.tempHeaderHandle;
@@ -334,9 +387,7 @@
                                         );
                                         variableRecords.add(headerVariable);
                                         headerIndex++;
-                                    } else {
-                                        System.debug('HeaderIndex out of bounds: ' + headerIndex);
-                                    }                                 
+                                    }                           
                                    
                                     headerIndex++;
                                 }
@@ -347,46 +398,57 @@
                 // BODY Component
                 else if (type == 'BODY') {
                     Map<String, Object> result = handleBodyComponent(whatsAppTemplate.Template_Category__c, component, example);
-                    System.debug(((String) result.get('bodyText')));
-                    whatsAppTemplate.WBTemplate_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
-
-                    List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
-                    String bodyMergeText = (String) result.get('bodyMergeText');
-
-                    Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
-                    Matcher matcher = pattern.matcher((String) result.get('bodyText'));
-                    Set<String> processedBodyPlaceholders = new Set<String>();
-
-                    List<Template_Variable__c> existingBodyVars = [
-                        SELECT Id, Name
-                        FROM Template_Variable__c
-                        WHERE Template__c = :whatsAppTemplate.Id
-                        AND Type__c = 'Body'
-                    ];
-
-                    if (!existingBodyVars.isEmpty()) {
-                        delete existingBodyVars;
-                    }
-
-                    while (matcher.find()) {
-                        String placeholder = matcher.group();
-
-                        if (!processedBodyPlaceholders.contains(placeholder)) {
-                            processedBodyPlaceholders.add(placeholder);
                     
-                            if (variableIndex < varAlternateTexts.size()) {
-                                Template_Variable__c bodyVariable = new Template_Variable__c(
-                                    Name = placeholder,
-                                    Object_Name__c = parsedFields[variableIndex].get('objectName'),
-                                    Field_Name__c = parsedFields[variableIndex].get('fieldName'), 
-                                    Type__c = 'Body',
-                                    Alternate_Text__c = varAlternateTexts[variableIndex]
-                                );
-                                variableRecords.add(bodyVariable);
-                            } else {
-                                System.debug('VariableIndex out of bounds: ' + variableIndex);
+                    if(((String) result.get('bodyText')) != null){
+                        whatsAppTemplate.WBTemplate_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
+    
+                        List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
+                        String bodyMergeText = (String) result.get('bodyMergeText');
+    
+                        Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
+                        Matcher matcher = pattern.matcher((String) result.get('bodyText'));
+                        Set<String> processedBodyPlaceholders = new Set<String>();
+    
+                        List<Template_Variable__c> existingBodyVars = [
+                            SELECT Id, Name
+                            FROM Template_Variable__c
+                            WHERE Template__c = :whatsAppTemplate.Id
+                            AND Type__c = 'Body'
+                        ];
+    
+                        if (!existingBodyVars.isEmpty()) {
+                            delete existingBodyVars;
+                        }
+    
+                        while (matcher.find()) {
+                            String placeholder = matcher.group();
+    
+                            if (!processedBodyPlaceholders.contains(placeholder)) {
+                                processedBodyPlaceholders.add(placeholder);
+                        
+                                if ((variableIndex < varAlternateTexts.size())) {
+                                    Template_Variable__c bodyVariable ;
+                                    if(whatsAppTemplate.Template_Category__c == 'Authentication'){
+
+                                        bodyVariable = new Template_Variable__c(
+                                            Name = placeholder,
+                                            Type__c = 'Body',
+                                            Alternate_Text__c = varAlternateTexts[variableIndex]
+                                            );
+                                        }
+                                    else{
+                                            bodyVariable = new Template_Variable__c(
+                                                Name = placeholder,
+                                                Object_Name__c = parsedFields[variableIndex].get('objectName'),
+                                                Field_Name__c = parsedFields[variableIndex].get('fieldName'), 
+                                                Type__c = 'Body',
+                                                Alternate_Text__c = varAlternateTexts[variableIndex]
+                                            );
+                                    }
+                                    variableRecords.add(bodyVariable);
+                                }
+                                variableIndex++; 
                             }
-                            variableIndex++; 
                         }
                     }
 
@@ -397,12 +459,22 @@
                 }
                 // BUTTONS Component
                 else if (type == 'BUTTONS') {
-                    buttonDetails = handleButtonComponent(component);
-                    for (Map<String, String> button : buttonDetails) {
-                        whatsAppTemplate.Button_Type__c = button.get('type');
-                        whatsAppTemplate.Button_Label__c = button.get('text');
-                        whatsAppTemplate.Button_Body__c = String.isNotBlank(button.get('value')) ? button.get('value') : button.get('text');
+                    List<Object> buttons = (List<Object>) component.get('buttons');
+                    for (Object buttonObj : buttons) {
+                        if (buttonObj instanceof Map<String, Object>) {
+                            Map<String, Object> button = (Map<String, Object>) buttonObj;
+                            String buttonType = (String) button.get('type');
+                            String buttonText = (String) button.get('text');
+        
+                            // ✅ Correct check for marketing opt-out
+                            if (buttonText == templateWrapper.marketingOptText) {
+                                button.put('isMarketingOpt', true);
+                            }
+                        }
                     }
+                    buttonDetails = handleButtonComponent(component);
+                    whatsAppTemplate.Button_Body__c = buttonDetails;
+                    
                 }
             }
     
@@ -425,16 +497,7 @@
             // Error response handling
             response.put('success', false);
             response.put('errorMessage', e.getMessage());
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'CreateTemplateWrapper',
-                'methodName' => 'handleSuccessResponse',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'handleSuccessResponse','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
         return templateId; 
     }
@@ -507,44 +570,19 @@
     @return          : buttonDetails - contain type ,label and value of different buttons.
     ********************************************************
     */
-    private static List<Map<String, String>> handleButtonComponent(Map<String, Object> component) {
-        List<Map<String, String>> buttonDetails = new List<Map<String, String>>();
+    private static String handleButtonComponent(Map<String, Object> component) {
+        String buttonList = '';
         try {
-            List<Object> buttons = (List<Object>) component.get('buttons'); 
+            List<Object> buttons = (List<Object>) component.get('buttons');
     
             if (buttons != null) {
-                for (Object buttonObj : buttons) {
-                    if (buttonObj instanceof Map<String, Object>) {
-                        Map<String, Object> button = (Map<String, Object>) buttonObj;
-                        String buttonType = (String) button.get('type');
-                        String buttonText = (String) button.get('text');
-                        String buttonValue = '';
-    
-                        if (buttonType == 'COPY_CODE') {
-                            buttonValue = (String) button.get('example');
-                            buttonText = 'Copy offer code';
-                        } else if(buttonType == 'URL'){
-                            buttonValue = (String) button.get('url'); 
-                        } else if(buttonType == 'PHONE_NUMBER'){
-                            buttonValue = (String) button.get('phone_number'); 
-                        }
-    
-                        buttonDetails.add(new Map<String, String>{
-                            'type' => buttonType,
-                            'text' => buttonText,
-                            'value' => buttonValue
-                        });
-                    } else {
-                        System.debug('Expected button to be a Map<String, Object>, found: ' + buttonObj);
-                    }
-                }
-            } else {
-                System.debug('No buttons found in component: ' + component);
+                buttonList = (String) JSON.serialize(buttons);
+                
             }
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleButtonComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
-        return buttonDetails; 
+        return buttonList; 
     }
     
       /*
@@ -555,17 +593,6 @@
     ********************************************************
     */
     
-    // public static String convertMarkdownToHtml(String bodyText) {
-    //     System.debug(bodyText);
-    //     bodyText = bodyText.replaceAll('\\*{1,2}([^*]+)\\*{1,2}', '<strong>$1</strong>');
-    //     bodyText = bodyText.replaceAll('_([^_]+)_', '<em>$1</em>');        
-    //     bodyText = bodyText.replaceAll('~([^~]+)~', '<s>$1</s>');        
-    //     bodyText = bodyText.replaceAll('```([^`]+)```', '<code>$1</code>');        
-    //     bodyText = bodyText.replaceAll('\n', '<br/>');
-    //     bodyText = bodyText.replaceAll(' ', '&nbsp;');
-        
-    //     return bodyText;
-    // }
 
     public class TemplateWrapper {      
         @AuraEnabled public String templateName;
@@ -573,7 +600,6 @@
         @AuraEnabled public String templateType;
         @AuraEnabled public String tempHeaderFormat;
         @AuraEnabled public String tempHeaderHandle;
-        // @AuraEnabled public String tempContentDocId;
         @AuraEnabled public String tempLanguage;
         @AuraEnabled public String tempHeaderText;
         @AuraEnabled public List<String> tempHeaderExample;
@@ -583,15 +609,20 @@
         @AuraEnabled public List<String> templateBodyText;
         @AuraEnabled public String tempFooterText;
         @AuraEnabled public String typeOfButton;
-        @AuraEnabled public String buttonPhoneText;
-        @AuraEnabled public String phoneNumber;
-        @AuraEnabled public String buttonURLText;
         @AuraEnabled public String url;
-        @AuraEnabled public String quickText;
-        @AuraEnabled public String copyCode;
         @AuraEnabled public String tempImgUrl;
         @AuraEnabled public String tempImgName;
         @AuraEnabled public String tempImgId;
+        @AuraEnabled public Integer expireTime;
+        
+        @AuraEnabled public Boolean autofillCheck;  
+        @AuraEnabled public List<String> packagename;  
+        @AuraEnabled public List<String> signaturename;  
+        @AuraEnabled public String marketingOptText;  
+        @AuraEnabled public String templateMiscellaneousData;
+        
+        @AuraEnabled public String selectedFlow;
+        
     }
 
 }

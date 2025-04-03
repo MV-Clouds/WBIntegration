@@ -18,7 +18,7 @@ import sendPreviewTemplate from '@salesforce/apex/WBTemplateController.sendPrevi
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
-import CountryJson from '@salesforce/resourceUrl/CountryJson';
+import CountryJson from '@salesforce/resourceUrl/MVWB__CountryJson';
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;
@@ -37,6 +37,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track objectNames = []; 
     @track fieldNames = [];
     @track isImgSelected = false;
+    @track isVidSelected = false;
+    @track isDocSelected = false;
     @track IsHeaderText = true;
     @track options = [
         { label: 'Contact', value: 'Contact', isSelected: true }
@@ -52,6 +54,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track isFieldDisabled=false;
     @track isSendDisabled=false;
     @track sendButtonClass;
+    @track bodyParaCode = '';
 
     get contactFields() {
         return Object.entries(this.contactDetails)
@@ -273,40 +276,63 @@ export default class WbPreviewTemplatePage extends LightningElement {
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
-                    this.isImgSelected = result.isImgUrl;
-                    this.IsHeaderText = !result.isImgUrl;                    
+                    
+                    this.IsHeaderText = !result.isImgUrl;            
                     this.originalHeader = result.template.MVWB__WBHeader_Body__c;
                     this.originalBody = result.template.MVWB__WBTemplate_Body__c;
                     const variableMappings = result.templateVariables;
-
+                    
                     if(result.template.MVWB__Header_Type__c=='Image'){
+                        this.isImgSelected = result.isImgUrl;
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(this.originalHeader, "text/html");
                         this.tempHeader = doc.documentElement.textContent || "";
-                    }else{
+                        
+                    }
+                    else if(result.template.MVWB__Header_Type__c=='Video'){
+                        
+                        this.isVidSelected = result.isImgUrl;
+                        
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(this.originalHeader, "text/html");
+                        this.tempHeader = doc.documentElement.textContent || "";
+                    }
+                    else if(result.template.MVWB__Header_Type__c=='Document'){
+                        
+                        this.isDocSelected = result.isImgUrl;
+                        
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(this.originalHeader, "text/html");
+                        this.tempHeader = doc.documentElement.textContent || "";
+                    }
+                    else{
                         this.tempHeader = this.originalHeader ||'';
                     }
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
                     this.tempFooter = result.template.MVWB__WBFooter_Body__c;
 
-                    this.isSendDisabled = result.template.MVWB__Status__c !== 'Active-Quality Pending';
+                    this.isSendDisabled = result.MVWB__template.Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    const buttonLabels = result.template.MVWB__Button_Label__c ? result.template.MVWB__Button_Label__c.split(',') : [];
-                    const buttonTypes = result.template.MVWB__Button_Type__c ? result.template.MVWB__Button_Type__c.split(',') : [];
-        
-                    this.buttonList = buttonLabels.map((label, index) => {
-                        const type = buttonTypes[index]?.trim() || 'default';
-                        return {
-                            id: index,
-                            btntext: label.trim(),
-                            btnType: type,
-                            iconName: this.getIconName(type) 
-                        };
-                    });
+                    const buttonBody = result.MVWB__template.Button_Body__c
+                    ? JSON.parse(result.MVWB__template.Button_Body__c)
+                    : []
+                  
+                  this.buttonList = buttonBody.map((buttonLabel, index) => {
+                  
+                    const type = buttonLabel.type
+                    return {
+                      id: index,
+                      btntext: buttonLabel.text.trim(),
+                      btnType: type,
+                      iconName: this.getIconName(type)
+                    }
+                  })
+                  
+
 
                     const grouped = variableMappings.reduce((acc, mapping) => {
                         const mappingWithValue = { 
@@ -358,6 +384,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     if(templateData.headerParams) this.headerParams = templateData.headerParams;
                     if(templateData.bodyParams) this.bodyParams = templateData.bodyParams;
                 }
+                this.bodyParaCode = templateData.bodyParams;
+                
                
             })
             .catch(e => {
@@ -380,22 +408,28 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 : (this.selectedCountryType && this.phoneNumber && this.phoneNumber.length >= 10) 
                     ? `${this.selectedCountryType}${this.phoneNumber}`
                     : null;
-    
+            
             if (!phonenum || isNaN(Number(phonenum))) {
                 this.showToast('Warning', 'Invalid country code or phone number', 'warning');
                 this.isLoading = false;
                 return;
             }
+            
+            const buttonValue = this.template.MVWB__Button_Body__c != undefined?JSON.parse(this.template.MVWB__Button_Body__c) : '';
+            
             const templatePayload = this.createJSONBody(phonenum, "template", {
                 templateName: this.template.MVWB__Template_Name__c,
                 languageCode: this.template.MVWB__Language__c,
                 headerImageURL: this.template.MVWB__WBHeader_Body__c,
                 headerType:this.template.MVWB__Header_Type__c,
-                headerParameters: this.headerParams,
-                bodyParameters: this.bodyParams,
-                buttonLabel: this.template.MVWB__Button_Label__c,
-                buttonType: this.template.MVWB__Button_Type__c
+                headerParameters: this.MVWB__headerParams,
+                bodyParameters: this.MVWB__bodyParams || '',
+                buttonLabel: this.template.MVWB__Button_Label__c || '',
+                buttonType: this.template.MVWB__Button_Type__c || '',
+                buttonValue : buttonValue
             });
+
+            
     
             sendPreviewTemplate({ jsonData: templatePayload })
                 .then((result) => {
@@ -414,56 +448,193 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 });
     
         } catch (e) {
-            console.error('Error in function sendTemplatePreview:', e.message);
+            console.error('Error in function sendTemplatePreview:', e.message+' --- '+e);
             this.isLoading = false; 
         }
     }    
     
-
-    createJSONBody(to, type, data){
+    createJSONBody(to, type, data) {
         try {
-                let payload = `{ "messaging_product": "whatsapp", "to": "${to}", "type": "${type}"`;
-                payload += `, "template": { 
-                    "name": "${data.templateName}",
-                    "language": { "code": "${data.languageCode}" }`;
-                let components = [];
-                if (data.headerParameters && data.headerParameters.length > 0) {
-                    let headerParams = data.headerParameters.map(
-                        (param) => `{ "type": "text", "text": "${param}" }`
-                    ).join(", ");
-                    components.push(`{ 
-                        "type": "header", 
-                        "parameters": [ ${headerParams} ] 
-                    }`);
+    
+            let payload = {
+                messaging_product: "whatsapp",
+                to: to,
+                type: type,
+                template: {
+                    name: data.templateName,
+                    language: {
+                        code: data.languageCode
+                    }
                 }
-                if(data.headerType=='Image' && data.headerImageURL){
-                    components.push(`{ 
-                        "type": "header", 
-                        "parameters": [ { "type": "image", "image": { "link":"${data.headerImageURL}" } } ] 
-                    }`);
-                }
-                if (data.bodyParameters && data.bodyParameters.length > 0) {
-                    let bodyParams = data.bodyParameters.map(
-                        (param) => `{ "type": "text", "text": "${param}" }`
-                    ).join(", ");
-                    components.push(`{ 
-                        "type": "body", 
-                        "parameters": [ ${bodyParams} ] 
-                    }`);
-                }
-                if (components.length > 0) {
-                    payload += `, "components": [ ${components.join(", ")} ]`;
-                }
-                payload += ` }`; 
-                payload += ` }`;
+            };
+    
+            let components = [];
+    
+            // Header Parameters (Text)
+            if (data.headerParameters && data.headerParameters.length > 0) {
+                let headerParams = data.headerParameters.map((param) => ({
+                    type: "text",
+                    text: param
+                }));
+    
+                components.push({
+                    type: "header",
+                    parameters: headerParams
+                });
+            }
+    
+            // Header Type (Image)
+            if (data.headerType === 'Image' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "image",
+                            image: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            else if (data.headerType === 'Document' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "document",
+                            document: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            else if (data.headerType === 'Video' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "video",
+                            video: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
             
-                return payload;
+    
+            // Body Parameters
+            if (data.bodyParameters && data.bodyParameters.length > 0) {
+                let bodyParams = data.bodyParameters.map((param) => ({
+                    type: "text",
+                    text: param
+                }));
+    
+                components.push({
+                    type: "body",
+                    parameters: bodyParams
+                });
+            }
+    
+            // Button Handling
+            
+            if (data.buttonValue && data.buttonValue.length > 0) {
+                let buttons = data.buttonValue
+                    .map((button, index) => {
+                        
+                        switch (button.type.toUpperCase()) {
+                            case "PHONE_NUMBER":
+                                components.push( {
+                                    type: "button",
+                                    sub_type: "voice_call",
+                                    index: index,
+                                    parameters: [
+                                        {
+                                            type: "text",
+                                            text: button.phone_number
+                                        }
+                                    ]
+                                });
+                                break;
+                            case "URL":
+                                
+                                break;
+                            case "QUICK_REPLY":
+                                
+                                break;
+                            case "FLOW":
+                                components.push( {
+                                        type: "button",
+                                        sub_type: "flow",
+                                        index: index,
+                                        parameters: [
+                                            {
+                                                "type": "payload",
+                                                "payload": "PAYLOAD"
+                                            }
+                                        ]   
+                                    });
+                                break;
+                            case 'copy_code' :
+                            case "COPY_CODE":
+                            case "COUPON_CODE":
+                                components.push( {
+                                    type: "button",
+                                    sub_type: "copy_code",
+                                    index: index,
+                                    parameters: [
+                                        {
+                                            type :'coupon_code',
+                                            coupon_code : button.example
+                                        }
+                                    ]
+                                }); 
+                                break;
+                            case "OTP":
+                                if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE") {
+
+                                    
+                                    components.push( {
+                                        type: "button",
+                                        sub_type: "url",
+                                        index: index,
+                                        parameters: [
+                                            {
+                                                type :'text',
+                                                text :this.bodyParaCode[0]
+                                            }
+                                            
+                                        ]
+                                    });
+                                } else {
+                                    console.warn(`OTP button at index ${index} missing otp_code parameter.`);
+                                    return null;
+                                }
+                                break;
+                            default:
+                                console.warn(`Unknown button type: ${button.type}`);
+                                return null;
+                        }
+                    })
+                    .filter((button) => button !== null);
+    
+                }
+            
+            // Add components if available
+            if (components.length > 0) {
+                payload.template.components = components;
+            }
+            
+    
+            // Convert the object to a JSON string
+            return JSON.stringify(payload);
         } catch (e) {
-            console.log('Error in function createJSONBody:::', e.message);
+            console.error('Error in function createJSONBody:::', e.message);
         }
     }
-
-    closePreview() {
+        closePreview() {
         this.dispatchEvent(new CustomEvent('closepopup'));
     }
 

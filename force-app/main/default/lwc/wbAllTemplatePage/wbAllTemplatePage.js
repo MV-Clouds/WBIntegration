@@ -18,7 +18,7 @@ import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateContr
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import {loadStyle} from 'lightning/platformResourceLoader';
-import wbPreviewTemplateStyle from '@salesforce/resourceUrl/wbPreviewTemplateStyle';
+import wbPreviewTemplateStyle from '@salesforce/resourceUrl/MVWB__wbPreviewTemplateStyle';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
 
 export default class WbAllTemplatePage extends LightningElement {
@@ -38,7 +38,7 @@ export default class WbAllTemplatePage extends LightningElement {
     @track isFilterVisible = false;
     @track editTemplateId='';
     subscription = null;
-    channelName = '/event/MVWB__Template_Update__e';
+    channelName = '/event/Template_Update__e';
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {
@@ -82,7 +82,6 @@ export default class WbAllTemplatePage extends LightningElement {
 
     renderedCallback() {
         loadStyle(this, wbPreviewTemplateStyle).then(() => {
-            console.log("Loaded Successfully")
         }).catch(error => {
             console.error("Error in loading the colors",error)
         })
@@ -114,7 +113,6 @@ export default class WbAllTemplatePage extends LightningElement {
     unregisterPlatformEventListener() {
         if (this.subscription) {
             unsubscribe(this.subscription, (response) => {
-                console.log('Unsubscribed from platform event:', response);
             });
         }
     }
@@ -161,7 +159,7 @@ export default class WbAllTemplatePage extends LightningElement {
             }
         })
         .catch(error => {
-            console.log(error);
+            console.error(error);
             this.isLoading=false;
         });
     }
@@ -278,7 +276,7 @@ export default class WbAllTemplatePage extends LightningElement {
                     }
                 })
                 .catch(error => {
-                    console.log(error);
+                    console.error(error);
                     this.showToastError('Error in deleting template');
                     this.isLoading=false;
                 });
@@ -305,7 +303,6 @@ export default class WbAllTemplatePage extends LightningElement {
         const record = this.filteredRecords.find(record => record.id === recordId);
     
         if (record && record.isButtonDisabled) {
-            console.log('Button is disabled, action not allowed.');
             return;  
         }
     
