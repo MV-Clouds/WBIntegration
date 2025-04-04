@@ -879,7 +879,7 @@
     background-color: var(--sent-message-bg-color, #DCF8C6);
     box-shadow: var(--sent-message-box-shadow, 0 0 2px 0 lightgray);
     color: var(--sent-message-text-color, black);
-    padding-top: 6px;
+    padding: 5px;
 }
 
 /* Styles for Emoji Picker */

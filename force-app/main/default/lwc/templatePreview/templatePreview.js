@@ -2,6 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import getTemplateData from '@salesforce/apex/ChatWindowController.getTemplateData';
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
+import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
 
 export default class TemplatePreview extends LightningElement {
     @api templateId;
@@ -13,6 +14,9 @@ export default class TemplatePreview extends LightningElement {
     @track templateData;
     @track isTextHeader;
     @track isImageHeader;
+    @track isVideoHeader;
+    @track isDocHeader;
+    @track tempHeader;
     @track headerBody;
     @track templateBody;
     @track footerBody;
@@ -21,6 +25,8 @@ export default class TemplatePreview extends LightningElement {
     @track bodyParams;
     @track isTemplateDeleted;
     @track isUpdateBody;
+    @track buttonList=[];
+    NoPreviewAvailableImg = NoPreviewAvailable;
 
     @track showSpinner = false;
 
@@ -31,7 +37,7 @@ export default class TemplatePreview extends LightningElement {
                 this.template.host.style.setProperty('--max-height-of-the-preview-div', 'fit-content');
             }
         }catch(e){
-            console.log('Error in connectedCallback:::', e.message);
+            console.error('Error in connectedCallback:::', e.message);
         }
     }
 
@@ -43,14 +49,14 @@ export default class TemplatePreview extends LightningElement {
                 this.isUpdateBody = false;
             }
         } catch (e) {
-            console.log('Error in function renderedCallback:::', e.message);
+            console.error('Error in function renderedCallback:::', e.message);
         }
     }
 
     fetchInitialData(){
         this.showSpinner = true;
         try {
-            // console.log(this.templateId, this.objectApiName, this.recordId);
+            // console.error(this.templateId, this.objectApiName, this.recordId);
             getTemplateData({templateId: this.templateId, contactId:this.recordId, objectApiName : this.objectApiName})
             .then((templateData) => {
                 if(!templateData){
@@ -61,15 +67,51 @@ export default class TemplatePreview extends LightningElement {
                 
                 this.templateData = templateData.template;
                 
-                this.isTextHeader = this.templateData?.MVWB__Header_Type__c === 'Text' ? true : false;
-                this.isImageHeader = this.templateData?.MVWB__Header_Type__c === 'Image' ? true : false;
+                this.isTextHeader = this.templateData?.Header_Type__c === 'Text' ? true : false;
+                this.isImageHeader = this.templateData?.Header_Type__c === 'Image' ? true : false;
+                this.isVideoHeader = this.templateData?.Header_Type__c === 'Video' ? true : false;
+                this.isDocHeader = this.templateData?.Header_Type__c === 'Document' ? true : false;
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(this.templateData?.MVWB__WBHeader_Body__c, "text/html");
+                const doc = parser.parseFromString(this.templateData?.WBHeader_Body__c, "text/html");
                 this.headerBody = doc.documentElement.textContent;
                 
-                this.templateBody = this.templateData?.MVWB__WBTemplate_Body__c;
-                this.footerBody = this.templateData?.MVWB__WBFooter_Body__c;
-                this.buttonLabel = this.templateData?.MVWB__Button_Label__c;
+                this.templateBody = this.templateData?.WBTemplate_Body__c;
+                this.footerBody = this.templateData?.WBFooter_Body__c;
+                // this.buttonLabel = this.templateData?.Button_Label__c;
+
+                if(this.templateData.Header_Type__c=='Image'){
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(this.headerBody, "text/html");
+                    this.headerBody = doc.documentElement.textContent || "";
+                }
+                else if(this.templateData.Header_Type__c=='Video'){
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(this.headerBody, "text/html");
+                    this.headerBody = doc.documentElement.textContent || "";
+                }
+                else if(this.templateData.Header_Type__c=='Document'){
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(this.headerBody, "text/html");
+                    this.headerBody = doc.documentElement.textContent || "";
+                }
+                else{
+                    this.headerBody = this.headerBody ||'';
+                }
+
+                const buttonBody = this.templateData.Button_Body__c
+                    ? JSON.parse(this.templateData.Button_Body__c)
+                    : []
+                this.buttonList = buttonBody.map((buttonLabel, index) => {
+                  
+                    const type = buttonLabel.type
+                    return {
+                        id: index,
+                        btntext: buttonLabel.text.trim(),
+                        btnType: type,
+                        iconName: this.getIconName(type)
+                    }
+                })
+
                 this.showSpinner = false;
 
                 if(templateData.headerParams) this.headerParams = templateData.headerParams;
@@ -79,11 +121,28 @@ export default class TemplatePreview extends LightningElement {
             })
             .catch(e => {
                 this.showSpinner = false;
-                console.log('Error in fetchInitialData > getTemplateData ::: ', e.message);
+                console.error('Error in fetchInitialData > getTemplateData ::: ', e.message);
             })
         } catch (e) {
             this.showSpinner = false;
-            console.log('Error in function fetchInitialData:::', e.message);
+            console.error('Error in function fetchInitialData:::', e.message);
+        }
+    }
+
+    getIconName(btntype) {
+        switch (btntype) {
+            case 'QUICK_REPLY':
+                return 'utility:reply';
+            case 'PHONE_NUMBER':
+                return 'utility:call';
+            case 'URL':
+                return 'utility:new_window';
+            case 'COPY_CODE':
+                return 'utility:copy';
+            case 'Flow':
+                return 'utility:file';
+            default:
+                return 'utility:question'; 
         }
     }
 
@@ -91,7 +150,7 @@ export default class TemplatePreview extends LightningElement {
         try {
             this.dispatchEvent(new CustomEvent('back'));
         } catch (e) {
-            console.log('Error in function handleBack:::', e.message);
+            console.error('Error in function handleBack:::', e.message);
         }
     }
 
@@ -101,17 +160,19 @@ export default class TemplatePreview extends LightningElement {
             createChat({chatData: {message: '', templateId: this.templateId, messageType: 'template', recordId: this.recordId, replyToChatId: null, phoneNumber: this.mobileNumber}})
             .then(chat => {
                 if(chat){
-                    let templatePayload = this.createJSONBody(this.mobileNumber, "template", {
-                        templateName: this.templateData.MVWB__Template_Name__c,
-                        languageCode: this.templateData.MVWB__Language__c,
+                    const buttonValue = this.templateData.Button_Body__c != undefined ? JSON.parse(this.templateData.Button_Body__c) : '';
+                    
+                    const templatePayload = this.createJSONBody(this.mobileNumber, "template", {
+                        templateName: this.templateData?.Template_Name__c,
+                        languageCode: this.templateData?.Language__c,
+                        headerImageURL: this.templateData?.WBHeader_Body__c,
+                        headerType:this.templateData?.Header_Type__c,
                         headerParameters: this.headerParams,
-                        bodyParameters: this.bodyParams,
-                        buttonLabel: this.templateData.MVWB__Button_Label__c,
-                        buttonType: this.templateData.MVWB__Button_Type__c,
-                        isHeaderImage: this.isImageHeader,
-                        headerImageURL: this.headerBody
+                        bodyParameters: this.bodyParams || '',
+                        buttonLabel: this.templateData?.Button_Label__c || '',
+                        buttonType: this.templateData?.Button_Type__c || '',
+                        buttonValue : buttonValue
                     });
-                    // console.log('the Payload is :: :', templatePayload);
 
                     sendWhatsappMessage({jsonData: templatePayload, chatId: chat.Id, isReaction: false, reaction: null})
                     .then(result => {
@@ -122,15 +183,15 @@ export default class TemplatePreview extends LightningElement {
                     })
                 }else{
                     this.showSpinner = false;
-                    console.log('there was some error sending the message!');
+                    console.error('there was some error sending the message!');
                 }
             })
             .catch((e) => {
                 this.showSpinner = false;
-                console.log('Error in handleSelectTemplate > createChat :: ', e);
+                console.error('Error in handleSelectTemplate > createChat :: ', e);
             })
         } catch (e) {
-            console.log('Error in function handleSend:::', e.message);
+            console.error('Error in function handleSend:::', e.message);
         }
     }
 
