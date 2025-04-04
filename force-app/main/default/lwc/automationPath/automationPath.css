@@ -1,3 +1,24 @@
+* {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.automation-container {
+    background: #f4f7fc;
+    /* padding: 20px; */
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    /* gap: 1rem; */
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 100%;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
 /* Container and Header Styles */
 .automation-container {
     border: 1px solid #dddbda; /* Light grey border */
@@ -6,9 +27,11 @@
 
 .header-background {
     background-color: #0070d2; /* Salesforce blue */
-    border-top-left-radius: .25rem;
-    border-top-right-radius: .25rem;
+    /* border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem; */
     margin: -1px; /* Adjust to align with border */
+    border-radius: 30px;
+    font-weight: 600;
 }
 
 /* Ensure buttons stretch and handle selected state */
@@ -18,11 +41,17 @@
     font-weight: bold;
 }
 
+.body-container {
+    height: auto;
+}
+
 /* Style the right-side content box */
 .content-box {
     border: 1px solid #dddbda;
-    min-height: 300px; /* Ensure minimum height */
-    background-color: #ffffff; /* White background */
+    height: 100%;
+    /* background-color: #ffffff; White background */
+    background-color: rgb(255, 255, 255, 0.6);
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.18);
 }
 
 /* Style the list items */
@@ -56,4 +85,76 @@
 /* Add border to footer */
 .footer-border {
     border-top: 1px solid #dddbda;
+}
+
+
+/* TABLE */
+
+.table-container {
+    border-radius: 0.4rem; 
+    overflow: visible !important; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+}
+
+.slds-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.slds-truncate{
+    display: flex;
+    justify-content: center;
+}
+
+table{
+    background: transparent;
+}
+
+tr{
+    border: none;
+}
+
+.tableHead {
+    background-color: #0070d2;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.tablerow {
+    text-align: center !important;
+}
+
+.radio-stack .slds-radio {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.tableData {
+    height: 10%;
+    padding: 10px;
+    font-size: 15px;
+    max-width: 200px;
+    overflow: visible;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: none;
+}
+
+.truncate-name{
+    display: block;
+    max-width: 100%;
+    overflow: visible;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+tr:nth-child(odd) {
+    background-color: #CAF0F866;
+}
+
+tr:nth-child(even) {
+    background-color: white;
 }

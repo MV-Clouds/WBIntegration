@@ -307,29 +307,137 @@ public with sharing class AutomationConfigController {
     }
 
     @AuraEnabled
-    public static List<String> getAvailableObjects() {
-        List<String> objectNames = new List<String>();
-        for (Schema.SObjectType obj : Schema.getGlobalDescribe().Values()) {
-            objectNames.add(obj.getDescribe().getName());
+    public static List<Automation_Path__c> getAutomationPathsByAutomationId(Id automationId) {
+        if (String.isEmpty(automationId)) {
+            return new List<Automation_Path__c>();
         }
-        return objectNames;
+        
+        List<Automation_Path__c> automationPaths = [
+            SELECT Id, Automation__c, Button_Value__c, Action_Type__c, Action_Template__c, 
+                Action_Email_Template__c, Object_Name__c, Field_Mapping__c, WB_Flow__c
+            FROM Automation_Path__c
+            WHERE Automation__c = :automationId
+        ];
+        
+        // Return an empty list if no records are found
+        return automationPaths != null ? automationPaths : new List<Automation_Path__c>();
     }
 
     @AuraEnabled
-    public static Map<String, String> getObjectFields(String objectName) {
-        Map<String, String> fieldMap = new Map<String, String>();
+    public static List<Map<String, String>> getAllObjects() {
+        List<Map<String, String>> objectList = new List<Map<String, String>>();
         
-        if (String.isEmpty(objectName) || !Schema.getGlobalDescribe().containsKey(objectName)) {
-            return fieldMap; // Return empty map if object is not found
+        try {
+            // Get all objects from Schema
+            Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
+            
+            for (String objectName : schemaMap.keySet()) {
+                Schema.DescribeSObjectResult objDescribe = schemaMap.get(objectName).getDescribe();
+                
+                // Ensure the object is accessible, customizable, and queryable
+                if (objDescribe.isAccessible() && objDescribe.isQueryable() && objDescribe.isCreateable()) {
+                    objectList.add(new Map<String, String>{
+                        'label' => objDescribe.getLabel(),
+                        'value' => objectName
+                    });
+                }
+            }
+        } catch (Exception e) {
+            System.debug('Error fetching objects: ' + e.getMessage());
         }
+        
+        return objectList;
+    }
 
-        Schema.DescribeSObjectResult objDesc = Schema.getGlobalDescribe().get(objectName).getDescribe();
-        
-        for (String fieldName : objDesc.fields.getMap().keySet()) { 
-            Schema.DescribeFieldResult fieldDesc = objDesc.fields.getMap().get(fieldName).getDescribe();
-            fieldMap.put(fieldDesc.getName(), fieldDesc.getType().name()); 
+    @AuraEnabled
+    public static List<Map<String, Object>> getRequiredFields(String objectName) {
+        try {
+            List<Map<String, Object>> requiredFields = new List<Map<String, Object>>();
+            List<Map<String, String>> phoneFields = new List<Map<String, String>>();
+            List<Map<String, String>> textFields = new List<Map<String, String>>();
+            
+            Schema.DescribeSObjectResult objectDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe();
+            Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
+            
+            for (Schema.SObjectField field : fieldMap.values()) {
+                Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+
+                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isCreateable()) {
+                    Map<String, String> phoneFieldInfo = new Map<String, String>();
+                    phoneFieldInfo.put('label', fieldDescribe.getLabel());
+                    phoneFieldInfo.put('value', fieldDescribe.getName());
+                    phoneFields.add(phoneFieldInfo);
+                }
+
+                // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
+                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isCreateable()) {
+                    Map<String, String> textFieldInfo = new Map<String, String>();
+                    textFieldInfo.put('label', fieldDescribe.getLabel());
+                    textFieldInfo.put('value', fieldDescribe.getName());
+                    textFields.add(textFieldInfo);
+                }
+                
+                // Skip fields that shouldn't be included
+                if (fieldDescribe.isNillable() || fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || 
+                    !fieldDescribe.isCreateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
+                    continue;
+                }
+    
+                Map<String, Object> fieldInfo = new Map<String, Object>();
+                fieldInfo.put('name', fieldDescribe.getName());
+                fieldInfo.put('label', fieldDescribe.getLabel());
+                fieldInfo.put('type', fieldDescribe.getType().name());
+    
+                // Handle picklist values
+                if (fieldDescribe.getType() == Schema.DisplayType.Picklist) {
+                    List<Schema.PicklistEntry> picklistEntries = fieldDescribe.getPicklistValues();
+                    List<String> picklistValues = new List<String>();
+                    List<Map<String, String>> picklistValuesSet = new List<Map<String, String>>();
+    
+                    for (Schema.PicklistEntry entry : picklistEntries) {
+                        picklistValues.add(entry.getValue());
+                        Map<String, String> picklistSet = new Map<String, String>();
+                        picklistSet.put('label', entry.getLabel());
+                        picklistSet.put('value', entry.getValue());
+                        picklistValuesSet.add(picklistSet);
+                    }
+    
+                    fieldInfo.put('picklistValues', picklistValuesSet);
+    
+                    // Set default picklist value (either default set value or first value)
+                    String defaultValue = fieldDescribe.getDefaultValue() != null ? 
+                        String.valueOf(fieldDescribe.getDefaultValue()) : 
+                        (picklistValues.isEmpty() ? '' : picklistValues[0]);
+    
+                    fieldInfo.put('value', defaultValue);
+                } 
+                
+                // Handle lookup fields (assign first record ID)
+                else if (fieldDescribe.getType() == Schema.DisplayType.Reference) {
+                    String relatedObject = fieldDescribe.getReferenceTo()[0].getDescribe().getName();
+                    fieldInfo.put('value', '');
+                    fieldInfo.put('relatedObject', relatedObject);
+                    fieldInfo.put('relatedRecordName', '');
+                }
+    
+                requiredFields.add(fieldInfo);
+            }
+
+            // Create the final response structure
+            Map<String, Object> responseMap = new Map<String, Object>();
+            responseMap.put('phoneFields', phoneFields);
+            responseMap.put('requiredFields', requiredFields);
+            responseMap.put('textFields', textFields);
+            
+            // Wrap the response map in a list to match the desired format
+            List<Map<String, Object>> finalResponse = new List<Map<String, Object>>();
+            finalResponse.add(responseMap);
+            
+            return finalResponse;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController', 'methodName' => 'getRequiredFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            return null;
         }
-        return fieldMap;
     }
 
     @AuraEnabled

@@ -3,12 +3,14 @@ import getAutomationById from '@salesforce/apex/AutomationConfigController.getAu
 import getTemplates from "@salesforce/apex/AutomationConfigController.getTemplates";
 import getEmailTemplates from "@salesforce/apex/AutomationConfigController.getEmailTemplates";
 import saveAutomationPaths from '@salesforce/apex/AutomationConfigController.saveAutomationPaths';
-import getAvailableObjects from '@salesforce/apex/AutomationConfigController.getAvailableObjects';
-import getObjectFields from '@salesforce/apex/AutomationConfigController.getObjectFields';
+import getAutomationPathsByAutomationId from '@salesforce/apex/AutomationConfigController.getAutomationPathsByAutomationId';
+import getAllObjects from '@salesforce/apex/AutomationConfigController.getAllObjects';
+import getRequiredFields from '@salesforce/apex/AutomationConfigController.getRequiredFields';
 import getFlowFields from '@salesforce/apex/AutomationConfigController.getFlowFields';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { NavigationMixin } from 'lightning/navigation';
 
-export default class AutomationPath extends LightningElement {
+export default class AutomationPath extends NavigationMixin(LightningElement) {
     @api recordId;
     @api templateType;
 
@@ -17,6 +19,8 @@ export default class AutomationPath extends LightningElement {
     @track searchTerm = '';
     @track selectedTemplateId = null;
     @track isFlowTemplate = false;
+    @track isScheduled = false;
+    @track selectedObject = '';
 
     // --- Data Properties ---
     @track automation = {};
@@ -24,7 +28,46 @@ export default class AutomationPath extends LightningElement {
     @track quickReplyButtons = [];
     @track automationPaths = {};
     @track allEmailTemplates = [];
-
+    @track allObjects = [];
+    @track requiredFields = [];
+    // @track chatWindowRows = [];
+    @track durationUnits = [
+        { label: 'Minutes', value: 'minutes' },
+        { label: 'Hours', value: 'hours' },
+        { label: 'Days', value: 'days' }
+    ];
+    @track chatWindowRows = [
+        {
+            id: '1',
+            selectedObject: 'First Name',
+            objectOptions: [
+                { label: 'First Name', value: 'First Name' },
+                { label: 'Last Name', value: 'Last Name' },
+                { label: 'Company Name', value: 'Company Name' }
+            ],
+            selectedNameField: 'Name',
+            nameFieldOptions: [
+                { label: 'Name', value: 'Name' },
+                { label: 'Company', value: 'Company' }
+            ],
+            isNameFieldDisabled: false
+        },
+        {
+            id: '2',
+            selectedObject: 'Company Name',
+            objectOptions: [
+                { label: 'First Name', value: 'First Name' },
+                { label: 'Last Name', value: 'Last Name' },
+                { label: 'Company Name', value: 'Company Name' }
+            ],
+            selectedNameField: 'Name',
+            nameFieldOptions: [
+                { label: 'Name', value: 'Name' },
+                { label: 'Company', value: 'Company' }
+            ],
+            isNameFieldDisabled: false
+        }
+    ];
 
     connectedCallback() {
         this.getCurrentPageReference();
@@ -45,7 +88,9 @@ export default class AutomationPath extends LightningElement {
             this.fetchAutomationName();
             this.fetchTemplates();
             this.loadEmailTemplates();
-            // this.loadObjects();
+            this.fetchAutomationPaths();
+            this.loadObjects();
+            this.loadRequiredFields();
             // this.loadFlowFields();
         }
     }
@@ -62,9 +107,11 @@ export default class AutomationPath extends LightningElement {
                         templateType: result.WB_Template__r?.MVWB__Template_Type__c || ''
                     };
 
-                    if (result.WB_Template__r?.Button_Body__c) {
+                    console.log('this.automation =', JSON.stringify(this.automation));
+                    if (result.WB_Template__r?.Button_Body__c) {  //Change to MVWB__Button_Body__c
                         try {
                             const buttons = JSON.parse(result.WB_Template__r.Button_Body__c);
+                            console.log('BUTTONS =', buttons);
                             this.quickReplyButtons = buttons
                             .filter(button => button.type === "QUICK_REPLY")
                             .map(button => ({
@@ -76,7 +123,7 @@ export default class AutomationPath extends LightningElement {
                                 this.automationPaths[button.id] = null;
                             });
                         } catch (error) {
-                            console.error("Error parsing Button_Body__c:", error);
+                            console.error("Error parsing MVWB__Button_Body__c:", error);
                         }
                     }
                     console.log('this.quickreplybuttons:', JSON.stringify(this.quickReplyButtons));
@@ -114,6 +161,40 @@ export default class AutomationPath extends LightningElement {
             });
     }
 
+    fetchAutomationPaths() {
+        if (!this.recordId) {
+            return;
+        }
+    
+        getAutomationPathsByAutomationId({ automationId: this.recordId })
+            .then((result) => {
+                console.log('Fetched Automation Paths:', JSON.stringify(result));
+    
+                // Convert the fetched records into a structured object
+                const automationPathsMap = {};
+                result.forEach(path => {
+                    automationPathsMap[path.Button_Value__c] = {
+                        templateId: path.Action_Template__c || path.Action_Email_Template__c || null,
+                        templateType: path.Action_Type__c === "Send Message" ? "whatsapp" : "email"
+                    };
+                });
+    
+                // Ensure all quick reply buttons have an entry in automationPaths
+                this.quickReplyButtons.forEach(button => {
+                    if (!automationPathsMap[button.id]) {
+                        automationPathsMap[button.id] = null;
+                    }
+                });
+    
+                this.automationPaths = automationPathsMap;
+            })
+            .catch((error) => {
+                console.error('Error fetching automation paths:', error);
+                this.automationPaths = {};
+            });
+    }
+
+
     // --- Getters for Dynamic UI ---
 
     get templateButtons() {
@@ -133,6 +214,26 @@ export default class AutomationPath extends LightningElement {
     }
     get isEmailView() {
         return this.selectedAction === 'email';
+    }
+
+    get whatsappButtonVariant() {
+        return this.selectedAction === 'whatsapp' ? 'brand' : 'neutral';
+    }
+    
+    get emailButtonVariant() {
+        return this.selectedAction === 'email' ? 'brand' : 'neutral';
+    }
+    
+    get createButtonVariant() {
+        return this.selectedAction === 'create' ? 'brand' : 'neutral';
+    }
+
+    get scheduleButtonVariant() {
+        return this.isScheduled === true ? 'brand' : 'neutral';
+    }
+
+    get immediateButtonVariant() {
+        return this.isScheduled === true ? 'neutral' : 'brand';
     }
 
     get filteredWhatsAppTemplates() {
@@ -168,6 +269,13 @@ export default class AutomationPath extends LightningElement {
     handleTemplateButtonClick(event) {
         this.selectedTemplateButtonId = event.target.dataset.id;
         console.log('Selected Template Button:', this.selectedTemplateButtonId);
+
+        if (this.automationPaths[this.selectedTemplateButtonId]) {
+            this.selectedTemplateId = this.automationPaths[this.selectedTemplateButtonId].templateId;
+            this.selectedAction = this.automationPaths[this.selectedTemplateButtonId].templateType;
+        } else {
+            this.selectedTemplateId = '';
+        }
     }
 
     handleActionChange(event) {
@@ -176,6 +284,11 @@ export default class AutomationPath extends LightningElement {
         // Reset specific view states if needed when changing tabs
         this.searchTerm = '';
         this.selectedTemplateId = null;
+    }
+
+    handleSendOptionChange(event) {
+        this.isScheduled = event.target.value === 'scheduled';
+        console.log('Send Option:', this.isScheduled);
     }
 
     handleSearchChange(event) {
@@ -189,7 +302,7 @@ export default class AutomationPath extends LightningElement {
         if (this.selectedTemplateButtonId && this.selectedAction) {
             this.automationPaths[this.selectedTemplateButtonId] = {
                 templateId: this.selectedTemplateId,
-                templateType: this.selectedAction
+                templateType: this.selectedAction,
             };    
         }
     
@@ -197,15 +310,25 @@ export default class AutomationPath extends LightningElement {
     }
 
     handleCancel() {
+        this.selectedTemplateButtonId = '';
+        this.selectedAction = '';
+        this.searchTerm = '';
+        this.selectedTemplateId = null;
+        this.isFlowTemplate = false;
+        this.automation = {};
+        this.allWhatsAppTemplates = [];
+        this.quickReplyButtons = [];
+        this.automationPaths = {};
+        this.allEmailTemplates = [];
+        this.allObjects = [];
         console.log('Cancel clicked');
-        // Add navigation logic or reset form logic
-        // Example reset:
-        // this.selectedTemplateButtonId = 'btn1';
-        // this.selectedAction = 'whatsapp';
-        // this.dateValue = new Date().toISOString().slice(0, 10);
-        // this.searchTerm = '';
-        // this.selectValue = 'None';
-        // this.selectedTemplateId = null;
+
+        this[NavigationMixin.Navigate]({
+            type: "standard__navItemPage",
+            attributes: {
+                apiName: 'Automation_Configuration'
+            },
+        });
     }
 
     handleSave() {
@@ -249,6 +372,111 @@ export default class AutomationPath extends LightningElement {
             });
     }
 
+    handleObjectChange(event) {
+        try {
+            this.selectedObject = event.target.value;
+            console.log('Selected Object:', this.selectedObject);
+            this.loadRequiredFields(); // Load fields for the new object
+        } catch (error) {
+            console.error('Error in object change : ' , error);
+        }
+    }
+
+    loadObjects() {
+        getAllObjects()
+            .then(data => {
+                // this.allObjects = data.map(obj => ({ label: obj, value: obj }));
+                this.objects = data.sort((a, b) => a.label.localeCompare(b.label));
+                this.allObjects = data.map(obj => ({
+                    label: obj.label,
+                    value: obj.value
+                }));
+                console.log('this.allObjects:', JSON.stringify(this.allObjects));
+            })
+            .catch(error => console.error('Error fetching objects:', error));
+
+        console.log('this.allObjects =', JSON.stringify(this.allObjects));
+    }
+
+    loadRequiredFields(savedFieldValues = {}) {
+        try {
+            this.isLoading = true;
+            if (!this.selectedObject) {
+                console.log('No object selected');
+                return;
+            }
+            getRequiredFields({ objectName: this.selectedObject })
+                .then(data => {
+                    // this.textFields = data[0]?.textFields;
+
+                    // this.phoneFields = data[0]?.phoneFields.map(field => {
+                    //     return {
+                    //         ...field,
+                    //         isSelected: false
+                    //     };
+                    // });
+                    // this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
+                    // const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
+                    // if (selectedField) {
+                    //     this.selectedPhoneFieldVal = selectedField.value;
+                    //     this.selectedPhoneFieldLabel = selectedField.label;
+                    //     // Update isSelected based on selectedPhoneFieldVal
+                    //     this.phoneFields = this.phoneFields.map(field => {
+                    //         return {
+                    //             ...field,
+                    //             isSelected: field.value === this.selectedPhoneFieldVal
+                    //         };
+                    //     });
+                    // } else {
+                    //     this.selectedPhoneFieldVal = '';
+                    //     this.selectedPhoneFieldLabel = '';
+                    // }
+                    // this.phoneFieldsForChatConfig = [...this.phoneFields];
+
+                    this.requiredFields = data[0]?.requiredFields.map(field => ({
+                        apiName: field.name,
+                        label: field.label,
+                        type: this.capitalizeFirstLetter(field.type),
+                        value: field.type === 'BOOLEAN' 
+                                ? (savedFieldValues[field.name] !== undefined ? savedFieldValues[field.name] : false)
+                                : field.type === 'DATE' 
+                                    ? (savedFieldValues[field.name] || field.value || new Date().toISOString().split('T')[0])
+                                    : field.type === 'DATETIME' 
+                                        ? (savedFieldValues[field.name] || field.value || new Date().toISOString())
+                                        : field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY'
+                                            ? (savedFieldValues[field.name] || field.value || 0) 
+                                            : (savedFieldValues[field.name] || field.value || ''),
+                        picklistValues: field?.picklistValues,
+                        relatedObject: field?.relatedObject,
+                        relatedRecordName: field?.relatedRecordName,
+                        isString: field.type === 'STRING',
+                        isNumber: field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY',
+                        isDate: field.type === 'DATE',
+                        isDateTime: field.type === 'DATETIME',
+                        isBoolean: field.type === 'BOOLEAN',
+                        isPicklist: field.type === 'PICKLIST',
+                        isReference: field.type === 'REFERENCE',
+                        isTextArea: field.type === 'TEXTAREA'
+                    }));
+                    console.log('this.requiredFields:', JSON.stringify(this.requiredFields));
+                    // this.populateReferenceNames();
+                })
+                .catch(error => {
+                    console.error('Error fetching required fields:', error);
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                });
+        } catch (error) {
+            console.error('Exception in loading required fields : ' , error);
+        }
+    }
+
+    capitalizeFirstLetter(str) {
+        if (!str) return str; // Handle null or undefined
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
     showToast(title, message, variant) {
         const event = new ShowToastEvent({
             title,
@@ -258,15 +486,6 @@ export default class AutomationPath extends LightningElement {
         this.dispatchEvent(event);
     }
 }
-
-    // loadObjects() {
-    //     getAvailableObjects()
-    //         .then(data => {
-    //             this.objects = data.map(obj => ({ label: obj, value: obj }));
-    //         })
-    //         .catch(error => console.error('Error fetching objects:', error));
-    // }
-
     // handleObjectChange(event) {
     //     this.selectedObject = event.detail.value;
     //     getObjectFields({ objectName: this.selectedObject })
