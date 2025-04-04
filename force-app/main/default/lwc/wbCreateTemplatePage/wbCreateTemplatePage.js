@@ -32,6 +32,8 @@ import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynam
 import tempLocationIcon from '@salesforce/resourceUrl/MVWB__tempLocationIcon';
 import tempVideoIcon from '@salesforce/resourceUrl/MVWB__tempVideoIcon';
 import imageUploadPreview from '@salesforce/resourceUrl/MVWB__imageUploadPreview';
+import docUploadPreview from '@salesforce/resourceUrl/MVWB__documentPreviewIcon';
+import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
 import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
 import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
@@ -119,8 +121,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track selectedCountryType = '+91';  
     @track originalTempBody = '';
     @track placeholderMap = {};
-    buttonList = [];
-    customButtonList = [];  
+    @track buttonList = [];
+    @track customButtonList = [];  
     @track emojis;
     @track originalHeader = '';
     @track menuButtonSelected;    
@@ -204,6 +206,8 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track tempLocationIcon=tempLocationIcon;
     @track tempVideoIcon=tempVideoIcon;
     @track imageUploadPreview = imageUploadPreview;
+    @track docUploadPreviewImg = docUploadPreview;
+    @track NoPreviewAvailableImg = NoPreviewAvailable;
     @track isFeatureEnabled = false;
     @track selectedTime = '5 minutes'; // Default value
     @track isFlowMarketing = false;
@@ -212,7 +216,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track isModalOpen = false;
     @track selectedFlowId = ''; 
     // @track allFlows ;
-    @track selectedFlow = null;
+    @track selectedFlow;
     @track iframeSrc;
     @track isModalPreview = false;
     // @track NoFileSelected = true;
@@ -256,7 +260,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     handleFlowDeleteClick(event){
         this.isFlowSelected = false;
         this.selectedFlowId = ''; // Get selected Flow ID
-        this.selectedFlow = '';
+        this.selectedFlow = undefined;
         this.NoFileSelected = true;
     }
     
@@ -1334,6 +1338,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.isDocSelected = false;
         this.isVidSelected = false;
         this.isImgSelected = false;
+        this.isDocFile = false;
         // this.isFlowMarketing = false;
         // this.isFlowUtility = false;
         this.isFlowSelected = false;
@@ -2338,13 +2343,11 @@ export default class WbCreateTemplatePage extends LightningElement {
     }
 
     get isSubmitDisabled() {
-        const currentTemplate = this.activeTab; 
-    
-        const areButtonFieldsFilled = this.buttonList.every(button => 
+        const currentTemplate = this.activeTab;
+        const areButtonFieldsFilled = this.buttonList.every(button =>
             button.btntext && (button.webURL || button.phonenum || button.offercode || button.isFlow)
         );
         const areCustomButtonFilled = this.customButtonList.every(button => button.Cbtntext);
-
         const hasCustomButtonError = this.customButtonList.some(button => button.hasError);
         const hasButtonListError = this.buttonList.some(button => button.hasError);
         const headerImageNotSelected = this.selectedContentType === 'Image' && !this.headerHandle;
@@ -2352,8 +2355,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         const headerDocumentNotSelected = this.selectedContentType === 'Document' && !this.headerHandle;
         const headerTextNotSelected = this.selectedContentType === 'Text' && !this.header;
         const hasHeaderError = !!this.headerError;
-
-        let headerFileNotSelected = '';
+        let headerFileNotSelected = false;
         if(this.selectedContentType === 'Document'){
             headerFileNotSelected = headerDocumentNotSelected;
         }
@@ -2363,40 +2365,35 @@ export default class WbCreateTemplatePage extends LightningElement {
         else if(this.selectedContentType === 'Video'){
             headerFileNotSelected = headerVideoNotSelected;
         }
-
         const result = (() => {
-            
-            switch (currentTemplate) {
-                case 'Marketing':
-                    if(this.flowBooleanCheck){
-                        
-                        return !(this.isFlowSelected && this.templateName && this.isCheckboxChecked && this.tempBody && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
-                    }
-                        return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
-                    
+        switch (currentTemplate) {
+            case 'Marketing':
+                if(this.flowBooleanCheck){
+                    return !(this.selectedFlow != undefined && this.templateName && this.tempBody && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);
+                }
+                // return !(this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);
+                return !(this.templateName && this.tempBody && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);
                 case 'Utility':
                     if(this.flowBooleanCheck){
-                        
-                        return !(this.isFlowSelected && this.templateName && this.tempBody && this.isCheckboxChecked && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
+                        return !(this.selectedFlow != undefined && this.templateName && this.tempBody && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);
                     }
-                    return !(this.templateName && this.tempBody && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);    
+                    return !(this.templateName && this.tempBody && areButtonFieldsFilled && areCustomButtonFilled && !this.templateExists && !hasCustomButtonError && !hasButtonListError && !headerFileNotSelected && !hasHeaderError && !headerTextNotSelected);
                     // break;
                 case 'Authentication':
                 if (this.value == 'zero_tap') {
                     return !((this.templateName && this.isautofillChecked) && this.autoCopyCode && this.autofilLabel);
                 } else if (this.value === 'ONE_TAP') {
-                    return !((this.templateName) && this.autoCopyCode && this.autofilLabel); 
+                    return !((this.templateName) && this.autoCopyCode && this.autofilLabel);
                 } else if (this.value === 'COPY_CODE') {
-                    return !(this.templateName  && this.autoCopyCode); 
+                    return !(this.templateName  && this.autoCopyCode);
                 }else {
                     return true;
-                }        
+                }
             default:
-                return true; 
+                return true;
         }
         })();
-    
-        return result; 
+        return result;
     }
 
     handlePackagename(event) {
@@ -2500,6 +2497,10 @@ export default class WbCreateTemplatePage extends LightningElement {
      
     handleSubmit() {
         try {
+            if((this.activeTab == 'Marketing' || this.activeTab == 'Utiltiy')&& !this.isCheckboxChecked && this.visitWebsiteCount > 0){
+                this.showToastError('Please select check-box to report website clicks.');
+                return ;
+            }
             this.isLoading=true;
             this.showReviewTemplate = false;
             if (!this.validateTemplate()) {

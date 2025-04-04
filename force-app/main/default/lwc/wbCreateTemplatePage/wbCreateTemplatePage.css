@@ -509,6 +509,10 @@ textarea {
     align-items: center;
 }
 
+.custom-add-button:hover {
+    background-color: #F5F5F5;
+}
+
 .custom-button {
     display: inline-flex;
     justify-content: center;
@@ -608,7 +612,6 @@ textarea {
 
 .uploadlabel {
     font-size: larger;
-    margin-top: 0.4rem;
 }
 
 .quicktext {
@@ -1667,7 +1670,7 @@ textarea {
     align-items: center;
     background-color: white;
     color: #4194f9;
-    border: 1px solid rgb(27 150 255 / 65%);
+    /* border: 1px solid rgb(27 150 255 / 65%); */
     border-radius: 0.25rem;
     cursor: pointer;
     width: 18%;

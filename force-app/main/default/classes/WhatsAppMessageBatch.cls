@@ -339,6 +339,18 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                                 });
                             }
                         }
+                        when 'FLOW' {
+                            if (((String)button.get('otp_type')).toUpperCase() == 'FLOW') {
+                                components.add(new Map<String, Object>{
+                                    'type' => 'button',
+                                    'sub_type' => 'flow',
+                                    'index' => index,
+                                    'parameters' => new List<Map<String, Object>>{
+                                        new Map<String, Object>{ 'type' => 'payload', 'text' => 'PAYLOAD' }
+                                    }
+                                });
+                            }
+                        }
                     }
                     index++;
                 }

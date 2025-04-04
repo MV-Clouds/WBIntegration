@@ -776,6 +776,39 @@
        }
    }
 
+   /*
+    *********************************************************
+    @description     : Method to get objects with phone field.
+    @return          : List<Map<String, String>> - return list of objects with phone field.
+    ********************************************************
+    */
+    @AuraEnabled(cacheable=true)
+    public static List<Map<String, String>> getObjectsWithPhoneField() {
+        List<Map<String, String>> objectList = new List<Map<String, String>>();
+        
+        try {
+            // Query FieldDefinition to fetch all objects having at least one Phone field
+            List<FieldDefinition> phoneFields = [SELECT EntityDefinition.QualifiedApiName, EntityDefinition.Label FROM FieldDefinition WHERE DataType = 'Phone' AND EntityDefinition.IsCustomizable = true AND EntityDefinition.IsApexTriggerable = true AND EntityDefinition.IsQueryable = true WITH SECURITY_ENFORCED];
+            
+            Set<String> processedObjects = new Set<String>();
+    
+            for (FieldDefinition field : phoneFields) {
+                String objectName = field.EntityDefinition.QualifiedApiName;
+                if (!processedObjects.contains(objectName)) {
+                    objectList.add(new Map<String, String>{
+                        'label' => field.EntityDefinition.Label,
+                        'value' => objectName
+                    });
+                    processedObjects.add(objectName);
+                }
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'getObjectsWithPhoneField','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+        }
+    
+        return objectList;
+    }
+
    public class FileChunkWrapper {
        @AuraEnabled public String uploadSessionId;
        @AuraEnabled public String fileContent;

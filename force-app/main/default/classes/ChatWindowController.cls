@@ -320,14 +320,14 @@ public with sharing class ChatWindowController {
             // Fetch template details
             if (!matchingTemplateIds.isEmpty()) {
                 templates.addAll([
-                    SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_Type__c, Template_Variable__c,
+                    SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
                         (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId AND Id IN :matchingTemplateIds WITH SECURITY_ENFORCED
                 ]);
             }
 
             // Fetch templates without child variables
             List<Template__c> templatesWithoutVariables = [
-                SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_Type__c, Template_Variable__c,
+                SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
                     (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED
             ];
             templates.addAll(templatesWithoutVariables);
@@ -384,12 +384,34 @@ public with sharing class ChatWindowController {
                         }
                     }
                 }
+
+                if (template.Header_Type__c == 'Image') {
+                    templateData.put('isImageUrl', true);
+                }
+                else if (template.Header_Type__c == 'Video') {
+                    templateData.put('isImageUrl', true);
+                }
+                else if (template.Header_Type__c == 'Document') {
+                    templateData.put('isImageUrl', true);
+                }
+
                 templateData.put('template', template);
                 templateData.put('headerParams', headerVariables);
                 templateData.put('bodyParams', bodyVariables);
                 templateData.put('template', templates[0]);
                 return templateData;
             } else if (templates.size() > 0 && templates[0].Template_Variable__c < 1){
+                Template__c template = templates[0];
+                if (template.Header_Type__c == 'Image') {
+                    templateData.put('isImageUrl', true);
+                }
+                else if (template.Header_Type__c == 'Video') {
+                    templateData.put('isImageUrl', true);
+                }
+                else if (template.Header_Type__c == 'Document') {
+                    templateData.put('isImageUrl', true);
+                }
+
                 templateData.put('template', templates[0]);
                 return templateData;
             } else {

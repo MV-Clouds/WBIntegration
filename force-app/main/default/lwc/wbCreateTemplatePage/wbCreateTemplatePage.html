@@ -434,6 +434,7 @@
                                                     class="conInput"
                                                     name="progress"
                                                     label="Status"
+                                                    variant="label-hidden"
                                                     value={selectedContentType}
                                                     placeholder="Select Progress"
                                                     options={typeOptions}
@@ -578,24 +579,22 @@
                                                         <div key={varItem.id} class="true-div">
                                                             <p class="var">{varItem.index}</p>
 
-                                                                <lightning-combobox 
-                                                                class="object-dropdown dropdown"
-                                                                data-name="objectPicklist"
-                                                                data-id={varItem.Id}
-                                                                value={selectedObject}
-                                                                options={availableObjects}
-                                                                onchange={handleObjectChange}>
-                                                            </lightning-combobox>
+                                                            <select class="slds-select" onchange={handleObjectChange} style="border:0;">
+                                                                <template for:each={availableObjectsWithSelection} for:item="obj">
+                                                                    <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">{obj.label}</option>
+                                                                </template>
+                                                            </select>
 
-                                                            <lightning-combobox 
-                                                                class="field-dropdown field-header-dd dropdown"
-                                                                data-id={varItem.id}
-                                                                value={selectedField}
-                                                                options={fields}
-                                                                onchange={handleFieldChange}>
-                                                            </lightning-combobox>
+                                                            <!-- Dynamic Field Selection -->
+                                                            <select class="field-dropdown field-header-dd dropdown" data-id={varItem.id} onchange={handleFieldChange} style="border:0;">
+                                                                <template for:each={fields} for:item="field">
+                                                                    <option key={field.value} class="header-field-option" value={field.value}>
+                                                                        {field.label}
+                                                                    </option>
+                                                                </template>
+                                                            </select>
 
-                                                            <input type="text" class="alternate-text dropdown" style="margin-top: 15px;border:0;"
+                                                            <input type="text" class="alternate-text dropdown" style="border:0;"
                                                                 placeholder="Alternate Text"
                                                                 value={varItem.alternateText} data-id={varItem.id}
                                                                 onchange={handleAlternateTextChange} />
@@ -685,14 +684,11 @@
                                                 <p class="var">Select Object for merge fields :</p>
                                               
                                                 <select class="object-dropdown dropdown" data-name="objectPicklist"
-                                                    onchange={handleObjectChange} value={selectedObject}>
-                                                    <!-- <option value={varItem.object} selected>{varItem.object}</option> -->
-                                                    <template for:each={availableObjects} for:item="obj">
-                                                        <option key={obj.value} value={obj.value}
-                                                            class="body-field-option">
+                                                    onchange={handleObjectChange} value={selectedObject} style="border:0;">
+                                                    <template for:each={availableObjectsWithSelection} for:item="obj">
+                                                        <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">
                                                             {obj.label}
                                                         </option>
-                                                      
                                                     </template>
                                                 </select>
                                             </div>
@@ -701,7 +697,7 @@
                                                 <div key={varItem.id} class="true-div">
                                                     <p class="var">{varItem.index}</p>
 
-                                                    <select class="field-dropdown field-body-dd dropdown"
+                                                    <select class="field-dropdown field-body-dd dropdown" style="border:0;"
                                                         data-id={varItem.id} data-index={varItem.index}
                                                         onchange={handleVarFieldChange}>
                                                         <template for:each={varItem.options} for:item="option">
@@ -713,7 +709,7 @@
                                                     </select>
 
                                                     <!-- Alternate Text Input -->
-                                                    <input type="text" class="alternate-text dropdown"
+                                                    <input type="text" class="alternate-text dropdown" style="border:0;"
                                                         placeholder="Alternate Text" value={varItem.alternateText}
                                                         data-id={varItem.id} data-index={varItem.index}
                                                         onchange={handleAlternateVarChange} />
@@ -1252,17 +1248,13 @@
                                             </template>
                                             <template if:true={isDocFile}>
                                                 <div class="imagedivWP">
-                                                    <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yV/r/FOtyeo41YsA.png" alt="">
+                                                    <img src={docUploadPreviewImg} alt="">
                                                 </div>
                                              </template>
                                              
                                              <template if:true={isDocSelected}>
                                                 <div class="imagedivWP" style="position: relative;">
-                                                    <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yV/r/FOtyeo41YsA.png" alt="">
-                                                    <div style="width: 234px;height:140px;display:flex;justify-content:center;align-items:center;position:absolute;">
-                                                        <p style="font-size:large;font-weight:bold;">Preview Unavailable</p>
-                                                    </div>
-                                                    <!-- <iframe height="'130px" width='230px' src={filePreview} class="iframe-style"></iframe> -->
+                                                    <img src={NoPreviewAvailableImg} alt="no preview available">
                                                 </div>
                                              </template>
                                              <template if:true={isLocation}>
