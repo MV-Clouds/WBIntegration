@@ -3,7 +3,7 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
- * @Last Modified On : 12-19-2024
+ * @Last Modified On : 04-04-2025
  * @Modification Log :
  *==============================================================================
  * Date Modified - Developer Name - Description
@@ -167,21 +167,28 @@ global without sharing class WhatsAppWebhook{
             SObject record;
 
             // Fetch metadata record from Object_Config__mdt
-            List<Object_Config__mdt> objectConfigList = [SELECT Id, ObjectConfigInfo__c, ChatWindowConfigInfo__c FROM Object_Config__mdt LIMIT 1];
+            List<MVWB__Object_Config__mdt> objectConfigList = [SELECT Id, MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt LIMIT 1];
             if(objectConfigList.size() <= 0) {
                 System.debug('Object Config not found!');
                 return;
             } else {
                 // Deserialize the JSON string from ObjectConfigInfo__c
-                Map<String, Object> configData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ObjectConfigInfo__c);
-                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ChatWindowConfigInfo__c);
+                Map<String, Object> configData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].MVWB__ObjectConfigInfo__c);
+                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].MVWB__ChatWindowConfigInfo__c);
+                
+                System.debug('configData'+ configData);
+                System.debug('chatConfigData'+ chatConfigData);
     
                 // Extract values from deserialized data
                 objectApiName = (String) configData.get('objectApiName'); // e.g., 'Account'
                 String phoneField = (String) configData.get('phoneField'); // e.g., 'Fax'
-
+                System.debug('phoneField'+ phoneField);
+                
                 Map<String, Object> chatConfig = (Map<String, Object>) chatConfigData.get(objectApiName);
                 String nameField = (String) chatConfig.get('nameField'); // e.g., 'Name'
+                System.debug('nameField'+ nameField);
+                
+                System.debug('requiredFieds'+ configData.get('requiredFieds'));
 
                 List<Object> requiredFieldsList = (List<Object>) configData.get('requiredFieds'); 
 

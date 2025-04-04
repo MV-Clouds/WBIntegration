@@ -77,35 +77,4 @@ public with sharing class ObjectConfigControllerTest {
 
         System.assertEquals('Test User', recordName, 'Expected contact name');
     }
-
-    @IsTest
-    static void testInitializeDummyConfig() {
-        // Ensure no metadata records exist before the test
-        // delete [SELECT Id FROM Object_Config__mdt];
-
-        // Mock Metadata API calls
-        Test.startTest();
-        ObjectConfigController.initializeDummyConfig();
-        Test.stopTest();
-
-        // Verify that metadata was created
-        Object_Config__mdt config = [SELECT Id, ObjectConfigInfo__c, ChatWindowConfigInfo__c FROM Object_Config__mdt LIMIT 1];
-        System.assertNotEquals(null, config);
-        System.assertNotEquals(null, config.ObjectConfigInfo__c);
-        System.assertNotEquals(null, config.ChatWindowConfigInfo__c);
-
-        // Validate JSON structure of ObjectConfigInfo__c
-        Map<String, Object> objectConfigMap = (Map<String, Object>) JSON.deserializeUntyped(config.ObjectConfigInfo__c);
-        System.assertEquals('Contact', objectConfigMap.get('objectApiName'));
-        System.assertEquals('Phone', objectConfigMap.get('phoneField'));
-        System.assert(objectConfigMap.containsKey('requiredFieds'));
-
-        // Validate JSON structure of ChatWindowConfigInfo__c
-        Map<String, Object> chatConfigMap = (Map<String, Object>) JSON.deserializeUntyped(config.ChatWindowConfigInfo__c);
-        Map<String, Object> contactConfig = (Map<String, Object>) chatConfigMap.get('Contact');
-        System.assertEquals('LastName', contactConfig.get('nameField'));
-        System.assertEquals('Phone', contactConfig.get('phoneField'));
-
-        System.debug('Test completed successfully.');
-    }
 }

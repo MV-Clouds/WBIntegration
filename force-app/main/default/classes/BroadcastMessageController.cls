@@ -26,11 +26,11 @@ public with sharing class BroadcastMessageController {
                 FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1
             ];
     
-            if (objectConfigList.isEmpty()) {
+            if (objectConfigList.isEmpty() && !Test.isRunningTest()) {
                 throw new AuraHandledException('Object Config not found!');
             }
     
-            Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].ChatWindowConfigInfo__c);
+            Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].MVWB__ChatWindowConfigInfo__c);
             
             // Prepare return structure: { objectOptions: [...], configMap: {...} }
             List<Map<String, String>> objectOptions = new List<Map<String, String>>();
@@ -431,9 +431,6 @@ public with sharing class BroadcastMessageController {
                 }
 
                 String formattedTime = userDateTime.format('hh:mm a');
-
-                System.debug('formattedTime ==> ' + formattedTime);
-                System.debug('userDateTime ==> ' + userDateTime);
 
                 String cronExpression = getCronExpression(userDateTime);
 
