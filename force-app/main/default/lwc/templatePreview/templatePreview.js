@@ -281,7 +281,7 @@ export default class TemplatePreview extends LightningElement {
                     type: "body",
                     parameters: bodyParams
                 });
-            } else if(this.templateData.Template_Category__c == 'Authentication'){
+            } else if(this.templateData.MVWB__Template_Category__c == 'Authentication'){
                 components.push({
                     type: "body",
                     parameters: [
