@@ -145,21 +145,11 @@
                 bodyComponent = new Map<String, Object>{
                     'type' => 'BODY'
                 };
-                Integer randomCode = Integer.valueOf(String.valueOf(Math.floor(Math.random() * 900000) + 100000));
-
-                // Convert Integer to String
-                String randomCodeStr = String.valueOf(randomCode);
-
-                // Add the string to templateWrapper
-                templateWrapper.varAlternateTexts.add(randomCodeStr);
-                templateWrapper.templateBodyText = new List<String>{'{{' + randomCodeStr + '}}'};
-    
             } else {
                 bodyComponent = new Map<String, Object>{
                     'type' => 'BODY',
                     'text' => templateWrapper.templateBody.replace('\\n', '\n')
-
-                    };
+                };
             }
     
             if ((templateWrapper.templateBodyText != null) && (templateWrapper.templateBodyText.size() > 0)) {
@@ -401,57 +391,48 @@
                     
                     if(((String) result.get('bodyText')) != null){
                         whatsAppTemplate.WBTemplate_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
-    
-                        List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
-                        String bodyMergeText = (String) result.get('bodyMergeText');
-    
-                        Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
-                        Matcher matcher = pattern.matcher((String) result.get('bodyText'));
-                        Set<String> processedBodyPlaceholders = new Set<String>();
-    
-                        List<Template_Variable__c> existingBodyVars = [
-                            SELECT Id, Name
-                            FROM Template_Variable__c
-                            WHERE Template__c = :whatsAppTemplate.Id
-                            AND Type__c = 'Body'
-                        ];
-    
-                        if (!existingBodyVars.isEmpty()) {
-                            delete existingBodyVars;
-                        }
-    
-                        while (matcher.find()) {
-                            String placeholder = matcher.group();
-    
-                            if (!processedBodyPlaceholders.contains(placeholder)) {
-                                processedBodyPlaceholders.add(placeholder);
-                        
-                                if ((variableIndex < varAlternateTexts.size())) {
-                                    Template_Variable__c bodyVariable ;
-                                    if(whatsAppTemplate.Template_Category__c == 'Authentication'){
 
+                        if(whatsAppTemplate.Template_Category__c != 'Authentication'){
+                            List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
+                            String bodyMergeText = (String) result.get('bodyMergeText');
+        
+                            Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
+                            Matcher matcher = pattern.matcher((String) result.get('bodyText'));
+                            Set<String> processedBodyPlaceholders = new Set<String>();
+        
+                            List<Template_Variable__c> existingBodyVars = [
+                                SELECT Id, Name
+                                FROM Template_Variable__c
+                                WHERE Template__c = :whatsAppTemplate.Id
+                                AND Type__c = 'Body'
+                            ];
+        
+                            if (!existingBodyVars.isEmpty()) {
+                                delete existingBodyVars;
+                            }
+        
+                            while (matcher.find()) {
+                                String placeholder = matcher.group();
+        
+                                if (!processedBodyPlaceholders.contains(placeholder)) {
+                                    processedBodyPlaceholders.add(placeholder);
+                            
+                                    if ((variableIndex < varAlternateTexts.size())) {
+                                        Template_Variable__c bodyVariable ;
                                         bodyVariable = new Template_Variable__c(
                                             Name = placeholder,
+                                            Object_Name__c = parsedFields[variableIndex].get('objectName'),
+                                            Field_Name__c = parsedFields[variableIndex].get('fieldName'), 
                                             Type__c = 'Body',
                                             Alternate_Text__c = varAlternateTexts[variableIndex]
-                                            );
-                                        }
-                                    else{
-                                            bodyVariable = new Template_Variable__c(
-                                                Name = placeholder,
-                                                Object_Name__c = parsedFields[variableIndex].get('objectName'),
-                                                Field_Name__c = parsedFields[variableIndex].get('fieldName'), 
-                                                Type__c = 'Body',
-                                                Alternate_Text__c = varAlternateTexts[variableIndex]
-                                            );
+                                        );
+                                        variableRecords.add(bodyVariable);
                                     }
-                                    variableRecords.add(bodyVariable);
+                                    variableIndex++; 
                                 }
-                                variableIndex++; 
                             }
                         }
                     }
-
                 }
                 // FOOTER Component
                 else if (type == 'FOOTER') {

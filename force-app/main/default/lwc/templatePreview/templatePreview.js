@@ -197,7 +197,10 @@ export default class TemplatePreview extends LightningElement {
 
     createJSONBody(to, type, data) {
         try {
-    
+            const randomCode = Math.floor(Math.random() * 900000) + 100000;
+            // Convert the integer to a string
+            const randomCodeStr = String(randomCode);
+
             let payload = {
                 messaging_product: "whatsapp",
                 to: to,
@@ -278,10 +281,19 @@ export default class TemplatePreview extends LightningElement {
                     type: "body",
                     parameters: bodyParams
                 });
+            } else if(this.templateData.Template_Category__c == 'Authentication'){
+                components.push({
+                    type: "body",
+                    parameters: [
+                        {
+                            type: "text",
+                            text: randomCodeStr
+                        }
+                    ]
+                });
             }
     
             // Button Handling
-            
             if (data.buttonValue && data.buttonValue.length > 0) {
                 let buttons = data.buttonValue
                     .map((button, index) => {
@@ -344,8 +356,8 @@ export default class TemplatePreview extends LightningElement {
                                         index: index,
                                         parameters: [
                                             {
-                                                type :'text',
-                                                text :this.bodyParaCode[0]
+                                                type : 'text',
+                                                text : randomCodeStr
                                             }
                                             
                                         ]
