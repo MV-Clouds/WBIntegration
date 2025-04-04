@@ -200,7 +200,6 @@ public class WBTemplateControllerTest {
         Map<String, Object> result = WBTemplateController.getTemplateDataWithReplacement(template.Id, contact.Id);
 
         Map<String, Object> result2 = WBTemplateController.getTemplateDataWithReplacement(template.Id, null);
-
     }
 
     @isTest

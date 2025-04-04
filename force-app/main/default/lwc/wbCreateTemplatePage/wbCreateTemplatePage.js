@@ -2531,9 +2531,7 @@ export default class WbCreateTemplatePage extends LightningElement {
             
             // Change
             if(this.activeTab=='Authentication'){
-                
-                this.tempBody = '{{1}} is your verification code';
-                
+                this.tempBody = ' is your verification code';
             }
 
             const templateMiscellaneousData = {
