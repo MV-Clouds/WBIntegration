@@ -474,7 +474,6 @@ input{
     background-color: #ccd0d5;
     border-radius: 4px;
     box-sizing: border-box;
-    min-width: 234px;
     height: 140px;
 }
 
@@ -514,4 +513,3 @@ input{
     font-size: 14px;
     font-weight: 500;
 }
-

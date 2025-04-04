@@ -120,19 +120,27 @@
     transform: scale(0.6);
 }
 
-.datatable {
-    margin-top: 1.5%;
-    border-radius: 8px;
-    background: transparent;
-}
 
 .table-container {
     /* border-radius: 0.4rem;  */
+    
+    margin-top: 1.5%;
     border-top-left-radius: 0.4rem; 
     border-top-right-radius: 0.4rem; 
-    overflow: hidden; 
+    overflow-y:auto; 
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
     border: 1px solid #dcdcdc; 
+    height : 77%;
+    background-color: transparent;
+    
+}
+
+thead{
+    position: sticky;
+    top: 0;
+    background-color: #0077B6;
+    z-index: 999;
+    /* background-color: ; */
 }
 
 .slds-table {

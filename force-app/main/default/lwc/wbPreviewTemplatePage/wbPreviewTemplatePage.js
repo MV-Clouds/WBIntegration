@@ -19,6 +19,7 @@ import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynam
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
 import CountryJson from '@salesforce/resourceUrl/CountryJson';
+import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;
@@ -55,6 +56,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track isSendDisabled=false;
     @track sendButtonClass;
     @track bodyParaCode = '';
+    @track NoPreviewAvailableImg = NoPreviewAvailable;
 
     get contactFields() {
         return Object.entries(this.contactDetails)
@@ -109,7 +111,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
             case 'URL':
                 return 'utility:new_window';
             case 'COPY_CODE':
-            return 'utility:copy';
+                return 'utility:copy';
+            case 'Flow':
+                return 'utility:file';
             default:
                 return 'utility:question'; 
         }
@@ -455,7 +459,10 @@ export default class WbPreviewTemplatePage extends LightningElement {
     
     createJSONBody(to, type, data) {
         try {
-    
+            const randomCode = Math.floor(Math.random() * 900000) + 100000;
+            // Convert the integer to a string
+            const randomCodeStr = String(randomCode);
+
             let payload = {
                 messaging_product: "whatsapp",
                 to: to,
@@ -536,6 +543,16 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     type: "body",
                     parameters: bodyParams
                 });
+            } else if(this.template.Template_Category__c == 'Authentication'){
+                components.push({
+                    type: "body",
+                    parameters: [
+                        {
+                            type: "text",
+                            text: randomCodeStr
+                        }
+                    ]
+                });
             }
     
             // Button Handling
@@ -559,10 +576,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
                                 });
                                 break;
                             case "URL":
-                                
                                 break;
                             case "QUICK_REPLY":
-                                
                                 break;
                             case "FLOW":
                                 components.push( {
@@ -594,18 +609,15 @@ export default class WbPreviewTemplatePage extends LightningElement {
                                 break;
                             case "OTP":
                                 if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE") {
-
-                                    
                                     components.push( {
                                         type: "button",
                                         sub_type: "url",
                                         index: index,
                                         parameters: [
                                             {
-                                                type :'text',
-                                                text :this.bodyParaCode[0]
+                                                type : 'text',
+                                                text : randomCodeStr
                                             }
-                                            
                                         ]
                                     });
                                 } else {
@@ -627,14 +639,14 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 payload.template.components = components;
             }
             
-    
             // Convert the object to a JSON string
             return JSON.stringify(payload);
         } catch (e) {
             console.error('Error in function createJSONBody:::', e.message);
         }
     }
-        closePreview() {
+
+    closePreview() {
         this.dispatchEvent(new CustomEvent('closepopup'));
     }
 
