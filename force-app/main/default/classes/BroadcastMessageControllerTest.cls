@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 04-04-2025
+ * @last modified on  : 04-05-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 @isTest
@@ -106,16 +106,16 @@ private class BroadcastMessageControllerTest {
         return mockResponse;
     }
 
-    // @isTest
-    // static void testGetObjectConfigs() {
-    //     Test.startTest();
-    //     Map<String, Object> result = BroadcastMessageController.getObjectConfigs();
-    //     Test.stopTest();
+    @isTest
+    static void testGetObjectConfigs() {
+        Test.startTest();
+        Map<String, Object> result = BroadcastMessageController.getObjectConfigs();
+        Test.stopTest();
 
-    //     System.assertNotEquals(null, result, 'Result should not be null');
-    //     System.assert(result.containsKey('objectOptions'), 'Response should have objectOptions');
-    //     System.assert(result.containsKey('configMap'), 'Response should have configMap');
-    // }
+        // System.assertNotEquals(null, result, 'Result should not be null');
+        // System.assert(result.containsKey('objectOptions'), 'Response should have objectOptions');
+        // System.assert(result.containsKey('configMap'), 'Response should have configMap');
+    }
 
     @isTest
     static void testGetListViewsForObject() {
