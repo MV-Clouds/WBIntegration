@@ -1,3 +1,10 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 04-04-2025
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 @isTest
 private class BroadcastMessageControllerTest {
 
@@ -43,7 +50,7 @@ private class BroadcastMessageControllerTest {
             Header_Type__c = 'text',
             WBHeader_Body__c = 'Header Text',
             Template_Id__c	= 'testId',
-            Button_Body__c	= '[{"type":"COPY_CODE","example":"AADDFCGOP"}]'
+            WBButton_Body__c	= '[{"type":"COPY_CODE","example":"AADDFCGOP"}]'
         );
 
 
@@ -55,7 +62,7 @@ private class BroadcastMessageControllerTest {
             Header_Type__c = 'text',
             WBHeader_Body__c = 'Header Text',
             Template_Id__c	= 'testId2',
-            Button_Body__c	= '[{"type":"OTP","text":"Verify Code","otp_type":"COPY_CODE"}]'
+            WBButton_Body__c	= '[{"type":"OTP","text":"Verify Code","otp_type":"COPY_CODE"}]'
         );
 
         insert new List<Template__c>{template, template2};

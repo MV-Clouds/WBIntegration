@@ -454,7 +454,7 @@
                         }
                     }
                     buttonDetails = handleButtonComponent(component);
-                    whatsAppTemplate.Button_Body__c = buttonDetails;
+                    whatsAppTemplate.WBButton_Body__c = buttonDetails;
                     
                 }
             }

@@ -10,10 +10,10 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { NavigationMixin } from 'lightning/navigation';
 import updateThemePreference from '@salesforce/apex/ChatWindowController.updateThemePreference';
 import updateStatus from '@salesforce/apex/ChatWindowController.updateStatus';
-import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
-import whatsappAudioIcon from '@salesforce/resourceUrl/MVWB__whatsAppAudioIcon';
+import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
+import whatsappAudioIcon from '@salesforce/resourceUrl/whatsAppAudioIcon';
 import { loadScript } from 'lightning/platformResourceLoader';
-import AWS_SDK from "@salesforce/resourceUrl/MVWB__AWSSDK";
+import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
 import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import { subscribe} from 'lightning/empApi';
 

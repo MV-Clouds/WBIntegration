@@ -15,12 +15,12 @@ MODIFICATION LOG*
 import { LightningElement, track,api } from 'lwc';
 import {loadStyle} from 'lightning/platformResourceLoader';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import wbCreateTempStyle from '@salesforce/resourceUrl/MVWB__wbCreateTempStyle';
-import richTextZip from '@salesforce/resourceUrl/MVWB__richTextZip';
-import buttonIconsZip from '@salesforce/resourceUrl/MVWB__buttonIconsZip';
-import emojiData from '@salesforce/resourceUrl/MVWB__emojis_data';
-import CountryJson from '@salesforce/resourceUrl/MVWB__CountryJson';
-import LanguageJson from '@salesforce/resourceUrl/MVWB__LanguageJson';
+import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
+import richTextZip from '@salesforce/resourceUrl/richTextZip';
+import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
+import emojiData from '@salesforce/resourceUrl/emojis_data';
+import CountryJson from '@salesforce/resourceUrl/CountryJson';
+import LanguageJson from '@salesforce/resourceUrl/LanguageJson';
 import createWhatsappTemplate from '@salesforce/apex/WBTemplateController.createWhatsappTemplate';
 import editWhatsappTemplate from '@salesforce/apex/WBTemplateController.editWhatsappTemplate';
 import startUploadSession from '@salesforce/apex/WBTemplateController.startUploadSession';
@@ -29,11 +29,11 @@ import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFiel
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 
-import tempLocationIcon from '@salesforce/resourceUrl/MVWB__tempLocationIcon';
-import tempVideoIcon from '@salesforce/resourceUrl/MVWB__tempVideoIcon';
-import imageUploadPreview from '@salesforce/resourceUrl/MVWB__imageUploadPreview';
-import docUploadPreview from '@salesforce/resourceUrl/MVWB__documentPreviewIcon';
-import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
+import tempLocationIcon from '@salesforce/resourceUrl/tempLocationIcon';
+import tempVideoIcon from '@salesforce/resourceUrl/tempVideoIcon';
+import imageUploadPreview from '@salesforce/resourceUrl/imageUploadPreview';
+import docUploadPreview from '@salesforce/resourceUrl/documentPreviewIcon';
+import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
 import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
 import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
@@ -781,9 +781,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                     if (this.addHeaderVar) {
                         this.buttonDisabled = true;
                     }  
-                    if (template.MVWB__Button_Body__c) {
-                        // Parse JSON from Button_Body__c
-                        let buttonDataList = JSON.parse(template.MVWB__Button_Body__c);
+                    if (template.MVWB__WBButton_Body__c) {
+                        // Parse JSON from WBButton_Body__c
+                        let buttonDataList = JSON.parse(template.MVWB__WBButton_Body__c);
                     
                         // Clear existing button and custom button lists before populating
                         this.buttonList = [];

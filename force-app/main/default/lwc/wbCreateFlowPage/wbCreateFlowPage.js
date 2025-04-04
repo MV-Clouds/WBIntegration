@@ -4,11 +4,11 @@ import publishWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.publish
 import deleteWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deleteWhatsAppFlow';
 import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deprecateWhatsAppFlow';
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.getPreviewURLofWhatsAppFlow';
-import FlowIcon from '@salesforce/resourceUrl/MVWB__FlowIcon';
+import FlowIcon from '@salesforce/resourceUrl/FlowIcon';
 import { loadScript } from 'lightning/platformResourceLoader';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import MonacoEditor from '@salesforce/resourceUrl/MVWB__MonacoEditor';
-import PublishPopupImage from '@salesforce/resourceUrl/MVWB__PublishPopupImage';
+import MonacoEditor from '@salesforce/resourceUrl/MonacoEditor';
+import PublishPopupImage from '@salesforce/resourceUrl/PublishPopupImage';
 import getJSONData from '@salesforce/apex/WhatsAppFlowController.getJSONData';
 
 export default class WbCreateFlowPage extends LightningElement {

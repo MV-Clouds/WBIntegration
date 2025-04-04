@@ -166,7 +166,7 @@
 
        try {
            List<Template__c> templates = [
-               SELECT Id, Name,Template_Name__c, Button_Body__c, Status__c,WBImage_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
+               SELECT Id, Name,Template_Name__c, WBButton_Body__c, Status__c,WBImage_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c,
                    WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, 
                    Template_Category__c, Template_Type__c , Template_Miscellaneous_Data__c
                FROM Template__c 
@@ -276,7 +276,7 @@
    public static Map<String, Object> getTemplateDataWithReplacement(String templateId, String contactId) {
        try {
            Map<String, Object> templateData = new Map<String, Object>();
-           List<Template__c> templates = [SELECT Id, Name,Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c,WBImage_Header_Handle__c, 
+           List<Template__c> templates = [SELECT Id, Name,Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c,WBImage_Header_Handle__c, 
                                                WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c,File_Name__c, 
                                                WBTemplate_Body__c, Template_Category__c, 
                                                Template_Type__c, Template_Variable__c, Template_Miscellaneous_Data__c,
