@@ -321,8 +321,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    const buttonBody = result.MVWB__template.WBButton_Body__c
-                    ? JSON.parse(result.MVWB__template.WBButton_Body__c)
+                    const buttonBody = result.MVWB__template.MVWB__WBButton_Body__c
+                    ? JSON.parse(result.MVWB__template.MVWB__WBButton_Body__c)
                     : []
                   
                   this.buttonList = buttonBody.map((buttonLabel, index) => {
@@ -426,8 +426,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 languageCode: this.template.MVWB__Language__c,
                 headerImageURL: this.template.MVWB__WBHeader_Body__c,
                 headerType:this.template.MVWB__Header_Type__c,
-                headerParameters: this.MVWB__headerParams,
-                bodyParameters: this.MVWB__bodyParams || '',
+                headerParameters: this.headerParams,
+                bodyParameters: this.bodyParams || '',
                 buttonLabel: this.template.MVWB__Button_Label__c || '',
                 buttonType: this.template.MVWB__Button_Type__c || '',
                 buttonValue : buttonValue

@@ -67,29 +67,29 @@ export default class TemplatePreview extends LightningElement {
                 
                 this.templateData = templateData.template;
                 
-                this.isTextHeader = this.templateData?.Header_Type__c === 'Text' ? true : false;
-                this.isImageHeader = this.templateData?.Header_Type__c === 'Image' ? true : false;
-                this.isVideoHeader = this.templateData?.Header_Type__c === 'Video' ? true : false;
-                this.isDocHeader = this.templateData?.Header_Type__c === 'Document' ? true : false;
+                this.isTextHeader = this.templateData?.MVWB__Header_Type__c === 'Text' ? true : false;
+                this.isImageHeader = this.templateData?.MVWB__Header_Type__c === 'Image' ? true : false;
+                this.isVideoHeader = this.templateData?.MVWB__Header_Type__c === 'Video' ? true : false;
+                this.isDocHeader = this.templateData?.MVWB__Header_Type__c === 'Document' ? true : false;
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(this.templateData?.WBHeader_Body__c, "text/html");
+                const doc = parser.parseFromString(this.templateData?.MVWB__WBHeader_Body__c, "text/html");
                 this.headerBody = doc.documentElement.textContent;
                 
-                this.templateBody = this.templateData?.WBTemplate_Body__c;
-                this.footerBody = this.templateData?.WBFooter_Body__c;
-                // this.buttonLabel = this.templateData?.Button_Label__c;
+                this.templateBody = this.templateData?.MVWB__WBTemplate_Body__c;
+                this.footerBody = this.templateData?.MVWB__WBFooter_Body__c;
+                // this.buttonLabel = this.templateData?.MVWB__Button_Label__c;
 
-                if(this.templateData.Header_Type__c=='Image'){
+                if(this.templateData.MVWB__Header_Type__c=='Image'){
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(this.headerBody, "text/html");
                     this.headerBody = doc.documentElement.textContent || "";
                 }
-                else if(this.templateData.Header_Type__c=='Video'){
+                else if(this.templateData.MVWB__Header_Type__c=='Video'){
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(this.headerBody, "text/html");
                     this.headerBody = doc.documentElement.textContent || "";
                 }
-                else if(this.templateData.Header_Type__c=='Document'){
+                else if(this.templateData.MVWB__Header_Type__c=='Document'){
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(this.headerBody, "text/html");
                     this.headerBody = doc.documentElement.textContent || "";
@@ -98,8 +98,8 @@ export default class TemplatePreview extends LightningElement {
                     this.headerBody = this.headerBody ||'';
                 }
 
-                const buttonBody = this.templateData.WBButton_Body__c
-                    ? JSON.parse(this.templateData.WBButton_Body__c)
+                const buttonBody = this.templateData.MVWB__WBButton_Body__c
+                    ? JSON.parse(this.templateData.MVWB__WBButton_Body__c)
                     : []
                 this.buttonList = buttonBody.map((buttonLabel, index) => {
                   
@@ -160,17 +160,17 @@ export default class TemplatePreview extends LightningElement {
             createChat({chatData: {message: '', templateId: this.templateId, messageType: 'template', recordId: this.recordId, replyToChatId: null, phoneNumber: this.mobileNumber}})
             .then(chat => {
                 if(chat){
-                    const buttonValue = this.templateData.WBButton_Body__c != undefined ? JSON.parse(this.templateData.WBButton_Body__c) : '';
+                    const buttonValue = this.templateData.MVWB__WBButton_Body__c != undefined ? JSON.parse(this.templateData.MVWB__WBButton_Body__c) : '';
                     
                     const templatePayload = this.createJSONBody(this.mobileNumber, "template", {
-                        templateName: this.templateData?.Template_Name__c,
-                        languageCode: this.templateData?.Language__c,
-                        headerImageURL: this.templateData?.WBHeader_Body__c,
-                        headerType:this.templateData?.Header_Type__c,
+                        templateName: this.templateData?.MVWB__Template_Name__c,
+                        languageCode: this.templateData?.MVWB__Language__c,
+                        headerImageURL: this.templateData?.MVWB__WBHeader_Body__c,
+                        headerType:this.templateData?.MVWB__Header_Type__c,
                         headerParameters: this.headerParams,
                         bodyParameters: this.bodyParams || '',
-                        buttonLabel: this.templateData?.Button_Label__c || '',
-                        buttonType: this.templateData?.Button_Type__c || '',
+                        buttonLabel: this.templateData?.MVWB__Button_Label__c || '',
+                        buttonType: this.templateData?.MVWB__Button_Type__c || '',
                         buttonValue : buttonValue
                     });
 
