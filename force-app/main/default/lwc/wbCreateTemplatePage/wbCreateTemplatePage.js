@@ -781,9 +781,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                     if (this.addHeaderVar) {
                         this.buttonDisabled = true;
                     }  
-                    if (template.MVWB__Button_Body__c) {
-                        // Parse JSON from Button_Body__c
-                        let buttonDataList = JSON.parse(template.MVWB__Button_Body__c);
+                    if (template.MVWB__WBButton_Body__c) {
+                        // Parse JSON from WBButton_Body__c
+                        let buttonDataList = JSON.parse(template.MVWB__WBButton_Body__c);
                     
                         // Clear existing button and custom button lists before populating
                         this.buttonList = [];

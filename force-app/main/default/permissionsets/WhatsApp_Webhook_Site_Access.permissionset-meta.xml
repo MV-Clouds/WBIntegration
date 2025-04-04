@@ -177,7 +177,7 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>MVWB__Template__c.MVWB__Button_Body__c</field>
+        <field>MVWB__Template__c.MVWB__WBButton_Body__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>

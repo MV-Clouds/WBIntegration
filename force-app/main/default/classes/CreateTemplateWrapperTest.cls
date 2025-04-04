@@ -1,3 +1,10 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 04-04-2025
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 @isTest
 public class CreateTemplateWrapperTest{
      @isTest
@@ -17,7 +24,7 @@ public class CreateTemplateWrapperTest{
         templateWrapper.templateBodyText = new List<String>{'Body Text 1', 'Body Text 2'};
         templateWrapper.tempFooterText = 'Footer Text';
         templateWrapper.typeOfButton = '[{\"id\":1,\"selectedActionType\":\"PHONE_NUMBER\",\"iconName\":\"utility:call\",\"btntext\":\"Call Phone Number\",\"webURL\":\"\",\"phonenum\":\"1231123123\",\"offercode\":\"\",\"selectedUrlType\":\"Static\",\"selectedCountryType\":\"+682\",\"isCallPhone\":true,\"isVisitSite\":false,\"isOfferCode\":false,\"hasError\":false,\"errorMessage\":\"\",\"isDisabled\":false}]';
-        templateWrapper.phoneNumber = '1234567890';
+        // templateWrapper.phoneNumber = '1234567890';
         templateWrapper.url = 'http://example.com';
         templateWrapper.tempImgUrl = 'http://example.com/image.png';
         

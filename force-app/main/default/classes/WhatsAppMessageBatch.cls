@@ -125,14 +125,14 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             // Fetch template details
             if (!matchingTemplateIds.isEmpty()) {
                 templates.addAll([
-                    SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
+                    SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
                         (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId AND Id IN :matchingTemplateIds WITH SECURITY_ENFORCED
                 ]);
             }
 
             // Fetch templates without child variables
             List<Template__c> templatesWithoutVariables = [
-                SELECT Id, Template_Name__c, Button_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
+                SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
                     (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED
             ];
             templates.addAll(templatesWithoutVariables);
@@ -220,8 +220,8 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             data.put('headerParameters', (List<Object>)templateData.get('headerParams'));
             data.put('bodyParameters', (List<Object>)templateData.get('bodyParams'));
 
-            if(template.Button_Body__c != null){
-                Object rawData = JSON.deserializeUntyped(template.Button_Body__c);
+            if(template.WBButton_Body__c != null){
+                Object rawData = JSON.deserializeUntyped(template.WBButton_Body__c);
                 List<Object> dataList = (List<Object>) rawData;
 
                 // Convert each entry to a Map<String, Object>

@@ -317,8 +317,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    const buttonBody = result.MVWB__template.Button_Body__c
-                    ? JSON.parse(result.MVWB__template.Button_Body__c)
+                    const buttonBody = result.MVWB__template.WBButton_Body__c
+                    ? JSON.parse(result.MVWB__template.WBButton_Body__c)
                     : []
                   
                   this.buttonList = buttonBody.map((buttonLabel, index) => {
@@ -415,7 +415,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 return;
             }
             
-            const buttonValue = this.template.MVWB__Button_Body__c != undefined?JSON.parse(this.template.MVWB__Button_Body__c) : '';
+            const buttonValue = this.template.MVWB__WBButton_Body__c != undefined?JSON.parse(this.template.MVWB__WBButton_Body__c) : '';
             
             const templatePayload = this.createJSONBody(phonenum, "template", {
                 templateName: this.template.MVWB__Template_Name__c,

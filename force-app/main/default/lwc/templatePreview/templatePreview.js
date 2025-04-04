@@ -98,8 +98,8 @@ export default class TemplatePreview extends LightningElement {
                     this.headerBody = this.headerBody ||'';
                 }
 
-                const buttonBody = this.templateData.Button_Body__c
-                    ? JSON.parse(this.templateData.Button_Body__c)
+                const buttonBody = this.templateData.WBButton_Body__c
+                    ? JSON.parse(this.templateData.WBButton_Body__c)
                     : []
                 this.buttonList = buttonBody.map((buttonLabel, index) => {
                   
@@ -160,7 +160,7 @@ export default class TemplatePreview extends LightningElement {
             createChat({chatData: {message: '', templateId: this.templateId, messageType: 'template', recordId: this.recordId, replyToChatId: null, phoneNumber: this.mobileNumber}})
             .then(chat => {
                 if(chat){
-                    const buttonValue = this.templateData.Button_Body__c != undefined ? JSON.parse(this.templateData.Button_Body__c) : '';
+                    const buttonValue = this.templateData.WBButton_Body__c != undefined ? JSON.parse(this.templateData.WBButton_Body__c) : '';
                     
                     const templatePayload = this.createJSONBody(this.mobileNumber, "template", {
                         templateName: this.templateData?.Template_Name__c,
