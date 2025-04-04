@@ -2,7 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import getTemplateData from '@salesforce/apex/ChatWindowController.getTemplateData';
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
-import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
+import NoPreviewAvailable from '@salesforce/resourceUrl/MVWB__NoPreviewAvailable';
 
 export default class TemplatePreview extends LightningElement {
     @api templateId;
