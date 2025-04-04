@@ -2,50 +2,58 @@
  * @description       :
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             :
- * @last modified on  : 03-25-2025
+ * @last modified on  : 04-04-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
  **/
 public with sharing class ChatGeminiHandler{
+
+    public static List<User_Theme_Preference__c> userPreferences = [SELECT Auto_Response__c FROM User_Theme_Preference__c WITH SECURITY_ENFORCED];
+    
     @InvocableMethod(label = 'Generate AI Response and Send WhatsApp'description = 'Calls Gemini API, sends WhatsApp message, and creates a new Chat record.')
     public static void processChat(List<InvocableInput> chats){
 
-        InvocableInput input = chats.get(0); // Assuming the flow only passes one record at a time.
-        String chatId = input.chatId;
-        System.debug('chatId:- ' + chatId);
-        Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c
-                        From Chat__c
-                        Where id = :chatId];
-        if (chat == null){
-            System.debug('No record Found');
-            return;
-        } else{
-            System.debug('chat Record:- ' + chat);
-        }
-        String message = chat.Message__c;
+        User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
 
-        if (String.isBlank(message)){
-            return; // No message to process.
-        }
-
-        try{
-            String geminiResponse = callGeminiAPI(message, chat.Phone__c); // Call Gemini API
-
-            Chat__c newChat = new Chat__c();
-            newChat.Message__c = message;
-            newChat.Phone__c = chat.Phone__c;
-            newChat.Type_of_Message__c = 'Outbound Messages'; // Assuming outbound message for now
-            newChat.Message_Status__c = 'Failed';
-            // chat.Message_Type__c = 'Text';
-            insert as user newChat;
-
-
-            if (String.isNotBlank(geminiResponse)){
-                sendWhatsAppMessage(newChat.Id, geminiResponse); // Send WhatsApp message
+        if(userPreference.Auto_Response__c){
+            
+            InvocableInput input = chats.get(0); // Assuming the flow only passes one record at a time.
+            String chatId = input.chatId;
+            System.debug('chatId:- ' + chatId);
+            Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c
+            From Chat__c
+            Where id = :chatId];
+            if (chat == null){
+                System.debug('No record Found');
+                return;
+            } else{
+                System.debug('chat Record:- ' + chat);
             }
-
-        } catch (Exception e){
-            System.debug('Error processing chat: ' + e.getMessage());
-            // Optionally, handle the error (e.g., log it, send an alert).
+            String message = chat.Message__c;
+            
+            if (String.isBlank(message)){
+                return; // No message to process.
+            }
+            
+            try{
+                String geminiResponse = callGeminiAPI(message, chat.Phone__c); // Call Gemini API
+                
+                Chat__c newChat = new Chat__c();
+                newChat.Message__c = message;
+                newChat.Phone__c = chat.Phone__c;
+                newChat.Type_of_Message__c = 'Outbound Messages'; // Assuming outbound message for now
+                newChat.Message_Status__c = 'Failed';
+                // chat.Message_Type__c = 'Text';
+                insert as user newChat;
+                
+                
+                if (String.isNotBlank(geminiResponse)){
+                    sendWhatsAppMessage(newChat.Id, geminiResponse); // Send WhatsApp message
+                }
+                
+            } catch (Exception e){
+                System.debug('Error processing chat: ' + e.getMessage());
+                // Optionally, handle the error (e.g., log it, send an alert).
+            }
         }
     }
 
