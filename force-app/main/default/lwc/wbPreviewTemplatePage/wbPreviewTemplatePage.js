@@ -18,7 +18,7 @@ import sendPreviewTemplate from '@salesforce/apex/WBTemplateController.sendPrevi
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
-import CountryJson from '@salesforce/resourceUrl/MVWB__CountryJson';
+import CountryJson from '@salesforce/resourceUrl/CountryJson';
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;

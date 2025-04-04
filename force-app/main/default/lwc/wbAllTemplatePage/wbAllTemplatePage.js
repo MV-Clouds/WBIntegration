@@ -18,7 +18,7 @@ import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateContr
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import {loadStyle} from 'lightning/platformResourceLoader';
-import wbPreviewTemplateStyle from '@salesforce/resourceUrl/MVWB__wbPreviewTemplateStyle';
+import wbPreviewTemplateStyle from '@salesforce/resourceUrl/wbPreviewTemplateStyle';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
 
 export default class WbAllTemplatePage extends LightningElement {
