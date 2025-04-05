@@ -193,16 +193,18 @@
                                         <tr key={row.id} class="tablerow">
                                             <td colspan="2" class="tableData">
                                                 <div class="slds-grid slds-gutters slds-align_absolute-center slds-p-around_x-small">
-                                                    <!-- Flow Field -->
+
+                                                    <!-- Object Field -->
                                                     <div class="slds-col slds-size_1-of-2">
                                                         <lightning-combobox
                                                             variant="label-hidden"
                                                             class="slds-size_full"
                                                             data-row-id={row.id}
-                                                            value={row.selectedObject}
-                                                            options={row.objectOptions}
-                                                            onchange={handleObjectChangeForChat}
-                                                            placeholder="Select Object">
+                                                            value={row.selectedNameField}
+                                                            options={objectFields}
+                                                            onchange={handleNameFieldChange}
+                                                            placeholder="Select Name Field"
+                                                            disabled={row.isNameFieldDisabled}>
                                                         </lightning-combobox>
                                                     </div>
                                 
@@ -215,18 +217,17 @@
                                                             class="slds-icon-text-default">
                                                         </lightning-icon>
                                                     </div>
-                                
-                                                    <!-- Object Field -->
+
+                                                    <!-- Flow Field -->
                                                     <div class="slds-col slds-size_1-of-2">
                                                         <lightning-combobox
                                                             variant="label-hidden"
                                                             class="slds-size_full"
                                                             data-row-id={row.id}
-                                                            value={row.selectedNameField}
-                                                            options={row.nameFieldOptions}
-                                                            onchange={handleNameFieldChange}
-                                                            placeholder="Select Name Field"
-                                                            disabled={row.isNameFieldDisabled}>
+                                                            value={row.selectedObject}
+                                                            options={row.objectOptions}
+                                                            onchange={handleObjectChangeForChat}
+                                                            placeholder="Select Object">
                                                         </lightning-combobox>
                                                     </div>
                                                 </div>

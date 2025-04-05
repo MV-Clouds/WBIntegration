@@ -6,6 +6,7 @@ import saveAutomationPaths from '@salesforce/apex/AutomationConfigController.sav
 import getAutomationPathsByAutomationId from '@salesforce/apex/AutomationConfigController.getAutomationPathsByAutomationId';
 import getAllObjects from '@salesforce/apex/AutomationConfigController.getAllObjects';
 import getRequiredFields from '@salesforce/apex/AutomationConfigController.getRequiredFields';
+import getObjectFields from '@salesforce/apex/AutomationConfigController.getObjectFields';
 import getFlowFields from '@salesforce/apex/AutomationConfigController.getFlowFields';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -30,6 +31,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track allEmailTemplates = [];
     @track allObjects = [];
     @track requiredFields = [];
+    @track objectFields = [];
     // @track chatWindowRows = [];
     @track durationUnits = [
         { label: 'Minutes', value: 'minutes' },
@@ -376,7 +378,10 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         try {
             this.selectedObject = event.target.value;
             console.log('Selected Object:', this.selectedObject);
-            this.loadRequiredFields(); // Load fields for the new object
+            this.loadRequiredFields();
+            this.objectFields = [];
+            this.fetchFieldsForObject(this.selectedObject);
+            
         } catch (error) {
             console.error('Error in object change : ' , error);
         }
@@ -469,6 +474,31 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 });
         } catch (error) {
             console.error('Exception in loading required fields : ' , error);
+        }
+    }
+
+    async fetchFieldsForObject(objectName) {
+        try {
+            console.log('Fetching fields for object:', objectName);
+            const result = await getObjectFields({ objectName });
+            console.log('Fetched fields:', JSON.stringify(result));
+            // this.textFields = data.textFields || [];
+            // this.phoneFieldsForChatConfig = data.phoneFields || [];
+            this.objectFields = result;
+
+            // this.chatWindowRows = this.chatWindowRows.map(row => {
+            //     if (row.id === parseInt(rowId)) {
+            //         return {
+            //             ...row,
+            //             nameFieldOptions: this.textFields.map(field => ({ label: field.label, value: field.value })),
+            //             phoneFieldOptions: this.phoneFieldsForChatConfig.map(field => ({ label: `${field.label} (${field.value})`, value: field.value }))
+            //         };
+            //     }
+            //     return row;
+            // });
+            console.log('this.objectFields', JSON.stringify(this.objectFields));
+        } catch (error) {
+            console.error('Error fetching fields:', error);
         }
     }
 

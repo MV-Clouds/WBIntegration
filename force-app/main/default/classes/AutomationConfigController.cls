@@ -441,6 +441,51 @@ public with sharing class AutomationConfigController {
     }
 
     @AuraEnabled
+    public static List<Map<String, String>> getObjectFields(String objectName) {
+        try {
+            // List<Map<String, String>> phoneFields = new List<Map<String, String>>();
+            // List<Map<String, String>> textFields = new List<Map<String, String>>();
+            List<Map<String, String>> objectFields = new List<Map<String, String>>();
+            
+            Schema.DescribeSObjectResult objectDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe();
+            Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
+            
+            for (Schema.SObjectField field : fieldMap.values()) {
+                Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+
+                if (fieldDescribe.isAccessible() && fieldDescribe.isCreateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
+                    Map<String, String> objectFieldInfo = new Map<String, String>();
+                    objectFieldInfo.put('label', fieldDescribe.getLabel());
+                    objectFieldInfo.put('value', fieldDescribe.getName());
+                    objectFields.add(objectFieldInfo);
+                }
+
+                // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
+                // if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isCreateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
+                //     Map<String, String> textFieldInfo = new Map<String, String>();
+                //     textFieldInfo.put('label', fieldDescribe.getLabel());
+                //     textFieldInfo.put('value', fieldDescribe.getName());
+                //     textFields.add(textFieldInfo);
+                // }
+            }
+
+            // Create the final response structure
+            // Map<String, Object> responseMap = new Map<String, Object>();
+            // responseMap.put('phoneFields', phoneFields);
+            // responseMap.put('textFields', textFields);
+            
+            // // Wrap the response map in a list to match the desired format
+            // List<Map<String, Object>> finalResponse = new List<Map<String, Object>>();
+            // finalResponse.add(responseMap);
+            
+            return objectFields;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController', 'methodName' => 'getTextAndPhoneFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            return null;
+        }
+    }
+
+    @AuraEnabled
     public static List<String> getFlowFields(String chatRecordId) {
         MVWB__Chat__c chat = [SELECT Flow_Response_JSON__c FROM MVWB__Chat__c WHERE Id = :chatRecordId LIMIT 1];
         
