@@ -28,36 +28,34 @@
         <div class="slds-m-around_medium container">
             <!-- Custom Table -->
             <template if:true={paginatedData.length}>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th class="sr-no">Sr. No</th>
-                                <th>Name</th>
-                                <th>Recipient Count</th>
-                                <th>Status</th>
-                                <th>Total Sent</th>
-                                <th>Total Delivered</th>
-                                <th>Total Read</th>
-                                <th>Total Failed</th>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="sr-no">Sr. No</th>
+                            <th>Name</th>
+                            <th>Recipient Count</th>
+                            <th>Status</th>
+                            <th>Total Sent</th>
+                            <th>Total Delivered</th>
+                            <th>Total Read</th>
+                            <th>Total Failed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={paginatedData} for:item="row">
+                            <tr key={row.Id}>
+                                <td class="sr-no">{row.index}</td>
+                                <td data-id={row.Id}>{row.Name}</td>
+                                <td>{row.Recipient_Count__c}</td>
+                                <td>{row.Status__c}</td>
+                                <td>{row.Total_Sent__c}</td>
+                                <td>{row.Total_Delivered__c}</td>
+                                <td>{row.Total_Read__c}</td>
+                                <td>{row.Total_Failed__c}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <template for:each={paginatedData} for:item="row">
-                                <tr key={row.Id}>
-                                    <td class="sr-no">{row.index}</td>
-                                    <td data-id={row.Id}>{row.Name}</td>
-                                    <td>{row.Recipient_Count__c}</td>
-                                    <td>{row.Status__c}</td>
-                                    <td>{row.Total_Sent__c}</td>
-                                    <td>{row.Total_Delivered__c}</td>
-                                    <td>{row.Total_Read__c}</td>
-                                    <td>{row.Total_Failed__c}</td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
+                        </template>
+                    </tbody>
+                </table>
             </template>
 
             <!-- No Records Message -->
