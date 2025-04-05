@@ -45,10 +45,10 @@ export default class StorageIntegration extends LightningElement {
         getConfiguration()
             .then(result => {
                 if (result) {
-                    this.accessKeyValue = result.AWS_Access_Key__c || '';
-                    this.secretAccessKeyValue = result.AWS_Secret_Access_Key__c || '';
-                    this.s3BucketNameValue = result.S3_Bucket_Name__c || '';
-                    this.s3RegionNameValue = result.S3_Region_Name__c || '';
+                    this.accessKeyValue = result.MVWB__AWS_Access_Key__c || '';
+                    this.secretAccessKeyValue = result.MVWB__AWS_Secret_Access_Key__c || '';
+                    this.s3BucketNameValue = result.MVWB__S3_Bucket_Name__c || '';
+                    this.s3RegionNameValue = result.MVWB__S3_Region_Name__c || '';
     
                     this.accessKey = this.accessKeyValue ? '*'.repeat(this.accessKeyValue.length) : '';
                     this.secretAccessKey = this.secretAccessKeyValue ? '*'.repeat(this.secretAccessKeyValue.length) : '';
