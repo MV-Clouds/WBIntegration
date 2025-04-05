@@ -232,6 +232,6 @@ span {
 .footer{
     display: flex;
     justify-content: flex-end;
-    padding: 0.5rem;
+    padding: 0.5rem 1rem;
     gap: 1rem;
 }

@@ -518,7 +518,7 @@ export default class BroadcastMessageComp extends LightningElement {
         this.isLoading = true;
 
         // Call the Apex method
-        processBroadcastMessageWithObject({ request: messageData })
+        processBroadcastMessageWithObject({ requestJson: JSON.stringify(messageData) })
         .then(() => {
             this.showToast('Success', 'Broadcast group created successfully', 'success');
             this.closePopUp();

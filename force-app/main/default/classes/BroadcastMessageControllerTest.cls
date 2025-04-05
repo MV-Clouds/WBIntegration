@@ -50,7 +50,7 @@ private class BroadcastMessageControllerTest {
             Header_Type__c = 'text',
             WBHeader_Body__c = 'Header Text',
             Template_Id__c	= 'testId',
-            WBButton_Body__c	= '[{"type":"COPY_CODE","example":"AADDFCGOP"}]'
+            WBButton_Body__c = '[{"type":"COPY_CODE","example":"AADDFCGOP"}]'
         );
 
 
@@ -170,46 +170,60 @@ private class BroadcastMessageControllerTest {
 
     @isTest
     static void testProcessBroadcastMessageWithObject_Insert() {
-        BroadcastMessageController.BroadcastMessageRequest request = new BroadcastMessageController.BroadcastMessageRequest();
-        request.name = 'New Broadcast Group';
-        request.description = 'Test Description';
-        request.objectApiName = 'Account';
-        request.phoneNumbers = new List<String>{'9876543210'};
-        request.listViewName = 'Test List View';
-        request.isUpdate = false;
-        request.phoneField = 'Phone';
-
+        Map<String, Object> requestMap = new Map<String, Object>{
+            'name' => 'New Broadcast Group',
+            'description' => 'Test Description',
+            'objectApiName' => 'Account',
+            'phoneNumbers' => new List<String>{'9876543210'},
+            'listViewName' => 'Test List View',
+            'isUpdate' => false,
+            'phoneField' => 'Phone'
+        };
+        
+        String requestJson = JSON.serialize(requestMap);
+    
         Test.startTest();
-        BroadcastMessageController.processBroadcastMessageWithObject(request);
+        BroadcastMessageController.processBroadcastMessageWithObject(requestJson);
         Test.stopTest();
-
-        Broadcast_Group__c createdGroup = [SELECT Id FROM Broadcast_Group__c WHERE Name = 'New Broadcast Group' LIMIT 1];
+    
+        Broadcast_Group__c createdGroup = [SELECT Id, Name FROM Broadcast_Group__c WHERE Name = 'New Broadcast Group' LIMIT 1];
         System.assertNotEquals(null, createdGroup, 'Broadcast group should be created');
     }
+    
 
     @isTest
     static void testProcessBroadcastMessageWithObject_Update() {
-
-        Broadcast_Group__c tempGroup = [SELECT Id, Name, Phone_Field__c FROM Broadcast_Group__c LIMIT 1];
-
-        BroadcastMessageController.BroadcastMessageRequest request = new BroadcastMessageController.BroadcastMessageRequest();
-        request.name = 'Updated Group Name';
-        request.description = 'Updated Description';
-        request.objectApiName = 'Account';
-        request.phoneNumbers = new List<String>{'1234567890', '9876543210'};
-        request.listViewName = 'Updated List View';
-        request.isUpdate = true;
-        request.broadcastGroupId = tempGroup.Id;
-        request.phoneField = tempGroup.Phone_Field__c;
-
+        // First create a broadcast group for update
+        Broadcast_Group__c tempGroup = new Broadcast_Group__c(
+            Name = 'Old Name',
+            Description__c = 'Old Description',
+            Object_Name__c = 'Account',
+            List_View__c = 'Old List View',
+            Phone_Field__c = 'Phone'
+        );
+        insert tempGroup;
+    
+        Map<String, Object> requestMap = new Map<String, Object>{
+            'name' => 'Updated Group Name',
+            'description' => 'Updated Description',
+            'objectApiName' => 'Account',
+            'phoneNumbers' => new List<String>{'1234567890', '9876543210'},
+            'listViewName' => 'Updated List View',
+            'isUpdate' => true,
+            'broadcastGroupId' => tempGroup.Id,
+            'phoneField' => 'Phone'
+        };
+    
+        String requestJson = JSON.serialize(requestMap);
+    
         Test.startTest();
-        BroadcastMessageController.processBroadcastMessageWithObject(request);
+        BroadcastMessageController.processBroadcastMessageWithObject(requestJson);
         Test.stopTest();
-
-        Broadcast_Group__c updatedGroup = [SELECT Name FROM Broadcast_Group__c WHERE Id = :tempGroup.Id];
-        System.assertEquals('Updated Group Name', updatedGroup.Name, 'Broadcast group should be updated');
+    
+        Broadcast_Group__c updatedGroup = [SELECT Name, Description__c FROM Broadcast_Group__c WHERE Id = :tempGroup.Id];
+        System.assertEquals('Updated Group Name', updatedGroup.Name, 'Broadcast group name should be updated');
     }
-
+    
     @isTest
     static void testGetBroadcastGroupDetails() {
 
