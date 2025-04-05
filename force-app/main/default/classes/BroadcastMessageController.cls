@@ -395,14 +395,12 @@ public with sharing class BroadcastMessageController {
                     objectApiName = brGroupRecs[0].Object_Name__c;
                     phoneField = brGroupRecs[0].Phone_Field__c;
                 }
-                System.debug(objectApiName);
 
                 List<Broadcast_Group_Member__c> groupMembers = new List<Broadcast_Group_Member__c>();
                 groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupIds WITH SECURITY_ENFORCED];
                 broadcast.Recipient_Count__c = groupMembers.size();
                 Database.insert(broadcast, false, AccessLevel.USER_MODE);
 
-                System.debug(groupMembers.size());
                 List<String> phoneList = new List<String>();
                 if (groupMembers.size() > 0) {
                     for (Broadcast_Group_Member__c member : groupMembers) {
@@ -420,7 +418,6 @@ public with sharing class BroadcastMessageController {
                     }
                 }
 
-                System.debug(chatRecs.size());
                 if (chatRecs.size() > 0) {
                     Database.insert(chatRecs, false, AccessLevel.USER_MODE);
                 }
@@ -458,7 +455,7 @@ public with sharing class BroadcastMessageController {
             }
             return 'Success';
         } catch (Exception e) {
-            System.debug('Error in sendTemplateMessage: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'createChatRecods', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error in sendTemplateMessage: ' + e.getMessage());
         }
     }  

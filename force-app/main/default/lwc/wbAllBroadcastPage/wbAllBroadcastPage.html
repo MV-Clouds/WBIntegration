@@ -46,12 +46,12 @@
                             <tr key={row.Id}>
                                 <td class="sr-no">{row.index}</td>
                                 <td data-id={row.Id}>{row.Name}</td>
-                                <td>{row.Recipient_Count__c}</td>
-                                <td>{row.Status__c}</td>
-                                <td>{row.Total_Sent__c}</td>
-                                <td>{row.Total_Delivered__c}</td>
-                                <td>{row.Total_Read__c}</td>
-                                <td>{row.Total_Failed__c}</td>
+                                <td>{row.MVWB__Recipient_Count__c}</td>
+                                <td>{row.MVWB__Status__c}</td>
+                                <td>{row.MVWB__Total_Sent__c}</td>
+                                <td>{row.MVWB__Total_Delivered__c}</td>
+                                <td>{row.MVWB__Total_Read__c}</td>
+                                <td>{row.MVWB__Total_Failed__c}</td>
                             </tr>
                         </template>
                     </tbody>
@@ -148,10 +148,10 @@
                                                     </div>
                                                     <div class="">
                                                         <h3 class="slds-text-heading_small">{group.Name}</h3>
-                                                        <p><strong>Members:</strong> {group.Count_of_Members__c}</p>
+                                                        <p><strong>Members:</strong> {group.MVWB__Count_of_Members__c}</p>
                                                         <p><strong>Object of Group Members: </strong>
-                                                            {group.Object_Name__c}</p>
-                                                        <p><strong>Description:</strong> {group.Description__c}</p>
+                                                            {group.MVWB__Object_Name__c}</p>
+                                                        <p><strong>Description:</strong> {group.MVWB__Description__c}</p>
                                                     </div>
                                                 </div>
                                             </div>
