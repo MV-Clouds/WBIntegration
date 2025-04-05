@@ -9,6 +9,8 @@ export default class FlowPreviewModel extends LightningElement {
     @track iframeSrc = '';
     @track cachedPreviewURLs = new Map(); // Store preview URLs for caching
     @track searchTerm = ''; // Stores search input
+    isSubmitDisabled = true;
+    
 
     connectedCallback() {
         this.fetchFlows();
@@ -19,17 +21,27 @@ export default class FlowPreviewModel extends LightningElement {
         getAllFlows()
             .then((data) => {
                 this.flows = data.map(flow => ({
-                    id: flow.Flow_Id__c,
-                    name: flow.Flow_Name__c,
+                    id: flow.MVWB__Flow_Id__c,
+                    name: flow.MVWB__Flow_Name__c,
                     date: this.formatDate(flow.LastModifiedDate),
                     isSelected: false
                 }));
+                if(data && data.length > 0){
+                    this.isSubmitDisabled = false;
+                }
                 this.filteredFlows = [...this.flows]; // Initialize search-filtered list
             })
             .catch(error => {
                 console.error('Error fetching flows:', error);
             });
     }
+
+    get flowDataAvailable(){
+        console.log(this.flow);
+        
+        return this.flows.length > 0;
+    }
+
 
     // Handle search input and filter flows
     handleSearch(event) {

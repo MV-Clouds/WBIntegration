@@ -1,3 +1,11 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 04-06-2025
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+
 <template>
     <section class="slds-modal slds-fade-in-open">
         <div class="slds-modal__container">
@@ -8,7 +16,13 @@
                 </lightning-button-icon>
             </header>
 
+
             <div class="slds-modal__content slds-p-around_medium slds-grid slds-gutters">
+                <template if:false={flowDataAvailable}>
+                    <h1 style="font-weight: bold;">No published flows found.</h1>
+                </template>
+                <template if:true={flowDataAvailable}>
+                
                 <!-- Left Section: Flow Selection -->
                 <div class="slds-col slds-size_1-of-3">
                     <lightning-input type="search" label="Search" class="slds-m-bottom_medium search-box"
@@ -43,11 +57,12 @@
                         <iframe src={iframeSrc} class="iframe-preview"></iframe>
                     </div>
                 </div>
+            </template>
             </div>
 
             <footer class="slds-modal__footer" style="display: flex; justify-content: flex-end;">
                 <lightning-button label="Cancel" onclick={handleClose} class="slds-m-right_small"></lightning-button>
-                <lightning-button variant="brand" label="Submit" onclick={handleSubmit}></lightning-button>
+                <lightning-button variant="brand" label="Submit" onclick={handleSubmit} disabled={isSubmitDisabled}></lightning-button>
             </footer>
         </div>
     </section>

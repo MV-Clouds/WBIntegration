@@ -2,7 +2,7 @@
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 04-05-2025
+  @last modified on  : 04-06-2025
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
@@ -22,7 +22,7 @@
                         <lightning-input variant="label-hidden" class="filter search-div" name="searchInput" type="search" placeholder="Search Name"
                             onchange={handleChange}></lightning-input>
                         <div class="icon" onclick={toggleFilterVisibility}>
-                            <img src="/resource/filterIcon" alt="filter">
+                            <img src="/resource/MVWB__filterIcon" alt="filter">
                         </div>
                         <div class={filterClass}>
                             <div class="custom-select">
@@ -102,13 +102,13 @@
                                     </td>
                                     <td class="tableData tablebtns" data-label="Actions">
                                         <button class="action-buttons">
-                                            <img src="/resource/previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
+                                            <img src="/resource/MVWB__previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
                                         </button>
                                         <button disabled={record.isButtonDisabled} class="action-buttons">
-                                            <img src="/resource/editIcon" class={record.cssClass} alt="edit" data-id={record.id} onclick={editTemplate} >
+                                            <img src="/resource/MVWB__editIcon" class={record.cssClass} alt="edit" data-id={record.id} onclick={editTemplate} >
                                         </button>
                                         <button class="action-buttons">
-                                            <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={record.id} onclick={deleteTemplate}>
+                                            <img src="/resource/MVWB__trashIcon" class="action trash" alt="delete" data-id={record.id} onclick={deleteTemplate}>
                                         </button>
                                     </td>
                                 </tr>

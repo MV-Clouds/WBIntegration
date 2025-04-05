@@ -2,7 +2,7 @@
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 03-05-2025
+  @last modified on  : 04-06-2025
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
@@ -244,7 +244,7 @@
                                     </div>
                                     <div class="templatePreview">
                                         <div class="slds-box slds-theme_default previewchild chat-bubble">
-                                            <img class="image" src="/resource/previewImage" alt="">
+                                            <img class="image" src="/resource/MVWB__previewImage" alt="">
                                             <div class="paratext">
                                                 <p class="hey">Hey there! Check out our fresh groceries now!</p>
                                                 <p class="code">Use code <b>HEALTH</b> to get additional 10% off on your entire
@@ -253,9 +253,9 @@
                                             </div>
                                         </div>
                                         <div class="codelink">
-                                            <p class="shoplink"> <img height="16px" width="16px" src="/resource/redirect"
+                                            <p class="shoplink"> <img height="16px" width="16px" src="/resource/MVWB__redirect"
                                                     alt=""> Shop now</p>
-                                            <p class="copycode"> <img height="16px" width="16px" src="/resource/copy"
+                                            <p class="copycode"> <img height="16px" width="16px" src="/resource/MVWB__copy"
                                                     alt=""> Copy code</p>
                                         </div>
                                     </div>
@@ -390,7 +390,7 @@
                                         <div class="chooseDoc">
                                             <div class="custom-upload-button" onclick={openModal}>
                                                 <label class="upload-label">
-                                                    <img src="/resource/uploadDocIcon" alt="Upload Icon" class="upload-icon" />
+                                                    <img src="/resource/MVWB__uploadDocIcon" alt="Upload Icon" class="upload-icon" />
                                                     <template if:true={NoFileSelected}>
                                                         <span>Choose Flow</span>
                                                     </template>
@@ -460,7 +460,7 @@
                                                         <p class="uploadlabel">Image</p>
                                                         <div class="custom-upload-button">
                                                             <label class="upload-label">
-                                                                <img src="/resource/uploadImgIcon" alt="Upload Icon"
+                                                                <img src="/resource/MVWB__uploadImgIcon" alt="Upload Icon"
                                                                     class="upload-icon" />
                                                                 <template if:true={NoFileSelected}>
                                                                     <span>Choose JPG or PNG file</span>
@@ -487,7 +487,7 @@
                                                         <p class="uploadlabel">Video</p>
                                                         <div class="custom-upload-button">
                                                             <label class="upload-label">
-                                                                <img src="/resource/uploadvideoIcon" alt="Upload Icon"
+                                                                <img src="/resource/MVWB__uploadvideoIcon" alt="Upload Icon"
                                                                     class="upload-icon" />
                                                                 <template if:true={NoFileSelected}>
                                                                     <span>Choose MP4 file</span>
@@ -513,7 +513,7 @@
                                                         <p class="uploadlabel">Document</p>
                                                         <div class="custom-upload-button">
                                                             <label class="upload-label">
-                                                                <img src="/resource/uploadDocIcon" alt="Upload Icon"
+                                                                <img src="/resource/MVWB__uploadDocIcon" alt="Upload Icon"
                                                                     class="upload-icon" />
                                                                 <template if:true={NoFileSelected}>
                                                                     <span>Choose PDF file</span>
@@ -641,7 +641,7 @@
                                         <div class="inner-rich">
                                             <div class="rich-icon">
                                                 <button class="toolbar-button" onclick={handleEmoji}>
-                                                    <img src="/resource/wbSmileIcon" class="custom-icon" />
+                                                    <img src="/resource/MVWB__wbSmileIcon" class="custom-icon" />
                                                 </button>
                                                 <template for:each={toolbarButtonsWithClasses} for:item="button">
                                                     <button key={button.title} class={button.classes}
