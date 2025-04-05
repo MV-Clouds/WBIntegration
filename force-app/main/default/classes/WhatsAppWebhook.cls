@@ -15,7 +15,7 @@ global without sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
-    public static List<AWS_Config__c> configList = [SELECT Id, AWS_Access_Key__c, AWS_Secret_Access_Key__c, S3_Bucket_Name__c, S3_Region_Name__c, CreatedDate, LastModifiedDate FROM AWS_Config__c WITH SECURITY_ENFORCED LIMIT 1];
+    public static List<AWS_Config__c> configList = [SELECT Id, AWS_Access_Key__c, AWS_Secret_Access_Key__c, S3_Bucket_Name__c, S3_Region_Name__c, CreatedDate, LastModifiedDate FROM AWS_Config__c LIMIT 1];
     public static AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;
 
     @HttpGet // GET
