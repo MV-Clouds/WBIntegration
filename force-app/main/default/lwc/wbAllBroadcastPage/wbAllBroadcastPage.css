@@ -7,19 +7,19 @@
     background-color: #ffffff;
     padding-top: 1rem;
     padding-bottom: 1rem;
-    height: calc(100% + 1.5rem);
-    margin-top: -0.8rem;
-    width: calc(100% + 1.5rem);
-    margin-left: -0.8rem;
+    height: 100%;
+    width: 100%;
     overflow: hidden;
     background-image: url('/resource/MVWB__wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
+    border-radius : 5px;
 }
 
 .container {
-    height: calc(100% - 10rem);
+    height: calc(100% - 9rem);
     overflow: scroll;
+    scrollbar-width: none !important;
 }
 
 .filterparent {
@@ -125,13 +125,6 @@
     border-radius: 5px;
     overflow: hidden;
     display: block;
-}
-
-/* Custom Table Styling */
-.table-container {
-    border-radius: 0.4rem; 
-    overflow: scroll !important; 
-    scrollbar-width: none !important;
 }
 
 .table {
