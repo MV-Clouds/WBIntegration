@@ -4,6 +4,7 @@ import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getB
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
+import { subscribe, unsubscribe } from 'lightning/empApi';
 
 export default class WbAllBroadcastPage extends LightningElement {
     @track data = [];
@@ -26,6 +27,10 @@ export default class WbAllBroadcastPage extends LightningElement {
     popUpSecondpage = false;
     popUpLastPage = false;
     popupHeader = 'Choose Broadcast Groups';
+
+
+    subscription = {};
+    channelName = '/event/MVWB__BroadcastUpdateEvent__e';
 
     get showNoRecordsMessage() {
         return this.filteredData.length === 0;
@@ -107,9 +112,13 @@ export default class WbAllBroadcastPage extends LightningElement {
     }
     
     connectedCallback() {
-
         this.loadBroadcastGroups();
+        this.subscribeToPlatformEvent();
         this.loadAllTemplates(); // Load templates on component initialization
+    }
+
+    disconnectedCallback(){
+        this.unsubscribeFromPlatformEvent();
     }
 
     // Load all templates once during initialization
@@ -156,6 +165,29 @@ export default class WbAllBroadcastPage extends LightningElement {
         
     }
 
+    subscribeToPlatformEvent() {
+        subscribe(this.channelName, -1, (message) => {
+            
+            if(message.data.payload.MVWB__IsChanged__c === true){
+                this.loadBroadcastGroups();
+            }            
+        })
+        .then((response) => {
+            this.subscription = response;
+        })
+        .catch(() => {
+            this.showToast('Error', 'Failed to subscribe to platform event.', 'error');
+        });
+    }
+
+    // Method to unsubscribe from the Platform Event
+    unsubscribeFromPlatformEvent() {
+        if (this.subscription) {
+            unsubscribe(this.subscription, () => {
+            });
+        }
+    }
+
     loadBroadcastGroups() {
         this.isLoading = true;
         getBroadcastRecs()
@@ -163,12 +195,12 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.data = result.map((item, index) => ({
                     ...item,
                     index : index + 1,
-                }));
+                }));                
 
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })
-            .catch(error => {
+            .catch(() => {
                 this.showToast('Error', 'Failed to load broadcast groups', 'error');
             })
             .finally(() => {
@@ -388,7 +420,7 @@ export default class WbAllBroadcastPage extends LightningElement {
             .then(result => {
                 if(result == 'Success'){
                     this.showToast('Success', 'Broadcast sent successfully', 'success');
-                    this.loadBroadcastGroups();
+                    this.handleCloseOnPopup();
                 } else {
                     this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
                 }
@@ -416,7 +448,6 @@ export default class WbAllBroadcastPage extends LightningElement {
             .then(result => {
                 if(result == 'Success'){
                     this.showToast('Success', 'Broadcast sent successfully', 'success');
-                    this.loadBroadcastGroups();
                     this.handleCloseOnPopup();
                 } else {
                     this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');

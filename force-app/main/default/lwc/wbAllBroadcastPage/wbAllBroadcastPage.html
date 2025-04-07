@@ -14,7 +14,7 @@
         <div class="filterparent">
             <div class="filterdiv">
                 <lightning-input variant="label-hidden" class="filter search-div" name="searchInput" type="search"
-                    placeholder="Search by Group Name" onchange={handleSearch}></lightning-input>
+                    placeholder="Search by Name..." onchange={handleSearch}></lightning-input>
             </div>
             <div class="btns">
                 <button class="custom-button cus-btns" onclick={newBroadcast}>
@@ -127,8 +127,8 @@
                                 <div class="slds-m-bottom_medium">
                                     <div class="slds-grid slds-gutters">
                                         <div class="slds-col slds-size_8-of-12">
-                                            <lightning-input type="search" label="Search by Name" variant="label-hidden"
-                                                placeholder="Enter broadcast name..." onchange={handleSearchPopup}>
+                                            <lightning-input type="search" variant="label-hidden"
+                                                placeholder="Search by Name..." onchange={handleSearchPopup}>
                                             </lightning-input>
                                         </div>
                                     </div>

@@ -14,12 +14,14 @@
     background-repeat: no-repeat;
     background-size: cover;
     border-radius : 5px;
+    display: flex;
+    flex-direction: column;
 }
 
 .container {
-    height: calc(100% - 9rem);
     overflow: scroll;
     scrollbar-width: none !important;
+    flex-grow: 1;
 }
 
 .filterparent {
@@ -183,7 +185,6 @@
     display: flex;
     align-items: center;
     font-size: 14px;
-    padding-bottom: 16px;
     justify-content: center;
 }
 
