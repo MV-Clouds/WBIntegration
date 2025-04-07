@@ -87,7 +87,14 @@
                 <!-- No Records Message -->
                 <template if:true={showNoRecordsMessage}>
                     <div class="no-records-message">
-                        No records to display.
+                        <div class="empty-state">
+                            <div class="empty-state__content">
+                                <div class="empty-state__icon">
+                                    <img src="/resource/MVWB__emptyState" alt="" draggable="false">
+                                </div>
+                                <div class="empty-state__message">No Data Available to Show.</div>
+                            </div>
+                        </div>
                     </div>
                 </template>
     
