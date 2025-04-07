@@ -172,7 +172,7 @@
                             <lightning-combobox
                                 name="Object"
                                 label="Object"
-                                value={value}
+                                value={selectedObject}
                                 placeholder="Select Object"
                                 options={allObjects}
                                 onchange={handleObjectChange}>
@@ -185,58 +185,73 @@
                                 <thead>
                                     <tr class="tablerow">
                                         <th class="tableHead"><div class="slds-truncate">Object Field</div></th>
+                                        <th class="tableHead" style="width: 2rem;"></th> <!-- Mapping Icon Header -->
                                         <th class="tableHead"><div class="slds-truncate">Flow Field</div></th>
+                                        <th class="tableHead" style="width: 2rem;"></th> <!-- Delete Icon Column -->
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <template for:each={chatWindowRows} for:item="row">
                                         <tr key={row.id} class="tablerow">
-                                            <td colspan="2" class="tableData">
-                                                <div class="slds-grid slds-gutters slds-align_absolute-center slds-p-around_x-small">
-
-                                                    <!-- Object Field -->
-                                                    <div class="slds-col slds-size_1-of-2">
-                                                        <lightning-combobox
-                                                            variant="label-hidden"
-                                                            class="slds-size_full"
-                                                            data-row-id={row.id}
-                                                            value={row.selectedNameField}
-                                                            options={objectFields}
-                                                            onchange={handleNameFieldChange}
-                                                            placeholder="Select Name Field"
-                                                            disabled={row.isNameFieldDisabled}>
-                                                        </lightning-combobox>
-                                                    </div>
-                                
-                                                    <!-- Mapping Icon -->
-                                                    <div class="slds-col slds-align_absolute-center slds-p-horizontal_small" style="width: 2rem;">
-                                                        <lightning-icon
-                                                            icon-name="utility:arrow_left"
-                                                            alternative-text="Maps to"
-                                                            size="x-small"
-                                                            class="slds-icon-text-default">
-                                                        </lightning-icon>
-                                                    </div>
-
-                                                    <!-- Flow Field -->
-                                                    <div class="slds-col slds-size_1-of-2">
-                                                        <lightning-combobox
-                                                            variant="label-hidden"
-                                                            class="slds-size_full"
-                                                            data-row-id={row.id}
-                                                            value={row.selectedObject}
-                                                            options={row.objectOptions}
-                                                            onchange={handleObjectChangeForChat}
-                                                            placeholder="Select Object">
-                                                        </lightning-combobox>
-                                                    </div>
-                                                </div>
+                                            <!-- Object Field -->
+                                            <td class="tableData">
+                                                <lightning-combobox
+                                                    variant="label-hidden"
+                                                    class="slds-size_full"
+                                                    data-row-id={row.id}
+                                                    value={row.selectedObjectField}
+                                                    options={objectFields}
+                                                    onchange={handleObjectFieldChange}
+                                                    placeholder="Select Object Field"
+                                                    disabled={row.isObjectFieldDisabled}>
+                                                </lightning-combobox>
+                                            </td>
+                        
+                                            <!-- Mapping Icon -->
+                                            <td class="tableData slds-text-align_center">
+                                                <lightning-icon
+                                                    icon-name="utility:arrow_left"
+                                                    alternative-text="Maps to"
+                                                    size="x-small"
+                                                    class="slds-icon-text-default">
+                                                </lightning-icon>
+                                            </td>
+                        
+                                            <!-- Flow Field -->
+                                            <td class="tableData">
+                                                <lightning-combobox
+                                                    variant="label-hidden"
+                                                    class="slds-size_full"
+                                                    data-row-id={row.id}
+                                                    value={row.selectedFlowField}
+                                                    options={row.filteredFlowFields}
+                                                    onchange={handleObjectChangeForChat}
+                                                    placeholder="Select Flow Field">
+                                                </lightning-combobox>
+                                            </td>
+                        
+                                            <!-- Delete Icon -->
+                                            <td class="tableData slds-text-align_center">
+                                                <lightning-button-icon
+                                                    icon-name="utility:delete"
+                                                    alternative-text="Delete"
+                                                    title="Delete"
+                                                    onclick={handleDeleteRow}
+                                                    data-row-id={row.id}
+                                                    disabled={row.isRequired}>
+                                                </lightning-button-icon>
                                             </td>
                                         </tr>
                                     </template>
                                 </tbody>                                
                             </table>
                         </div>
+                        <lightning-button 
+                            label="Add Row" 
+                            icon-name="utility:add" 
+                            onclick={addMappingRow} 
+                            class="slds-m-around_medium">
+                        </lightning-button>
                     </div>
                 </lightning-layout-item>
             </lightning-layout>

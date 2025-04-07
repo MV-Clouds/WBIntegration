@@ -443,8 +443,7 @@ public with sharing class AutomationConfigController {
     @AuraEnabled
     public static List<Map<String, String>> getObjectFields(String objectName) {
         try {
-            // List<Map<String, String>> phoneFields = new List<Map<String, String>>();
-            // List<Map<String, String>> textFields = new List<Map<String, String>>();
+
             List<Map<String, String>> objectFields = new List<Map<String, String>>();
             
             Schema.DescribeSObjectResult objectDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe();
@@ -457,26 +456,10 @@ public with sharing class AutomationConfigController {
                     Map<String, String> objectFieldInfo = new Map<String, String>();
                     objectFieldInfo.put('label', fieldDescribe.getLabel());
                     objectFieldInfo.put('value', fieldDescribe.getName());
+                    objectFieldInfo.put('type', String.valueOf(fieldDescribe.getType()));
                     objectFields.add(objectFieldInfo);
                 }
-
-                // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
-                // if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isCreateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
-                //     Map<String, String> textFieldInfo = new Map<String, String>();
-                //     textFieldInfo.put('label', fieldDescribe.getLabel());
-                //     textFieldInfo.put('value', fieldDescribe.getName());
-                //     textFields.add(textFieldInfo);
-                // }
             }
-
-            // Create the final response structure
-            // Map<String, Object> responseMap = new Map<String, Object>();
-            // responseMap.put('phoneFields', phoneFields);
-            // responseMap.put('textFields', textFields);
-            
-            // // Wrap the response map in a list to match the desired format
-            // List<Map<String, Object>> finalResponse = new List<Map<String, Object>>();
-            // finalResponse.add(responseMap);
             
             return objectFields;
         } catch (Exception e) {
@@ -486,14 +469,43 @@ public with sharing class AutomationConfigController {
     }
 
     @AuraEnabled
-    public static List<String> getFlowFields(String chatRecordId) {
-        MVWB__Chat__c chat = [SELECT Flow_Response_JSON__c FROM MVWB__Chat__c WHERE Id = :chatRecordId LIMIT 1];
-        
-        List<String> flowKeys = new List<String>();
-        if (String.isNotBlank(chat.Flow_Response_JSON__c)) {
-            Map<String, Object> flowData = (Map<String, Object>) JSON.deserializeUntyped(chat.Flow_Response_JSON__c);
-            flowKeys.addAll(flowData.keySet());
+    public static String getFlowIdFromAutomation(Id automationId) {
+        // Step 1: Query the template related to the automation
+        Automation__c automation = [
+            SELECT WB_Template__r.Button_Body__c 
+            FROM Automation__c 
+            WHERE Id = :automationId 
+            LIMIT 1
+        ];
+    
+        String buttonBodyJson = automation.WB_Template__r.Button_Body__c;
+        if (String.isBlank(buttonBodyJson)) { return null; }
+    
+        try {
+            // Step 2: Parse the JSON string into a list of objects
+            List<Object> buttonList = (List<Object>) JSON.deserializeUntyped(buttonBodyJson);
+    
+            // Step 3: Loop through and find the flow_id
+            for (Object itemObj : buttonList) {
+                Map<String, Object> item = (Map<String, Object>) itemObj;
+                if ((String)item.get('type') == 'FLOW' && item.containsKey('flow_id')) {
+                    return (String)item.get('flow_id');
+                }
+            }
+        } catch (Exception ex) {
+            System.debug('Error parsing button body JSON: ' + ex.getMessage());
         }
-        return flowKeys;
+    
+        return null; // if no FLOW type or error
+    }
+
+    @AuraEnabled
+    public static String getFlowFields(String flowId) {
+        Flow__c flow =  [SELECT Id, Flow_JSON__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+
+        if (flow == null || String.isBlank(flow.Flow_JSON__c)) {
+            return null; // or handle the error as needed
+        }
+        return flow.Flow_JSON__c;
     }
 }

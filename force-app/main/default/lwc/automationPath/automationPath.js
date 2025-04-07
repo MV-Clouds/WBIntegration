@@ -7,7 +7,9 @@ import getAutomationPathsByAutomationId from '@salesforce/apex/AutomationConfigC
 import getAllObjects from '@salesforce/apex/AutomationConfigController.getAllObjects';
 import getRequiredFields from '@salesforce/apex/AutomationConfigController.getRequiredFields';
 import getObjectFields from '@salesforce/apex/AutomationConfigController.getObjectFields';
+import getFlowIdFromAutomation from '@salesforce/apex/AutomationConfigController.getFlowIdFromAutomation';
 import getFlowFields from '@salesforce/apex/AutomationConfigController.getFlowFields';
+import { createRecord } from 'lightning/uiRecordApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
 
@@ -22,6 +24,8 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track isFlowTemplate = false;
     @track isScheduled = false;
     @track selectedObject = '';
+    @track FlowId = '';
+    @track isFlowAutomationCreated = false;
 
     // --- Data Properties ---
     @track automation = {};
@@ -32,115 +36,176 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track allObjects = [];
     @track requiredFields = [];
     @track objectFields = [];
-    // @track chatWindowRows = [];
+    @track flowFields = [];
+    @track chatWindowRows = [];
     @track durationUnits = [
         { label: 'Minutes', value: 'minutes' },
         { label: 'Hours', value: 'hours' },
         { label: 'Days', value: 'days' }
     ];
-    @track chatWindowRows = [
-        {
-            id: '1',
-            selectedObject: 'First Name',
-            objectOptions: [
-                { label: 'First Name', value: 'First Name' },
-                { label: 'Last Name', value: 'Last Name' },
-                { label: 'Company Name', value: 'Company Name' }
-            ],
-            selectedNameField: 'Name',
-            nameFieldOptions: [
-                { label: 'Name', value: 'Name' },
-                { label: 'Company', value: 'Company' }
-            ],
-            isNameFieldDisabled: false
-        },
-        {
-            id: '2',
-            selectedObject: 'Company Name',
-            objectOptions: [
-                { label: 'First Name', value: 'First Name' },
-                { label: 'Last Name', value: 'Last Name' },
-                { label: 'Company Name', value: 'Company Name' }
-            ],
-            selectedNameField: 'Name',
-            nameFieldOptions: [
-                { label: 'Name', value: 'Name' },
-                { label: 'Company', value: 'Company' }
-            ],
-            isNameFieldDisabled: false
-        }
-    ];
+    
+    typeCompatibilityMap = {
+        STRING: ["TextInput"],
+        PICKLIST: ["Dropdown", "RadioGroup"],
+        BOOLEAN: ["OptIn", "Checkbox"],
+        TEXTAREA: ["TextArea"],
+        MULTIPICKLIST: ["CheckboxGroup", "ChipSelector"]
+    };
+
 
     connectedCallback() {
-        this.getCurrentPageReference();
-    }
-
-    getCurrentPageReference() {
         console.log('Automation Path Loaded with Record ID:', this.recordId);
         console.log('Automation Path Loaded with Template Type:', this.templateType);
+    
+        if (!this.recordId) return;
+    
+        this.isFlowTemplate = this.templateType === 'Flow';
+        this.selectedAction = this.isFlowTemplate ? 'create' : 'whatsapp';
 
-        if (this.recordId) {
-            this.isFlowTemplate = this.templateType === 'Flow';
-            if (this.isFlowTemplate) {
-                this.selectedAction = 'create';
-            } else {
-                this.selectedAction = 'whatsapp';
+        console.log('isFlowTemplate:', this.isFlowTemplate);
+    
+        this.isFlowTemplate
+            ? (this.loadObjects(), this.loadRequiredFields(), this.setFlowId())
+            : (this.fetchTemplates(), this.loadEmailTemplates());
+    
+        this.fetchAutomationName();
+        this.fetchAutomationPaths();
+    }
+
+    loadObjects() {
+        getAllObjects()
+            .then(data => {
+                // this.allObjects = data.map(obj => ({ label: obj, value: obj }));
+                this.objects = data.sort((a, b) => a.label.localeCompare(b.label));
+                this.allObjects = data.map(obj => ({
+                    label: obj.label,
+                    value: obj.value
+                }));
+            })
+            .catch(error => console.error('Error fetching objects:', error));
+
+        // console.log('this.allObjects =', JSON.stringify(this.allObjects));
+    }
+
+    loadRequiredFields(savedFieldValues = {}) {
+        // if (this.isFlowAutomationCreated) {
+        //     console.log('Flow automation already created, skipping required fields loading.');
+        //     return;
+        // }
+        try {
+            this.isLoading = true;
+            if (!this.selectedObject) {
+                console.log('No object selected');
+                return;
             }
-            console.log('this.isFlowTemplate :::', this.isFlowTemplate);
-            this.fetchAutomationName();
-            this.fetchTemplates();
-            this.loadEmailTemplates();
-            this.fetchAutomationPaths();
-            this.loadObjects();
-            this.loadRequiredFields();
-            // this.loadFlowFields();
+            getRequiredFields({ objectName: this.selectedObject })
+                .then(data => {
+                    const excludedFields = ['OwnerId', 'IsConverted', 'IsUnreadByOwner', 'CreatedDate', 'CreatedById', 'LastModifiedDate', 'LastModifiedById', 'SystemModstamp', 'LastViewedDate', 'LastReferencedDate'];
+                    this.requiredFields = data[0]?.requiredFields
+                        .filter(field => !excludedFields.includes(field.name))
+                        .map(field => ({
+                            apiName: field.name,
+                            label: field.label,
+                            type: this.capitalizeFirstLetter(field.type),
+                            value: field.type === 'BOOLEAN' 
+                                    ? (savedFieldValues[field.name] !== undefined ? savedFieldValues[field.name] : false)
+                                    : field.type === 'DATE' 
+                                        ? (savedFieldValues[field.name] || field.value || new Date().toISOString().split('T')[0])
+                                        : field.type === 'DATETIME' 
+                                            ? (savedFieldValues[field.name] || field.value || new Date().toISOString())
+                                            : field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY'
+                                                ? (savedFieldValues[field.name] || field.value || 0) 
+                                                : (savedFieldValues[field.name] || field.value || ''),
+                            picklistValues: field?.picklistValues,
+                            relatedObject: field?.relatedObject,
+                            relatedRecordName: field?.relatedRecordName,
+                            isString: field.type === 'STRING',
+                            isNumber: field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY',
+                            isDate: field.type === 'DATE',
+                            isDateTime: field.type === 'DATETIME',
+                            isBoolean: field.type === 'BOOLEAN',
+                            isPicklist: field.type === 'PICKLIST',
+                            isReference: field.type === 'REFERENCE',
+                            isTextArea: field.type === 'TEXTAREA'
+                    }));
+                    // console.log('this.requiredFields:', JSON.stringify(this.requiredFields));
+
+                    this.chatWindowRows = this.requiredFields.map((field, index) => ({
+                        id: `${field.apiName}-${index}`,
+                        selectedObject: this.selectedObject,
+                        selectedObjectField: field.apiName,
+                        selectedObjectFieldType: field.type,
+                        filteredFlowFields: this.getFilteredFlowFields(field.type),
+                        isObjectFieldDisabled: true,
+                        isRequired: true
+                    }));
+                    // console.log('this.chatWindowRows:', JSON.stringify(this.chatWindowRows));
+                })
+                .catch(error => {
+                    console.error('Error fetching required fields:', error);
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                });
+        } catch (error) {
+            console.error('Exception in loading required fields : ' , error);
         }
     }
 
-    fetchAutomationName() {
-        getAutomationById({ recordId: this.recordId })
-            .then(result => {
-                if (result) {
-                    this.automation = {
-                        id: result.Id,
-                        name: result.Name,
-                        description: result.Description__c,
-                        templateName: result.WB_Template__r?.MVWB__Template_Name__c || 'N/A',
-                        templateType: result.WB_Template__r?.MVWB__Template_Type__c || ''
-                    };
-
-                    console.log('this.automation =', JSON.stringify(this.automation));
-                    if (result.WB_Template__r?.Button_Body__c) {  //Change to MVWB__Button_Body__c
-                        try {
-                            const buttons = JSON.parse(result.WB_Template__r.Button_Body__c);
-                            console.log('BUTTONS =', buttons);
-                            this.quickReplyButtons = buttons
-                            .filter(button => button.type === "QUICK_REPLY")
-                            .map(button => ({
-                                id: button.text,
-                                label: button.text
-                            }));
-
-                            this.quickReplyButtons.forEach(button => {
-                                this.automationPaths[button.id] = null;
-                            });
-                        } catch (error) {
-                            console.error("Error parsing MVWB__Button_Body__c:", error);
-                        }
-                    }
-                    console.log('this.quickreplybuttons:', JSON.stringify(this.quickReplyButtons));
-                }
+    setFlowId() {
+        getFlowIdFromAutomation({ automationId: this.recordId })
+            .then((data) => {
+                this.FlowId = data;
+                console.log('Flow Id:', this.FlowId);
+                this.loadFlowFields();
             })
-            .catch(error => {
-                console.error('Error fetching automation:', error);
+            .catch((error) => {
+                console.error('Error setting flow Id:', error);
             });
+    }
+
+    loadFlowFields() {
+        getFlowFields({ flowId: this.FlowId })
+            .then((jsonData) => {
+                jsonData = JSON.parse(jsonData);
+                const data = this.extractFlowFieldTypes(jsonData.screens);
+                const keys = Object.keys(data);
+                this.flowFields = keys.map(key => ({
+                    label: key,
+                    value: key,
+                    type: data[key]
+                }));
+                // console.log('Formatted combobox options:', JSON.stringify(this.flowFields));
+            })
+            .catch((error) => {
+                console.error('Error fetching flow JSON:', error);
+            });
+    }
+
+    extractFlowFieldTypes(screens) {
+        const flowFieldTypes = {};
+    
+        screens.forEach(screen => {
+            const children = screen.layout?.children || [];
+            children.forEach(child => {
+                if (child.type === 'Form') {
+                    child.children?.forEach(field => {
+                        if (field.name) {
+                            flowFieldTypes[field.name] = field.type;
+                        }
+                    });
+                }
+            });
+        });
+    
+        return flowFieldTypes;
     }
 
     fetchTemplates() {
         getTemplates()
             .then((result) => {
                 if (result) {
-                    console.log("Templates Result:", JSON.stringify(result));
+                    // console.log("Templates Result:", JSON.stringify(result));
                     this.allWhatsAppTemplates = result.map(template => ({
                         Id: template.Id,
                         Name: template.MVWB__Template_Name__c
@@ -163,6 +228,46 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             });
     }
 
+    fetchAutomationName() {
+        getAutomationById({ recordId: this.recordId })
+            .then(result => {
+                if (result) {
+                    this.automation = {
+                        id: result.Id,
+                        name: result.Name,
+                        description: result.Description__c,
+                        templateName: result.WB_Template__r?.MVWB__Template_Name__c || 'N/A',
+                        templateType: result.WB_Template__r?.MVWB__Template_Type__c || ''
+                    };
+
+                    console.log('this.automation =', JSON.stringify(this.automation));
+                    if (result.WB_Template__r?.Button_Body__c) {  //Change to MVWB__Button_Body__c
+                        try {
+                            const buttons = JSON.parse(result.WB_Template__r.Button_Body__c);
+                            // console.log('BUTTONS =', buttons);
+                            this.quickReplyButtons = buttons
+                            .filter(button => button.type === "QUICK_REPLY")
+                            .map(button => ({
+                                id: button.text,
+                                label: button.text
+                            }));
+
+                            this.quickReplyButtons.forEach(button => {
+                                this.automationPaths[button.id] = null;
+                            });
+
+                        } catch (error) {
+                            console.error("Error parsing MVWB__Button_Body__c:", error);
+                        }
+                    }
+                    // console.log('this.quickreplybuttons:', JSON.stringify(this.quickReplyButtons));
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching automation:', error);
+            });
+    }
+
     fetchAutomationPaths() {
         if (!this.recordId) {
             return;
@@ -172,23 +277,69 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             .then((result) => {
                 console.log('Fetched Automation Paths:', JSON.stringify(result));
     
-                // Convert the fetched records into a structured object
-                const automationPathsMap = {};
-                result.forEach(path => {
-                    automationPathsMap[path.Button_Value__c] = {
-                        templateId: path.Action_Template__c || path.Action_Email_Template__c || null,
-                        templateType: path.Action_Type__c === "Send Message" ? "whatsapp" : "email"
-                    };
-                });
+                if (!this.isFlowTemplate) {
+
+                    // Convert the fetched records into a structured object
+                    const automationPathsMap = {};
+                    result.forEach(path => {
+                        automationPathsMap[path.Button_Value__c] = {
+                            templateId: path.Action_Template__c || path.Action_Email_Template__c || null,
+                            templateType: path.Action_Type__c === "Send Message" ? "whatsapp" : "email"
+                        };
+                    });
+        
+                    // Ensure all quick reply buttons have an entry in automationPaths
+                    this.quickReplyButtons.forEach(button => {
+                        if (!automationPathsMap[button.id]) {
+                            automationPathsMap[button.id] = null;
+                        }
+                    });
+        
+                    this.automationPaths = automationPathsMap;
     
-                // Ensure all quick reply buttons have an entry in automationPaths
-                this.quickReplyButtons.forEach(button => {
-                    if (!automationPathsMap[button.id]) {
-                        automationPathsMap[button.id] = null;
+                    this.selectedTemplateButtonId = this.quickReplyButtons[0]?.id || '';
+                    this.selectedTemplateId = this.automationPaths[this.selectedTemplateButtonId]?.templateId || null;
+                    this.selectedAction = this.automationPaths[this.selectedTemplateButtonId]?.templateType || 'whatsapp';
+                } else {
+                    const flowPath = result.find(path => path.Action_Type__c === 'Create/Edit a Record');
+
+                    if (flowPath) {
+                        this.isFlowAutomationCreated = true;
+                        console.log('Flow Path:', JSON.stringify(flowPath));
+                        this.selectedObject = flowPath.Object_Name__c || '';
+                        console.log('this.selectedObject :', this.selectedObject);
+                        
+                        this.loadFlowFields();
+                        console.log('After JSON DATA');
+                        
+                        this.fetchFieldsForObject(this.selectedObject);
+
+                        this.FlowId = flowPath.WB_Flow__c || '';
+
+                        try {
+                            const fieldMapping = JSON.parse(flowPath.Field_Mapping__c || '{}');
+                            console.log('this.objectFields :', JSON.stringify(this.objectFields));
+                            // Convert to chatWindowRows format if needed
+                            this.chatWindowRows = Object.entries(fieldMapping).map(([flowField, objectField], index) => ({
+                                id: `row-${index}`,
+                                selectedObject: this.selectedObject,
+                                selectedObjectField: objectField,
+                                filteredFlowFields: this.getFilteredFlowFields(this.objectFields.find(field => field.label === objectField)?.type || ''), //filteredFlowFields: this.getFilteredFlowFields(fieldType),
+                                selectedFlowField: flowField
+                            }));
+                            console.log('CHAT WINDOW ROWS:', JSON.stringify(this.chatWindowRows));
+                        } catch (e) {
+                            console.error('Error parsing field mapping:', e);
+                            this.chatWindowRows = [];
+                        }
+
+                    } else {
+                        // No existing flow automation path found
+                        this.selectedObject = '';
+                        this.FlowId = '';
+                        this.chatWindowRows = [];
                     }
-                });
-    
-                this.automationPaths = automationPathsMap;
+                }
             })
             .catch((error) => {
                 console.error('Error fetching automation paths:', error);
@@ -196,6 +347,36 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             });
     }
 
+    getFilteredFlowFields(objectFieldType) {
+        objectFieldType = objectFieldType.toUpperCase();
+        console.log('Called with objectFieldType:', objectFieldType);
+        const compatibleTypes = (this.typeCompatibilityMap[objectFieldType] || []).map(t => t.toUpperCase());
+        // console.log('Compatible Types:', JSON.stringify(compatibleTypes));
+        // console.log('All Flow Fields:', JSON.stringify(this.flowFields, null, 2));
+        console.log('this.flowFields ::: ', JSON.stringify(this.flowFields));
+        
+        return this.flowFields
+            .filter(field => {
+                const match = compatibleTypes.includes(field.type?.toUpperCase());
+                // console.log(`Checking field: ${field.label}, type: ${field.type}, match: ${match}`);
+                return match;
+            })
+            .map(field => ({ label: field.label, value: field.value }));
+    }
+
+    fetchFieldsForObject(objectName) {
+        try {
+            console.log('Fetching fields for object:', objectName);
+            getObjectFields({ objectName: objectName })
+            .then((result) => {
+                console.log('fetchFieldsForObjects after apex:- ',JSON.stringify(result))
+                this.objectFields = result;
+            });
+            console.log('this.objectFields fetchFieldsForObject:- ', JSON.stringify(this.objectFields));
+        } catch (error) {
+            console.error('Error fetching fields:', error);
+        }
+    }
 
     // --- Getters for Dynamic UI ---
 
@@ -211,9 +392,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     get isWhatsAppView() {
         return this.selectedAction === 'whatsapp';
     }
-    get isCreateView() {
-        return this.selectedAction === 'create';
-    }
+
     get isEmailView() {
         return this.selectedAction === 'email';
     }
@@ -334,44 +513,81 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     handleSave() {
-        const allButtonsHaveTemplates = Object.values(this.automationPaths).every(value => value !== null);
-        
-        if (!allButtonsHaveTemplates) {
-            console.error('Error: All buttons must have a selected template before saving.');
-            alert('Please select a template for all buttons before saving.');
-            return;
-        }
-    
-        const automationPathRecords = Object.entries(this.automationPaths).map(([button, { templateId, templateType }]) => {
-            let actionType = "Send Email";
-            let actionTemplate = null;
-            let actionEmailTemplate = null;
-    
-            if (templateType === "whatsapp") {
-                actionType = "Send Message";
-                actionTemplate = templateId;
-            } else {
-                actionEmailTemplate = templateId;
+        if (!this.isFlowTemplate) {
+
+            const allButtonsHaveTemplates = Object.values(this.automationPaths).every(value => value !== null);
+            
+            if (!allButtonsHaveTemplates) {
+                console.error('Error: All buttons must have a selected template before saving.');
+                alert('Please select a template for all buttons before saving.');
+                return;
             }
-    
-            return {
-                Automation__c: this.recordId,
-                Button_Value__c: button,
-                Action_Type__c: actionType,
-                Action_Template__c: actionTemplate,
-                Action_Email_Template__c: actionEmailTemplate
-            };
-        });
-    
-        console.log('Saving Automation Paths:', JSON.stringify(automationPathRecords));
-    
-        saveAutomationPaths({ automationPaths: automationPathRecords })
-            .then((result) => {
-                this.showToast('Success', `Automation Paths saved successfully.`, 'success');
-            })
-            .catch((error) => {
-                this.showToast('Error', `Failed to save automation paths.`, 'error');
+        
+            const automationPathRecords = Object.entries(this.automationPaths).map(([button, { templateId, templateType }]) => {
+                let actionType = "Send Email";
+                let actionTemplate = null;
+                let actionEmailTemplate = null;
+        
+                if (templateType === "whatsapp") {
+                    actionType = "Send Message";
+                    actionTemplate = templateId;
+                } else {
+                    actionEmailTemplate = templateId;
+                }
+        
+                return {
+                    Automation__c: this.recordId,
+                    Button_Value__c: button,
+                    Action_Type__c: actionType,
+                    Action_Template__c: actionTemplate,
+                    Action_Email_Template__c: actionEmailTemplate
+                };
             });
+        
+            console.log('Saving Automation Paths:', JSON.stringify(automationPathRecords));
+        
+            saveAutomationPaths({ automationPaths: automationPathRecords })
+                .then((result) => {
+                    this.showToast('Success', `Automation Paths saved successfully.`, 'success');
+                })
+                .catch((error) => {
+                    this.showToast('Error', `Failed to save automation paths.`, 'error');
+                });
+        } else {
+            const fields = {};
+
+            if (!this.selectedObject) {
+                this.showToast('Error', 'Please select an object.', 'error');
+                return;
+            }
+
+            fields.Automation__c = this.recordId;
+            fields.Action_Type__c = 'Create/Edit a Record';
+            // 1. Object Name
+            fields.Object_Name__c = this.selectedObject;
+
+            // 2. Field Mapping
+            const mapping = {};
+            this.chatWindowRows.forEach(row => {
+                if (row.selectedFlowField && row.selectedObjectField) {
+                    mapping[row.selectedFlowField] = row.selectedObjectField;
+                }
+            });
+
+            fields.Field_Mapping__c = JSON.stringify(mapping);
+            fields.WB_Flow__c = this.FlowId;
+
+            console.log('Fields to save:', JSON.stringify(fields));
+            const recordInput = { apiName: 'Automation_Path__c', fields };
+
+            createRecord(recordInput)
+                .then(result => {
+                    this.showToast('Success', 'Record saved successfully', 'success');
+                })
+                .catch(error => {
+                    this.showToast('Error', 'Error saving record', 'error');
+                });
+        }
     }
 
     handleObjectChange(event) {
@@ -387,123 +603,51 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         }
     }
 
-    loadObjects() {
-        getAllObjects()
-            .then(data => {
-                // this.allObjects = data.map(obj => ({ label: obj, value: obj }));
-                this.objects = data.sort((a, b) => a.label.localeCompare(b.label));
-                this.allObjects = data.map(obj => ({
-                    label: obj.label,
-                    value: obj.value
-                }));
-                console.log('this.allObjects:', JSON.stringify(this.allObjects));
-            })
-            .catch(error => console.error('Error fetching objects:', error));
-
-        console.log('this.allObjects =', JSON.stringify(this.allObjects));
+    addMappingRow() {
+        const newRow = {
+            id: `row-${Date.now()}`,
+            selectedObject: this.selectedObject,
+            selectedObjectField: '',
+            selectedObjectFieldType: '',
+            isObjectFieldDisabled: false,
+            isRequired: false
+        };
+        this.chatWindowRows = [...this.chatWindowRows, newRow];
     }
 
-    loadRequiredFields(savedFieldValues = {}) {
-        try {
-            this.isLoading = true;
-            if (!this.selectedObject) {
-                console.log('No object selected');
-                return;
-            }
-            getRequiredFields({ objectName: this.selectedObject })
-                .then(data => {
-                    // this.textFields = data[0]?.textFields;
-
-                    // this.phoneFields = data[0]?.phoneFields.map(field => {
-                    //     return {
-                    //         ...field,
-                    //         isSelected: false
-                    //     };
-                    // });
-                    // this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
-                    // const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
-                    // if (selectedField) {
-                    //     this.selectedPhoneFieldVal = selectedField.value;
-                    //     this.selectedPhoneFieldLabel = selectedField.label;
-                    //     // Update isSelected based on selectedPhoneFieldVal
-                    //     this.phoneFields = this.phoneFields.map(field => {
-                    //         return {
-                    //             ...field,
-                    //             isSelected: field.value === this.selectedPhoneFieldVal
-                    //         };
-                    //     });
-                    // } else {
-                    //     this.selectedPhoneFieldVal = '';
-                    //     this.selectedPhoneFieldLabel = '';
-                    // }
-                    // this.phoneFieldsForChatConfig = [...this.phoneFields];
-
-                    this.requiredFields = data[0]?.requiredFields.map(field => ({
-                        apiName: field.name,
-                        label: field.label,
-                        type: this.capitalizeFirstLetter(field.type),
-                        value: field.type === 'BOOLEAN' 
-                                ? (savedFieldValues[field.name] !== undefined ? savedFieldValues[field.name] : false)
-                                : field.type === 'DATE' 
-                                    ? (savedFieldValues[field.name] || field.value || new Date().toISOString().split('T')[0])
-                                    : field.type === 'DATETIME' 
-                                        ? (savedFieldValues[field.name] || field.value || new Date().toISOString())
-                                        : field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY'
-                                            ? (savedFieldValues[field.name] || field.value || 0) 
-                                            : (savedFieldValues[field.name] || field.value || ''),
-                        picklistValues: field?.picklistValues,
-                        relatedObject: field?.relatedObject,
-                        relatedRecordName: field?.relatedRecordName,
-                        isString: field.type === 'STRING',
-                        isNumber: field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY',
-                        isDate: field.type === 'DATE',
-                        isDateTime: field.type === 'DATETIME',
-                        isBoolean: field.type === 'BOOLEAN',
-                        isPicklist: field.type === 'PICKLIST',
-                        isReference: field.type === 'REFERENCE',
-                        isTextArea: field.type === 'TEXTAREA'
-                    }));
-                    console.log('this.requiredFields:', JSON.stringify(this.requiredFields));
-                    // this.populateReferenceNames();
-                })
-                .catch(error => {
-                    console.error('Error fetching required fields:', error);
-                })
-                .finally(() => {
-                    this.isLoading = false;
-                });
-        } catch (error) {
-            console.error('Exception in loading required fields : ' , error);
-        }
+    handleObjectFieldChange(event) {
+        const rowId = event.target.dataset.rowId;
+        const value = event.detail.value;
+        console.log('Value in handleObjectFieldChange:', value);
+        const fieldType = this.objectFields.find(field => field.value === value)?.type || '';
+        this.chatWindowRows = this.chatWindowRows.map(row => 
+            row.id === rowId ? {
+                ...row,
+                selectedObjectField: value,
+                selectedObjectFieldType: fieldType,
+                filteredFlowFields: this.getFilteredFlowFields(fieldType),
+                selectedFlowField: ''
+            } : row
+        );
+        // console.log('this.chatWindowRows:', JSON.stringify(this.chatWindowRows));
+        // console.log('this.getFilteredFlowFields:', JSON.stringify(this.getFilteredFlowFields(fieldType)));
     }
-
-    async fetchFieldsForObject(objectName) {
-        try {
-            console.log('Fetching fields for object:', objectName);
-            const result = await getObjectFields({ objectName });
-            console.log('Fetched fields:', JSON.stringify(result));
-            // this.textFields = data.textFields || [];
-            // this.phoneFieldsForChatConfig = data.phoneFields || [];
-            this.objectFields = result;
-
-            // this.chatWindowRows = this.chatWindowRows.map(row => {
-            //     if (row.id === parseInt(rowId)) {
-            //         return {
-            //             ...row,
-            //             nameFieldOptions: this.textFields.map(field => ({ label: field.label, value: field.value })),
-            //             phoneFieldOptions: this.phoneFieldsForChatConfig.map(field => ({ label: `${field.label} (${field.value})`, value: field.value }))
-            //         };
-            //     }
-            //     return row;
-            // });
-            console.log('this.objectFields', JSON.stringify(this.objectFields));
-        } catch (error) {
-            console.error('Error fetching fields:', error);
-        }
+    
+    handleObjectChangeForChat(event) {
+        const rowId = event.target.dataset.rowId;
+        const value = event.detail.value;
+        this.chatWindowRows = this.chatWindowRows.map(row =>
+            row.id === rowId ? { ...row, selectedFlowField: value } : row
+        );
+    }
+    
+    handleDeleteRow(event) {
+        const rowId = event.target.dataset.rowId;
+        this.chatWindowRows = this.chatWindowRows.filter(row => row.id !== rowId);
     }
 
     capitalizeFirstLetter(str) {
-        if (!str) return str; // Handle null or undefined
+        if (!str) return str;
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     }
 
@@ -516,28 +660,3 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         this.dispatchEvent(event);
     }
 }
-    // handleObjectChange(event) {
-    //     this.selectedObject = event.detail.value;
-    //     getObjectFields({ objectName: this.selectedObject })
-    //         .then(data => {
-    //             this.fields = Object.keys(data).map(field => ({
-    //                 label: field,
-    //                 value: field,
-    //                 type: data[field]
-    //             }));
-    //         })
-    //         .catch(error => console.error('Error fetching fields:', error));
-    // }
-
-    // loadFlowFields() {
-    //     getFlowFields({ chatRecordId: this.recordId })
-    //         .then(data => {
-    //             this.flowFields = data.map(key => ({ label: key, value: key }));
-    //         })
-    //         .catch(error => console.error('Error fetching Flow fields:', error));
-    // }
-
-    // handleFieldMapping(event) {
-    //     const flowField = event.target.dataset.flowfield;
-    //     this.selectedFlowFields[flowField] = event.detail.value;
-    // }
