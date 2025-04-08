@@ -27,7 +27,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track originalHeader;
     @track originalBody;
     @track template;
-    @track tempHeader;
+    @track tempHeader ;
     @track tempBody;
     @track tempFooter;
     @track headerParams;
@@ -41,9 +41,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track isVidSelected = false;
     @track isDocSelected = false;
     @track IsHeaderText = true;
-    @track options = [
-        { label: 'Contact', value: 'Contact', isSelected: true }
-    ];
+    @track options = [];
     @track contactDetails=[];
     @track inputValues = {};
     @track groupedVariables=[];
@@ -57,6 +55,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track sendButtonClass;
     @track bodyParaCode = '';
     @track NoPreviewAvailableImg = NoPreviewAvailable;
+    @track headerPramsCustomList = [];
+    @track bodyPramsCustomList = [];
 
     get contactFields() {
         return Object.entries(this.contactDetails)
@@ -65,7 +65,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     get isDisabled(){
-        return !(this.objectNames && this.fieldNames);
+        // if(this.objectNames && this.fieldNames.length>0){
+        //     return false;
+        // }
+        // return !(this.objectNames && this.fieldNames);
+        return false;
     }
 
     formatText(inputText) {
@@ -79,6 +83,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
         } catch (error) {
             console.error('Something went wrong in formatting text.',error);  
         }
+    }
+
+    get getObjectName(){
+        
+        return this.objectNames[0];
     }
 
     @api
@@ -251,6 +260,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
         
             this.formatedTempBody = this.formatText(updatedBody);
             this.tempHeader = updatedHeader;
+            
         } catch (error) {
             console.error('Something went wrong while updating the template.',error);   
         }
@@ -260,6 +270,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
         try {
             const {name, value } = event.target; 
             const groupType = event.target.dataset.group; 
+            if(groupType == 'Header'){
+                this.headerPramsCustomList.push(value)
+            }
+            else if(groupType == 'Body'){
+                this.bodyPramsCustomList.push(value);
+
+            }
             this.variableMapping[groupType.toLowerCase()][name] = value;
             const group = this.groupedVariables.find(group => group.type === groupType);
             const mapping = group.mappings.find(mapping => mapping.variable === name);
@@ -280,6 +297,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
+
+                    
                     
                     this.IsHeaderText = !result.isImgUrl;            
                     this.originalHeader = result.template.MVWB__WBHeader_Body__c;
@@ -316,13 +335,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     this.formattedtempHeader = this.originalHeader;
                     this.tempFooter = result.template.MVWB__WBFooter_Body__c;
 
-                    this.isSendDisabled = result.MVWB__template.Status__c !== 'Active-Quality Pending';
+                    this.isSendDisabled = result.template.MVWB__Status__c !== 'Active-Quality Pending';
                     this.sendButtonClass = this.isSendDisabled 
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
-                    const buttonBody = result.MVWB__template.MVWB__WBButton_Body__c
-                    ? JSON.parse(result.MVWB__template.MVWB__WBButton_Body__c)
+                    const buttonBody = result.template.MVWB__WBButton_Body__c
+                    ? JSON.parse(result.template.MVWB__WBButton_Body__c)
                     : []
                   
                   this.buttonList = buttonBody.map((buttonLabel, index) => {
@@ -360,8 +379,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         this.noContact=false;
                     }
 
-                    this.objectNames = result.objectNames;
+                    this.objectNames = result.objectNames == undefined? ['Contact'] : result.objectNames;
                     this.fieldNames = result.fieldNames;
+
+                    this.options.push({ label: this.objectNames[0], value: this.objectNames[0], isSelected: true });
+                   
                     this.formatedTempBody = this.formatText(this.tempBody);
                     this.isLoading = false;
                 }
@@ -407,27 +429,35 @@ export default class WbPreviewTemplatePage extends LightningElement {
         this.isLoading = true; 
     
         try {
+          
+            if(this.groupedVariables.length == (this.headerPramsCustomList.length+this.bodyPramsCustomList.length)){
+                this.showToast('Warning', 'Please fill all input fields', 'warning');
+                return;
+            }
             let phonenum = this.selectedContactId 
                 ? this.contactDetails.Phone 
                 : (this.selectedCountryType && this.phoneNumber && this.phoneNumber.length >= 10) 
                     ? `${this.selectedCountryType}${this.phoneNumber}`
                     : null;
             
+                   
+
             if (!phonenum || isNaN(Number(phonenum))) {
                 this.showToast('Warning', 'Invalid country code or phone number', 'warning');
                 this.isLoading = false;
                 return;
             }
             
-            const buttonValue = this.template.MVWB__WBButton_Body__c != undefined?JSON.parse(this.template.MVWB__WBButton_Body__c) : '';
+            const buttonValue = this.template.WBButton_Body__c != undefined?JSON.parse(this.template.MVWB__WBButton_Body__c) : '';
+            
             
             const templatePayload = this.createJSONBody(phonenum, "template", {
                 templateName: this.template.MVWB__Template_Name__c,
                 languageCode: this.template.MVWB__Language__c,
                 headerImageURL: this.template.MVWB__WBHeader_Body__c,
                 headerType:this.template.MVWB__Header_Type__c,
-                headerParameters: this.headerParams,
-                bodyParameters: this.bodyParams || '',
+                headerParameters: this.headerPramsCustomList,
+                bodyParameters: this.bodyPramsCustomList,
                 buttonLabel: this.template.MVWB__Button_Label__c || '',
                 buttonType: this.template.MVWB__Button_Type__c || '',
                 buttonValue : buttonValue
@@ -543,7 +573,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     type: "body",
                     parameters: bodyParams
                 });
-            } else if(this.template.Template_Category__c == 'Authentication'){
+            } else if(this.template.MVWB__Template_Category__c == 'Authentication'){
                 components.push({
                     type: "body",
                     parameters: [

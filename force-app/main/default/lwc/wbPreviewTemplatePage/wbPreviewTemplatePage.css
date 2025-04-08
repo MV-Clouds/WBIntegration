@@ -513,3 +513,10 @@ input{
     font-size: 14px;
     font-weight: 500;
 }
+
+.no-variable{
+    height: -webkit-fill-available;
+    font-size: larger;
+    font-weight: 500;
+
+}

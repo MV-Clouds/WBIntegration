@@ -13,10 +13,10 @@
                     <div class="createtempdiv2">
                         <div class="slds-box templateContent3">
                             <div class="left">
-                                    <p class="variable-heading">Contact Records</p>
+                                    <!-- <p class="variable-heading">Contact Records</p> -->
                                   
                                     <div class="true-div">
-                                        <div class="object-div">
+                                        <!-- <div class="object-div">
                                             <select class="object-dropdown dropdown" disabled={isDisabled}>
                                                 <template for:each={options} for:item="option">
                                                     <option key={option.value} value={option.value} selected={option.isSelected}>
@@ -24,16 +24,25 @@
                                                     </option>
                                                 </template>
                                             </select>
-                                        </div>
+                                        </div> -->
                                       
-                                        <c-custom-lookup-lwc icon-name="standard:contact"
-                                        s-object-api-name="Contact"
-                                        onlookupupdate={handleRecordSelection}
-                                        class="custom-lookup"
-                                         disabled={isDisabled}
-                                        placeholder="Search contacts here..."></c-custom-lookup-lwc>
+                                        <!-- <template if:true={getObjectName}>
+                                            <div class="object-label">{getObjectName}</div>
+
+                                            <c-custom-lookup-lwc icon-name="standard:contact"
+                                            s-object-api-name={getObjectName}
+                                            onlookupupdate={handleRecordSelection}
+                                            class="custom-lookup"
+                                             disabled={isDisabled}
+                                            placeholder="Search contacts here..."></c-custom-lookup-lwc>
+                                        </template> -->
                                     </div>
 
+                                    <template if:false={noContact}>
+                                        <div class="slds-align_absolute-center no-variable">
+                                            <h1>Selected template does not have any merge fields.</h1>
+                                        </div>
+                                    </template>
                                     <template if:true={noContact}>
                                         <div class="custom-var">
                                             <div class="var-head">
