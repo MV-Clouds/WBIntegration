@@ -343,7 +343,7 @@ export default class ObjectConfigComp extends LightningElement {
                 phoneField: this.selectedPhoneFieldVal,
                 requiredFieds: this.requiredFields.map(field => ({
                     name: field.apiName,
-                    value: field.value,
+                    value: field.value.toString(),
                     type: field.type
                 }))
             });

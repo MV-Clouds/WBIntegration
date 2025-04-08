@@ -137,8 +137,8 @@
    ********************************************************
    */
    @AuraEnabled(cacheable=true)
-   public static List<sObject> getRecordsBySObject() {
-       String sObjectName='Contact';
+   public static List<sObject> getRecordsBySObject(String objectName) {
+       String sObjectName=objectName;
        List<sObject> records = new List<sObject>();
        
        try {
@@ -149,6 +149,9 @@
        }
        return records;
    }
+
+
+
 
    /*
    *********************************************************
