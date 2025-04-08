@@ -97,7 +97,7 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                 Database.update(br, false, AccessLevel.USER_MODE);
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'finish' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
         }
     }
 
