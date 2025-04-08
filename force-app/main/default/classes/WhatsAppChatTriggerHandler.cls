@@ -99,8 +99,13 @@ public without sharing class WhatsAppChatTriggerHandler {
             // Perform bulk update
             if (!broadcastsToUpdate.isEmpty()) {
                 List<Broadcast__c> broadcastList = new List<Broadcast__c>(broadcastsToUpdate.values()); // Convert map values to list
-                Database.update(broadcastList, false); // Use the list in Database.update()
+                Database.SaveResult[] results = Database.update(broadcastList, false); // Capture update results
             }
+
+            // Publishing the event will not affect here so whether the broadcast count is updated or not it status will update for sure so for safer side using it here instead of calling multuple api calls
+            BroadcastUpdateEvent__e	 broadcastEvent = new BroadcastUpdateEvent__e();
+            broadcastEvent.IsChanged__c	= true;
+            EventBus.publish(broadcastEvent);
         }
         catch(Exception e){
             ExceptionHandler.logException(new Map<String, Object>{'className' => CLASS_NAME,'methodName' => 'updateBroadcastCounts','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
