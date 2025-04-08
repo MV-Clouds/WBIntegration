@@ -114,11 +114,9 @@ export default class WbCreateFlowPage extends LightningElement {
 
     getJSONDataFromApex(){
         try {
-            console.log(this.templateType);
             this.isLoading = true;
             getJSONData({type: this.templateType})
                 .then((data) => {
-                    console.log({data});
                     if(data){
                         this.jsonString = data;
     
@@ -126,7 +124,6 @@ export default class WbCreateFlowPage extends LightningElement {
     
                         createWhatsAppFlow({ flowName: this.flowName, categories: catagories, flowJson: this.jsonString, templateType: this.templateType })
                             .then((result) => {
-                                console.log({result});
                                 if (!result.startsWith('Failed')) {
                                     this.flowId = result;
                                     this.status = 'Draft';
@@ -137,6 +134,7 @@ export default class WbCreateFlowPage extends LightningElement {
                                 } else {
                                     console.error(result);
                                     this.showToastError(result);
+                                    this.isLoading = false;
                                 }
                             }).catch(error => {
                                 console.error('Error in creating Flow : ',error);
@@ -153,6 +151,7 @@ export default class WbCreateFlowPage extends LightningElement {
                 });
         } catch (error) {
             console.error('Error loading JSON data:', error);
+            this.isLoading = false;
         }
     }
 
@@ -169,6 +168,7 @@ export default class WbCreateFlowPage extends LightningElement {
                 require(['vs/editor/editor.main'], () => {
                     this.initializeEditor();
                 });
+                this.isLoading = false;
             })
             .catch(error => {
                 console.error('Error loading Monaco Editor:', error);
@@ -206,7 +206,6 @@ export default class WbCreateFlowPage extends LightningElement {
                 this.isLoading = true;
                 getPreviewURLofWhatsAppFlow({ flowId : this.flowId })
                     .then((data) => {
-                        console.log({data});
                         if(data != 'failed'){
                             this.flowPreviewURL = data;
                         } else {
@@ -221,9 +220,11 @@ export default class WbCreateFlowPage extends LightningElement {
                     });
             } else {
                 console.error('Flow id not found');
+                this.isLoading = false;
             }
         } catch (error) {
             console.error('Error in getting Flow Preview URL:', error);
+            this.isLoading = false;
         }
     }
 
@@ -261,6 +262,7 @@ export default class WbCreateFlowPage extends LightningElement {
                 })
         } catch (error) {
             console.error('Failed to publish flow : ' , error);
+            this.isLoading = false;
         }
     }
 
@@ -288,6 +290,7 @@ export default class WbCreateFlowPage extends LightningElement {
                 })
         } catch (error) {
             console.error('Failed to delete flow : ' , error);
+            this.isLoading = false;
         }
     }
 
@@ -319,6 +322,7 @@ export default class WbCreateFlowPage extends LightningElement {
                 })
         } catch (error) {
             console.error('Failed to delete flow : ' , error);
+            this.isLoading = false;
             this.closeDeletePopup();
         }
     }
