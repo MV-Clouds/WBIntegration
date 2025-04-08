@@ -66,11 +66,10 @@
 }
 
 .edit-content{
-    width: 65%;
+    width: 70%;
 }
 
 .previewFlow{
-    width: 30%;
     margin-top: 1rem;
 }
 
@@ -217,7 +216,6 @@ label{
     display: flex;
     justify-content: space-between;
     background-color: white;
-    margin-left: 1rem;
 }
 
 .editor-heading{
@@ -227,8 +225,6 @@ label{
 .editor-container {
     height: 742px;
     border: 1px solid #d8dde6;
-    border-radius: 5px;
-    margin-left: 1rem;
     overflow-y: auto;
     pointer-events: none;
 }
@@ -265,10 +261,7 @@ img{
 }
 
 .name-header{
-    margin-top: 1.5rem;
-    margin-left: 1rem;
     display: flex;
-    width: 94%;
     justify-content: space-between;
 }
 
@@ -457,3 +450,8 @@ img{
     cursor: pointer;
 }
 /* Delete ppopup */
+
+.flowIframe{
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.19);
+    border: none;
+}
