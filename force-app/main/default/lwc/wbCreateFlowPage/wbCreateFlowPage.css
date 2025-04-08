@@ -12,6 +12,7 @@
     border-radius: 5px;
     height: 100%;
     overflow-x: scroll;
+    scrollbar-width: none;
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.5), 0 1px 8px 0 rgba(0, 0, 0, 0.29);
 }
 
@@ -46,24 +47,15 @@
     font-size: x-large;
 }
 
-.createFlowDiv {
-    width: 105.3%;
-}
-
 .divcontainer2 {
-    /* display: flex; */
-    /* justify-content: space-between; */
     width: 100%;
 }
-
-/* .flowPreviewDiv{
-    width: 30%;
-} */
 
 .flow-content{
     width: 100%;
     display: flex;
     justify-content: space-between;
+    margin-bottom: 1rem;
 }
 
 .edit-content{
@@ -76,9 +68,8 @@
 
 .templateContent3 {
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.19);
-    width: 95%;
     padding: 1rem;
-    padding-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
     margin-top: 1rem;
 }
 
@@ -110,15 +101,13 @@
 
 .templateContent4 {
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.19);
-    width: 95%;
     padding: 1rem;
-    padding-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
     margin-top: 1rem;
 }
 
 .tempHead {
-    font-size: 21px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .conInput {
@@ -132,9 +121,7 @@
 
 .authContent1 {
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.19);
-    width: 95%;
     padding: 1rem;
-    padding-bottom: 2.5rem;
     margin-top: 1rem;
 }
 
@@ -186,7 +173,7 @@
 }
 
 label{
-    font-size: larger;
+    font-size: large;
     font-weight: 500;
     margin-bottom: 0.5rem;
 }
@@ -226,8 +213,8 @@ label{
 .editor-container {
     height: 742px;
     border: 1px solid #d8dde6;
-    overflow-y: auto;
-    pointer-events: none;
+    overflow-y: scroll;
+    /* pointer-events: none; */
 }
 
 .editor {
