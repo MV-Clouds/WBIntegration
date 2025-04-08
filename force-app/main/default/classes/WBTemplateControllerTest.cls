@@ -155,7 +155,7 @@ public class WBTemplateControllerTest {
     @isTest
     static void testGetRecordsBySObject() {
         Test.startTest();        
-        List<sObject> records = WBTemplateController.getRecordsBySObject();
+        List<sObject> records = WBTemplateController.getRecordsBySObject('Contact');
         Test.stopTest();
     }
     
@@ -454,6 +454,18 @@ public class WBTemplateControllerTest {
         System.assertEquals('error', response.get('status'));
         System.assertNotEquals(null, response.get('message'));
 
+    }
+
+    @isTest
+    static void testGetCompanyName() {
+        // Call the method
+        Test.startTest();
+        String companyName = WBTemplateController.getCompanyName();
+        WBTemplateController.getObjectsWithPhoneField();
+        Test.stopTest();
+        
+        // Assert that it returns a non-null value
+        System.assertNotEquals(null, companyName, 'Company name should not be null');
     }
     
     

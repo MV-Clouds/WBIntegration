@@ -38,6 +38,8 @@ import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
 import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
+import getCompanyName from '@salesforce/apex/OrgInfoController.getCompanyName';
+
 
 export default class WbCreateTemplatePage extends LightningElement {
     maxTempNamelength = 512;
@@ -220,6 +222,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track iframeSrc;
     @track isModalPreview = false;
     // @track NoFileSelected = true;
+    companyName = '';
 
 
     get expireTime() {
@@ -594,6 +597,13 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.generateEmojiCategories();
         this.fetchUpdatedTemplates(false);
         this.fetchObjectsWithPhoneField();
+        getCompanyName()
+            .then(result => {
+                this.companyName = result;
+            })
+            .catch(error => {
+                console.error('Error fetching company name:', error);
+            });
     }
 
     fetchObjectsWithPhoneField() {
