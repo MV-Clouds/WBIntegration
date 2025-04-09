@@ -20,12 +20,12 @@ export default class WbAllBroadcastPage extends LightningElement {
     currentPage = 1;
     pageSize = 15;
     visiblePages = 5;
-    isLoading = false;
-    showPopup = false;
+    @track isLoading = false;
+    @track showPopup = false;
     selectedObjectName = '';
-    popUpFirstPage = true;
-    popUpSecondpage = false;
-    popUpLastPage = false;
+    @track popUpFirstPage = true;
+    @track popUpSecondpage = false;
+    @track popUpLastPage = false;
     popupHeader = 'Choose Broadcast Groups';
 
 
