@@ -29,6 +29,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track popupHeader = 'Choose Broadcast Groups';
 
 
+
     subscription = {};
     channelName = '/event/MVWB__BroadcastUpdateEvent__e';
 
