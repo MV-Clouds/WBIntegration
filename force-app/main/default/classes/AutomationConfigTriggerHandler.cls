@@ -1,11 +1,96 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 04-08-2025
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 public without sharing class AutomationConfigTriggerHandler {
+    private List<MVWB__Chat__c> recordNewList = new List<MVWB__Chat__c>();
+    private List<MVWB__Chat__c> recordOldList = new List<MVWB__Chat__c>();
+    private Map<Id, MVWB__Chat__c> recordNewMap = new Map<Id, MVWB__Chat__c>();
+    private Map<Id, MVWB__Chat__c> recordOldMap = new Map<Id, MVWB__Chat__c>();
+    private Boolean isInsert;
+    private Boolean isUpdate;
+    private Boolean isDelete = false;
+    private Boolean isUndelete = false;
+    private static final String CLASS_NAME = 'AutomationConfigTriggerHandler';
+
+    public AutomationConfigTriggerHandler( List<MVWB__Chat__c> newList,  List<MVWB__Chat__c> oldList, Map<Id, MVWB__Chat__c> newMap, Map<Id, MVWB__Chat__c> oldMap, Boolean isInsert, Boolean isUpdate, Boolean isDelete, Boolean isUndelete) {
+        this.recordNewList = newList;
+        this.recordOldList = oldList;
+        this.recordNewMap = newMap;
+        this.recordOldMap = oldMap;
+        this.isInsert = isInsert;
+        this.isUpdate = isUpdate;
+        this.isDelete = isDelete;
+        this.isUndelete = isUndelete;
+    }
+
+    public void filterAndProcessValidChats() {
+        List<MVWB__Chat__c> validChats = new List<MVWB__Chat__c>();
+        Set<Id> replyToIds = new Set<Id>();
+
+        for (MVWB__Chat__c newChat : (List<MVWB__Chat__c>)recordNewList) {
+            if (newChat.MVWB__Type_of_Message__c == 'Inbound Messages' && newChat.MVWB__Reply_to__c != null) {
+                replyToIds.add(newChat.MVWB__Reply_to__c);
+            }
+        }
+
+        Map<Id, MVWB__Chat__c> parentChatMap = new Map<Id, MVWB__Chat__c>();
+        if (!replyToIds.isEmpty()) {
+            for (MVWB__Chat__c parent : [
+                SELECT Id, MVWB__Whatsapp_Template__r.MVWB__WBButton_Body__c
+                FROM MVWB__Chat__c
+                WHERE Id IN :replyToIds
+            ]) {
+                parentChatMap.put(parent.Id, parent);
+            }
+        }
+
+        for (MVWB__Chat__c newChat : (List<MVWB__Chat__c>)recordNewList) {
+            if (isValidAutomationChat(newChat, parentChatMap.get(newChat.MVWB__Reply_to__c))) {
+                validChats.add(newChat);
+            }
+        }
+
+        if (!validChats.isEmpty()) {
+            processAutomationConfiguration(validChats);
+        } else {
+            System.debug('No valid messages found (Button/Interactive & Inbound Message). Exiting trigger.');
+        }
+    }
+
+    private Boolean isValidAutomationChat(MVWB__Chat__c newChat, MVWB__Chat__c parentChat) {
+        if (newChat.MVWB__Type_of_Message__c != 'Inbound Messages') {
+            System.debug('Not an Inbound Message. Exiting. ' + newChat.MVWB__Message__c);
+            return false;
+        }
+
+        String buttonType = null;
+
+        if (newChat.MVWB__Reply_to__c != null && parentChat != null && parentChat.MVWB__Whatsapp_Template__r != null) {
+            try {
+                String buttonBody = parentChat.MVWB__Whatsapp_Template__r.MVWB__WBButton_Body__c;
+                buttonType = getButtonTypeByText(buttonBody, newChat.MVWB__Message__c);
+                System.debug('Button Type: ' + buttonType);
+            } catch (Exception e) {
+                System.debug('Error parsing button JSON: ' + e.getMessage());
+            }
+        }
+
+        return buttonType == 'QUICK_REPLY' || newChat.MVWB__Message_Type__c == 'interactive';
+    }
+
     public static String getButtonTypeByText(String jsonInput, String buttonText) {
         try {
-            // Deserialize JSON into a List of Maps
-            List<Map<String, Object>> buttons = (List<Map<String, Object>>) JSON.deserializeUntyped(jsonInput);
-            
-            // Iterate through each button object
-            for (Map<String, Object> btn : buttons) {
+            // Deserialize JSON into a raw List of Objects
+            List<Object> rawButtons = (List<Object>) JSON.deserializeUntyped(jsonInput);
+    
+            // Iterate and safely cast each item to Map<String, Object>
+            for (Object rawBtn : rawButtons) {
+                Map<String, Object> btn = (Map<String, Object>) rawBtn;
+    
                 if (btn.containsKey('text') && btn.get('text') == buttonText) {
                     return (String) btn.get('type'); // Return the button type
                 }
@@ -14,7 +99,7 @@ public without sharing class AutomationConfigTriggerHandler {
             System.debug('Error parsing JSON: ' + e.getMessage());
         }
         return 'Not Found'; // Return "Not Found" if no matching text is found
-    }
+    }    
 
     public static void processAutomationConfiguration(List<MVWB__Chat__c> newChats) {
         System.debug('Handler method called');
@@ -113,7 +198,7 @@ public without sharing class AutomationConfigTriggerHandler {
         Set<Id> relevantAutomationIds = new Set<Id>(templateIdToAutomationIdMap.values());
 
         for (Automation_Path__c path : [
-            SELECT Id, Automation__c, Button_Value__c, Action_Template__c
+            SELECT Id, Automation__c, Button_Value__c, Action_Template__c, Action_Type__c, Action_Email_Template__c, Object_Name__c, Field_Mapping__c
             FROM Automation_Path__c
             WHERE Automation__c IN :relevantAutomationIds
         ]) {
@@ -160,11 +245,94 @@ public without sharing class AutomationConfigTriggerHandler {
                         System.debug('Matched Path: ' + matchingPath.Id);
                         System.debug('Chat ID (inserting) is a reply to Template (' + originalChat.MVWB__Whatsapp_Template__c + ') with Automation (' + automationId + ') and matching Path (' + matchingPath.Id + ') found via Button Value (' + matchingPath.Button_Value__c + ').');
 
-                        Map<String, Object> tempData = getTemplateData(matchingPath.Action_Template__c, contactId, 'Contact');
-                        System.debug('tempData = ' + tempData);
-                        String jsonData = generatePayloadFromTemplateData(tempData, newChat.MVWB__Phone__c);
-                        System.debug('jsonData = ' + jsonData);
-                        sendWhatsAppMessage(jsonData, newChat.Id);
+                        if (matchingPath.Action_Type__c == 'Send Message') {
+
+                            Map<String, Object> tempData = getTemplateData(matchingPath.Action_Template__c, contactId, 'Contact'); //Change
+                            System.debug('tempData = ' + tempData);
+                            String jsonData = generatePayloadFromTemplateData(tempData, newChat.MVWB__Phone__c);
+                            System.debug('jsonData = ' + jsonData);
+                            // String phone = '' + newChat.MVWB__Phone__c;
+                            // String actionTemplate = matchingPath.Action_Template__c;
+                            Map<String, String> chatData = new Map<String, String>();
+                            chatData.put('message', '');
+                            chatData.put('templateId', String.valueOf(matchingPath.Action_Template__c));
+                            chatData.put('messageType', 'Template');
+                            chatData.put('replyToChatId', '');
+                            chatData.put('phoneNumber', String.valueOf(newChat.MVWB__Phone__c));
+                            MVWB__Chat__c newChatRecord = createChat(chatData);
+                            System.debug('newChatRecord = ' + newChatRecord);
+                            sendWhatsAppMessage(jsonData, newChatRecord.Id);
+                            MVWB__Chat__c chatToUpdate = new MVWB__Chat__c(
+                                Id = newChatRecord.Id,
+                                MVWB__Date_of_Message__c = Date.today(),
+                                MVWB__Message_Status__c = 'Sent',
+                                MVWB__Message_Sent_Time__c = System.now()
+                            );
+                            update chatToUpdate;
+
+                        } else if (matchingPath.Action_Type__c == 'Send Email') {
+
+                            Contact contactRecord1 = [SELECT Id, Email FROM Contact WHERE Phone = :newChat.MVWB__Phone__c LIMIT 1];
+                            
+                            if (contactRecord1 != null && String.isNotBlank(contactRecord1.Email) && String.isNotBlank(matchingPath.Action_Email_Template__c)) {
+
+                                Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+                                email.setToAddresses(new String[] { contactRecord1.Email });
+                                email.setTemplateId(matchingPath.Action_Email_Template__c);
+                                email.setTargetObjectId(contactRecord1.Id);
+                                email.setTreatTargetObjectAsRecipient(true);
+                                email.setSaveAsActivity(false);
+
+                                try {
+                                    Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
+                                    System.debug('Email sent to: ' + contactRecord1.Email);
+
+                                } catch (Exception e) {
+                                    System.debug('Failed to send email: ' + e.getMessage());
+                                }
+                            } else {
+                                System.debug('Email or TemplateId missing. Cannot send email.');
+                            }
+
+                        } else if (matchingPath.Action_Type__c == 'Create a Record') {
+                            
+                            String flowResponseJson = newChat.MVWB__Flow_Response_JSON__c;
+                            String fieldMappingJson = matchingPath.Field_Mapping__c;
+                            String objectName = matchingPath.Object_Name__c;
+
+                            if (String.isNotBlank(flowResponseJson) &&
+                                String.isNotBlank(fieldMappingJson) &&
+                                String.isNotBlank(objectName)) {
+
+                                try {
+                                    // Parse flow response and field mapping
+                                    Map<String, Object> flowResponse = (Map<String, Object>) JSON.deserializeUntyped(flowResponseJson);
+                                    Map<String, Object> fieldMapping = (Map<String, Object>) JSON.deserializeUntyped(fieldMappingJson);
+
+                                    // Dynamically create SObject instance
+                                    SObject recordToInsert = (SObject) Type.forName('Schema.' + objectName).newInstance();
+
+                                    // Loop through flow fields and set values to corresponding object fields
+                                    for (String flowField : fieldMapping.keySet()) {
+                                        String objectField = String.valueOf(fieldMapping.get(flowField));
+
+                                        if (flowResponse.containsKey(flowField)) {
+                                            Object fieldValue = flowResponse.get(flowField);
+                                            recordToInsert.put(objectField, fieldValue);
+                                        }
+                                    }
+
+                                    insert recordToInsert;
+                                    System.debug('Record of type ' + objectName + ' inserted successfully: ' + recordToInsert);
+
+                                } catch (Exception e) {
+                                    System.debug('Error processing flow response for record creation: ' + e.getMessage());
+                                }
+                            } else {
+                                System.debug('Missing required data: Flow Response, Field Mapping, or Object Name');
+                            }
+                        }
+
                     } else {
                         System.debug('No matching path found for message: "' + newChat.MVWB__Message__c + '"');
                     }
@@ -189,14 +357,14 @@ public without sharing class AutomationConfigTriggerHandler {
             // Fetch template details
             if (!matchingTemplateIds.isEmpty()) {
                 templates.addAll([
-                    SELECT Id, MVWB__Template_Name__c, MVWB__Button_Body__c, MVWB__Button_Label__c, MVWB__Button_Type__c, MVWB__WBFooter_Body__c, MVWB__WBHeader_Body__c, MVWB__Header_Type__c, MVWB__Language__c, MVWB__WBTemplate_Body__c, MVWB__Template_Category__c, MVWB__Template_SubCatagory__c, MVWB__Template_Type__c, MVWB__Template_Variable__c,
+                    SELECT Id, MVWB__Template_Name__c, MVWB__WBButton_Body__c, MVWB__Button_Label__c, MVWB__Button_Type__c, MVWB__WBFooter_Body__c, MVWB__WBHeader_Body__c, MVWB__Header_Type__c, MVWB__Language__c, MVWB__WBTemplate_Body__c, MVWB__Template_Category__c, MVWB__Template_SubCatagory__c, MVWB__Template_Type__c, MVWB__Template_Variable__c,
                         (SELECT Id, Name, MVWB__Field_Name__c, MVWB__Object_Name__c, MVWB__Type__c, MVWB__Alternate_Text__c FROM MVWB__WB_Template_Variables__r) FROM MVWB__Template__c WHERE Id = :templateId AND Id IN :matchingTemplateIds
                 ]);
             }
 
             // Fetch templates without child variables
             List<MVWB__Template__c> templatesWithoutVariables = [
-                SELECT Id, MVWB__Template_Name__c, MVWB__Button_Body__c, MVWB__Button_Label__c, MVWB__Button_Type__c, MVWB__WBFooter_Body__c, MVWB__WBHeader_Body__c, MVWB__Header_Type__c, MVWB__Language__c, MVWB__WBTemplate_Body__c, MVWB__Template_Category__c, MVWB__Template_SubCatagory__c, MVWB__Template_Type__c, MVWB__Template_Variable__c,
+                SELECT Id, MVWB__Template_Name__c, MVWB__WBButton_Body__c, MVWB__Button_Label__c, MVWB__Button_Type__c, MVWB__WBFooter_Body__c, MVWB__WBHeader_Body__c, MVWB__Header_Type__c, MVWB__Language__c, MVWB__WBTemplate_Body__c, MVWB__Template_Category__c, MVWB__Template_SubCatagory__c, MVWB__Template_Type__c, MVWB__Template_Variable__c,
                     (SELECT Id, Name, MVWB__Field_Name__c, MVWB__Object_Name__c, MVWB__Type__c, MVWB__Alternate_Text__c FROM MVWB__WB_Template_Variables__r) FROM MVWB__Template__c WHERE Id = :templateId
             ];
             templates.addAll(templatesWithoutVariables);
@@ -265,7 +433,7 @@ public without sharing class AutomationConfigTriggerHandler {
                 return null;
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
+            // MVWB__ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
         }
         return null;
     }
@@ -282,9 +450,9 @@ public without sharing class AutomationConfigTriggerHandler {
             data.put('headerType', template.MVWB__Header_Type__c);
             data.put('headerParameters', (List<Object>)templateData.get('headerParams'));
             data.put('bodyParameters', (List<Object>)templateData.get('bodyParams'));
-            if(template.MVWB__Button_Body__c != null){
-                // data.put('buttonValue', (List<Map<String, Object>>)JSON.deserializeUntyped(template.MVWB__Button_Body__c));
-                Object rawData = JSON.deserializeUntyped(template.MVWB__Button_Body__c);
+            if(template.MVWB__WBButton_Body__c != null){
+                // data.put('buttonValue', (List<Map<String, Object>>)JSON.deserializeUntyped(template.MVWB__WBButton_Body__c));
+                Object rawData = JSON.deserializeUntyped(template.MVWB__WBButton_Body__c);
                 List<Object> dataList = (List<Object>) rawData;
 
                 // Convert each entry to a Map<String, Object>
@@ -447,9 +615,18 @@ public without sharing class AutomationConfigTriggerHandler {
                 Map<String, Object> firstMessage = (Map<String, Object>)messages[0];
                 String whatsAppMessageID = (String) firstMessage.get('id');
                 System.debug('WhatsApp Message ID: ' + whatsAppMessageID);
+                MVWB__Chat__c chatToSend = [SELECT Id, MVWB__Type_of_Message__c, MVWB__WhatsAppMessageId__c, MVWB__Message__c, MVWB__Message_Status__c, MVWB__Message_Type__c, MVWB__Reply_To__c, MVWB__Reaction__c, MVWB__Whatsapp_Template__c, MVWB__Whatsapp_Template__r.Name, CreatedDate, MVWB__Last_Interaction_Date__c, MVWB__Phone__c FROM MVWB__Chat__c WHERE Id =:chatId LIMIT 1];
+                chatToSend.MVWB__Message_Status__c = 'Sent';
+                chatToSend.MVWB__WhatsAppMessageId__c = whatsAppMessageID;
+                update chatToSend;
+                MVWB__Chat_Message__e newChatEvent = new MVWB__Chat_Message__e();
+                newChatEvent.MVWB__Chat_Data__c = JSON.serialize(chatToSend);
+                newChatEvent.MVWB__Type__c = 'new';
+                // newChatEvent.ContactId__c = whatsappChat.Contact__c;
+                EventBus.publish(newChatEvent);
             }else{
                 System.debug('Error sending WhatsApp Message: '+response.getBody());
-                ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
+                // MVWB__ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
 
             update chat;
@@ -458,9 +635,41 @@ public without sharing class AutomationConfigTriggerHandler {
             // return resultMap;
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => chatId, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+            // MVWB__ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => chatId, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
         resultMap.put('chat', chat);
         // return resultMap;
+    }
+
+    public static MVWB__Chat__c createChat(Map<String, String> chatData ){
+        try {
+
+            String message = chatData.get('message');
+            String templateId = chatData.get('templateId');
+            String messageType = chatData.get('messageType');
+            String replyToChatId = chatData.get('replyToChatId');
+            String phoneNumber = chatData.get('phoneNumber');
+
+            MVWB__Chat__c chat = new MVWB__Chat__c();
+            chat.MVWB__Message__c = message;
+            chat.MVWB__Whatsapp_Template__c = templateId;
+            chat.MVWB__Phone__c = phoneNumber;
+            chat.MVWB__Type_of_Message__c	= 'OutBound Messages';
+            chat.MVWB__Message_Status__c = 'Sent';
+            chat.MVWB__Message_Type__c = messageType;
+            // chat.MVWB__Reply_To__c = replyToChatId;
+
+            insert chat;
+            System.debug('chat:- '+chat.Id);
+            chat = [SELECT Id, MVWB__Type_of_Message__c, MVWB__WhatsAppMessageId__c, MVWB__Message__c, MVWB__Message_Status__c, MVWB__Message_Type__c, MVWB__Reply_To__c, MVWB__Reaction__c, MVWB__Whatsapp_Template__c, MVWB__Whatsapp_Template__r.MVWB__Template_Name__c, CreatedDate, MVWB__Last_Interaction_Date__c FROM MVWB__Chat__c WHERE Id =:chat.Id];
+            System.debug('chat:- '+chat);
+            return chat;
+        } catch (Exception e) {
+            if(e.getMessage().contains('STORAGE_LIMIT_EXCEEDED')){
+                throw new AuraHandledException('STORAGE_LIMIT_EXCEEDED');
+            }
+            // MVWB__ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
+            return null;
+        }
     }
 }

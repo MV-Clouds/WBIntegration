@@ -9,7 +9,7 @@ import getRequiredFields from '@salesforce/apex/AutomationConfigController.getRe
 import getObjectFields from '@salesforce/apex/AutomationConfigController.getObjectFields';
 import getFlowIdFromAutomation from '@salesforce/apex/AutomationConfigController.getFlowIdFromAutomation';
 import getFlowFields from '@salesforce/apex/AutomationConfigController.getFlowFields';
-import { createRecord } from 'lightning/uiRecordApi';
+import { createRecord, updateRecord } from 'lightning/uiRecordApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
 
@@ -22,10 +22,11 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track searchTerm = '';
     @track selectedTemplateId = null;
     @track isFlowTemplate = false;
-    @track isScheduled = false;
+    // @track isScheduled = false;
     @track selectedObject = '';
     @track FlowId = '';
-    @track isFlowAutomationCreated = false;
+    @track FlowRecordId = '';
+    // @track isFlowAutomationCreated = false;
 
     // --- Data Properties ---
     @track automation = {};
@@ -38,18 +39,24 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track objectFields = [];
     @track flowFields = [];
     @track chatWindowRows = [];
-    @track durationUnits = [
-        { label: 'Minutes', value: 'minutes' },
-        { label: 'Hours', value: 'hours' },
-        { label: 'Days', value: 'days' }
-    ];
+    // @track durationUnits = [
+    //     { label: 'Minutes', value: 'minutes' },
+    //     { label: 'Hours', value: 'hours' },
+    //     { label: 'Days', value: 'days' }
+    // ];
     
     typeCompatibilityMap = {
-        STRING: ["TextInput"],
-        PICKLIST: ["Dropdown", "RadioGroup"],
-        BOOLEAN: ["OptIn", "Checkbox"],
-        TEXTAREA: ["TextArea"],
-        MULTIPICKLIST: ["CheckboxGroup", "ChipSelector"]
+        STRING: ["TextInput", "Text"],
+        PICKLIST: ["Dropdown", "CheckboxGroup", "ChipSelector", "RadioButtonsGroup"],
+        NUMBER: ["TextInput(Number)"],
+        DOUBLE: ["TextInput(Number)"],
+        PHONE: ["TextInput(Phone)"],
+        CHECKBOX: ["OptIn", "Checkbox"],
+        TEXTAREA: ["TextArea", "Text"],
+        MULTIPICKLIST: ["CheckboxGroup", "ChipSelector", "RadioButtonsGroup"],
+        DATE: ["DatePicker"],
+        DATETIME: ["DateTimePicker"],
+        URL: ["EmbeddedLink"]
     };
 
 
@@ -88,10 +95,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     loadRequiredFields(savedFieldValues = {}) {
-        // if (this.isFlowAutomationCreated) {
-        //     console.log('Flow automation already created, skipping required fields loading.');
-        //     return;
-        // }
+        console.log('LOADING REQUIRED FIELDS');
         try {
             this.isLoading = true;
             if (!this.selectedObject) {
@@ -140,6 +144,8 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         isRequired: true
                     }));
                     // console.log('this.chatWindowRows:', JSON.stringify(this.chatWindowRows));
+
+                    // this.fetchAutomationPaths();
                 })
                 .catch(error => {
                     console.error('Error fetching required fields:', error);
@@ -175,30 +181,78 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     value: key,
                     type: data[key]
                 }));
-                // console.log('Formatted combobox options:', JSON.stringify(this.flowFields));
+                console.log('Formatted combobox options:', JSON.stringify(this.flowFields));
             })
             .catch((error) => {
                 console.error('Error fetching flow JSON:', error);
             });
     }
 
-    extractFlowFieldTypes(screens) {
-        const flowFieldTypes = {};
+    // extractFlowFieldTypes(screens) {
+    //     const flowFieldTypes = {};
     
-        screens.forEach(screen => {
-            const children = screen.layout?.children || [];
-            children.forEach(child => {
-                if (child.type === 'Form') {
-                    child.children?.forEach(field => {
-                        if (field.name) {
-                            flowFieldTypes[field.name] = field.type;
+    //     screens.forEach(screen => {
+    //         console.log('Screen:', JSON.stringify(screen));
+    //         const children = screen.layout?.children || [];
+    //         children.forEach(child => {
+    //             if (child.type === 'Form') {
+    //                 child.children?.forEach(field => {
+    //                     if (field.name) {
+    //                         flowFieldTypes[field.name] = field.type;
+    //                     }
+    //                 });
+    //             }
+    //         });
+    //     });
+    
+    //     return flowFieldTypes;
+    // }
+
+    extractFlowFieldTypes(screens) {
+        const fieldTypes = {};
+    
+        screens.forEach((screen, screenIndex) => {
+            const layoutChildren = screen?.layout?.children || [];
+    
+            layoutChildren.forEach(child => {
+                if (child.type === 'Form' && Array.isArray(child.children)) {
+                    const formElements = child.children;
+    
+                    formElements.forEach(formElement => {
+                        if (formElement.type === 'Footer' && formElement['on-click-action']?.payload) {
+                            const payload = formElement['on-click-action'].payload;
+    
+                            for (const fieldKey in payload) {
+                                const expression = payload[fieldKey];
+                                // Match pattern like ${form.Purchase_experience}
+                                const match = expression.match(/\${form\.(\w+)}/);
+                                if (match) {
+                                    const fieldName = match[1];
+                                    const matchingElement = formElements.find(el => el.name === fieldName);
+                                    if (matchingElement) {
+                                        const dataType = matchingElement.type;
+                                        // Basic mapping UI type to general data type
+                                        // const dataType = this.mapUiTypeToDataType(uiType);
+                                        fieldTypes[fieldKey] = dataType;
+                                    }
+                                }
+                            }
                         }
                     });
                 }
             });
+    
+            // Additionally, check screen.data for direct type mappings
+            if (screen.data) {
+                for (const key in screen.data) {
+                    if (!fieldTypes[key] && screen.data[key]?.type) {
+                        fieldTypes[key] = screen.data[key].type;
+                    }
+                }
+            }
         });
     
-        return flowFieldTypes;
+        return fieldTypes;
     }
 
     fetchTemplates() {
@@ -241,9 +295,9 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     };
 
                     console.log('this.automation =', JSON.stringify(this.automation));
-                    if (result.WB_Template__r?.Button_Body__c) {  //Change to MVWB__Button_Body__c
+                    if (result.WB_Template__r?.MVWB__WBButton_Body__c) {  //Change to MVWB__WBButton_Body__c
                         try {
-                            const buttons = JSON.parse(result.WB_Template__r.Button_Body__c);
+                            const buttons = JSON.parse(result.WB_Template__r.MVWB__WBButton_Body__c);
                             // console.log('BUTTONS =', buttons);
                             this.quickReplyButtons = buttons
                             .filter(button => button.type === "QUICK_REPLY")
@@ -257,7 +311,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                             });
 
                         } catch (error) {
-                            console.error("Error parsing MVWB__Button_Body__c:", error);
+                            console.error("Error parsing MVWB__WBButton_Body__c:", error);
                         }
                     }
                     // console.log('this.quickreplybuttons:', JSON.stringify(this.quickReplyButtons));
@@ -279,6 +333,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     
                 if (!this.isFlowTemplate) {
 
+                    console.log('this.isFlowTemplate:', this.isFlowTemplate);
                     // Convert the fetched records into a structured object
                     const automationPathsMap = {};
                     result.forEach(path => {
@@ -301,43 +356,54 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     this.selectedTemplateId = this.automationPaths[this.selectedTemplateButtonId]?.templateId || null;
                     this.selectedAction = this.automationPaths[this.selectedTemplateButtonId]?.templateType || 'whatsapp';
                 } else {
-                    const flowPath = result.find(path => path.Action_Type__c === 'Create/Edit a Record');
+                    const existingFlowPath = result.find(path => path.Action_Type__c === 'Create/Edit a Record');
 
-                    if (flowPath) {
-                        this.isFlowAutomationCreated = true;
-                        console.log('Flow Path:', JSON.stringify(flowPath));
-                        this.selectedObject = flowPath.Object_Name__c || '';
+                    if (existingFlowPath) {
+                        
+                        // this.isFlowAutomationCreated = true;
+
+                        console.log('Flow Path:', JSON.stringify(existingFlowPath));
+                        this.FlowRecordId = existingFlowPath.Id || '';
+                        this.selectedObject = existingFlowPath.Object_Name__c || '';
                         console.log('this.selectedObject :', this.selectedObject);
                         
                         this.loadFlowFields();
                         console.log('After JSON DATA');
                         
-                        this.fetchFieldsForObject(this.selectedObject);
-
-                        this.FlowId = flowPath.WB_Flow__c || '';
-
-                        try {
-                            const fieldMapping = JSON.parse(flowPath.Field_Mapping__c || '{}');
-                            console.log('this.objectFields :', JSON.stringify(this.objectFields));
+                        // this.fetchFieldsForObject(this.selectedObject);
+                        getObjectFields({ objectName: this.selectedObject })
+                        .then((result) => {
+                            console.log('fetchFieldsForObjects after apex:- ',JSON.stringify(result))
+                            this.objectFields = result;
+                            const fieldMapping = JSON.parse(existingFlowPath.Field_Mapping__c || '{}');
+                            console.log('fieldMapping :', JSON.stringify(fieldMapping));
+                            
+                            // console.log('this.objectFields :', JSON.stringify(this.objectFields));
                             // Convert to chatWindowRows format if needed
                             this.chatWindowRows = Object.entries(fieldMapping).map(([flowField, objectField], index) => ({
                                 id: `row-${index}`,
                                 selectedObject: this.selectedObject,
                                 selectedObjectField: objectField,
-                                filteredFlowFields: this.getFilteredFlowFields(this.objectFields.find(field => field.label === objectField)?.type || ''), //filteredFlowFields: this.getFilteredFlowFields(fieldType),
-                                selectedFlowField: flowField
+                                filteredFlowFields: this.getFilteredFlowFields(this.objectFields.find(field => field.value === objectField)?.type || ''), //filteredFlowFields: this.getFilteredFlowFields(fieldType),
+                                selectedFlowField: flowField,
+                                isRequired: this.isFieldRequired(objectField),
+                                isObjectFieldDisabled: this.isFieldRequired(objectField),
                             }));
                             console.log('CHAT WINDOW ROWS:', JSON.stringify(this.chatWindowRows));
-                        } catch (e) {
-                            console.error('Error parsing field mapping:', e);
-                            this.chatWindowRows = [];
-                        }
+                        })
+                        .catch((error) => {
+                            console.error('Error fetching object fields:', error);
+                        });
+                        console.log('this.objectFields fetchFieldsForObject:- ', JSON.stringify(this.objectFields));
+
+                        this.FlowId = existingFlowPath.WB_Flow__c || '';
 
                     } else {
                         // No existing flow automation path found
                         this.selectedObject = '';
                         this.FlowId = '';
                         this.chatWindowRows = [];
+                        this.FlowRecordId = '';
                     }
                 }
             })
@@ -347,29 +413,51 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             });
     }
 
+    // getFilteredFlowFields(objectFieldType) {
+    //     objectFieldType = objectFieldType.toUpperCase();
+    //     console.log('Called with objectFieldType:', objectFieldType);
+    //     const compatibleTypes = (this.typeCompatibilityMap[objectFieldType] || []).map(t => t.toUpperCase());
+    //     // console.log('Compatible Types:', JSON.stringify(compatibleTypes));
+    //     // console.log('All Flow Fields:', JSON.stringify(this.flowFields, null, 2));
+    //     console.log('this.flowFields ::: ', JSON.stringify(this.flowFields));
+        
+    //     return this.flowFields
+    //         .filter(field => {
+    //             const match = compatibleTypes.includes(field.type?.toUpperCase());
+    //             // console.log(`Checking field: ${field.label}, type: ${field.type}, match: ${match}`);
+    //             return match;
+    //         })
+    //         .map(field => ({ label: field.label, value: field.value }));
+    // }
+
     getFilteredFlowFields(objectFieldType) {
         objectFieldType = objectFieldType.toUpperCase();
         console.log('Called with objectFieldType:', objectFieldType);
+    
         const compatibleTypes = (this.typeCompatibilityMap[objectFieldType] || []).map(t => t.toUpperCase());
-        // console.log('Compatible Types:', JSON.stringify(compatibleTypes));
-        // console.log('All Flow Fields:', JSON.stringify(this.flowFields, null, 2));
+    
         console.log('this.flowFields ::: ', JSON.stringify(this.flowFields));
-        
+    
         return this.flowFields
             .filter(field => {
-                const match = compatibleTypes.includes(field.type?.toUpperCase());
-                // console.log(`Checking field: ${field.label}, type: ${field.type}, match: ${match}`);
-                return match;
+                let fieldType = field.type?.toUpperCase();
+    
+                // For TextInput, adjust type based on input-type
+                if (fieldType === "TEXTINPUT" && field["input-type"]) {
+                    fieldType = `TEXTINPUT(${field["input-type"].toUpperCase()})`;
+                }
+    
+                return compatibleTypes.includes(fieldType);
             })
             .map(field => ({ label: field.label, value: field.value }));
-    }
+    }    
 
     fetchFieldsForObject(objectName) {
         try {
             console.log('Fetching fields for object:', objectName);
             getObjectFields({ objectName: objectName })
             .then((result) => {
-                console.log('fetchFieldsForObjects after apex:- ',JSON.stringify(result))
+                // console.log('fetchFieldsForObjects after apex:- ',JSON.stringify(result))
                 this.objectFields = result;
             });
             console.log('this.objectFields fetchFieldsForObject:- ', JSON.stringify(this.objectFields));
@@ -409,13 +497,13 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         return this.selectedAction === 'create' ? 'brand' : 'neutral';
     }
 
-    get scheduleButtonVariant() {
-        return this.isScheduled === true ? 'brand' : 'neutral';
-    }
+    // get scheduleButtonVariant() {
+    //     return this.isScheduled === true ? 'brand' : 'neutral';
+    // }
 
-    get immediateButtonVariant() {
-        return this.isScheduled === true ? 'neutral' : 'brand';
-    }
+    // get immediateButtonVariant() {
+    //     return this.isScheduled === true ? 'neutral' : 'brand';
+    // }
 
     get filteredWhatsAppTemplates() {
         const lowerSearchTerm = this.searchTerm.toLowerCase();
@@ -467,10 +555,10 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         this.selectedTemplateId = null;
     }
 
-    handleSendOptionChange(event) {
-        this.isScheduled = event.target.value === 'scheduled';
-        console.log('Send Option:', this.isScheduled);
-    }
+    // handleSendOptionChange(event) {
+    //     this.isScheduled = event.target.value === 'scheduled';
+    //     console.log('Send Option:', this.isScheduled);
+    // }
 
     handleSearchChange(event) {
         this.searchTerm = event.target.value;
@@ -489,6 +577,16 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     
         console.log('Updated automationPaths:', JSON.stringify(this.automationPaths));
     }
+
+    // handleDurationValueChange(event) {
+    //     this.durationValue = event.target.value;
+    //     console.log('Selected Duration Value:', this.durationValue);
+    // }
+
+    // handleDurationUnitChange(event) {
+    //     this.durationUnit = event.target.value;
+    //     console.log('Selected Duration Unit:', this.durationUnit);
+    // }
 
     handleCancel() {
         this.selectedTemplateButtonId = '';
@@ -513,13 +611,15 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     handleSave() {
+
+        console.log('saveAutomationPath triggered');
+
         if (!this.isFlowTemplate) {
 
             const allButtonsHaveTemplates = Object.values(this.automationPaths).every(value => value !== null);
             
             if (!allButtonsHaveTemplates) {
-                console.error('Error: All buttons must have a selected template before saving.');
-                alert('Please select a template for all buttons before saving.');
+                this.showToast('Error', 'Please select a template for all buttons before saving.', 'error');
                 return;
             }
         
@@ -577,16 +677,36 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             fields.Field_Mapping__c = JSON.stringify(mapping);
             fields.WB_Flow__c = this.FlowId;
 
-            console.log('Fields to save:', JSON.stringify(fields));
-            const recordInput = { apiName: 'Automation_Path__c', fields };
+            if (this.FlowRecordId) {
 
-            createRecord(recordInput)
-                .then(result => {
-                    this.showToast('Success', 'Record saved successfully', 'success');
-                })
-                .catch(error => {
-                    this.showToast('Error', 'Error saving record', 'error');
-                });
+                console.log('Updating existing record with ID:', this.FlowRecordId);
+
+                fields.Id = this.FlowRecordId;
+                console.log('Fields to save:', JSON.stringify(fields));
+
+                const updateInput = { fields };
+                updateRecord(updateInput)
+                    .then(() => {
+                        this.showToast('Success', 'Record updated successfully', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Error updating record', error);
+                        this.showToast('Error', 'Error updating record', 'error');
+                    });
+            } else {
+
+                console.log('Creating new record');
+                console.log('Fields to save:', JSON.stringify(fields));
+                const recordInput = { apiName: 'Automation_Path__c', fields };
+    
+                createRecord(recordInput)
+                    .then(result => {
+                        this.showToast('Success', 'Record saved successfully', 'success');
+                    })
+                    .catch(error => {
+                        this.showToast('Error', 'Error saving record', 'error');
+                    });
+            }
         }
     }
 
@@ -639,6 +759,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         this.chatWindowRows = this.chatWindowRows.map(row =>
             row.id === rowId ? { ...row, selectedFlowField: value } : row
         );
+        console.log('this.chatWindowRows in handleObjectChangeForChat:', JSON.stringify(this.chatWindowRows));
     }
     
     handleDeleteRow(event) {
@@ -650,6 +771,15 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         if (!str) return str;
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     }
+
+    isFieldRequired(apiName) {
+        console.log('this.requiredFields', JSON.stringify(this.requiredFields));
+        if (!this.requiredFields || this.requiredFields.length === 0) {
+            return false;
+        }
+    
+        return this.requiredFields.some(field => field.apiName === apiName);
+    }    
 
     showToast(title, message, variant) {
         const event = new ShowToastEvent({

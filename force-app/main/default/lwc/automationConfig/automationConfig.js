@@ -18,7 +18,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     @track selectedTemplateId = '';
     @track recordId = null;
 
-    @track isEditMode = false;
+    // @track isEditMode = false;
     
     connectedCallback() {
         this.fetchAutomations();
@@ -104,28 +104,30 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         }
 
         const automationRecord = {
-            Id: this.isEditMode ? this.recordId : undefined,
+            // Id: this.isEditMode ? this.recordId : undefined,
             Name: this.name,
             Description__c: this.description,
             WB_Template__c: this.selectedTemplateId
         };
 
-        const apexMethod = this.isEditMode ? updateAutomations : saveAutomations;
+        console.log('Automation Record:', JSON.stringify(automationRecord));
 
-        apexMethod({ automations: [automationRecord] })
+        // const apexMethod = this.isEditMode ? updateAutomations : saveAutomations;
+
+        saveAutomations({ automations: [automationRecord] })
             .then((result) => {
-                this.showToast('Success', `Automation ${this.isEditMode ? 'updated' : 'saved'} successfully.`, 'success');
+                this.showToast('Success', `Automation saved successfully.`, 'success');
                 this.closeModal();
                 this.fetchAutomations();
             })
             .catch(error => {
-                console.error(`Error ${this.isEditMode ? 'updating' : 'saving'} record:`, error);
-                this.showToast('Error', `Failed to ${this.isEditMode ? 'update' : 'save'} automation.`, 'error');
+                console.error(`Error saving record:`, error);
+                this.showToast('Error', `Failed to save automation.`, 'error');
             });
     }
 
     get modalTitle() {
-        return this.isEditMode ? 'Edit Automation' : 'New Automation';
+        return 'New Automation';
     }
 
     /**
@@ -148,12 +150,12 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         this.name = '';
         this.description = '';
         this.selectedTemplateId = '';
-        this.isEditMode = false;
+        // this.isEditMode = false;
     }
 
     closeModal() {
         this.isModalOpen = false;
-        this.isEditMode = false;
+        // this.isEditMode = false;
         this.recordId = null;
         this.name = '';
         this.description = '';

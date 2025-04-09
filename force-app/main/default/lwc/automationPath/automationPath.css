@@ -91,10 +91,14 @@
 /* TABLE */
 
 .table-container {
-    border-radius: 0.4rem; 
+    /* border-radius: 0.4rem;  */
     overflow: visible !important; 
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
 }
+
+/* .table-container .tablerow {
+    border-radius: 0.4rem !important;
+} */
 
 .slds-table {
     width: 100%;
@@ -136,7 +140,7 @@ tr{
     height: 10%;
     padding: 10px;
     font-size: 15px;
-    max-width: 200px;
+    /* max-width: 200px; */
     overflow: visible;
     text-overflow: ellipsis;
     white-space: nowrap;
