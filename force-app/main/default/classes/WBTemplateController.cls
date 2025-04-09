@@ -812,6 +812,11 @@
         return objectList;
     }
 
+    @AuraEnabled(cacheable=true)
+    public static String getCompanyName() {
+        return [SELECT Name FROM Organization LIMIT 1].Name;
+    }
+
    public class FileChunkWrapper {
        @AuraEnabled public String uploadSessionId;
        @AuraEnabled public String fileContent;

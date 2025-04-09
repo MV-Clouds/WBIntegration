@@ -38,6 +38,8 @@ import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
 import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
+import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
+
 
 export default class WbCreateTemplatePage extends LightningElement {
     maxTempNamelength = 512;
@@ -220,6 +222,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track iframeSrc;
     @track isModalPreview = false;
     // @track NoFileSelected = true;
+    companyName = '';
 
 
     get expireTime() {
@@ -594,6 +597,13 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.generateEmojiCategories();
         this.fetchUpdatedTemplates(false);
         this.fetchObjectsWithPhoneField();
+        getCompanyName()
+            .then(result => {
+                this.companyName = result;
+            })
+            .catch(error => {
+                console.error('Error fetching company name:', error);
+            });
     }
 
     fetchObjectsWithPhoneField() {
@@ -1061,9 +1071,17 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     // Reset file data after deletion
     resetFileData() {
+        this.file = null;
         this.fileName = null;
         this.fileData = null;
+        this.fileType = null;
+        this.fileSize = null;
         this.filePreview = null;
+
+        const fileInput = this.template.querySelector('.file-input');
+        if(fileInput) {
+            fileInput.value = '';
+        }
         
         if(this.isImgSelected){
             this.isImageFile = true;
@@ -1080,6 +1098,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.isfilename = false;
         this.NoFileSelected = true;
         this.contentVersionId = null;
+        this.headerHandle = '';
     }
 
     uploadFile() {

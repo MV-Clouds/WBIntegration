@@ -455,6 +455,18 @@ public class WBTemplateControllerTest {
         System.assertNotEquals(null, response.get('message'));
 
     }
+
+    @isTest
+    static void testGetCompanyName() {
+        // Call the method
+        Test.startTest();
+        String companyName = WBTemplateController.getCompanyName();
+        WBTemplateController.getObjectsWithPhoneField();
+        Test.stopTest();
+        
+        // Assert that it returns a non-null value
+        System.assertNotEquals(null, companyName, 'Company name should not be null');
+    }
     
     
 }

@@ -993,8 +993,8 @@
                                                         <div class="consent">
                                                             <lightning-input type="checkbox"
                                                                 name="input2"></lightning-input>
-                                                            <p style="font-size: 15px;">I understand that it's
-                                                                responsibility of MV Clouds to stop sending marketing
+                                                            <p style="font-size: 15px;">I understand that it's {companyName}
+                                                                responsibility to stop sending marketing
                                                                 messages to customers who opt out.</p>
                                                         </div>
                                                     </template>
@@ -1027,7 +1027,7 @@
                                             <template if:true={authZeroTab}>
                                                 <div class="consentZero">
                                                     <lightning-input type="checkbox" class="checkbox" name="isautofillChecked" checked={isautofillChecked} onchange={handleInputChange}></lightning-input>
-                                                    <p style="font-size: 14px;">By selecting zero-tap, I understand that MV Clouds's use of zero-tap authentication is subject to the WhatsApp Business Terms of Service . It's MV Clouds 's responsibility to ensure that its customers expect that the code will be automatically filled in on their behalf when they choose to receive the zero-tap code through WhatsApp.</p>
+                                                    <p style="font-size: 14px;">By selecting zero-tap, I understand that {companyName} use of zero-tap authentication is subject to the WhatsApp Business Terms of Service . It's {companyName} responsibility to ensure that its customers expect that the code will be automatically filled in on their behalf when they choose to receive the zero-tap code through WhatsApp.</p>
                                                 </div>
                                             </template>
                                             <div class="radio-item">

@@ -41,17 +41,14 @@ export default class CustomMultiselectPicklist extends LightningElement {
         try {
             event.preventDefault();
             const value = event.target.name;
-                console.log('Option value:', value);
             let tempSelectedValues = [...this.selectedValues]; 
     
             if (event.target.checked) {
                 if (!tempSelectedValues.includes(value)) {
                     tempSelectedValues.push(value);
-                    console.log('Added to selectedValues:', JSON.stringify(tempSelectedValues));
                 }
             } else {
                 tempSelectedValues = tempSelectedValues.filter(item => item !== value);
-                console.log('Removed from selectedValues:', JSON.stringify(tempSelectedValues));
             }
         
             this.selectedValues = tempSelectedValues;

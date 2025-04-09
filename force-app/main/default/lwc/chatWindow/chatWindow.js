@@ -131,7 +131,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             if (this.isAwsSdkInitialized) {
                 Promise.all([loadScript(this, AWS_SDK)])
                     .then(() => {
-                        console.log('Script loaded successfully');
+                        // console.log('Script loaded successfully');
                     })
                     .catch((error) => {
                         console.error("error -> ", error);
@@ -152,7 +152,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             let actionType = response.data.payload.MVWB__Type__c;
             
             if(response.data.payload.MVWB__ContactId__c !== self.phoneNumber) return;
-            // console.log(actionType ,' status :: ', receivedChat.MVWB__Message_Status__c ,' Chat received is :: ', receivedChat.MVWB__WhatsAppMessageId__c);
 
             let chat = self.chats?.find(ch => ch.Id === receivedChat.Id);
             
@@ -259,7 +258,8 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 ch.isVideo = ch.MVWB__Message_Type__c == 'Video';
                 ch.isAudio = ch.MVWB__Message_Type__c == 'Audio';
                 ch.isDoc = ch.MVWB__Message_Type__c == 'Document';
-                ch.isOther = !['Text', 'Image', 'Template', 'Video', 'Document', 'Audio'].includes(ch.MVWB__Message_Type__c) ;
+                ch.isFlow = ch.Message_Type__c == 'interactive';
+                ch.isOther = !['Text', 'Image', 'Template', 'Video', 'Document', 'Audio', 'interactive'].includes(ch.MVWB__Message_Type__c) ;
                 ch.isTemplate = ch.MVWB__Message_Type__c == 'Template';
                 ch.messageBy = ch.MVWB__Type_of_Message__c == 'Outbound Messages' ? 'You' : this.recordName;
                 if ((ch.isDoc || ch.isAudio) && ch.MVWB__File_Data__c) {
@@ -1026,7 +1026,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         try {
             getS3ConfigSettings()
                 .then(result => {
-                    console.log('result--> ', result);
                     if (result != null) {
                         this.confData = result;
                         this.isAWSEnabled = true;
@@ -1047,7 +1046,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 let fileSizeMB = Math.floor(file.size / (1024 * 1024));
                 let isValid = false;
                 let maxSize = 0;
-                console.log(fileType, fileSizeMB);
     
                 if (fileType.includes('image/')) {
                     maxSize = 5;

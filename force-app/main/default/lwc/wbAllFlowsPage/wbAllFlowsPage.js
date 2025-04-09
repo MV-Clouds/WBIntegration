@@ -118,16 +118,19 @@ export default class WbAllFlowsPage extends LightningElement {
                 deleteWhatsAppFlow({flowId : flowId})
                     .then((result) => {
                         if(!result.startsWith('Failed')){
+                            this.showToast('Success', 'Flow deleted successfully', 'success');
                             this.fetchWhatsAppFlows();
                         } else {
+                            this.showToast('Error', 'Failed to delete flow', 'error');
                             console.error('Error in deleting WhatsApp Flow:', error);
                         }
                     })
                     .catch((error) => {
+                        this.showToast('Error', 'Failed to delete flow', 'error');
                         console.error('Failed to delete flow : ' , error);
                     })
             } else {
-                this.showToastError('Only flows in Draft or Published status can be deleted.')
+                this.showToast('Error', 'Only flows in Draft or Published status can be deleted.', 'error');
             }
         } catch (error) {
             console.error('Error in deleteFlow : ' , error);
@@ -143,18 +146,22 @@ export default class WbAllFlowsPage extends LightningElement {
                 deprecateWhatsAppFlow({flowId : flowId})
                     .then((result) => {
                         if(!result.startsWith('Failed')){
+                            this.showToast('Success', 'Flow deprecated successfully', 'success');
                             this.fetchWhatsAppFlows();
                         } else {
-                            console.error('Error in deleting WhatsApp Flow:', error);
+                            this.showToast('Error', 'Failed to deprecate flow', 'error');
+                            console.error('Error in deprecate WhatsApp Flow:', error);
                         }
                     })
                     .catch((error) => {
-                        console.error('Failed to delete flow : ' , error);
+                        this.showToast('Error', 'Failed to deprecate flow', 'error');
+                        console.error('Failed to deldeprecateete flow : ' , error);
                     })
             } else {
-                this.showToastError('Only flows in Draft or Published status can be deleted.')
+                this.showToast('Error', 'Only flows in Draft or Published status can be deleted.', 'error');
             }
         } catch (error) {
+            this.showToast('Error', 'Failed to deprecate flow', 'error');
             console.error('Error in deprecateflow : ' , error);
         }
     }
@@ -165,7 +172,6 @@ export default class WbAllFlowsPage extends LightningElement {
             this.showPopup = true;
 
             let matchingRecord = this.filteredRecords.find(record => record.MVWB__Flow_Id__c === flowId);
-            console.log({matchingRecord});
             if (matchingRecord && matchingRecord.MVWB__Status__c === 'Draft') {
                 this.isFlowDraft = true;
             }
@@ -176,13 +182,16 @@ export default class WbAllFlowsPage extends LightningElement {
                     if(data != 'failed'){
                         this.flowPreviewURL = data;
                     } else {
+                        this.showToast('Error', 'Failed to get flow preview', 'error');
                         console.error('Error in getting Flow Preview URL:', error);
                     }
                 })
                 .catch(error => {
+                    this.showToast('Error', 'Failed to get flow preview', 'error');
                     console.error('Error in getting Flow Preview URL:', error);
                 });
         } catch (error) {
+            this.showToast('Error', 'Failed to get flow preview', 'error');
             console.error('Error in getting Flow Preview URL:', error);
         }
     }
@@ -201,34 +210,24 @@ export default class WbAllFlowsPage extends LightningElement {
                     if(!result.startsWith('Failed')){
                         this.closePopup();
                         this.fetchWhatsAppFlows();
-                        this.showToastSuccess('Flow successfully published.');
+                        this.showToast('Success', 'Flow Published Successfully', 'success');
                     } else {
+                        this.showToast('Error', 'Failed to publish flow', 'error');
                         console.error('Error in publishing WhatsApp Flow:', error);
                     }
                 })
                 .catch((error) => {
+                    this.showToast('Error', 'Failed to publish flow', 'error');
                     console.error('Failed to publish flow : ' , error);
                 })
         } catch (error) {
+            this.showToast('Error', 'Failed to publish flow', 'error');
             console.error('Error in publishFlow : ' , error);
         }
     }
 
-    showToastError(message) {
-        const toastEvent = new ShowToastEvent({
-            title: 'Error',
-            message,
-            variant: 'error'
-        });
-        this.dispatchEvent(toastEvent);
-    }
-
-    showToastSuccess(message) {
-        const toastEvent = new ShowToastEvent({
-            title: 'Success',
-            message,
-            variant: 'success'
-        });
+    showToast(title, message, varient) {
+        const toastEvent = new ShowToastEvent({title: title, message: message, variant: varient});
         this.dispatchEvent(toastEvent);
     }
 }

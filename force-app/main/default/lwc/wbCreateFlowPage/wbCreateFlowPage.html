@@ -76,7 +76,7 @@
                     <div class="slds-box slds-theme_default templatebtn">
                         <div class="footer-btn">
                             <lightning-button variant="brand-outline" onclick={handleDiscard} label="Discard" class="slds-m-left_x-small"></lightning-button>
-                            <p class="footer-desp">When utilising template flow JSON, you are responsible for customising the experience to suit your use case, adhering to applicable laws and complying with WhatsApp Business Messaging Policy. Learn more about templates.</p>                      
+                            <p class="footer-desp">When utilising template flow JSON, you are responsible for customising the experience to suit your use case, adhering to applicable laws and complying with WhatsApp Business Messaging Policy.</p>                      
                         </div>
                         <lightning-button variant="brand" label="Create" onclick={handleCreate} class="slds-m-left_x-small" disabled={isCreateDisabled}></lightning-button>
                     </div>
@@ -127,7 +127,7 @@
                                     </div>
                                 </div>
                                 <div class="previewFlow">
-                                    <iframe src={flowPreviewURL} width="430" height="800" ></iframe>
+                                    <iframe class="flowIframe" src={flowPreviewURL} width="430" height="800" ></iframe>
                                 </div>
                             </div>
                         </div>

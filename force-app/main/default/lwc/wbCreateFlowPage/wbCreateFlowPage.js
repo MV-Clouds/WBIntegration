@@ -114,11 +114,9 @@ export default class WbCreateFlowPage extends LightningElement {
 
     getJSONDataFromApex(){
         try {
-            console.log(this.templateType);
             this.isLoading = true;
             getJSONData({type: this.templateType})
                 .then((data) => {
-                    console.log({data});
                     if(data){
                         this.jsonString = data;
     
@@ -126,33 +124,39 @@ export default class WbCreateFlowPage extends LightningElement {
     
                         createWhatsAppFlow({ flowName: this.flowName, categories: catagories, flowJson: this.jsonString, templateType: this.templateType })
                             .then((result) => {
-                                console.log({result});
                                 if (!result.startsWith('Failed')) {
                                     this.flowId = result;
                                     this.status = 'Draft';
                                     this.formatJSONDataonUI();
                                     this.getFlowPreview();
+                                    this.showToast('Success', 'Flow created successfully', 'success');
                                     // this.isJsonVisible = true;
                                     // this.iscreateflowvisible = false; 
                                 } else {
                                     console.error(result);
-                                    this.showToastError(result);
+                                    this.showToast(result);
+                                    this.isLoading = false;
                                 }
                             }).catch(error => {
                                 console.error('Error in creating Flow : ',error);
+                                this.showToast('Error', 'Failed to create flow', 'error');
                                 this.isLoading = false;
                             });
                     } else {
                         console.error('Error loading JSON data:', error);
+                        this.showToast('Error', 'Failed to load Flow JSON data', 'error');
                         this.isLoading = false;
                     }
                 })
                 .catch((error) => {
                     console.error('error in json fetch' , error);
+                    this.showToast('Error', 'Failed to load Flow JSON data', 'error');
                     this.isLoading = false;
                 });
         } catch (error) {
             console.error('Error loading JSON data:', error);
+            this.showToast('Error', 'Failed to load Flow JSON data', 'error');
+            this.isLoading = false;
         }
     }
 
@@ -169,6 +173,7 @@ export default class WbCreateFlowPage extends LightningElement {
                 require(['vs/editor/editor.main'], () => {
                     this.initializeEditor();
                 });
+                this.isLoading = false;
             })
             .catch(error => {
                 console.error('Error loading Monaco Editor:', error);
@@ -187,6 +192,7 @@ export default class WbCreateFlowPage extends LightningElement {
                 language: 'json',
                 theme: 'vs-light',
                 automaticLayout: true,
+                readOnly: true,
                 minimap: { enabled: false }
             });
     
@@ -206,7 +212,6 @@ export default class WbCreateFlowPage extends LightningElement {
                 this.isLoading = true;
                 getPreviewURLofWhatsAppFlow({ flowId : this.flowId })
                     .then((data) => {
-                        console.log({data});
                         if(data != 'failed'){
                             this.flowPreviewURL = data;
                         } else {
@@ -221,9 +226,11 @@ export default class WbCreateFlowPage extends LightningElement {
                     });
             } else {
                 console.error('Flow id not found');
+                this.isLoading = false;
             }
         } catch (error) {
             console.error('Error in getting Flow Preview URL:', error);
+            this.isLoading = false;
         }
     }
 
@@ -248,19 +255,23 @@ export default class WbCreateFlowPage extends LightningElement {
             publishWhatsAppFlow({flowId : this.flowId})
                 .then((result) => {
                     if(!result.startsWith('Failed')){
+                        this.showToast('Success', 'Flow published successfully', 'success');
                         this.isFlowVisible = false;
                     } else {
                         console.error('Error in publishing WhatsApp Flow:', error);
                     }
                 })
                 .catch((error) => {
+                    this.showToast('Error', 'Failed to publish flow', 'error');
                     console.error('Failed to publish flow : ' , error);
                 })
                 .finally(() => {
                     this.isLoading = false;
                 })
         } catch (error) {
+            this.showToast('Error', 'Failed to publish flow', 'error');
             console.error('Failed to publish flow : ' , error);
+            this.isLoading = false;
         }
     }
 
@@ -275,19 +286,24 @@ export default class WbCreateFlowPage extends LightningElement {
             deleteWhatsAppFlow({flowId : this.flowId})
                 .then((result) => {
                     if(!result.startsWith('Failed')){
+                        this.showToast('Success', 'Flow deleted successfully', 'success');
                         this.isFlowVisible = false;
                     } else {
+                        this.showToast('Error', 'Failed to delete flow', 'error');
                         console.error('Error in deleting WhatsApp Flow:', error);
                     }
                     })
                 .catch((error) => {
+                    this.showToast('Error', 'Failed to delete flow', 'error');
                     console.error('Failed to delete flow : ' , error);
                 })
                 .finally(() => {
                     this.isLoading = false;
                 })
         } catch (error) {
+            this.showToast('Error', 'Failed to delete flow', 'error');
             console.error('Failed to delete flow : ' , error);
+            this.isLoading = false;
         }
     }
 
@@ -306,19 +322,24 @@ export default class WbCreateFlowPage extends LightningElement {
             deprecateWhatsAppFlow({flowId : this.flowId})
                 .then((result) => {
                     if(!result.startsWith('Failed')){
+                        this.showToast('Success', 'Flow deprecated successfully', 'success');
                         this.isFlowVisible = false;
                     } else {
+                        this.showToast('Error', 'Failed to deprecate flow', 'error');
                         console.error('Error in deleting WhatsApp Flow:', error);
                     }
                 })
                 .catch((error) => {
+                    this.showToast('Error', 'Failed to delete flow', 'error');
                     console.error('Failed to delete flow : ' , error);
                 })
                 .finally(() => {
                     this.isLoading = false;
                 })
         } catch (error) {
+            this.showToast('Error', 'Failed to delete flow', 'error');
             console.error('Failed to delete flow : ' , error);
+            this.isLoading = false;
             this.closeDeletePopup();
         }
     }
@@ -331,12 +352,8 @@ export default class WbCreateFlowPage extends LightningElement {
         this.isFlowVisible = false;
     }
 
-    showToastError(message) {
-        const toastEvent = new ShowToastEvent({
-            title: 'Error',
-            message,
-            variant: 'error'
-        });
+    showToast(title, message, varient) {
+        const toastEvent = new ShowToastEvent({title: title, message: message, variant: varient});
         this.dispatchEvent(toastEvent);
     }
 }
