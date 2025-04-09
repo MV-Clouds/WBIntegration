@@ -64,7 +64,7 @@ public without sharing class WhatsAppChatTriggerHandler {
             // Query existing Broadcast__c records
             Map<Id, Broadcast__c> broadcastsToUpdate = new Map<Id, Broadcast__c>();
             if (!broadcastIds.isEmpty()) {
-                for (Broadcast__c broadcast : [SELECT Id, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c 
+                for (Broadcast__c broadcast : [SELECT Id, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c, Recipient_Count__c 
                                                FROM Broadcast__c 
                                                WHERE Id IN :broadcastIds]) {
                     broadcast.Total_Sent__c = broadcast.Total_Sent__c == null ? 0 : broadcast.Total_Sent__c;
@@ -81,6 +81,11 @@ public without sharing class WhatsAppChatTriggerHandler {
                 if (chat.WB_Broadcast__c == null || chat.Message_Status__c == null) {
                     continue;
                 }
+
+                Chat__c oldChat = recordOldMap.get(chat.Id);
+                if (oldChat != null && oldChat.Message_Status__c == chat.Message_Status__c) {
+                    continue;
+                }
     
                 if (!broadcastsToUpdate.containsKey(chat.WB_Broadcast__c)) {
                     broadcastsToUpdate.put(chat.WB_Broadcast__c, new Broadcast__c(
@@ -90,10 +95,19 @@ public without sharing class WhatsAppChatTriggerHandler {
                 
                 Broadcast__c broadcast = broadcastsToUpdate.get(chat.WB_Broadcast__c);
 
-                broadcast.Total_Sent__c += chat.Message_Status__c == 'Sent' ? 1 : 0;
-                broadcast.Total_Delivered__c += chat.Message_Status__c == 'Delivered' ? 1 : 0;
-                broadcast.Total_Read__c += chat.Message_Status__c == 'Seen' ? 1 : 0;
-                broadcast.Total_Failed__c += chat.Message_Status__c == 'Failed' ? 1 : 0;
+                Decimal recipientLimit = broadcast.Recipient_Count__c;
+                if (chat.Message_Status__c == 'Sent' && broadcast.Total_Sent__c < recipientLimit) {
+                    broadcast.Total_Sent__c += 1;
+                }
+                if (chat.Message_Status__c == 'Delivered' && broadcast.Total_Delivered__c < recipientLimit) {
+                    broadcast.Total_Delivered__c += 1;
+                }
+                if (chat.Message_Status__c == 'Seen' && broadcast.Total_Read__c < recipientLimit) {
+                    broadcast.Total_Read__c += 1;
+                }
+                if (chat.Message_Status__c == 'Failed' && broadcast.Total_Failed__c < recipientLimit) {
+                    broadcast.Total_Failed__c += 1;
+                }
             }
     
             // Perform bulk update

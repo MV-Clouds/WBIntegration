@@ -323,33 +323,31 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                                 'sub_type' => 'copy_code',
                                 'index' => index,
                                 'parameters' => new List<Map<String, Object>>{
-                                    new Map<String, Object>{ 'type' => 'coupon_code', 'coupon_code' => (String)data.get('bodyParaCode') }
+                                    new Map<String, Object>{ 'type' => 'coupon_code', 'coupon_code' => (String)button.get('example') }
                                 }
                             });
                         }
                         when 'OTP' {
-                            if (((String)button.get('otp_type')).toUpperCase() == 'COPY_CODE') {
-                                components.add(new Map<String, Object>{
-                                    'type' => 'button',
-                                    'sub_type' => 'url',
-                                    'index' => index,
-                                    'parameters' => new List<Map<String, Object>>{
-                                        new Map<String, Object>{ 'type' => 'text', 'text' => (String)data.get('bodyParaCode') }
-                                    }
-                                });
-                            }
+                            Integer randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
+                            String randomCodeStr = String.valueOf(randomCode);
+                            components.add(new Map<String, Object>{
+                                'type' => 'button',
+                                'sub_type' => 'url',
+                                'index' => index,
+                                'parameters' => new List<Map<String, Object>>{
+                                    new Map<String, Object>{ 'type' => 'text', 'text' => randomCodeStr }
+                                }
+                            });
                         }
                         when 'FLOW' {
-                            if (((String)button.get('otp_type')).toUpperCase() == 'FLOW') {
-                                components.add(new Map<String, Object>{
-                                    'type' => 'button',
-                                    'sub_type' => 'flow',
-                                    'index' => index,
-                                    'parameters' => new List<Map<String, Object>>{
-                                        new Map<String, Object>{ 'type' => 'payload', 'text' => 'PAYLOAD' }
-                                    }
-                                });
-                            }
+                            components.add(new Map<String, Object>{
+                                'type' => 'button',
+                                'sub_type' => 'flow',
+                                'index' => index,
+                                'parameters' => new List<Map<String, Object>>{
+                                    new Map<String, Object>{ 'type' => 'payload', 'payload' => 'PAYLOAD' }
+                                }
+                            });
                         }
                     }
                     index++;

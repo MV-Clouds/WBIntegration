@@ -22,16 +22,16 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     //Data Variables
     @api recordId;
     @api height;
-    chats = [];
+    @track chats = [];
 
-    recordData;
+    @track recordData;
     @track groupedChats = [];
     @track isLightMode = true; // Default : Light mode (Sun)
     @track messageText = '';
     @track selectedTemplate = null;
     @track allTemplates = [];
     @track templateSearchKey = null;
-    emojiCategories = [];
+    @track emojiCategories = [];
     @track replyToMessage = null;
     @track reactToMessage = null;
     @track noteText = '';
@@ -39,10 +39,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     //Control Variables
     @track showSpinner = false;
     @track noChatMessages = true;
-    showEmojiPicker = false;
-    showAttachmentOptions = false;
+    @track showEmojiPicker = false;
+    @track showAttachmentOptions = false;
     // showSendOptions = false;
-    scrollBottom = false;
+    @track scrollBottom = false;
     @track showReactEmojiPicker = false;
     @track sendOnlyTemplate = false;
 
@@ -53,24 +53,24 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     @track uploadFileType = null;
     @track NoPreviewAvailable = NoPreviewAvailable;
     @track headphone = whatsappAudioIcon;
-    audioPreview = false;
-    audioURL = '';
-    isAWSEnabled = false;
+    @track audioPreview = false;
+    @track audioURL = '';
+    @track isAWSEnabled = false;
     @track confData;
     @track s3;
     @track isAwsSdkInitialized = true;
     @track selectedFilesToUpload = [];
-    selectedFileName;
+    @track selectedFileName;
 
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
     @track phoneNumber;
     @track recordName;
 
-    replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
+    @track replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
 
-    subscription = {};
-    channelName = '/event/MVWB__Chat_Message__e';
+    @track subscription = {};
+    @track channelName = '/event/MVWB__Chat_Message__e';
 
     //Get Variables
     get sunClass() {
@@ -1106,7 +1106,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             const results = await Promise.all(uploadPromises);
             results.forEach((result) => {
                 if (result) {
-                    let bucketName = this.confData.S3_Bucket_Name__c;
+                    let bucketName = this.confData.MVWB__S3_Bucket_Name__c;
                     let objKey = result.Key;
                     let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
 
@@ -1178,16 +1178,16 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             let AWS = window.AWS;
 
             AWS.config.update({
-                accessKeyId: confData.AWS_Access_Key__c,
-                secretAccessKey: confData.AWS_Secret_Access_Key__c
+                accessKeyId: confData.MVWB__AWS_Access_Key__c,
+                secretAccessKey: confData.MVWB__AWS_Secret_Access_Key__c
             });
 
-            AWS.config.region = confData.S3_Region_Name__c;
+            AWS.config.region = confData.MVWB__S3_Region_Name__c;
 
             this.s3 = new AWS.S3({
                 apiVersion: "2006-03-01",
                 params: {
-                    Bucket: confData.S3_Bucket_Name__c
+                    Bucket: confData.MVWB__S3_Bucket_Name__c
                 }
             });
 

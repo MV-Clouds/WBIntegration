@@ -15,18 +15,18 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track selectedGroupIds = [];
     @track templateOptions = []; // Will store the processed template options
     @track templateMap = new Map(); // Store the raw Map from Apex
-    selectedTemplate = null;
-    selectedDateTime;
-    currentPage = 1;
-    pageSize = 15;
-    visiblePages = 5;
-    isLoading = false;
-    showPopup = false;
-    selectedObjectName = '';
-    popUpFirstPage = true;
-    popUpSecondpage = false;
-    popUpLastPage = false;
-    popupHeader = 'Choose Broadcast Groups';
+    @track selectedTemplate = null;
+    @track selectedDateTime;
+    @track currentPage = 1;
+    @track pageSize = 15;
+    @track visiblePages = 5;
+    @track isLoading = false;
+    @track showPopup = false;
+    @track selectedObjectName = '';
+    @track popUpFirstPage = true;
+    @track popUpSecondpage = false;
+    @track popUpLastPage = false;
+    @track popupHeader = 'Choose Broadcast Groups';
 
 
     subscription = {};
@@ -123,7 +123,7 @@ export default class WbAllBroadcastPage extends LightningElement {
 
     // Load all templates once during initialization
     loadAllTemplates() {
-        this.isLoading = true;
+        // this.isLoading = true;
         getTemplatesByObject()
             .then(result => {
                 // Convert the Apex Map to JavaScript Map
@@ -133,9 +133,6 @@ export default class WbAllBroadcastPage extends LightningElement {
             .catch(error => {
                 this.showToast('Error', 'Failed to load templates', 'error');
             })
-            .finally(() => {
-                this.isLoading = false;
-            });
     }
 
     updateTemplateOptions() {
@@ -189,7 +186,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     }
 
     loadBroadcastGroups() {
-        this.isLoading = true;
+        // this.isLoading = true;
         getBroadcastRecs()
             .then(result => {
                 this.data = result.map((item, index) => ({
@@ -412,7 +409,15 @@ export default class WbAllBroadcastPage extends LightningElement {
         if(this.selectedDateTime === '' || this.selectedDateTime === null){
             this.showToast('Error!', 'Please select date and time', 'error');
             return;
-        }        
+        }     
+
+        const selectedTime = new Date(this.selectedDateTime);
+        const now = new Date();
+
+        if (selectedTime < now) {
+            this.showToast('Error!', 'Selected date and time cannot be in the past', 'error');
+            return;
+        }   
 
         let grpIdList = this.selectedGroupIds.map(record => record.Id);
 
