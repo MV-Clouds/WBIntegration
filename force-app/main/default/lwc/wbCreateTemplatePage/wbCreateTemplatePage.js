@@ -1071,9 +1071,17 @@ export default class WbCreateTemplatePage extends LightningElement {
 
     // Reset file data after deletion
     resetFileData() {
+        this.file = null;
         this.fileName = null;
         this.fileData = null;
+        this.fileType = null;
+        this.fileSize = null;
         this.filePreview = null;
+
+        const fileInput = this.template.querySelector('.file-input');
+        if(fileInput) {
+            fileInput.value = '';
+        }
         
         if(this.isImgSelected){
             this.isImageFile = true;
