@@ -76,6 +76,9 @@ export default class TemplatePreview extends LightningElement {
                 this.headerBody = doc.documentElement.textContent;
                 
                 this.templateBody = this.templateData?.MVWB__WBTemplate_Body__c;
+                if (this.templateData?.MVWB__Template_Category__c === 'Authentication') {
+                    this.templateBody = '{{code}} ' + this.templateBody;
+                }
                 this.footerBody = this.templateData?.MVWB__WBFooter_Body__c;
                 // this.buttonLabel = this.templateData?.MVWB__Button_Label__c;
 
