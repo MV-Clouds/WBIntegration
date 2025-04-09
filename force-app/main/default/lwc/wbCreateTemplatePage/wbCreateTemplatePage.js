@@ -38,7 +38,7 @@ import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
 import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
-import getCompanyName from '@salesforce/apex/OrgInfoController.getCompanyName';
+import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
 
 
 export default class WbCreateTemplatePage extends LightningElement {
@@ -1090,6 +1090,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.isfilename = false;
         this.NoFileSelected = true;
         this.contentVersionId = null;
+        this.headerHandle = '';
     }
 
     uploadFile() {
