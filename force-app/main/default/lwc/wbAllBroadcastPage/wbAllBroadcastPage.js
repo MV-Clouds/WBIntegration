@@ -5,8 +5,9 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
 import { subscribe, unsubscribe } from 'lightning/empApi';
+import { NavigationMixin } from 'lightning/navigation';
 
-export default class WbAllBroadcastPage extends LightningElement {
+export default class WbAllBroadcastPage extends NavigationMixin(LightningElement) {
     @track data = [];
     @track paginatedData = [];
     @track filteredData = [];
@@ -15,22 +16,22 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track selectedGroupIds = [];
     @track templateOptions = []; // Will store the processed template options
     @track templateMap = new Map(); // Store the raw Map from Apex
-    selectedTemplate = null;
-    selectedDateTime;
-    currentPage = 1;
-    pageSize = 15;
-    visiblePages = 5;
+    @track selectedTemplate = null;
+    @track selectedDateTime;
+    @track currentPage = 1;
+    @track pageSize = 15;
+    @track visiblePages = 5;
     @track isLoading = false;
     @track showPopup = false;
-    selectedObjectName = '';
+    @track selectedObjectName = '';
     @track popUpFirstPage = true;
     @track popUpSecondpage = false;
     @track popUpLastPage = false;
-    popupHeader = 'Choose Broadcast Groups';
+    @track popupHeader = 'Choose Broadcast Groups';
 
 
     subscription = {};
-    channelName = '/event/MVWB__BroadcastUpdateEvent__e';
+    channelName = '/event/BroadcastUpdateEvent__e';
 
     get showNoRecordsMessage() {
         return this.filteredData.length === 0;
@@ -123,7 +124,7 @@ export default class WbAllBroadcastPage extends LightningElement {
 
     // Load all templates once during initialization
     loadAllTemplates() {
-        this.isLoading = true;
+        // this.isLoading = true;
         getTemplatesByObject()
             .then(result => {
                 // Convert the Apex Map to JavaScript Map
@@ -133,9 +134,6 @@ export default class WbAllBroadcastPage extends LightningElement {
             .catch(error => {
                 this.showToast('Error', 'Failed to load templates', 'error');
             })
-            .finally(() => {
-                this.isLoading = false;
-            });
     }
 
     updateTemplateOptions() {
@@ -158,7 +156,7 @@ export default class WbAllBroadcastPage extends LightningElement {
 
         // Convert to combobox options format
         this.templateOptions = combinedTemplates.map(template => ({
-            label: template.MVWB__Template_Name__c,
+            label: template.Template_Name__c,
             value: template.Id
         }));
 
@@ -168,7 +166,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     subscribeToPlatformEvent() {
         subscribe(this.channelName, -1, (message) => {
             
-            if(message.data.payload.MVWB__IsChanged__c === true){
+            if(message.data.payload.IsChanged__c === true){
                 this.loadBroadcastGroups();
             }            
         })
@@ -189,7 +187,7 @@ export default class WbAllBroadcastPage extends LightningElement {
     }
 
     loadBroadcastGroups() {
-        this.isLoading = true;
+        // this.isLoading = true;
         getBroadcastRecs()
             .then(result => {
                 this.data = result.map((item, index) => ({
@@ -301,21 +299,27 @@ export default class WbAllBroadcastPage extends LightningElement {
         try {
             const groupId = event.target.dataset.id;
             const selectedGroup = this.broadcastGroups.find(group => group.Id === groupId);
-    
+            console.log('Selected group ::: ',selectedGroup);
+            
             if (event.target.checked) {
                 // Add group ID to selected list if checked
                 if (!this.selectedGroupIds.some(group => group.Id === groupId)) {
                     this.selectedGroupIds = [
                         ...this.selectedGroupIds,
-                        { Id: groupId, ObjName: selectedGroup.MVWB__Object_Name__c } // Store both Id and Name
+                        { Id: groupId, ObjName: selectedGroup.Object_Name__c,Name:selectedGroup.Name } // Store both Id and Name
                     ];
                 }
             } else {
                 // Remove group ID if unchecked
                 this.selectedGroupIds = this.selectedGroupIds.filter(group => group.Id !== groupId);
             }
+
+            console.log('Selected group ids ::: ',this.selectedGroupIds);
+            
     
             this.selectedObjectName = this.selectedGroupIds[0]?.ObjName || '';
+            console.log('Selected object name ::: ',this.selectedObjectName);
+            
     
             // Update filteredGroups to reflect selection
             this.filteredGroups = this.filteredGroups.map(group => ({
@@ -412,7 +416,15 @@ export default class WbAllBroadcastPage extends LightningElement {
         if(this.selectedDateTime === '' || this.selectedDateTime === null){
             this.showToast('Error!', 'Please select date and time', 'error');
             return;
-        }        
+        }     
+
+        const selectedTime = new Date(this.selectedDateTime);
+        const now = new Date();
+
+        if (selectedTime < now) {
+            this.showToast('Error!', 'Selected date and time cannot be in the past', 'error');
+            return;
+        }   
 
         let grpIdList = this.selectedGroupIds.map(record => record.Id);
 
@@ -443,6 +455,8 @@ export default class WbAllBroadcastPage extends LightningElement {
 
         this.isLoading = true;
         let grpIdList = this.selectedGroupIds.map(record => record.Id);
+        // console.log('Selected group ids ::: ',grpIdList);
+        // console.log('Selected template ::: ',this.selectedGroupIds);
 
         createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: false, timeOfMessage: ''})
             .then(result => {
@@ -461,6 +475,45 @@ export default class WbAllBroadcastPage extends LightningElement {
             });
     }
 
+    handleNextbroadcastOnPopup(event) {
+        try {
+            const firstObjName = this.selectedGroupIds[0]?.ObjName;
+            const allSameObjName = this.selectedGroupIds.every(group => group.ObjName === firstObjName);
+
+            if (!allSameObjName) {
+                this.showToast('Error!', 'Please select groups with the same object name', 'error');
+                return;
+            }
+
+            const names = this.selectedGroupIds.map(item => item.Name); // Extract names from selectedGroupIds
+            console.log('Selected template ::: ', this.selectedTemplate);
+            console.log('Selected names ::: ', names);
+
+            event.preventDefault();
+
+            // Encode the data as query parameters
+            const navigationState = {
+                groupNames: names,
+                objectName : this.selectedObjectName
+            };
+            const encodedNavigationState = btoa(JSON.stringify(navigationState));
+
+            // Navigate to the wbCreateMarketingCampaign component
+            this[NavigationMixin.Navigate]({
+                type: 'standard__navItemPage',
+                attributes: {
+                    apiName: 'create_Marketing' // Replace with the API name of your Lightning Tab
+                },
+                state: {
+                    c__navigationState: encodedNavigationState
+                }
+            });
+        } catch (error) {
+            console.error('Error in handleNextbroadcastOnPopup:', error);
+            this.showToast('Error!', 'An error occurred while navigating', 'error');
+        }
+    }
+    
     showToast(title ,message, status){
         this.dispatchEvent(new ShowToastEvent({title: title, message: message, variant: status}));
     }

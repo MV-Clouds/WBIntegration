@@ -1,0 +1,73 @@
+* {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    user-select: none;
+}
+
+.wrapper {
+    background-color: #ffffff;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius : 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.heading {
+    font-size: x-large;
+    font-weight: 500;
+}
+
+.allTemplates{
+    overflow: auto;
+    flex: 1;
+}
+
+.broadCastGroup {
+    display: flex;
+    flex-direction: column;
+    margin: 1rem;
+    padding: 1rem;
+    border-radius: 5px;
+    background-color: transparent;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.broadCastGroup h1 {
+    font-weight: 500;
+    font-size: large;
+    margin-bottom: 1rem;
+    white-space: nowrap;
+}
+
+.groupListWrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    width: 100%;
+    flex-wrap: nowrap; /* keep it in one row, scroll if overflow */
+    overflow-x: auto;  /* optional: allows horizontal scrolling on smaller screens */
+}
+
+.groupListWrapper .slds-box {
+    padding: 10px;
+    background-color: #0077B6;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.templateList{
+    margin: 15px;
+}
+
+.allTemplates{
+    margin: 15px;
+    --slds-c-card-color-background  : transparent;
+}

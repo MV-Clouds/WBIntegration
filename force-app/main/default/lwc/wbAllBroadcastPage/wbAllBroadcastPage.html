@@ -20,7 +20,7 @@
                 <button class="custom-button cus-btns" onclick={newBroadcast}>
                     <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                         class="left-icon"></lightning-icon>
-                    <span>New Broadcast</span>
+                    <span>New</span>
                 </button>
             </div>
         </div>
@@ -46,12 +46,12 @@
                             <tr key={row.Id}>
                                 <td class="sr-no">{row.index}</td>
                                 <td data-id={row.Id}>{row.Name}</td>
-                                <td>{row.MVWB__Recipient_Count__c}</td>
-                                <td>{row.MVWB__Status__c}</td>
-                                <td>{row.MVWB__Total_Sent__c}</td>
-                                <td>{row.MVWB__Total_Delivered__c}</td>
-                                <td>{row.MVWB__Total_Read__c}</td>
-                                <td>{row.MVWB__Total_Failed__c}</td>
+                                <td>{row.Recipient_Count__c}</td>
+                                <td>{row.Status__c}</td>
+                                <td>{row.Total_Sent__c}</td>
+                                <td>{row.Total_Delivered__c}</td>
+                                <td>{row.Total_Read__c}</td>
+                                <td>{row.Total_Failed__c}</td>
                             </tr>
                         </template>
                     </tbody>
@@ -64,7 +64,7 @@
                     <div class="empty-state">
                         <div class="empty-state__content">
                             <div class="empty-state__icon">
-                                <img src="/resource/MVWB__emptyState" alt="" draggable="false">
+                                <img src="/resource/emptyState" alt="" draggable="false">
                             </div>
                             <div class="empty-state__message">No Data Available to Show.</div>
                         </div>
@@ -148,10 +148,10 @@
                                                     </div>
                                                     <div class="">
                                                         <h3 class="slds-text-heading_small">{group.Name}</h3>
-                                                        <p><strong>Members:</strong> {group.MVWB__Count_of_Members__c}</p>
+                                                        <p><strong>Members:</strong> {group.Count_of_Members__c}</p>
                                                         <p><strong>Object of Group Members: </strong>
-                                                            {group.MVWB__Object_Name__c}</p>
-                                                        <p><strong>Description:</strong> {group.MVWB__Description__c}</p>
+                                                            {group.Object_Name__c}</p>
+                                                        <p><strong>Description:</strong> {group.Description__c}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -165,13 +165,15 @@
                                             label="Close" class="slds-m-left_x-small"></lightning-button>
                                         <lightning-button variant="brand" label="Next" onclick={handleNextOnPopup}
                                             class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
+                                        <lightning-button variant="brand" label="Create Broadcast campaign" onclick={handleNextbroadcastOnPopup}
+                                            class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
                                     </div>
                                 </template>
 
                                 <template if:false={filteredGroups.length}>
                                     <div class="empty-state__content">
                                         <div class="empty-state__icon">
-                                            <img src="/resource/MVWB__emptyState" alt="" draggable="false">
+                                            <img src="/resource/emptyState" alt="" draggable="false">
                                         </div>
                                         <div class="empty-state__message">No Data Available to Show.</div>
                                     </div>
