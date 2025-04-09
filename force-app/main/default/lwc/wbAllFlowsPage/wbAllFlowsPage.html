@@ -1,3 +1,10 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 04-09-2025
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
 <template>
     <template if:true={isFlowVisible}>
         <div class="slds-theme_default main">
@@ -52,13 +59,13 @@
                             <template for:each={filteredRecords} for:item="record">
                                 <tr class="tablerow" key={record.Id}>
                                     <td class="tableData" data-label="Flow Name">
-                                        <div class="slds-truncate">{record.Flow_Name__c}</div>
+                                        <div class="slds-truncate">{record.MVWB__Flow_Name__c}</div>
                                     </td>
                                     <td class="tableData" data-label="Flow ID">
-                                        <div class="slds-truncate">{record.Flow_Id__c}</div>
+                                        <div class="slds-truncate">{record.MVWB__Flow_Id__c}</div>
                                     </td>
                                     <td class="tableData" data-label="Status">
-                                        <div class="slds-truncate"><p class={record.Status__c}>{record.Status__c}</p></div>
+                                        <div class="slds-truncate"><p class={record.MVWB__Status__c}>{record.MVWB__Status__c}</p></div>
                                     </td>
                                     <td class="tableData" data-label="LastModifiedDate">
                                         <div class="slds-truncate">{record.LastModifiedDate}</div>
@@ -66,18 +73,18 @@
                                     <td class="tableData tablebtns" data-label="Actions">
                                         <template if:false={record.isDeprecated}>
                                             <button class="action-buttons slds-m-right--x-small">
-                                                <img src="/resource/previewIcon" class="action" title="preview" alt="preview" data-id={record.Flow_Id__c} onclick={previewTemplate}>
+                                                <img src="/resource/MVWB__previewIcon" class="action" title="preview" alt="preview" data-id={record.MVWB__Flow_Id__c} onclick={previewTemplate}>
                                             </button>
                                         </template>
                                         <!-- <button disabled={record.isButtonDisabled} class="action-buttons slds-m-horizontal--x-small">
-                                            <img src="/resource/editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
+                                            <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
                                         </button> -->
                                         <button class="action-buttons slds-m-horizontal--x-small">
                                             <template if:true={record.isPublished}>
-                                                <img src="/resource/trashIcon" class="action trash" title="Deprecate" alt="Deprecate" data-id={record.Flow_Id__c} data-status={record.Status__c} onclick={deprecateFlow}>
+                                                <img src="/resource/MVWB__trashIcon" class="action trash" title="Deprecate" alt="Deprecate" data-id={record.MVWB__Flow_Id__c} data-status={record.MVWB__Status__c} onclick={deprecateFlow}>
                                             </template>
                                             <template if:true={record.isDraft}>
-                                                <img src="/resource/trashIcon" class="action trash" title="Delete" alt="deDeletelete" data-id={record.Flow_Id__c} data-status={record.Status__c} onclick={deleteFlow}>
+                                                <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete" alt="deDeletelete" data-id={record.MVWB__Flow_Id__c} data-status={record.MVWB__Status__c} onclick={deleteFlow}>
                                             </template>
                                         </button>
                                     </td>

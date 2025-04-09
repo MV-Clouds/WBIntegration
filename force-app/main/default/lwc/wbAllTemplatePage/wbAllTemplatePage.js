@@ -37,8 +37,8 @@ export default class WbAllTemplatePage extends LightningElement {
     @track showPopup = false; 
     @track isFilterVisible = false;
     @track editTemplateId='';
-    subscription = null;
-    channelName = '/event/Template_Update__e';
+    @track subscription = null;
+    channelName = '/event/MVWB__Template_Update__e';
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {

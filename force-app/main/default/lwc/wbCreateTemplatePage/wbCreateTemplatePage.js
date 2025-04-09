@@ -728,7 +728,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                     
                     
                     try{
-                        const templateMiscellaneousData = JSON.parse(template.Template_Miscellaneous_Data__c);
+                        const templateMiscellaneousData = JSON.parse(template.MVWB__Template_Miscellaneous_Data__c);
                         this.contentVersionId = templateMiscellaneousData.contentVersionId
                         this.isImageFile = templateMiscellaneousData.isImageFile
                         this.isImgSelected = templateMiscellaneousData.isImgSelected

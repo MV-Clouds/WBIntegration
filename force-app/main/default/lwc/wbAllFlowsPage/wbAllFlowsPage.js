@@ -14,14 +14,14 @@ export default class WbAllFlowsPage extends LightningElement {
     @track filteredRecords = [];
     @track statusValues = [];
     @track statusOptions = [];
-    isFlowVisible = true;
-    iscreateflowvisible = false;
-    searchInput;
-    isLoading = false;
-    flowPreviewURL = '';
-    showPopup = false;
-    isFlowDraft = false;
-    selectedFlowId = '';
+    @track isFlowVisible = true;
+    @track iscreateflowvisible = false;
+    @track searchInput;
+    @track isLoading = false;
+    @track flowPreviewURL = '';
+    @track showPopup = false;
+    @track isFlowDraft = false;
+    @track selectedFlowId = '';
 
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
     flowMetadata;
