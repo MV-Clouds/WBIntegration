@@ -219,6 +219,7 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             data.put('headerType', template.Header_Type__c);
             data.put('headerParameters', (List<Object>)templateData.get('headerParams'));
             data.put('bodyParameters', (List<Object>)templateData.get('bodyParams'));
+            data.put('templateType', template.Template_Category__c);
 
             if(template.WBButton_Body__c != null){
                 Object rawData = JSON.deserializeUntyped(template.WBButton_Body__c);
@@ -298,6 +299,15 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                 }
                 
                 components.add(new Map<String, Object>{ 'type' => 'body', 'parameters' => bodyParams });
+            } else if((String)data.get('templateType') == 'Authentication'){
+                Integer randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
+                String randomCodeStr = String.valueOf(randomCode);
+                components.add(new Map<String, Object>{
+                    'type' => 'body',
+                    'parameters' => new List<Map<String, Object>>{
+                        new Map<String, Object>{ 'type' => 'text', 'text' => randomCodeStr }
+                    }
+                });
             }
 
             // Button Parameters
