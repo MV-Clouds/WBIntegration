@@ -434,6 +434,9 @@ global without sharing class WhatsAppWebhook{
                             }
                         }
                         whatsappChat.Message_Type__c = 'interactive';
+                        if (contextId != null && contextId != ''){
+                            whatsappChat.WhatsAppContextMessageID__c = contextId;
+                        }
                     }
                 }
             }
