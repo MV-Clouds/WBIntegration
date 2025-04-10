@@ -48,9 +48,10 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     typeCompatibilityMap = {
         STRING: ["TextInput", "Text"],
         PICKLIST: ["Dropdown", "CheckboxGroup", "ChipSelector", "RadioButtonsGroup"],
-        NUMBER: ["TextInput(Number)"],
-        DOUBLE: ["TextInput(Number)"],
-        PHONE: ["TextInput(Phone)"],
+        NUMBER: ["TextInput"],
+        DOUBLE: ["TextInput"],
+        EMAIL: ["TextInput"],
+        PHONE: ["TextInput"],
         CHECKBOX: ["OptIn", "Checkbox"],
         TEXTAREA: ["TextArea", "Text"],
         MULTIPICKLIST: ["CheckboxGroup", "ChipSelector", "RadioButtonsGroup"],
@@ -171,9 +172,11 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     loadFlowFields() {
+        console.log('Loading Flow Fields for Flow ID:', this.FlowId);
         getFlowFields({ flowId: this.FlowId })
             .then((jsonData) => {
                 jsonData = JSON.parse(jsonData);
+                console.log('Flow JSON Data:', JSON.stringify(jsonData));
                 const data = this.extractFlowFieldTypes(jsonData.screens);
                 const keys = Object.keys(data);
                 this.flowFields = keys.map(key => ({
@@ -356,7 +359,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     this.selectedTemplateId = this.automationPaths[this.selectedTemplateButtonId]?.templateId || null;
                     this.selectedAction = this.automationPaths[this.selectedTemplateButtonId]?.templateType || 'whatsapp';
                 } else {
-                    const existingFlowPath = result.find(path => path.Action_Type__c === 'Create/Edit a Record');
+                    const existingFlowPath = result.find(path => path.Action_Type__c === 'Create a Record');
 
                     if (existingFlowPath) {
                         
@@ -662,7 +665,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             }
 
             fields.Automation__c = this.recordId;
-            fields.Action_Type__c = 'Create/Edit a Record';
+            fields.Action_Type__c = 'Create a Record';
             // 1. Object Name
             fields.Object_Name__c = this.selectedObject;
 
@@ -701,9 +704,11 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     
                 createRecord(recordInput)
                     .then(result => {
+                        console.log('result = ', JSON.stringify(result)); 
                         this.showToast('Success', 'Record saved successfully', 'success');
                     })
                     .catch(error => {
+                        console.error('Error saving record', JSON.stringify(error));
                         this.showToast('Error', 'Error saving record', 'error');
                     });
             }

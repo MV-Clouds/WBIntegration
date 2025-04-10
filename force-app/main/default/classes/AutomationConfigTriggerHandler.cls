@@ -40,7 +40,7 @@ public without sharing class AutomationConfigTriggerHandler {
         Map<Id, MVWB__Chat__c> parentChatMap = new Map<Id, MVWB__Chat__c>();
         if (!replyToIds.isEmpty()) {
             for (MVWB__Chat__c parent : [
-                SELECT Id, MVWB__Whatsapp_Template__r.MVWB__WBButton_Body__c
+                SELECT Id, MVWB__Whatsapp_Template__r.MVWB__WBButton_Body__c, MVWB__Reply_to__c
                 FROM MVWB__Chat__c
                 WHERE Id IN :replyToIds
             ]) {
@@ -109,12 +109,19 @@ public without sharing class AutomationConfigTriggerHandler {
         List<MVWB__Chat__c> potentialPathReplies = new List<MVWB__Chat__c>();
 
         for (MVWB__Chat__c newChat : newChats) {
-            if (String.isNotBlank(newChat.MVWB__WhatsAppContextMessageID__c)) {
+            // if (String.isNotBlank(newChat.MVWB__WhatsAppContextMessageID__c)) {
                 contextMessageIds.add(newChat.MVWB__WhatsAppContextMessageID__c);
-                if (String.isNotBlank(newChat.MVWB__Message__c)) {
+                if (String.isNotBlank(newChat.MVWB__Message__c) || String.isNotBlank(newChat.MVWB__Flow_Response_JSON__c)) {
+                    System.debug('Adding to potentialPathReplies: ' + newChat.MVWB__Flow_Response_JSON__c);
+                    if(String.isNotBlank(newChat.MVWB__Flow_Response_JSON__c)){
+                        System.debug('Adding contextMessageId: ' + newChat.MVWB__Reply_To__c);
+                        MVWB__Chat__c contextMessageId = [SELECT Id, MVWB__WhatsAppMessageId__c FROM MVWB__Chat__c WHERE Id = :newChat.MVWB__Reply_to__c];
+                        System.debug('Adding contextMessageId: ' + contextMessageId);
+                        contextMessageIds.add(contextMessageId.MVWB__WhatsAppMessageId__c);
+                    }
                     potentialPathReplies.add(newChat);
                 }
-            }
+            // }
         }
 
         if (contextMessageIds.isEmpty() || potentialPathReplies.isEmpty()) {
@@ -140,6 +147,7 @@ public without sharing class AutomationConfigTriggerHandler {
             return;
         }
         System.debug('Matching Automation records found.');
+        System.debug('TemplateIdToAutomationIdMap: ' + templateIdToAutomationIdMap);
 
         // Step 4: Fetch Automation Paths
         Map<Id, Map<String, Automation_Path__c>> automationPathsMap = fetchAutomationPaths(templateIdToAutomationIdMap);
@@ -153,6 +161,7 @@ public without sharing class AutomationConfigTriggerHandler {
     }
 
     private static Map<String, MVWB__Chat__c> fetchOriginalChats(Set<String> contextMessageIds) {
+        System.debug('Fetching original chats for context message IDs: ' + contextMessageIds);
         Map<String, MVWB__Chat__c> originalChatsMap = new Map<String, MVWB__Chat__c>();
 
         for (MVWB__Chat__c originalChat : [
@@ -160,6 +169,9 @@ public without sharing class AutomationConfigTriggerHandler {
             FROM MVWB__Chat__c
             WHERE MVWB__WhatsAppMessageId__c IN :contextMessageIds
         ]) {
+            if (originalChat.MVWB__Whatsapp_Template__c != null) {
+                System.debug('Adding to originalChatsMap: ' + originalChat.MVWB__WhatsAppMessageId__c);
+            }
             if (originalChat.MVWB__WhatsAppMessageId__c != null) {
                 originalChatsMap.put(originalChat.MVWB__WhatsAppMessageId__c, originalChat);
             }
@@ -194,17 +206,27 @@ public without sharing class AutomationConfigTriggerHandler {
     }
 
     private static Map<Id, Map<String, Automation_Path__c>> fetchAutomationPaths(Map<String, Id> templateIdToAutomationIdMap) {
+        System.debug('Fetching Automation Paths for template IDs: ' + templateIdToAutomationIdMap);
         Map<Id, Map<String, Automation_Path__c>> automationPathsMap = new Map<Id, Map<String, Automation_Path__c>>();
         Set<Id> relevantAutomationIds = new Set<Id>(templateIdToAutomationIdMap.values());
+        System.debug('Relevant Automation IDs: ' + relevantAutomationIds);
 
         for (Automation_Path__c path : [
             SELECT Id, Automation__c, Button_Value__c, Action_Template__c, Action_Type__c, Action_Email_Template__c, Object_Name__c, Field_Mapping__c
             FROM Automation_Path__c
             WHERE Automation__c IN :relevantAutomationIds
         ]) {
+            System.debug('Adding to automationPathsMap: ' + path);
             if (path.Automation__c != null && String.isNotBlank(path.Button_Value__c)) {
                 String normalizedButtonValue = path.Button_Value__c.toLowerCase().trim();
 
+                if (!automationPathsMap.containsKey(path.Automation__c)) {
+                    automationPathsMap.put(path.Automation__c, new Map<String, Automation_Path__c>());
+                }
+                automationPathsMap.get(path.Automation__c).put(normalizedButtonValue, path);
+            }
+            if(path.Automation__c != null && path.Action_Type__c == 'Create a Record' && String.isNotBlank(path.Field_Mapping__c)){
+                String normalizedButtonValue = 'interactive';
                 if (!automationPathsMap.containsKey(path.Automation__c)) {
                     automationPathsMap.put(path.Automation__c, new Map<String, Automation_Path__c>());
                 }
@@ -221,16 +243,32 @@ public without sharing class AutomationConfigTriggerHandler {
         Map<Id, Map<String, Automation_Path__c>> automationPathsMap
     ) {
         for (MVWB__Chat__c newChat : potentialPathReplies) {
+
+            MVWB__Chat__c originalChat = new MVWB__Chat__c();
             
-            MVWB__Chat__c originalChat = originalChatsMap.get(newChat.MVWB__WhatsAppContextMessageID__c);
+            if(newChat.MVWB__Message_Type__c == 'interactive'){
+                System.debug('Message Type is interactive. Exiting.');
+                MVWB__Chat__c contextMessageId = [SELECT Id, MVWB__WhatsAppMessageId__c FROM MVWB__Chat__c WHERE Id = :newChat.MVWB__Reply_to__c];
+                originalChat = originalChatsMap.get(contextMessageId.MVWB__WhatsAppMessageId__c);
+            } else{
+                originalChat = originalChatsMap.get(newChat.MVWB__WhatsAppContextMessageID__c);
+            }
 
             if (originalChat != null && String.isNotBlank(originalChat.MVWB__Whatsapp_Template__c)) {
                 
                 Id automationId = templateIdToAutomationIdMap.get(originalChat.MVWB__Whatsapp_Template__c);
+                System.debug('Automation ID: ' + automationId);
+                System.debug('automationPathsMap: ' + automationPathsMap);
+                System.debug('automationpathmap.containsKey(automationId): ' + automationPathsMap.containsKey(automationId));
 
                 if (automationId != null && automationPathsMap.containsKey(automationId)) {
                     
-                    String normalizedMessageBody = newChat.MVWB__Message__c.toLowerCase().trim();
+                    String normalizedMessageBody = '';
+                    if(newChat.MVWB__Message_Type__c == 'interactive'){
+                        normalizedMessageBody = 'interactive';
+                    } else{
+                        normalizedMessageBody = newChat.MVWB__Message__c.toLowerCase().trim();
+                    }
                     Contact contactRecord = [SELECT Id FROM Contact WHERE Phone = :newChat.MVWB__Phone__c LIMIT 1];
                     
                     Id contactId = contactRecord != null ? contactRecord.Id : null;
@@ -242,8 +280,9 @@ public without sharing class AutomationConfigTriggerHandler {
                         // *** If ALL CONDITIONS MET ***
                         Automation_Path__c matchingPath = pathsForThisAutomation.get(normalizedMessageBody);
 
-                        System.debug('Matched Path: ' + matchingPath.Id);
-                        System.debug('Chat ID (inserting) is a reply to Template (' + originalChat.MVWB__Whatsapp_Template__c + ') with Automation (' + automationId + ') and matching Path (' + matchingPath.Id + ') found via Button Value (' + matchingPath.Button_Value__c + ').');
+                        System.debug('Matched Path Id: ' + matchingPath.Id);
+                        System.debug('Matched Path: ' + matchingPath);
+                        // System.debug('Chat ID (inserting) is a reply to Template (' + originalChat.MVWB__Whatsapp_Template__c + ') with Automation (' + automationId + ') and matching Path (' + matchingPath.Id + ') found via Button Value (' + matchingPath.Button_Value__c + ').');
 
                         if (matchingPath.Action_Type__c == 'Send Message') {
 
@@ -474,7 +513,6 @@ public without sharing class AutomationConfigTriggerHandler {
 
     public static String createJSONBody(String to, String type, Map<String, Object> data) {
         try {
-            System.debug(data);
             // Base Payload Structure
             Map<String, Object> payload = new Map<String, Object>();
             payload.put('messaging_product', 'whatsapp');
@@ -489,7 +527,6 @@ public without sharing class AutomationConfigTriggerHandler {
 
             // Header Parameters (Text)
             List<Object> headerParameters = (List<Object>)data.get('headerParameters');
-            System.debug(headerParameters);
             if (headerParameters != null && !headerParameters.isEmpty()) {
                 List<Map<String, Object>> headerParams = new List<Map<String, Object>>();
                 
@@ -514,7 +551,7 @@ public without sharing class AutomationConfigTriggerHandler {
 
             // Body Parameters
             List<Object> bodyParameters = (List<Object>)data.get('bodyParameters');
-            if (bodyParameters != null && bodyParameters.size() > 0) {
+            if (bodyParameters != null && !bodyParameters.isEmpty()) {
                 List<Map<String, Object>> bodyParams = new List<Map<String, Object>>();
                 
                 for (Object param : bodyParameters) {
@@ -522,11 +559,20 @@ public without sharing class AutomationConfigTriggerHandler {
                 }
                 
                 components.add(new Map<String, Object>{ 'type' => 'body', 'parameters' => bodyParams });
+            } else if((String)data.get('templateType') == 'Authentication'){
+                Integer randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
+                String randomCodeStr = String.valueOf(randomCode);
+                components.add(new Map<String, Object>{
+                    'type' => 'body',
+                    'parameters' => new List<Map<String, Object>>{
+                        new Map<String, Object>{ 'type' => 'text', 'text' => randomCodeStr }
+                    }
+                });
             }
 
             // Button Parameters
             List<Map<String, Object>> buttonValue = (List<Map<String, Object>>)data.get('buttonValue');
-            if (buttonValue != null && buttonValue.size() > 0) {
+            if (buttonValue != null && !buttonValue.isEmpty()) {
                 Integer index = 0;
                 for (Map<String, Object> button : buttonValue) {
                     String buttonType = ((String)button.get('type')).toUpperCase();
@@ -547,24 +593,31 @@ public without sharing class AutomationConfigTriggerHandler {
                                 'sub_type' => 'copy_code',
                                 'index' => index,
                                 'parameters' => new List<Map<String, Object>>{
-                                    new Map<String, Object>{ 'type' => 'coupon_code', 'coupon_code' => (String)data.get('bodyParaCode') }
+                                    new Map<String, Object>{ 'type' => 'coupon_code', 'coupon_code' => (String)button.get('example') }
                                 }
                             });
                         }
                         when 'OTP' {
-                            if (((String)button.get('otp_type')).toUpperCase() == 'COPY_CODE') {
-                                components.add(new Map<String, Object>{
-                                    'type' => 'button',
-                                    'sub_type' => 'url',
-                                    'index' => index,
-                                    'parameters' => new List<Map<String, Object>>{
-                                        new Map<String, Object>{ 'type' => 'text', 'text' => (String)data.get('bodyParaCode') }
-                                    }
-                                });
-                            }
+                            Integer randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
+                            String randomCodeStr = String.valueOf(randomCode);
+                            components.add(new Map<String, Object>{
+                                'type' => 'button',
+                                'sub_type' => 'url',
+                                'index' => index,
+                                'parameters' => new List<Map<String, Object>>{
+                                    new Map<String, Object>{ 'type' => 'text', 'text' => randomCodeStr }
+                                }
+                            });
                         }
-                        when else {
-                            System.debug('Unknown button type: ' + buttonType);
+                        when 'FLOW' {
+                            components.add(new Map<String, Object>{
+                                'type' => 'button',
+                                'sub_type' => 'flow',
+                                'index' => index,
+                                'parameters' => new List<Map<String, Object>>{
+                                    new Map<String, Object>{ 'type' => 'payload', 'payload' => 'PAYLOAD' }
+                                }
+                            });
                         }
                     }
                     index++;
@@ -572,14 +625,14 @@ public without sharing class AutomationConfigTriggerHandler {
             }
 
             // Add Components to Template
-            if (components.size() > 0) {
+            if (!components.isEmpty()) {
                 template.put('components', components);
             }
 
             payload.put('template', template);
             return JSON.serialize(payload);
         } catch (Exception e) {
-            System.debug('Error in createJSONBody: ' + e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'createJSONBody', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => '', 'chatId' => null, 'moreDetails' => '', 'apiResponse' => '' });
             return null;
         }
     }

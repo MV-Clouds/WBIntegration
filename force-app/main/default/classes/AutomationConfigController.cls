@@ -18,16 +18,16 @@ public without sharing class AutomationConfigController {
         try {
             return [SELECT Id, Name, Description__c, WB_Template__r.MVWB__Template_Name__c, WB_Template__r.MVWB__Template_Type__c FROM Automation__c];
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{
-            //     'className' => 'AutomationConfigController',
-            //     'methodName' => 'getAllAutomations',
-            //     'exceptionObj' => e,
-            //     'isApiException' => false,
-            //     'statusCode' => null,
-            //     'chatId' => null,
-            //     'moreDetails' => e.getMessage(),
-            //     'apiResponse' => null
-            // });
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getAllAutomations',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             System.debug('Error in getAllAutomations: ' + e.getMessage());
             return null;
         }
@@ -43,16 +43,16 @@ public without sharing class AutomationConfigController {
         try {
             return [SELECT Id, MVWB__Template_Name__c, MVWB__Template_Type__c FROM MVWB__Template__c WITH USER_MODE];
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{
-            //     'className' => 'AutomationConfigController',
-            //     'methodName' => 'getTemplates',
-            //     'exceptionObj' => e,
-            //     'isApiException' => false,
-            //     'statusCode' => null,
-            //     'chatId' => null,
-            //     'moreDetails' => e.getMessage(),
-            //     'apiResponse' => null
-            // });
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getTemplates',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
     }
@@ -76,16 +76,16 @@ public without sharing class AutomationConfigController {
             }
             return automations;
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{
-            //     'className' => 'AutomationConfigController',
-            //     'methodName' => 'saveAutomations',
-            //     'exceptionObj' => e,
-            //     'isApiException' => false,
-            //     'statusCode' => null,
-            //     'chatId' => null,
-            //     'moreDetails' => e.getMessage(),
-            //     'apiResponse' => null
-            // });
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'saveAutomations',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             System.debug('Error in saveAutomations: ' + e.getMessage());
             return null;
         }
@@ -132,16 +132,16 @@ public without sharing class AutomationConfigController {
             return recordsToUpdate;
 
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{
-            //     'className' => 'AutomationConfigController',
-            //     'methodName' => 'updateAutomations',
-            //     'exceptionObj' => e,
-            //     'isApiException' => false,
-            //     'statusCode' => null,
-            //     'chatId' => null,
-            //     'moreDetails' => e.getMessage(),
-            //     'apiResponse' => null
-            // });
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'updateAutomations',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
     }
@@ -174,16 +174,16 @@ public without sharing class AutomationConfigController {
             }
 
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{
-            //     'className' => 'AutomationConfigController',
-            //     'methodName' => 'deleteAutomations',
-            //     'exceptionObj' => e,
-            //     'isApiException' => false,
-            //     'statusCode' => null,
-            //     'chatId' => null,
-            //     'moreDetails' => e.getMessage(),
-            //     'apiResponse' => null
-            // });
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'deleteAutomations',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
         }
     }
 
@@ -197,16 +197,16 @@ public without sharing class AutomationConfigController {
         try {
             return [SELECT Id, Name, Description__c, WB_Template__r.MVWB__Template_Name__c, WB_Template__r.MVWB__Template_Type__c, WB_Template__r.MVWB__WBButton_Body__c FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{
-            //     'className' => 'AutomationConfigController',
-            //     'methodName' => 'getAutomationById',
-            //     'exceptionObj' => e,
-            //     'isApiException' => false,
-            //     'statusCode' => null,
-            //     'chatId' => null,
-            //     'moreDetails' => e.getMessage(),
-            //     'apiResponse' => null
-            // });
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getAutomationById',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
     }
@@ -221,16 +221,16 @@ public without sharing class AutomationConfigController {
         try {
             return [SELECT Id, Name FROM EmailTemplate WITH SECURITY_ENFORCED];
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{
-            //     'className' => 'AutomationConfigController',
-            //     'methodName' => 'getTemplates',
-            //     'exceptionObj' => e,
-            //     'isApiException' => false,
-            //     'statusCode' => null,
-            //     'chatId' => null,
-            //     'moreDetails' => e.getMessage(),
-            //     'apiResponse' => null
-            // });
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getTemplates',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
     }
@@ -295,16 +295,16 @@ public without sharing class AutomationConfigController {
             }
             return automationPaths;
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{
-            //     'className' => 'AutomationConfigController',
-            //     'methodName' => 'saveAutomationPaths',
-            //     'exceptionObj' => e,
-            //     'isApiException' => false,
-            //     'statusCode' => null,
-            //     'chatId' => null,
-            //     'moreDetails' => e.getMessage(),
-            //     'apiResponse' => null
-            // });
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'saveAutomationPaths',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
     }
@@ -419,7 +419,7 @@ public without sharing class AutomationConfigController {
             
             return finalResponse;
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController', 'methodName' => 'getRequiredFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController', 'methodName' => 'getRequiredFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
     }
@@ -447,7 +447,7 @@ public without sharing class AutomationConfigController {
             
             return objectFields;
         } catch (Exception e) {
-            // MVWB__ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController', 'methodName' => 'getTextAndPhoneFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController', 'methodName' => 'getTextAndPhoneFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
         }
     }
@@ -485,7 +485,7 @@ public without sharing class AutomationConfigController {
 
     @AuraEnabled
     public static String getFlowFields(String flowId) {
-        MVWB__Flow__c flow =  [SELECT Id, MVWB__Flow_JSON__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+        MVWB__Flow__c flow =  [SELECT Id, MVWB__Flow_JSON__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED];
 
         if (flow == null || String.isBlank(flow.MVWB__Flow_JSON__c)) {
             return null; // or handle the error as needed

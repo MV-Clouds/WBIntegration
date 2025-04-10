@@ -38,7 +38,7 @@
                             <lightning-layout-item flexibility="grow">
                                 <lightning-button-group>
                                     <lightning-button label="Send WhatsApp Template" value="whatsapp" onclick={handleActionChange} variant={whatsappButtonVariant}></lightning-button>
-                                    <lightning-button label="Send Email Template" value="email" onclick={handleActionChange} variant={emailButtonVariant}></lightning-button>
+                                    <!-- <lightning-button label="Send Email Template" value="email" onclick={handleActionChange} variant={emailButtonVariant}></lightning-button> -->
                                     <template if:true={isFlowTemplate}>
                                         <div class="slds-p-around_medium">
                                             <lightning-button label="Create Records" value="create" onclick={handleActionChange} variant={createButtonVariant}></lightning-button>
@@ -81,7 +81,7 @@
                         </template>
 
                         <!-- Email Search View -->
-                        <template if:true={isEmailView}>
+                        <!-- <template if:true={isEmailView}>
                             <lightning-layout vertical-align="end">
                                 <lightning-layout-item flexibility="grow" padding="around-small">
                                     <lightning-input
@@ -110,7 +110,7 @@
                                     </div>
                                 </template>
                             </div>
-                        </template>
+                        </template> -->
 
                         <!-- Send Options
                         <lightning-layout padding="around-small" class="slds-m-top_medium">
