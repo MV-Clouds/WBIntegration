@@ -39,9 +39,9 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     id: record.Id,
                     srNo: index + 1,
                     name: record.Name,
-                    description: record.Description__c,
-                    template: record.WB_Template__r ? record.WB_Template__r.MVWB__Template_Name__c : '',
-                    templateType: record.WB_Template__r ? record.WB_Template__r.MVWB__Template_Type__c : ''
+                    description: record.MVWB__Description__c,
+                    template: record.WB_Template__r ? record.MVWB__WB_Template__r.MVWB__MVWB__Template_Name__c : '',
+                    templateType: record.WB_Template__r ? record.MVWB__WB_Template__r.MVWB__MVWB__Template_Type__c : ''
                 }));
                 console.log('this.automationData =', JSON.stringify(this.automationData));
                 this.originalAutomationData = [...this.automationData];
@@ -106,8 +106,8 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         const automationRecord = {
             // Id: this.isEditMode ? this.recordId : undefined,
             Name: this.name,
-            Description__c: this.description,
-            WB_Template__c: this.selectedTemplateId
+            MVWB__Description__c: this.description,
+            MVWB__WB_Template__c: this.selectedTemplateId
         };
 
         console.log('Automation Record:', JSON.stringify(automationRecord));

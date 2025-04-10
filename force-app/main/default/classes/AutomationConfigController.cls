@@ -309,23 +309,49 @@ public without sharing class AutomationConfigController {
         }
     }
 
+    /**
+    * Method Name : getAutomationPathsByAutomationId
+    * @description : Fetch Automation Path records by Automation Id
+    * @param automationId Id of the Automation
+    * @return List of Automation_Path__c records
+    */
     @AuraEnabled
     public static List<Automation_Path__c> getAutomationPathsByAutomationId(Id automationId) {
-        if (String.isEmpty(automationId)) {
-            return new List<Automation_Path__c>();
+        try {
+            
+            if (String.isEmpty(automationId)) {
+                return new List<Automation_Path__c>();
+            }
+            
+            List<Automation_Path__c> automationPaths = [
+                SELECT Id, Automation__c, Button_Value__c, Action_Type__c, Action_Template__c, 
+                    Action_Email_Template__c, Object_Name__c, Field_Mapping__c, WB_Flow__c
+                FROM Automation_Path__c
+                WHERE Automation__c = :automationId
+            ];
+            
+            // Return an empty list if no records are found
+            return automationPaths != null ? automationPaths : new List<Automation_Path__c>();
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getAutomationPathsByAutomationId',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
         }
-        
-        List<Automation_Path__c> automationPaths = [
-            SELECT Id, Automation__c, Button_Value__c, Action_Type__c, Action_Template__c, 
-                Action_Email_Template__c, Object_Name__c, Field_Mapping__c, WB_Flow__c
-            FROM Automation_Path__c
-            WHERE Automation__c = :automationId
-        ];
-        
-        // Return an empty list if no records are found
-        return automationPaths != null ? automationPaths : new List<Automation_Path__c>();
     }
 
+    /**
+    * Method Name : getAllObjects
+    * @description : Fetch all objects from the schema
+    * @return List of Map<String, String> containing object label and value
+    */
     @AuraEnabled
     public static List<Map<String, String>> getAllObjects() {
         List<Map<String, String>> objectList = new List<Map<String, String>>();
@@ -346,12 +372,28 @@ public without sharing class AutomationConfigController {
                 }
             }
         } catch (Exception e) {
-            System.debug('Error fetching objects: ' + e.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getAllObjects',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
         }
         
         return objectList;
     }
 
+    /**
+    * Method Name : getRequiredFields
+    * @description : Fetch required fields for a given object
+    * @param objectName Name of the object
+    * @return List of Map<String, Object> containing field details
+    */
     @AuraEnabled
     public static List<Map<String, Object>> getRequiredFields(String objectName) {
         try {
@@ -418,12 +460,28 @@ public without sharing class AutomationConfigController {
             finalResponse.add(responseMap);
             
             return finalResponse;
+
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController', 'methodName' => 'getRequiredFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getRequiredFields',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
     }
 
+    /**
+    * Method Name : getObjectFields
+    * @description : Fetch all fields for a given object
+    * @param objectName Name of the object
+    * @return List of Map<String, String> containing field details
+    */
     @AuraEnabled
     public static List<Map<String, String>> getObjectFields(String objectName) {
         try {
@@ -447,13 +505,30 @@ public without sharing class AutomationConfigController {
             
             return objectFields;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController', 'methodName' => 'getTextAndPhoneFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getObjectFields',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
             return null;
         }
     }
 
+    /**
+    * Method Name : getFlowIdFromAutomation
+    * @description : Fetch flow_id from Automation record
+    * @param automationId Id of the Automation
+    * @return String flow_id
+    */
     @AuraEnabled
     public static String getFlowIdFromAutomation(Id automationId) {
+        try {
+
         // Step 1: Query the template related to the automation
         Automation__c automation = [
             SELECT WB_Template__r.MVWB__WBButton_Body__c 
@@ -465,7 +540,6 @@ public without sharing class AutomationConfigController {
         String buttonBodyJson = automation.WB_Template__r.MVWB__WBButton_Body__c;
         if (String.isBlank(buttonBodyJson)) { return null; }
     
-        try {
             // Step 2: Parse the JSON string into a list of objects
             List<Object> buttonList = (List<Object>) JSON.deserializeUntyped(buttonBodyJson);
     
@@ -476,20 +550,53 @@ public without sharing class AutomationConfigController {
                     return (String)item.get('flow_id');
                 }
             }
+
         } catch (Exception ex) {
-            System.debug('Error parsing button body JSON: ' + ex.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getFlowIdFromAutomation',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
         }
     
         return null; // if no FLOW type or error
     }
 
+    /**
+    * Method Name : getFlowFields
+    * @description : Fetch flow fields from MVWB__Flow__c record
+    * @param flowId Id of the flow
+    * @return String flow fields JSON
+    */
     @AuraEnabled
     public static String getFlowFields(String flowId) {
-        MVWB__Flow__c flow =  [SELECT Id, MVWB__Flow_JSON__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED];
-
-        if (flow == null || String.isBlank(flow.MVWB__Flow_JSON__c)) {
-            return null; // or handle the error as needed
+        try {
+            
+            MVWB__Flow__c flow =  [SELECT Id, MVWB__Flow_JSON__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED];
+    
+            if (flow == null || String.isBlank(flow.MVWB__Flow_JSON__c)) {
+                return null; // or handle the error as needed
+            }
+            return flow.MVWB__Flow_JSON__c;
+            
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getFlowFields',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
         }
-        return flow.MVWB__Flow_JSON__c;
     }
 }

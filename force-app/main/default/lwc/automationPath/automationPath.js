@@ -292,15 +292,15 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     this.automation = {
                         id: result.Id,
                         name: result.Name,
-                        description: result.Description__c,
-                        templateName: result.WB_Template__r?.MVWB__Template_Name__c || 'N/A',
-                        templateType: result.WB_Template__r?.MVWB__Template_Type__c || ''
+                        description: result.MVWB__Description__c,
+                        templateName: result.MVWB__WB_Template__r?.MVWB__Template_Name__c || 'N/A',
+                        templateType: result.MVWB__WB_Template__r?.MVWB__Template_Type__c || ''
                     };
 
                     console.log('this.automation =', JSON.stringify(this.automation));
-                    if (result.WB_Template__r?.MVWB__WBButton_Body__c) {  //Change to MVWB__WBButton_Body__c
+                    if (result.MVWB__WB_Template__r?.MVWB__WBButton_Body__c) {
                         try {
-                            const buttons = JSON.parse(result.WB_Template__r.MVWB__WBButton_Body__c);
+                            const buttons = JSON.parse(result.MVWB__WB_Template__r.MVWB__WBButton_Body__c);
                             // console.log('BUTTONS =', buttons);
                             this.quickReplyButtons = buttons
                             .filter(button => button.type === "QUICK_REPLY")
@@ -340,9 +340,9 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     // Convert the fetched records into a structured object
                     const automationPathsMap = {};
                     result.forEach(path => {
-                        automationPathsMap[path.Button_Value__c] = {
-                            templateId: path.Action_Template__c || path.Action_Email_Template__c || null,
-                            templateType: path.Action_Type__c === "Send Message" ? "whatsapp" : "email"
+                        automationPathsMap[path.MVWB__Button_Value__c] = {
+                            templateId: path.MVWB__Action_Template__c || path.MVWB__Action_Email_Template__c || null,
+                            templateType: path.MVWB__Action_Type__c === "Send Message" ? "whatsapp" : "email"
                         };
                     });
         
@@ -359,7 +359,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     this.selectedTemplateId = this.automationPaths[this.selectedTemplateButtonId]?.templateId || null;
                     this.selectedAction = this.automationPaths[this.selectedTemplateButtonId]?.templateType || 'whatsapp';
                 } else {
-                    const existingFlowPath = result.find(path => path.Action_Type__c === 'Create a Record');
+                    const existingFlowPath = result.find(path => path.MVWB__Action_Type__c === 'Create a Record');
 
                     if (existingFlowPath) {
                         
@@ -367,7 +367,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
 
                         console.log('Flow Path:', JSON.stringify(existingFlowPath));
                         this.FlowRecordId = existingFlowPath.Id || '';
-                        this.selectedObject = existingFlowPath.Object_Name__c || '';
+                        this.selectedObject = existingFlowPath.MVWB__Object_Name__c || '';
                         console.log('this.selectedObject :', this.selectedObject);
                         
                         this.loadFlowFields();
@@ -378,7 +378,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         .then((result) => {
                             console.log('fetchFieldsForObjects after apex:- ',JSON.stringify(result))
                             this.objectFields = result;
-                            const fieldMapping = JSON.parse(existingFlowPath.Field_Mapping__c || '{}');
+                            const fieldMapping = JSON.parse(existingFlowPath.MVWB__Field_Mapping__c || '{}');
                             console.log('fieldMapping :', JSON.stringify(fieldMapping));
                             
                             // console.log('this.objectFields :', JSON.stringify(this.objectFields));
@@ -399,7 +399,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         });
                         console.log('this.objectFields fetchFieldsForObject:- ', JSON.stringify(this.objectFields));
 
-                        this.FlowId = existingFlowPath.WB_Flow__c || '';
+                        this.FlowId = existingFlowPath.MVWB__WB_Flow__c || '';
 
                     } else {
                         // No existing flow automation path found
@@ -639,11 +639,11 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 }
         
                 return {
-                    Automation__c: this.recordId,
-                    Button_Value__c: button,
-                    Action_Type__c: actionType,
-                    Action_Template__c: actionTemplate,
-                    Action_Email_Template__c: actionEmailTemplate
+                    MVWB__Automation__c: this.recordId,
+                    MVWB__Button_Value__c: button,
+                    MVWB__Action_Type__c: actionType,
+                    MVWB__Action_Template__c: actionTemplate,
+                    MVWB__Action_Email_Template__c: actionEmailTemplate
                 };
             });
         
@@ -664,10 +664,10 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 return;
             }
 
-            fields.Automation__c = this.recordId;
-            fields.Action_Type__c = 'Create a Record';
+            fields.MVWB__Automation__c = this.recordId;
+            fields.MVWB__Action_Type__c = 'Create a Record';
             // 1. Object Name
-            fields.Object_Name__c = this.selectedObject;
+            fields.MVWB__Object_Name__c = this.selectedObject;
 
             // 2. Field Mapping
             const mapping = {};
@@ -677,8 +677,8 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 }
             });
 
-            fields.Field_Mapping__c = JSON.stringify(mapping);
-            fields.WB_Flow__c = this.FlowId;
+            fields.MVWB__Field_Mapping__c = JSON.stringify(mapping);
+            fields.MVWB__WB_Flow__c = this.FlowId;
 
             if (this.FlowRecordId) {
 
@@ -700,7 +700,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
 
                 console.log('Creating new record');
                 console.log('Fields to save:', JSON.stringify(fields));
-                const recordInput = { apiName: 'Automation_Path__c', fields };
+                const recordInput = { apiName: 'MVWB__Automation_Path__c', fields };
     
                 createRecord(recordInput)
                     .then(result => {
