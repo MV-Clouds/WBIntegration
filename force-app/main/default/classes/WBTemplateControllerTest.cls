@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 01-01-2025
+ * @last modified on  : 04-08-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 @isTest
@@ -108,7 +108,7 @@ public class WBTemplateControllerTest {
     @isTest
     static void testGetRecordsBySObject() {
         Test.startTest();        
-        List<sObject> records = WBTemplateController.getRecordsBySObject();
+        List<sObject> records = WBTemplateController.getRecordsBySObject('Contact');
         Test.stopTest();
     }
     
@@ -153,6 +153,7 @@ public class WBTemplateControllerTest {
         Map<String, Object> result = WBTemplateController.getTemplateDataWithReplacement(template.Id, contact.Id);
 
         Map<String, Object> result2 = WBTemplateController.getTemplateDataWithReplacement(template.Id, null);
+<<<<<<< HEAD
 
         // Validate the result
         // System.assert(result.containsKey('template'), 'Result should contain the template');
@@ -171,6 +172,8 @@ public class WBTemplateControllerTest {
 
         // System.assert(resultTemplate.Header_Body__c.contains('John Doe'), 'Header body should replace {{ContactName}}');
         // System.assert(resultTemplate.Template_Body__c.contains('10000.0'), 'Template body should replace {{AccountBalance}}');
+=======
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
     }
 
     @isTest
@@ -223,6 +226,31 @@ public class WBTemplateControllerTest {
         Test.stopTest();
     }
 
+<<<<<<< HEAD
+=======
+    @isTest
+    static void testCreateWhatsappTemplate_Exception() {
+        // Creating a mock TemplateWrapper
+        CreateTemplateWrapper.TemplateWrapper mockTemplateWrapper = new CreateTemplateWrapper.TemplateWrapper();
+        mockTemplateWrapper.templateName = 'Test Template';
+        mockTemplateWrapper.tempLanguage = 'en';
+        String serializedWrapper = JSON.serialize(mockTemplateWrapper);
+
+        // Mock HTTP callout to return an error response
+        
+        Test.setMock(HttpCalloutMock.class, new TestHttpResponse(500));
+
+        Test.startTest();
+        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper);
+        Test.stopTest();
+
+        // Assert that the error is caught and logged correctly
+        // System.assertEquals('error', response.get('status'));
+        // System.assertNotEquals(null, response.get('message'));
+    }
+
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
      @isTest
     static void testCreateTemplateFailed() {
         CreateTemplateWrapper.TemplateWrapper mockTemplateWrapper = new CreateTemplateWrapper.TemplateWrapper();
@@ -404,4 +432,21 @@ public class WBTemplateControllerTest {
         System.assertNotEquals(null, response.get('message'));
 
     }
+<<<<<<< HEAD
+=======
+
+    @isTest
+    static void testGetCompanyName() {
+        // Call the method
+        Test.startTest();
+        String companyName = WBTemplateController.getCompanyName();
+        WBTemplateController.getObjectsWithPhoneField();
+        Test.stopTest();
+        
+        // Assert that it returns a non-null value
+        System.assertNotEquals(null, companyName, 'Company name should not be null');
+    }
+    
+    
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
 }

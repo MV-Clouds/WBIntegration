@@ -19,6 +19,7 @@ import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynam
 import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchDynamicRecordData';
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
 import CountryJson from '@salesforce/resourceUrl/CountryJson';
+import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=true;
@@ -26,7 +27,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track originalHeader;
     @track originalBody;
     @track template;
-    @track tempHeader;
+    @track tempHeader ;
     @track tempBody;
     @track tempFooter;
     @track headerParams;
@@ -38,9 +39,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track fieldNames = [];
     @track isImgSelected = false;
     @track IsHeaderText = true;
-    @track options = [
-        { label: 'Contact', value: 'Contact', isSelected: true }
-    ];
+    @track options = [];
     @track contactDetails=[];
     @track inputValues = {};
     @track groupedVariables=[];
@@ -52,6 +51,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track isFieldDisabled=false;
     @track isSendDisabled=false;
     @track sendButtonClass;
+<<<<<<< HEAD
+=======
+    @track bodyParaCode = '';
+    @track NoPreviewAvailableImg = NoPreviewAvailable;
+    @track headerPramsCustomList = [];
+    @track bodyPramsCustomList = [];
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
 
     get contactFields() {
         return Object.entries(this.contactDetails)
@@ -60,7 +66,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     get isDisabled(){
-        return !(this.objectNames && this.fieldNames);
+        // if(this.objectNames && this.fieldNames.length>0){
+        //     return false;
+        // }
+        // return !(this.objectNames && this.fieldNames);
+        return false;
     }
 
     formatText(inputText) {
@@ -74,6 +84,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
         } catch (error) {
             console.error('Something went wrong in formatting text.',error);  
         }
+    }
+
+    get getObjectName(){
+        
+        return this.objectNames[0];
     }
 
     @api
@@ -106,7 +121,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
             case 'URL':
                 return 'utility:new_window';
             case 'COPY_CODE':
-            return 'utility:copy';
+                return 'utility:copy';
+            case 'Flow':
+                return 'utility:file';
             default:
                 return 'utility:question'; 
         }
@@ -244,6 +261,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
         
             this.formatedTempBody = this.formatText(updatedBody);
             this.tempHeader = updatedHeader;
+            
         } catch (error) {
             console.error('Something went wrong while updating the template.',error);   
         }
@@ -253,6 +271,13 @@ export default class WbPreviewTemplatePage extends LightningElement {
         try {
             const {name, value } = event.target; 
             const groupType = event.target.dataset.group; 
+            if(groupType == 'Header'){
+                this.headerPramsCustomList.push(value)
+            }
+            else if(groupType == 'Body'){
+                this.bodyPramsCustomList.push(value);
+
+            }
             this.variableMapping[groupType.toLowerCase()][name] = value;
             const group = this.groupedVariables.find(group => group.type === groupType);
             const mapping = group.mappings.find(mapping => mapping.variable === name);
@@ -273,8 +298,15 @@ export default class WbPreviewTemplatePage extends LightningElement {
             getDynamicObjectData({templateId:this.templateid})
             .then((result) => {
                 if (result) {
+<<<<<<< HEAD
                     this.isImgSelected = result.isImgUrl;
                     this.IsHeaderText = !result.isImgUrl;                    
+=======
+
+                    
+                    
+                    this.IsHeaderText = !result.isImgUrl;            
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
                     this.originalHeader = result.template.MVWB__WBHeader_Body__c;
                     this.originalBody = result.template.MVWB__WBTemplate_Body__c;
                     const variableMappings = result.templateVariables;
@@ -295,6 +327,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     ? 'send-btn send-btn-active' 
                     : 'send-btn';
                   
+<<<<<<< HEAD
                     const buttonLabels = result.template.MVWB__Button_Label__c ? result.template.MVWB__Button_Label__c.split(',') : [];
                     const buttonTypes = result.template.MVWB__Button_Type__c ? result.template.MVWB__Button_Type__c.split(',') : [];
         
@@ -307,6 +340,24 @@ export default class WbPreviewTemplatePage extends LightningElement {
                             iconName: this.getIconName(type) 
                         };
                     });
+=======
+                    const buttonBody = result.template.MVWB__WBButton_Body__c
+                    ? JSON.parse(result.template.MVWB__WBButton_Body__c)
+                    : []
+                  
+                  this.buttonList = buttonBody.map((buttonLabel, index) => {
+                  
+                    const type = buttonLabel.type
+                    return {
+                      id: index,
+                      btntext: buttonLabel.text.trim(),
+                      btnType: type,
+                      iconName: this.getIconName(type)
+                    }
+                  })
+                  
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
 
                     const grouped = variableMappings.reduce((acc, mapping) => {
                         const mappingWithValue = { 
@@ -330,9 +381,15 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         this.noContact=false;
                     }
 
-                    this.objectNames = result.objectNames;
+                    this.objectNames = result.objectNames == undefined? ['Contact'] : result.objectNames;
                     this.fieldNames = result.fieldNames;
+
+                    this.options.push({ label: this.objectNames[0], value: this.objectNames[0], isSelected: true });
+                   
                     this.formatedTempBody = this.formatText(this.tempBody);
+                    if(result.template.MVWB__Template_Category__c == 'Authentication'){
+                        this.formatedTempBody = '{{code}} ' + this.formatedTempBody;
+                    }
                     this.isLoading = false;
                 }
             })
@@ -375,26 +432,52 @@ export default class WbPreviewTemplatePage extends LightningElement {
         this.isLoading = true; 
     
         try {
+          
+            if((this.groupedVariables.length != (this.headerPramsCustomList.length+this.bodyPramsCustomList.length)) && this.noContact){
+                this.showToast('Warning', 'Please fill all input fields', 'warning');
+                return;
+            }
             let phonenum = this.selectedContactId 
                 ? this.contactDetails.Phone 
                 : (this.selectedCountryType && this.phoneNumber && this.phoneNumber.length >= 10) 
                     ? `${this.selectedCountryType}${this.phoneNumber}`
                     : null;
+<<<<<<< HEAD
     
+=======
+            
+                   
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
             if (!phonenum || isNaN(Number(phonenum))) {
                 this.showToast('Warning', 'Invalid country code or phone number', 'warning');
                 this.isLoading = false;
                 return;
             }
+<<<<<<< HEAD
+=======
+            
+            const buttonValue = this.template.MVWB__WBButton_Body__c != undefined?JSON.parse(this.template.MVWB__WBButton_Body__c) : '';
+            
+            
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
             const templatePayload = this.createJSONBody(phonenum, "template", {
                 templateName: this.template.MVWB__Template_Name__c,
                 languageCode: this.template.MVWB__Language__c,
                 headerImageURL: this.template.MVWB__WBHeader_Body__c,
                 headerType:this.template.MVWB__Header_Type__c,
+<<<<<<< HEAD
                 headerParameters: this.headerParams,
                 bodyParameters: this.bodyParams,
                 buttonLabel: this.template.MVWB__Button_Label__c,
                 buttonType: this.template.MVWB__Button_Type__c
+=======
+                headerParameters: this.headerPramsCustomList,
+                bodyParameters: this.bodyPramsCustomList,
+                buttonLabel: this.template.MVWB__Button_Label__c || '',
+                buttonType: this.template.MVWB__Button_Type__c || '',
+                buttonValue : buttonValue
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
             });
     
             sendPreviewTemplate({ jsonData: templatePayload })
@@ -419,6 +502,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
         }
     }    
     
+<<<<<<< HEAD
 
     createJSONBody(to, type, data){
         try {
@@ -435,6 +519,183 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         "type": "header", 
                         "parameters": [ ${headerParams} ] 
                     }`);
+=======
+    createJSONBody(to, type, data) {
+        try {
+            const randomCode = Math.floor(Math.random() * 900000) + 100000;
+            // Convert the integer to a string
+            const randomCodeStr = String(randomCode);
+
+            let payload = {
+                messaging_product: "whatsapp",
+                to: to,
+                type: type,
+                template: {
+                    name: data.templateName,
+                    language: {
+                        code: data.languageCode
+                    }
+                }
+            };
+    
+            let components = [];
+    
+            // Header Parameters (Text)
+            if (data.headerParameters && data.headerParameters.length > 0) {
+                let headerParams = data.headerParameters.map((param) => ({
+                    type: "text",
+                    text: param
+                }));
+    
+                components.push({
+                    type: "header",
+                    parameters: headerParams
+                });
+            }
+    
+            // Header Type (Image)
+            if (data.headerType === 'Image' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "image",
+                            image: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            else if (data.headerType === 'Document' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "document",
+                            document: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            else if (data.headerType === 'Video' && data.headerImageURL) {
+                components.push({
+                    type: "header",
+                    parameters: [
+                        {
+                            type: "video",
+                            video: {
+                                link: data.headerImageURL
+                            }
+                        }
+                    ]
+                });
+            }
+            
+    
+            // Body Parameters
+            if (data.bodyParameters && data.bodyParameters.length > 0) {
+                let bodyParams = data.bodyParameters.map((param) => ({
+                    type: "text",
+                    text: param
+                }));
+    
+                components.push({
+                    type: "body",
+                    parameters: bodyParams
+                });
+            } else if(this.template.MVWB__Template_Category__c == 'Authentication'){
+                components.push({
+                    type: "body",
+                    parameters: [
+                        {
+                            type: "text",
+                            text: randomCodeStr
+                        }
+                    ]
+                });
+            }
+    
+            // Button Handling
+            
+            if (data.buttonValue && data.buttonValue.length > 0) {
+                let buttons = data.buttonValue
+                    .map((button, index) => {
+                        
+                        switch (button.type.toUpperCase()) {
+                            case "PHONE_NUMBER":
+                                components.push( {
+                                    type: "button",
+                                    sub_type: "voice_call",
+                                    index: index,
+                                    parameters: [
+                                        {
+                                            type: "text",
+                                            text: button.phone_number
+                                        }
+                                    ]
+                                });
+                                break;
+                            case "URL":
+                                break;
+                            case "QUICK_REPLY":
+                                break;
+                            case "FLOW":
+                                components.push( {
+                                        type: "button",
+                                        sub_type: "flow",
+                                        index: index,
+                                        parameters: [
+                                            {
+                                                "type": "payload",
+                                                "payload": "PAYLOAD"
+                                            }
+                                        ]   
+                                    });
+                                break;
+                            case 'copy_code' :
+                            case "COPY_CODE":
+                            case "COUPON_CODE":
+                                components.push( {
+                                    type: "button",
+                                    sub_type: "copy_code",
+                                    index: index,
+                                    parameters: [
+                                        {
+                                            type :'coupon_code',
+                                            coupon_code : button.example
+                                        }
+                                    ]
+                                }); 
+                                break;
+                            case "OTP":
+                                if (button.otp_type && button.otp_type.toUpperCase() === "COPY_CODE") {
+                                    components.push( {
+                                        type: "button",
+                                        sub_type: "url",
+                                        index: index,
+                                        parameters: [
+                                            {
+                                                type : 'text',
+                                                text : randomCodeStr
+                                            }
+                                        ]
+                                    });
+                                } else {
+                                    console.warn(`OTP button at index ${index} missing otp_code parameter.`);
+                                    return null;
+                                }
+                                break;
+                            default:
+                                console.warn(`Unknown button type: ${button.type}`);
+                                return null;
+                        }
+                    })
+                    .filter((button) => button !== null);
+    
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
                 }
                 if(data.headerType=='Image' && data.headerImageURL){
                     components.push(`{ 
@@ -457,7 +718,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 payload += ` }`; 
                 payload += ` }`;
             
+<<<<<<< HEAD
                 return payload;
+=======
+            // Add components if available
+            if (components.length > 0) {
+                payload.template.components = components;
+            }
+            
+            // Convert the object to a JSON string
+            return JSON.stringify(payload);
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
         } catch (e) {
             console.log('Error in function createJSONBody:::', e.message);
         }

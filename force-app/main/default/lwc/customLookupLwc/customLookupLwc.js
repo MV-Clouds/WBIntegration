@@ -18,8 +18,9 @@ export default class CustomLookupLwc extends LightningElement {
     }
 
     fetchAllRecords() {
+        
         try {
-            getRecordsBySObject()
+            getRecordsBySObject({objectName: this.sObjectApiName})
             .then((data) => {
                 if (data) {
                     this.allRecords = [{ Id: '', Name: 'None' }, ...data]; 

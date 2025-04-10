@@ -479,6 +479,19 @@ input{
     border-radius: 30px;
 }
 
+<<<<<<< HEAD
+=======
+.imagedivWP {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ccd0d5;
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: 140px;
+}
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
 .screen {
     position: absolute;
     width: 80%;
@@ -514,4 +527,14 @@ input{
 .variable-head{
     font-size: 14px;
     font-weight: 500;
+<<<<<<< HEAD
+=======
+}
+
+.no-variable{
+    height: -webkit-fill-available;
+    font-size: larger;
+    font-weight: 500;
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
 }

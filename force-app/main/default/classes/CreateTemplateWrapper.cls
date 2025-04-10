@@ -133,12 +133,30 @@
     */
     private static Map<String, Object> buildBodyComponent(TemplateWrapper templateWrapper) {
         try {
+<<<<<<< HEAD
             Map<String, Object> bodyComponent = new Map<String, Object>{
                 'type' => 'BODY',
                 'text' => templateWrapper.templateBody.replace('\\n', '\n')
             };
     
             if (templateWrapper.templateBodyText != null && templateWrapper.templateBodyText.size() > 0) {
+=======
+
+            Map<String, Object> bodyComponent;
+            if (templateWrapper.templateCategory == 'Authentication') {
+                bodyComponent = new Map<String, Object>{
+                    'type' => 'BODY'
+                };
+            } else {
+                bodyComponent = new Map<String, Object>{
+                    'type' => 'BODY',
+                    'text' => templateWrapper.templateBody.replace('\\n', '\n')
+                };
+            }
+    
+            if ((templateWrapper.templateBodyText != null) && (templateWrapper.templateBodyText.size() > 0)) {
+                
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
                 bodyComponent.put('example', new Map<String, Object>{
                     'body_text' => new List<List<String>>{templateWrapper.templateBodyText}
                 });
@@ -347,6 +365,7 @@
                 // BODY Component
                 else if (type == 'BODY') {
                     Map<String, Object> result = handleBodyComponent(whatsAppTemplate.Template_Category__c, component, example);
+<<<<<<< HEAD
                     System.debug(((String) result.get('bodyText')));
                     whatsAppTemplate.WBTemplate_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
 
@@ -385,11 +404,54 @@
                                 variableRecords.add(bodyVariable);
                             } else {
                                 System.debug('VariableIndex out of bounds: ' + variableIndex);
+=======
+                    
+                    if(((String) result.get('bodyText')) != null){
+                        whatsAppTemplate.WBTemplate_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
+
+                        if(whatsAppTemplate.Template_Category__c != 'Authentication'){
+                            List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
+                            String bodyMergeText = (String) result.get('bodyMergeText');
+        
+                            Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
+                            Matcher matcher = pattern.matcher((String) result.get('bodyText'));
+                            Set<String> processedBodyPlaceholders = new Set<String>();
+        
+                            List<Template_Variable__c> existingBodyVars = [
+                                SELECT Id, Name
+                                FROM Template_Variable__c
+                                WHERE Template__c = :whatsAppTemplate.Id
+                                AND Type__c = 'Body'
+                            ];
+        
+                            if (!existingBodyVars.isEmpty()) {
+                                delete existingBodyVars;
+                            }
+        
+                            while (matcher.find()) {
+                                String placeholder = matcher.group();
+        
+                                if (!processedBodyPlaceholders.contains(placeholder)) {
+                                    processedBodyPlaceholders.add(placeholder);
+                            
+                                    if ((variableIndex < varAlternateTexts.size())) {
+                                        Template_Variable__c bodyVariable ;
+                                        bodyVariable = new Template_Variable__c(
+                                            Name = placeholder,
+                                            Object_Name__c = parsedFields[variableIndex].get('objectName'),
+                                            Field_Name__c = parsedFields[variableIndex].get('fieldName'), 
+                                            Type__c = 'Body',
+                                            Alternate_Text__c = varAlternateTexts[variableIndex]
+                                        );
+                                        variableRecords.add(bodyVariable);
+                                    }
+                                    variableIndex++; 
+                                }
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
                             }
                             variableIndex++; 
                         }
                     }
-
                 }
                 // FOOTER Component
                 else if (type == 'FOOTER') {

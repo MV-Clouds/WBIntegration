@@ -1,3 +1,10 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 04-06-2025
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
 <template>
     <template if:true={isTemplateVisible}>
         <div class="slds-theme_default main">
@@ -50,6 +57,7 @@
                 </div>
             </div>
 
+<<<<<<< HEAD
             <div class="datatable">
                 <!-- Custom HTML Table -->
                 <div class="table-container">
@@ -119,6 +127,75 @@
                         </tbody>                    
                     </table>
                 </div>
+=======
+            <div class="table-container">
+                <table class="slds-table">
+                    <thead>
+                        <tr class="tablerow">
+                            <th class="tableHead" scope="col">
+                                <div class="slds-truncate">No.</div>
+                            </th>
+                            <th class="tableHead" scope="col">
+                                <div class="slds-truncate">Template Name</div>
+                            </th>
+                            <th class="tableHead" scope="col">
+                                <div class="slds-truncate">Category</div>
+                            </th>
+                            <th class="tableHead" scope="col">
+                                <div class="slds-truncate">Language</div>
+                            </th>
+                            <th class="tableHead" scope="col">
+                                <div class="slds-truncate">Status</div>
+                            </th>
+                            <th class="tableHead" scope="col">
+                                <div class="slds-truncate">Actions</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template if:true={allRecords.length}>
+                            <template for:each={filteredRecords} for:item="record">
+                                <tr class="slds-table_bordered tablerow" key={record.id}>
+                                    <td class="tableData" data-label="Sr. No.">
+                                        <div class="slds-truncate">{record.serialNumber}</div>
+                                    </td>
+                                    <td class="tableData" data-label="Template Name" title={record.MVWB__Template_Name__c}>
+                                        <div class="truncate-name">{record.MVWB__Template_Name__c}</div>
+                                    </td>
+                                    <td class="tableData" data-label="Category">
+                                        <div class="slds-truncate">{record.MVWB__Template_Category__c}</div>
+                                    </td>
+                                    <td class="tableData" data-label="Language">
+                                        <div class="slds-truncate">{record.LanguageLabel}</div>
+                                    </td>
+                                    <td class="tableData status" data-label="Status">
+                                        <div class="slds-truncate"><p class={record.MVWB__Status__c}>{record.MVWB__Status__c}</p></div>
+                                    </td>
+                                    <td class="tableData tablebtns" data-label="Actions">
+                                        <button class="action-buttons">
+                                            <img src="/resource/MVWB__previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
+                                        </button>
+                                        <button disabled={record.isButtonDisabled} class="action-buttons">
+                                            <img src="/resource/MVWB__editIcon" class={record.cssClass} alt="edit" data-id={record.id} onclick={editTemplate} >
+                                        </button>
+                                        <button class="action-buttons">
+                                            <img src="/resource/MVWB__trashIcon" class="action trash" alt="delete" data-id={record.id} onclick={deleteTemplate}>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </template>
+                        <template if:false={filteredRecords.length}>
+                            <tr>
+                                <td class="slds-text-align_center" colspan="6">
+                                    No records found.
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>          
+                    
+                </table>
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
             </div>
         </div>
     </template>

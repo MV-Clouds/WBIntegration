@@ -9,7 +9,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: url(/resource/MVWB__wbiTemplateBg);
+  background-image: url('/resource/MVWB__wbiTemplateBg');
   background-size: cover;
   background-repeat: no-repeat;
   border-radius: 5px;

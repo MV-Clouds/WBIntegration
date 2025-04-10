@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 12-16-2024
+ * @last modified on  : 04-05-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 @IsTest
@@ -12,9 +12,41 @@ private class WhatsAppWebhookTest {
         // Create common test contact
         Contact testContact = new Contact(
                 LastName = 'Test Contact', 
+                Phone = '+919428234735'
+            );
+        Contact testContact2 = new Contact(
+                LastName = 'Test Contact2', 
                 Phone = '+919501082174'
             );
+<<<<<<< HEAD
         insert testContact;       
+=======
+        Contact testContact3 = new Contact(
+                LastName = 'Test Contact3', 
+                Phone = '+919664599641'
+            );
+        Contact testContact4 = new Contact(
+                LastName = 'Test Contact4', 
+                Phone = '+919558680273'
+            );
+        List<Contact> conlist = new List<Contact>();
+        conlist.add(testContact);
+        conlist.add(testContact2);
+        conlist.add(testContact3);
+        insert conlist;      
+        
+        Template__c temp = new Template__c(
+            Template_Name__c = 'hello_world',
+            Status__c = 'In-Review',
+            Template_Id__c = '138470518808412'
+        );
+        insert temp;
+
+        Chat__c dummyChatReact = new Chat__c(
+            WhatsAppMessageId__c = 'wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSNjMxRUI5Mzg0RTlBRTUwNEM5AA=='
+        );
+        insert dummyChatReact;
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
     }
     
     @IsTest
@@ -120,6 +152,24 @@ private class WhatsAppWebhookTest {
     }
 
     @IsTest
+<<<<<<< HEAD
+=======
+    static void testProcessWhatsAppPayloadReaction() {
+        HttpResponse mockResponse = new HttpResponse();
+        mockResponse.setHeader('Content-Type', 'application/json');
+        mockResponse.setStatusCode(200);
+        mockResponse.setBodyAsBlob(Blob.valueOf('mock-binary-data'));
+
+        String documentjsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"499269473267232","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Harsh Gandhi"},"wa_id":"919664599641"}],"messages":[{"from":"919664599641","id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAEhggQjdDNEQ0OTk1ODQyNkEwQjExNDdBRDNEQjFCNkRBN0UA","timestamp":"1743487801","type":"reaction","reaction":{"message_id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSNjMxRUI5Mzg0RTlBRTUwNEM5AA==","emoji":"\ud83d\udc4d"}}]},"field":"messages"}]}]}';
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(mockResponse));
+        WhatsAppWebhook.processWhatsAppPayload(documentjsonPayload);
+        Test.stopTest();
+        System.assertEquals('397858113402150', WhatsAppWebhook.phoneNumberId, 'Expected phone number ID to be set.');
+    }
+
+    @IsTest
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
     static void testHandleMediaAttachment() {
         String documentId = '3827582537491666';
         Test.startTest();

@@ -17,26 +17,35 @@ public class CreateTemplateWrapperTest{
         templateWrapper.templateBodyText = new List<String>{'Body Text 1', 'Body Text 2'};
         templateWrapper.tempFooterText = 'Footer Text';
         templateWrapper.typeOfButton = '[{\"id\":1,\"selectedActionType\":\"PHONE_NUMBER\",\"iconName\":\"utility:call\",\"btntext\":\"Call Phone Number\",\"webURL\":\"\",\"phonenum\":\"1231123123\",\"offercode\":\"\",\"selectedUrlType\":\"Static\",\"selectedCountryType\":\"+682\",\"isCallPhone\":true,\"isVisitSite\":false,\"isOfferCode\":false,\"hasError\":false,\"errorMessage\":\"\",\"isDisabled\":false}]';
+<<<<<<< HEAD
         templateWrapper.buttonPhoneText = 'Call Us';
         templateWrapper.phoneNumber = '1234567890';
         templateWrapper.buttonURLText = 'Visit Website';
+=======
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
         templateWrapper.url = 'http://example.com';
         templateWrapper.quickText = 'Quick Message';
         templateWrapper.copyCode = 'COPY123';
         templateWrapper.tempImgUrl = 'http://example.com/image.png';
+<<<<<<< HEAD
         
         // Debug statement to confirm field values
         System.debug('TemplateWrapper: ' + templateWrapper);
+=======
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
         Map<String, Object> result = CreateTemplateWrapper.buildPayload(templateWrapper);
 
         templateWrapper.tempHeaderFormat = 'Image';
-        templateWrapper.typeOfButton = '[{\"id\":1,\"selectedActionType\":\"QUICK_REPLY\",\"iconName\":\"utility:call\",\"btntext\":\"Call Phone Number\",\"webURL\":\"\",\"phonenum\":\"1231123123\",\"offercode\":\"\",\"selectedUrlType\":\"Static\",\"selectedCountryType\":\"+682\",\"isCallPhone\":true,\"isVisitSite\":false,\"isOfferCode\":false,\"hasError\":false,\"errorMessage\":\"\",\"isDisabled\":false}]';
+        templateWrapper.typeOfButton = '[{\"id\":1,\"selectedCustomType\":\"QUICK_REPLY\",\"iconName\":\"utility:call\",\"btntext\":\"Call Phone Number\",\"webURL\":\"\",\"phonenum\":\"1231123123\",\"offercode\":\"\",\"selectedUrlType\":\"Static\",\"selectedCountryType\":\"+682\",\"isCallPhone\":true,\"isVisitSite\":false,\"isOfferCode\":false,\"hasError\":false,\"errorMessage\":\"\",\"isDisabled\":false}]';
         CreateTemplateWrapper.buildPayload(templateWrapper);
         templateWrapper.typeOfButton = '[{\"id\":1,\"selectedActionType\":\"URL\",\"iconName\":\"utility:call\",\"btntext\":\"Call Phone Number\",\"webURL\":\"\",\"phonenum\":\"1231123123\",\"offercode\":\"\",\"selectedUrlType\":\"Static\",\"selectedCountryType\":\"+682\",\"isCallPhone\":true,\"isVisitSite\":false,\"isOfferCode\":false,\"hasError\":false,\"errorMessage\":\"\",\"isDisabled\":false}]';
         CreateTemplateWrapper.buildPayload(templateWrapper);
         templateWrapper.typeOfButton = '[{\"id\":1,\"selectedActionType\":\"COPY_CODE\",\"iconName\":\"utility:call\",\"btntext\":\"Call Phone Number\",\"webURL\":\"\",\"phonenum\":\"1231123123\",\"offercode\":\"\",\"selectedUrlType\":\"Static\",\"selectedCountryType\":\"+682\",\"isCallPhone\":true,\"isVisitSite\":false,\"isOfferCode\":false,\"hasError\":false,\"errorMessage\":\"\",\"isDisabled\":false}]';
         CreateTemplateWrapper.buildPayload(templateWrapper);
-        templateWrapper.typeOfButton = '[{\"id\":1,\"selectedActionType\":\"Marketing opt-out\"}]';
+        templateWrapper.typeOfButton = '[{\"id\":1,\"selectedCustomType\":\"Marketing opt-out\"}]';
+        CreateTemplateWrapper.buildPayload(templateWrapper);
+        templateWrapper.typeOfButton = '[{\"id\":1,\"selectedActionType\":\"Flow\"}]';
         CreateTemplateWrapper.buildPayload(templateWrapper);
 
         HttpResponse res = new HttpResponse();
@@ -101,5 +110,72 @@ public class CreateTemplateWrapperTest{
         CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
         System.assertNotEquals(result, null, 'there should some data.');
 
+    }
+    @isTest
+    static void testBuildPayloadAuthentication() {
+        CreateTemplateWrapper.TemplateWrapper templateWrapper = new CreateTemplateWrapper.TemplateWrapper(); 
+        templateWrapper.templateName = 'WB Template';
+        templateWrapper.tempLanguage = 'en';
+        templateWrapper.templateCategory = 'Authentication';
+        templateWrapper.templateType = 'One-time passcode';
+        templateWrapper.tempHeaderHandle = 'header1';
+        templateWrapper.varAlternateTexts = new List<String>{'Var Text 1', 'Var Text 2'};
+        templateWrapper.templateBody = 'This is a sample body';
+        templateWrapper.templateBodyText = new List<String>{'Body Text 1', 'Body Text 2'};
+        templateWrapper.tempFooterText = 'Footer Text';
+        templateWrapper.typeOfButton = '[]'; 
+        templateWrapper.expireTime = 301;
+
+        Map<String, Object> result = CreateTemplateWrapper.buildPayload(templateWrapper);
+
+        Map<String, Object> payload = new Map<String, Object>();
+        payload.put('category', 'Authentication');
+        payload.put('language', 'en_US');
+        payload.put('name', 'auth_template_001');
+
+        payload.put('components', new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'type' => 'HEADER',
+                'format' => 'TEXT',
+                'text' => 'Event by {{1}}',
+                'example' => new Map<String, Object>{
+                    'header_text' => new List<Object>{'{{Contact.Email}}'}
+                }
+            },
+            new Map<String, Object>{
+                'type' => 'BODY',
+                'text' => 'Hello {{1}}, Please use the following OTP for verification: {{2}}',
+                'example' => new Map<String, Object>{
+                    'body_text' => new List<List<String>>{
+                        new List<String>{'{{Contact.Name}}', '{{Contact.OTP}}'}
+                    }
+                }
+            },
+            new Map<String, Object>{
+                'type' => 'FOOTER',
+                'text' => 'Secure Login - WB'
+            },
+            new Map<String, Object>{
+                'type' => 'BUTTONS',
+                'buttons' => new List<Map<String, Object>>{
+                    new Map<String, Object>{
+                        'type' => 'OTP',
+                        'text' => 'Verify Code',
+                        'otp_type' => 'COPY_CODE'
+                    }
+                }
+            }
+        });
+
+        HttpResponse res = new HttpResponse();
+        res.setStatusCode(200);
+        res.setBody('{\"success\": true}');
+
+        Map<String, Object> response = new Map<String, Object>();
+        response.put('success', 'true');
+        response.put('id', 'auth_template_001');
+
+        CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
+        System.assertNotEquals(result, null, '🔹 Payload should not be null.');
     }
 }

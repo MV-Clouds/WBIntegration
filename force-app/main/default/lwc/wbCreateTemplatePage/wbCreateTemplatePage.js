@@ -29,6 +29,21 @@ import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFiel
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 
+<<<<<<< HEAD
+=======
+import tempLocationIcon from '@salesforce/resourceUrl/tempLocationIcon';
+import tempVideoIcon from '@salesforce/resourceUrl/tempVideoIcon';
+import imageUploadPreview from '@salesforce/resourceUrl/imageUploadPreview';
+import docUploadPreview from '@salesforce/resourceUrl/documentPreviewIcon';
+import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
+import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
+import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
+import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
+import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
+import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
+
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
 export default class WbCreateTemplatePage extends LightningElement {
     maxTempNamelength = 512;
     maxShortlength = 60;
@@ -135,6 +150,318 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track contentDocumentId='';
     @track isRendered=false;
 
+<<<<<<< HEAD
+=======
+    // -----------------------------------------------------------------
+    @track isStage1 = true;
+    @track isStage2 = false;
+
+    @track isSection1Active = true;
+    @track isSection2Active = false;
+    @track isSection3Active = false;
+    @track selectedOption='Custom';
+    @track activeTab = 'Marketing';
+    
+    @track showDefaultBtn=true;
+    @track utilityOrderStatusSelected = false;
+    @track defaultPreview = true;
+    @track authenticationPasscodeSelected = false;
+    @track UtilityCustomSelected = false;
+    @track isDefault=true;
+    @track ifAuthentication = false;
+    @track isAppSetup=true;
+    @track showAutofill=true;
+    @track showAuthBtn=false;
+    @track authZeroTab=true;
+     
+    @track isautofillChecked=false;
+    @track selectContent=['Add security recommendation'];
+    @track showOneTap=false;
+    @track autofilLabel='Autofill';
+    @track autoCopyCode='Copy Code';
+    @track value='zero_tap';
+    @track packages = [
+        { id: 1, packagename: '', signature: '', curPackageName: 0, curHashCode: 0 }
+    ];
+    @track expirationTime = 300; 
+    @track isExpiration=false;
+    @track prevContent=true;
+    @track maxPackages=5;
+    @track showMsgValidity = false; //change
+    
+    @track IsHeaderText = false;
+    
+    @track authPrevBody = `{{1}}`;
+    
+    @track isAddCallPhoneNumber = false;
+    @track isAddVisitWebsiteCount = false;
+    @track isAddCopyOfferCode = false;
+    @track isAddFlow = false;
+    
+    @track tempLocationIcon=tempLocationIcon;
+    @track tempVideoIcon=tempVideoIcon;
+    @track imageUploadPreview = imageUploadPreview;
+    @track docUploadPreviewImg = docUploadPreview;
+    @track NoPreviewAvailableImg = NoPreviewAvailable;
+    @track isFeatureEnabled = false;
+    @track selectedTime = '5 minutes'; // Default value
+    @track isFlowMarketing = false;
+    @track isFlowUtility = false;
+    @track isFlowSelected = false;
+    @track isModalOpen = false;
+    @track selectedFlowId = ''; 
+    // @track allFlows ;
+    @track selectedFlow;
+    @track iframeSrc;
+    @track isModalPreview = false;
+    // @track NoFileSelected = true;
+    companyName = '';
+
+
+    get expireTime() {
+        return [
+            { label: '1 minute', value: '1 minute' },
+            { label: '2 minutes', value: '2 minutes' },
+            { label: '3 minutes', value: '3 minutes' },
+            { label: '5 minutes', value: '5 minutes' },
+            { label: '10 minutes', value: '10 minutes' }
+        ];
+    }
+
+    openModal() {
+        this.isModalOpen = true;
+    }
+
+    closeModal() {
+        this.isModalOpen = false;
+        this.isModalPreview = false;
+    }
+    modalPreview(){
+        this.isModalPreview = true;
+    }
+
+    handleFlowSelection(event) {
+        const { selectedFlow, iframeSrc ,flows } = event.detail; // Destructure the received data
+    
+        this.selectedFlowId = selectedFlow; // Get selected Flow ID
+        this.iframeSrc = iframeSrc;
+        this.selectedFlow = flows; // Store the entire list of flows
+    
+    
+        this.isFlowSelected = true; // Hide "Choose Flow" button after selection
+        this.NoFileSelected = false; // Hide text after selection
+        this.closeModal();
+    }
+
+    handleFlowDeleteClick(event){
+        this.isFlowSelected = false;
+        this.selectedFlowId = ''; // Get selected Flow ID
+        this.selectedFlow = undefined;
+        this.NoFileSelected = true;
+    }
+    
+    
+    
+    get contentOption() {
+        return [
+            { label: 'Add security recommendation', value: 'Add security recommendation' },
+            { label: 'Add expiry time for the code', value: 'Add expiry time for the code' },
+        ];
+    }
+
+    convertTimeToSeconds(label) {
+        const timeMap = {
+            '1 minute': 60,
+            '2 minutes': 120,
+            '3 minutes': 180,
+            '5 minutes': 300,
+            '10 minutes': 600
+        };
+        return timeMap[label] || 300; // Default to 5 minutes if not found
+    }
+
+    get flowBooleanCheck() {
+        return this.isFlowMarketing || this.isFlowUtility;
+    }
+    
+
+    handleTabClick(event) {
+        this.activeSection = event.target.dataset.tab;
+        
+        
+        this.resetSections();
+        // this.template.querySelectorAll('.section-tab-li').forEach(item => {
+        //     item.classList.remove('active-tab');
+        // })
+        this.isFlowMarketing = false;
+        this.isFlowUtility = false;
+        this.showMsgValidity=false;
+        this.ifAuthentication=false;
+        this.isDefault=true;
+        if (this.activeSection === 'section1') {
+            this.isSection1Active = true;
+            this.activeTab = 'Marketing';
+            this.selectedOption='CustomMarketing';
+        } else if (this.activeSection === 'section2') {
+            this.isSection2Active = true;
+            this.activeTab = 'Utility';
+            this.selectedOption='Custom';
+            this.showMsgValidity=true;
+        } else if (this.activeSection === 'section3') {            
+            this.isSection3Active = true;
+            this.ifAuthentication=true;
+            this.showMsgValidity=true;
+            this.selectedOption='One-time passcode';
+            this.isDefault=false;
+            this.activeTab = 'Authentication';
+        }
+        this.handleDefaultValues();
+        
+        // this.template.querySelector('.' + this.activeSection).classList.add('active-tab');
+    }
+
+    handleDefaultValues(){
+        this.utilityOrderStatusSelected = false;
+        this.authenticationPasscodeSelected = false;
+        this.UtilityCustomSelected = false;
+        this.defaultPreview = false;
+        
+        this.isFlowMarketing = false;
+        this.isFlowUtility = false;
+        this.showDefaultBtn = true;
+        
+        switch (this.selectedOption) {
+            case 'ORDER_STATUS':
+                this.utilityOrderStatusSelected = true;
+                this.showDefaultBtn = false;
+                break;
+            case 'One-time passcode':
+                this.authenticationPasscodeSelected = true;
+                // this.showDefaultBtn = true;
+                break;
+            case 'Custom':
+                this.UtilityCustomSelected = true;
+                // this.showDefaultBtn = true;
+                break;
+            case 'CustomMarketing':
+                this.defaultPreview = true;
+                break;
+            case 'flow':
+                this.isFlowMarketing = true;
+                break;
+            case 'flowutility':
+                this.isFlowUtility = true;
+                break;
+            default:
+                this.defaultPreview = true;
+                // this.showDefaultBtn = true;
+                break;
+        }
+        
+    }
+
+    resetSections() {
+        this.isSection1Active = false;
+        this.isSection2Active = false;
+        this.isSection3Active = false;
+        
+        
+    }
+    
+    handleRadioChange(event) {
+        this.selectedOption = '';
+        this.selectedOption = event.target.value;
+
+        
+        this.ifUtilty = false;
+        // this.showDefaultBtn = false;
+        this.utilityOrderStatusSelected = false;
+        this.authenticationPasscodeSelected = false;
+        this.UtilityCustomSelected = false;
+        this.defaultPreview = false;
+        this.isFlowMarketing = false;
+        this.isFlowUtility = false;
+        this.showDefaultBtn = true;
+
+        switch(this.selectedOption) {
+            case 'ORDER_STATUS':
+                this.ifUtilty = true;
+                this.utilityOrderStatusSelected = true;
+                this.showDefaultBtn = false;
+                break;
+            case 'One-time passcode':
+                this.authenticationPasscodeSelected = true;
+                break;
+            case 'Custom':
+                this.UtilityCustomSelected = true;
+                // this.showDefaultBtn = true;
+                break;
+            case 'flow':
+                this.isFlowMarketing = true;
+                this.handleMenuSelect({
+                    currentTarget: {
+                        dataset: {
+                            value: 'Flow',
+                            buttonData: false
+                        }
+                    }
+                });
+                break;
+                case 'flowutility' :
+                this.isFlowUtility = true;
+                this.handleMenuSelect({
+                    currentTarget: {
+                        dataset: {
+                            value: 'Flow',
+                            buttonData: false
+                        }
+                    }
+                });
+                break;
+            default:
+                this.defaultPreview = true;
+                // this.showDefaultBtn = true;
+                break;
+        }
+
+    }
+
+    
+    handleChange(event) {
+        this.value = event.target.value;
+        
+        if(this.value=='zero_tap'){
+            
+            this.authZeroTab=true;
+            this.isAppSetup=true;
+            this.showAutofill = true;
+            
+            this.showAuthBtn=false;
+            this.showOneTap=false;
+            // this.showOneTap=true;
+        }
+        else if(this.value=='COPY_CODE'){
+            
+            this.authZeroTab=false;
+            this.isAppSetup=false;
+            this.showAutofill = false;
+            
+            this.showAuthBtn=true;
+            this.showOneTap=false;
+        }else if(this.value=='ONE_TAP'){
+            
+            this.authZeroTab=false;
+            this.isAppSetup=true;
+            this.showAutofill = true;
+            
+            this.showAuthBtn=false;
+            this.showOneTap=true;
+        }
+    }
+
+    
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
     @api
     get edittemplateid() {
         return this._edittemplateid;
@@ -251,6 +578,34 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.fetchFields('Lead');
         this.generateEmojiCategories();
         this.fetchUpdatedTemplates(false);
+<<<<<<< HEAD
+=======
+        this.fetchObjectsWithPhoneField();
+        getCompanyName()
+            .then(result => {
+                this.companyName = result;
+            })
+            .catch(error => {
+                console.error('Error fetching company name:', error);
+            });
+    }
+
+    fetchObjectsWithPhoneField() {
+        this.isLoading = true;
+        getObjectsWithPhoneField()
+        .then((result) => {            
+            this.availableObjects = result;
+            this.selectedObject = this.availableObjects[0].value;
+            this.fetchFields(this.selectedObject);
+        })
+        .catch((error) => {
+            console.error('Error fetching objects with phone field: ', error);
+            this.showToastError('Error fetching objects with phone field: '+error.message);
+        })
+        .finally(() => {
+            this.isLoading = false;
+        });
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
     }
     
     renderedCallback() {
@@ -360,6 +715,7 @@ export default class WbCreateTemplatePage extends LightningElement {
                 }
                 this.handleContentType({target:{value:template.MVWB__Header_Type__c ||'None'}});
 
+<<<<<<< HEAD
                 if(headerType.toLowerCase()=='image'){
                     this.isImageFile=true;
                     this.isfilename=true;
@@ -373,6 +729,204 @@ export default class WbCreateTemplatePage extends LightningElement {
                     this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
                 }
              
+=======
+                this.selectedOption = template.MVWB__Template_Type__c;
+                this.activeTab = template.MVWB__Template_Category__c;
+                 let sec = '';
+                 if (this.activeTab === 'Marketing') {
+                     sec = 'section1';
+                 } else if (this.activeTab === 'Utility') {
+                     sec = 'section2';
+                 } else if (this.activeTab === 'Authentication') {
+                     sec = 'section3';
+                 }
+                 
+                 // ✅ Create a mock event to pass correctly
+                 const event = {
+                     target: {
+                         dataset: {
+                             tab: sec
+                         }
+                     }
+                 };
+                 
+                 // Pass this mock event to handleTabClick()
+                 this.handleTabClick(event);
+                this.handleRadioChange({ target: { value: this.selectedOption } });
+                this.handleNextclick();
+
+                setTimeout(() => {
+                    
+                    this.templateName = template.MVWB__Template_Name__c || '';
+                    this.metaTemplateId = template.MVWB__Template_Id__c || '';
+                    const headerBody = template.MVWB__WBHeader_Body__c || '';
+                    
+                    const headerType = template.MVWB__Header_Type__c || 'None';
+                    
+                    this.footer = template.MVWB__WBFooter_Body__c || '';
+                    this.selectedLanguage = template.MVWB__Language__c;
+                    this.languageOptions = this.languageOptions.map(option => ({
+                        ...option,
+                        isSelected: option.value === this.selectedLanguage
+                    }));
+                    
+                    this.tempBody = template.MVWB__WBTemplate_Body__c || 'Hello';
+                    
+                    this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
+                    
+                    
+                    
+                    try{
+                        const templateMiscellaneousData = JSON.parse(template.MVWB__Template_Miscellaneous_Data__c);
+                        this.contentVersionId = templateMiscellaneousData.contentVersionId
+                        this.isImageFile = templateMiscellaneousData.isImageFile
+                        this.isImgSelected = templateMiscellaneousData.isImgSelected
+                        this.isDocSelected = templateMiscellaneousData.isDocSelected
+                        this.isVidSelected = templateMiscellaneousData.isVidSelected
+                        this.IsHeaderText = templateMiscellaneousData.isHeaderText
+                        this.addHeaderVar = templateMiscellaneousData.addHeaderVar
+                        this.addMedia = templateMiscellaneousData.addMedia
+                        this.isImageFileUploader = templateMiscellaneousData.isImageFileUploader
+                        this.isVideoFileUploader = templateMiscellaneousData.isVideoFileUploader
+                        this.isDocFileUploader = templateMiscellaneousData.isDocFileUploader
+                        this.isVideoFile = templateMiscellaneousData.isVideoFile
+                        this.isDocFile = templateMiscellaneousData.isDocFile
+                        
+                    }
+                    catch(error){
+                        console.error('Miss Error ::: ',error)
+                    }
+                    
+
+                    // const parser = new DOMParser();
+                    // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
+                    // this.previewHeader = doc.documentElement.textContent;
+                    if(template.MVWB__Header_Type__c=='Image' || template.MVWB__Header_Type__c=='Video' || template.MVWB__Header_Type__c=='Document'){
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
+                        this.previewHeader = doc.documentElement.textContent||"";
+                        
+                        this.fileName = template.MVWB__File_Name__c;
+                        this.fileType = template.MVWB__Header_Type__c;
+                        
+                        this.filePreview = template.MVWB__WBHeader_Body__c;
+                        
+                    }else{
+                        this.previewHeader= this.formatText(headerBody) ||'';
+                    }
+                    
+                    
+                    // this.previewHeader= this.formatText(headerBody) ||'';
+                    this.selectedContentType=template.MVWB__Header_Type__c || 'None';
+                    this.btntext = template.MVWB__Button_Label__c || '';
+                    let tvs =templateVariables.map(tv=>{
+                        let temp = {
+                            object:tv.objName,
+                            field:tv.fieldName,
+                            alternateText:tv.alternateText?tv.alternateText:'',
+                            id:tv.variable.slice(2,3),
+                            index:tv.variable,
+                            type:tv.type
+                        };
+                        return temp;
+                    })
+                    
+                    this.variables = tvs.filter(tv=>tv.type=='Body') || [];
+                    this.header_variables = tvs.filter(tv=>tv.type=='Header') || [];
+                    this.updatePreviewContent(this.previewHeader,'header');
+                    this.updatePreviewContent(this.previewBody,'body');
+                    this.addHeaderVar=this.header_variables?.length>0?true:false;
+                    this.addVar=this.variables?.length>0?true:false;
+                    if (this.addHeaderVar) {
+                        this.buttonDisabled = true;
+                    }  
+                    if (template.MVWB__WBButton_Body__c) {
+                        // Parse JSON from WBButton_Body__c
+                        let buttonDataList = JSON.parse(template.MVWB__WBButton_Body__c);
+                    
+                        // Clear existing button and custom button lists before populating
+                        this.buttonList = [];
+                        this.customButtonList = [];
+                        this.callPhoneNumber = 0;
+                        this.visitWebsiteCount = 0;
+                        this.copyOfferCode = 0;
+                        this.flowCount = 0;
+                        this.marketingOpt = 0;
+                    
+                        buttonDataList.forEach((button, index) => {
+                            if (button.type === 'QUICK_REPLY' || button.type === 'Marketing opt-out') {
+                                // Handle custom buttons
+                                try{
+                                    if(button.isMarketingOpt){
+                                        button.type = 'Marketing opt-out';
+                                    }
+                                }
+                                catch(error){
+                                    console.error(error);
+                                }
+                                let buttonData = {
+                                    btntext : button.text
+                                }
+                                
+                                this.handleMenuSelect({
+                                    currentTarget: {
+                                        dataset: {
+                                            value: button.type,
+                                            buttonData: buttonData
+                                        }
+                                    }
+                                });
+                            } else {
+                                // Handle regular buttons
+                                let newButton = {
+                                    id: index + 1, // Unique ID for button
+                                    selectedActionType: button.type || '',
+                                    iconName: this.getButtonIcon(button.type),
+                                    btntext: button.text || '',
+                                    webURL: button.url || '',
+                                    phonenum: button.phone_number || '',
+                                    offercode: button.example || '',
+                                    selectedUrlType: button.type === 'URL' ? 'Static' : '',
+                                    selectedCountryType: button.phone_number ? button.phone_number.split(' ')[0] : '',
+                                    isCallPhone: button.type === 'PHONE_NUMBER',
+                                    isVisitSite: button.type === 'URL',
+                                    isOfferCode: button.type === 'COPY_CODE',
+                                    isFlow : button.type === 'Flow',
+                                    hasError: false,
+                                    errorMessage: ''
+                                };
+                    
+                                // Call handleMenuSelect() to process button creation correctly
+                                this.handleMenuSelect({
+                                    currentTarget: {
+                                        dataset: {
+                                            value: button.type,
+                                            buttonData: newButton
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    
+                    }
+                    
+                    
+                    if(headerType.toLowerCase()=='image' || headerType.toLowerCase() == 'video'){
+                        this.headerHandle=template.MVWB__WBImage_Header_Handle__c;
+                        this.imageurl=template.MVWB__WBHeader_Body__c;
+                        this.NoFileSelected = false;
+                        this.isfilename=true;
+                        this.fileName=template.MVWB__File_Name__c;
+                        this.fileType = template.MVWB__Header_Type__c.toLowerCase();
+                        
+                            this.filePreview=headerBody;
+                    }
+                    else{
+                        this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
+                    }
+                 
+                }, 1000);
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
             })
             .catch((error) => {
                 console.error('Error fetching fields: ', error);
@@ -513,7 +1067,94 @@ export default class WbCreateTemplatePage extends LightningElement {
             reader.readAsDataURL(file);
         } 
     }
+<<<<<<< HEAD
     
+=======
+
+    // Upload file to Apex
+    handleUpload() {
+        if (this.fileData) {
+            this.isLoading = true;
+            uploadFile({ base64Data: this.fileData, fileName: this.fileName })
+                .then((result) => {
+                    this.contentVersionId = result; // Store the returned ContentVersion Id
+                    getPublicLink({ contentVersionId: this.contentVersionId })
+                    .then((publicUrl) => {
+                        this.generatePreview(publicUrl.replace('/sfc/p/#', '/sfc/p/'));
+                    })
+                    .catch((error) => {
+                        
+                     this.isLoading = false;
+                        console.error('❌ Error fetching public link:', error);
+                    });
+                    this.uploadFile();
+                })
+                .catch((error) => {
+                    console.error('Error uploading file: ', error);
+                    
+                     this.isLoading = false;
+                    this.showToastError('Error uploading file!');
+                });
+        } else {
+            this.showToastError('Please select a file first!');
+
+        }
+    }
+
+    // Delete file from ContentVersion
+    handleDelete() {
+        
+        if (this.contentVersionId) {
+            deleteFile({ contentVersionId: this.contentVersionId })
+                .then((result) => {
+                    this.showToastSuccess('File deleted successfully');
+                    this.resetFileData(); // Reset file data after deletion
+                })
+                .catch((error) => {
+                    console.error('Error deleting file: ', error);
+                    this.showToastError('Error deleting file!');
+
+                    
+                });
+        } else {
+            this.showToastError('No file to delete!');
+
+        }
+    }
+
+    // Reset file data after deletion
+    resetFileData() {
+        this.file = null;
+        this.fileName = null;
+        this.fileData = null;
+        this.fileType = null;
+        this.fileSize = null;
+        this.filePreview = null;
+
+        const fileInput = this.template.querySelector('.file-input');
+        if(fileInput) {
+            fileInput.value = '';
+        }
+        
+        if(this.isImgSelected){
+            this.isImageFile = true;
+        }
+        else if(this.isVidSelected){
+            this.isVideoFile = true;
+        }
+        else if(this.isDocSelected){
+            this.isDocFile = true;
+        }
+        this.isImgSelected = false;
+        this.isDocSelected = false;
+        this.isVidSelected = false;
+        this.isfilename = false;
+        this.NoFileSelected = true;
+        this.contentVersionId = null;
+        this.headerHandle = '';
+    }
+
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
     uploadFile() {
         this.isLoading=true;
         if (!this.file) {
@@ -1621,6 +2262,39 @@ export default class WbCreateTemplatePage extends LightningElement {
             if (this.customButtonList && this.customButtonList.length > 0) {
                 buttonData.push(...this.customButtonList);
             }
+<<<<<<< HEAD
+=======
+            let fileUrl = null;
+                if (this.filePreview) {
+                    fileUrl = this.filePreview; // Use ContentVersion if available
+                } 
+            
+            
+            // Change
+            if(this.activeTab=='Authentication'){
+                this.tempBody = ' is your verification code';
+            }
+
+            const templateMiscellaneousData = {
+                contentVersionId : this.contentVersionId ,
+                isImageFile : this.isImageFile,
+                isImgSelected : this.isImgSelected,
+                isDocSelected : this.isDocSelected,
+                isVidSelected : this.isVidSelected,
+                isHeaderText : this.IsHeaderText,
+                addHeaderVar : this.addHeaderVar,
+                addMedia: this.addMedia,
+                isImageFileUploader : this.isImageFileUploader,
+                isVideoFileUploader : this.isVideoFileUploader,
+                isDocFileUploader : this.isDocFileUploader,
+                isVideoFile : this.isVideoFile,
+                isDocFile : this.isDocFile,
+
+            }
+
+            
+            
+>>>>>>> 969c50ea056df61edd127a15cd19a04a749f125c
             const template = {
                 templateName: this.templateName ? this.templateName : null,
                 templateCategory: this.activeTab ? this.activeTab : null,
