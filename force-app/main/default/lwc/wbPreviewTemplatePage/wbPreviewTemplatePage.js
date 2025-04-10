@@ -385,6 +385,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     this.options.push({ label: this.objectNames[0], value: this.objectNames[0], isSelected: true });
                    
                     this.formatedTempBody = this.formatText(this.tempBody);
+                    if(result.template.MVWB__Template_Category__c == 'Authentication'){
+                        this.formatedTempBody = '{{code}} ' + this.formatedTempBody;
+                    }
                     this.isLoading = false;
                 }
             })
@@ -430,7 +433,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     
         try {
           
-            if(this.groupedVariables.length == (this.headerPramsCustomList.length+this.bodyPramsCustomList.length)){
+            if((this.groupedVariables.length != (this.headerPramsCustomList.length+this.bodyPramsCustomList.length)) && this.noContact){
                 this.showToast('Warning', 'Please fill all input fields', 'warning');
                 return;
             }
@@ -448,7 +451,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 return;
             }
             
-            const buttonValue = this.template.WBButton_Body__c != undefined?JSON.parse(this.template.MVWB__WBButton_Body__c) : '';
+            const buttonValue = this.template.MVWB__WBButton_Body__c != undefined?JSON.parse(this.template.MVWB__WBButton_Body__c) : '';
             
             
             const templatePayload = this.createJSONBody(phonenum, "template", {

@@ -54,7 +54,14 @@
 
                 <div class="slds-col slds-size_2-of-3 slds-box preview-pane" style="display: flex; justify-content: center; align-items: center;">
                     <div class="preview-container" style="width: 280px; height: 100%; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
-                        <iframe src={iframeSrc} class="iframe-preview"></iframe>
+                        <template if:true={iframeSrc}>
+                            <iframe src={iframeSrc} class="iframe-preview"></iframe>
+                        </template>
+                        <template if:false={iframeSrc}>
+                            <div class="iframe-preview slds-context-bar__icon-action slds-text-align--center slds-text-heading_large">
+                                Please select the flow to view preview.
+                            </div>
+                        </template>
                     </div>
                 </div>
             </template>
