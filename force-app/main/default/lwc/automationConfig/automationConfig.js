@@ -2,7 +2,7 @@ import { LightningElement, track } from 'lwc';
 import getAllAutomations from '@salesforce/apex/AutomationConfigController.getAllAutomations';
 import getTemplates from '@salesforce/apex/AutomationConfigController.getTemplates';
 import saveAutomations from '@salesforce/apex/AutomationConfigController.saveAutomations';
-import updateAutomations from '@salesforce/apex/AutomationConfigController.updateAutomations';
+// import updateAutomations from '@salesforce/apex/AutomationConfigController.updateAutomations';
 import deleteAutomations from '@salesforce/apex/AutomationConfigController.deleteAutomations';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -35,7 +35,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         this.isLoading = true;
         getAllAutomations()
             .then(data => {
-                this.automationData = data.map((record, index) => ({
+                this.originalAutomationData = data.map((record, index) => ({
                     id: record.Id,
                     srNo: index + 1,
                     name: record.Name,
@@ -43,8 +43,8 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : '',
                     templateType: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Type__c : ''
                 }));
-                console.log('this.automationData =', JSON.stringify(this.automationData));
-                this.originalAutomationData = [...this.automationData];
+                console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
+                this.automationData = [...this.originalAutomationData];
             })
             .catch(error => {
                 console.error('Error fetching automation records:', error);
@@ -137,13 +137,15 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     * Created By: Kavya Trivedi
     */
     handleSearch(event) {
-        const searchTerm = event.target.value.toLowerCase();
+        console.log('Search term:', event.target.value);
+        const searchTerm = event.target.value.toLowerCase().trim();
         this.automationData = this.originalAutomationData.filter(auto =>
-            auto.name.toLowerCase().includes(searchTerm) ||
-            auto.description.toLowerCase().includes(searchTerm) ||
-            auto.template.toLowerCase().includes(searchTerm)
+            (auto.name || '').toLowerCase().includes(searchTerm) ||
+            (auto.description || '').toLowerCase().includes(searchTerm) ||
+            (auto.template || '').toLowerCase().includes(searchTerm)
         );
-    }    
+        console.log('Filtered Data:', this.automationData);
+    }
 
     handleNew() {
         this.isModalOpen = true;
