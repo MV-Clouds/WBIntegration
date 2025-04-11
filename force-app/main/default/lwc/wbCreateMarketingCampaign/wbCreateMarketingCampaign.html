@@ -110,7 +110,7 @@
                         <template for:each={emailConfigs} for:item="config" for:index="index">
                             <div key={config.id} class="slds-grid slds-gutters slds-m-bottom_small">
                                 <!-- Email Template -->
-                                <div class="slds-col">
+                                <div class="slds-col" style="flex: 2;">
                                     <!-- <lightning-combobox
                                         name="whatsappTemplate"
                                         label="Whatsapp Template"
@@ -140,7 +140,7 @@
                                 </div>
         
                                 <!-- Days After Start -->
-                                <div class="slds-col">
+                                <div class="slds-col" style="flex: 1;">
                                     <lightning-input
                                         type="number"
                                         label="Days After Start"
@@ -148,6 +148,7 @@
                                         data-index={index}
                                         data-field="daysAfter"
                                         onchange={handleInputChange}
+                                        disabled={config.isImmediateSelected}
                                         required>
                                     </lightning-input>
                                     <template if:true={config.errorDaysAfter}>
@@ -156,7 +157,7 @@
                                 </div>
         
                                 <!-- Time to Send -->
-                                <div class="slds-col">
+                                <div class="slds-col" style="flex: 1;">
                                     <lightning-input
                                         type="time"
                                         label="Time to Send"
@@ -164,6 +165,7 @@
                                         data-index={index}
                                         data-field="timeToSend"
                                         onchange={handleInputChange}
+                                        disabled={config.isImmediateSelected}
                                         required>
                                     </lightning-input>
                                     <template if:true={config.errorTimeToSend}>
@@ -171,8 +173,24 @@
                                     </template>
                                 </div>
         
+                                <!-- Immediate Checkbox -->
+                                <div class="slds-col slds-align-bottom slds-grid slds-align_absolute-center" style="flex: 1;padding-top: 5px;">
+                                    <lightning-button-stateful
+                                        label-when-off="Send Immediately"
+                                        label-when-on="Immediate Send Enabled"
+                                        label-when-hover="Schedule"
+                                        icon-name-when-off="utility:add"
+                                        icon-name-when-on="utility:check"
+                                        icon-name-when-hover="utility:event"
+                                        data-index={index}
+                                        data-field="isImmediateSelected"
+                                        selected={config.isImmediateSelected}
+                                        onclick={handleInputChange}>
+                                    </lightning-button-stateful>
+                                </div>
+                                
                                 <!-- Delete Button -->
-                                <div class="slds-col slds-align-bottom slds-grid slds-align_absolute-center">
+                                <div class="slds-col slds-align-bottom slds-grid slds-align_absolute-center" style="flex: 0.3;">
                                     <lightning-button-icon
                                         icon-name="utility:delete"
                                         alternative-text="Delete"

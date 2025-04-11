@@ -22,6 +22,7 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
     campaignStartDate = '';
     campaignEndDate = '';
     createBrodcastPopup = false;
+    isImmediateSelected = false;
 
     // dateFieldOptions = [
     //     { label: 'Birthday', value: 'birthday' },
@@ -78,6 +79,11 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
             this.specificError = '';
             this.selectedDate = '';
         }
+    }
+
+    handleImmediateSelectedClick(){
+        this.isImmediateSelected = !this.isImmediateSelected;
+        // console.log('isImmediateSelected:', this.isImmediateSelected);
     }
 
     @track specificError = ''; // Error for the "specific" option
@@ -140,7 +146,7 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
 
         
         @track emailConfigs = [
-            { id: 1, template: '', daysAfter: 0, timeToSend: '' }
+            { id: 1, template: '', daysAfter: 0, timeToSend: '' , isImmediateSelected : false }
         ];
         @track error = '';
         nextId = 2;
@@ -161,7 +167,7 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
             this.error = '';
             this.emailConfigs = [
                 ...this.emailConfigs,
-                { id: this.nextId++, template: '', daysAfter: 0, timeToSend: '' }
+                { id: this.nextId++, template: '', daysAfter: 0, timeToSend: '', isImmediateSelected : false}
             ];
         }
     
@@ -177,12 +183,23 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
             this.validateDuplicates();
         }
     
-        handleInputChange(event) {
-            const index = parseInt(event.target.dataset.index, 10);
-            const field = event.target.dataset.field;
-            this.emailConfigs[index][field] = event.detail.value;
-            this.validateDuplicates();
-        }
+        // handleInputChange(event) {
+        //     const index = parseInt(event.target.dataset.index, 10);
+        //     const field = event.target.dataset.field;
+        //     // this.emailConfigs[index][field] = event.detail.value;
+        //     if (field === 'isImmediateSelected') {
+        //         console.log('In isImmediateSelected');
+        //         console.log('isImmediateSelected:', this.emailConfigs[index][field]);
+                
+        //         // Toggle the isImmediateSelected field
+        //         this.emailConfigs[index][field] = !this.emailConfigs[index][field];
+        //     } else {
+        //         // Update other fields like daysAfter, timeToSend, etc.
+        //         this.emailConfigs[index][field] = event.detail.value;
+        //     }
+        
+        //     this.validateDuplicates();
+        // }
     
         validateDuplicates() {
             const seen = new Set();
@@ -287,11 +304,22 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         const field = event.target.dataset.field;
         const value = event.target.value;
 
+        if (field === 'isImmediateSelected') {
+            console.log('In isImmediateSelected');
+            console.log('isImmediateSelected:', this.emailConfigs[index][field]);
+            
+            // Toggle the isImmediateSelected field
+            this.emailConfigs[index][field] = !this.emailConfigs[index][field];
+        } else {
+            // Update other fields like daysAfter, timeToSend, etc.
+            // this.emailConfigs[index][field] = event.detail.value;
+            this.emailConfigs[index][field] = value;
+        }
+
         // Update the emailConfigs array
-        this.emailConfigs[index][field] = value;
 
         // Validate for duplicate time and date
-        if (field === 'timeToSend' || field === 'daysAfter') {
+        if (field === 'timeToSend' || field === 'daysAfter' || field === 'isImmediateSelected') {
             this.validateDuplicateSchedules();
         }
     }
@@ -320,21 +348,32 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         this.emailConfigs = this.emailConfigs.map(config => ({
             ...config,
             errorDaysAfter: '',
-            errorTimeToSend: ''
+            errorTimeToSend: '',
+            errorTemplate: ''
         }));
 
         const scheduleSet = new Set();
         let hasError = false;
 
         for (const config of this.emailConfigs) {
-            const scheduleKey = `${config.daysAfter}-${config.timeToSend}`;
-            if (scheduleSet.has(scheduleKey)) {
-                // Set specific errors for duplicate fields
-                config.errorDaysAfter = 'Duplicate schedule detected.';
-                config.errorTimeToSend = 'Duplicate schedule detected.';
-                hasError = true;
-            } else {
-                scheduleSet.add(scheduleKey);
+            // Skip validation for rows where isImmediateSelected is true
+            if (config.isImmediateSelected) {
+                console.log('Skipping validation for immediate selected row');
+                continue;
+            }
+
+            // Only validate rows with valid daysAfter, timeToSend, and template values
+            if (config.daysAfter !== '' && config.timeToSend && config.template) {
+                const scheduleKey = `${config.daysAfter}-${config.timeToSend}-${config.template}`;
+                if (scheduleSet.has(scheduleKey)) {
+                    // Set specific errors for duplicate fields
+                    config.errorDaysAfter = 'Duplicate schedule detected.';
+                    config.errorTimeToSend = 'Duplicate schedule detected.';
+                    config.errorTemplate = 'Duplicate schedule detected.';
+                    hasError = true;
+                } else {
+                    scheduleSet.add(scheduleKey);
+                }
             }
         }
 
@@ -433,19 +472,37 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         this.createBrodcastPopup = false;
     }
 
+    // get isSubmitDisabled() {
+    //     // Check if any required field in emailConfigs is empty
+    //     const hasEmptyFields = this.emailConfigs.some(config => {
+    //         return !config.template || !config.timeToSend || config.daysAfter === '';
+    //     });
+
+    //     // Check if specific or related option validations fail
+    //     if (this.selectedOption === 'specific') {
+    //         return hasEmptyFields || !this.selectedDate || new Date(this.selectedDate) <= new Date();
+    //     } else if (this.selectedOption === 'related') {
+    //         return hasEmptyFields || !this.selectedDateField;
+    //     }
+
+    //     return hasEmptyFields;
+    // }
     get isSubmitDisabled() {
-        // Check if any required field in emailConfigs is empty
+        // Check if any required field in emailConfigs is empty, excluding rows where isImmediateSelected is true
         const hasEmptyFields = this.emailConfigs.some(config => {
+            if (config.isImmediateSelected) {
+                return false; // Skip validation for rows with isImmediateSelected = true
+            }
             return !config.template || !config.timeToSend || config.daysAfter === '';
         });
-
+    
         // Check if specific or related option validations fail
         if (this.selectedOption === 'specific') {
             return hasEmptyFields || !this.selectedDate || new Date(this.selectedDate) <= new Date();
         } else if (this.selectedOption === 'related') {
             return hasEmptyFields || !this.selectedDateField;
         }
-
+    
         return hasEmptyFields;
     }
 
@@ -474,7 +531,7 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         console.log('Campaign Data:', JSON.stringify(campaignData));
         
         createMarketingCampaign({ campaignData: JSON.stringify(campaignData) })
-            .then((campaignId) => {
+            .then(() => {
                 this.dispatchEvent(
                     new ShowToastEvent({
                         title: 'Success',

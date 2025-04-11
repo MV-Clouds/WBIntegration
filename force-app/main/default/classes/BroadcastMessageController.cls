@@ -158,6 +158,7 @@ public with sharing class BroadcastMessageController {
         Map<String, List<Template__c>> objectTemplateMap = new Map<String, List<Template__c>>();
     
         try {
+            System.debug('Get template By Object');
             // Fetch all templates with their related object names from Template_Variable__c
             List<Template__c> templates = [SELECT Id, Template_Name__c, 
                                                   (SELECT Object_Name__c FROM WB_Template_Variables__r) 
@@ -169,16 +170,19 @@ public with sharing class BroadcastMessageController {
             // Categorize templates by object name
             for (Template__c template : templates) {
                 String objectName;
-    
+                System.debug('Object Name ::: '+objectName);
                 // If the template has associated object names, use the first one; otherwise, categorize it as 'Generic'
                 if (!template.WB_Template_Variables__r.isEmpty()) {
                     objectName = template.WB_Template_Variables__r[0].Object_Name__c;
+                    System.debug('Object Name1 ::: '+objectName);
                 } else {
                     objectName = 'Generic'; // Templates without variables are categorized as 'Generic'
+                    System.debug('Object Name2 ::: '+objectName);
                 }
     
                 // Initialize list if objectName is not yet added
                 if (!objectTemplateMap.containsKey(objectName)) {
+                    System.debug('Object Name3 ::: '+objectName);
                     objectTemplateMap.put(objectName, new List<Template__c>());
                 }
     
@@ -189,7 +193,7 @@ public with sharing class BroadcastMessageController {
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getTemplatesByObject', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
-    
+        System.debug(objectTemplateMap);
         return objectTemplateMap;
     }    
 
@@ -511,6 +515,42 @@ public with sharing class BroadcastMessageController {
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastGroupsByBroadcastId', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error fetching broadcast groups: ' + e.getMessage());
+        }
+    }
+    @AuraEnabled(cacheable=true)
+    public static List<Map<String, String>> getDateFieldsForPicklist(String objectApiName) {
+        try {
+            List<Map<String, String>> options = new List<Map<String, String>>();
+
+            // Get the describe information for the specified object
+            Map<String, Schema.SObjectType> globalDescribe = Schema.getGlobalDescribe();
+            if (!globalDescribe.containsKey(objectApiName)) {
+                throw new AuraHandledException('Invalid object API name: ' + objectApiName);
+            }
+
+            Map<String, Schema.SObjectField> objectFields = globalDescribe.get(objectApiName).getDescribe().fields.getMap();
+
+            // Exclude audit fields
+            Set<String> auditFieldsToExclude = new Set<String>{
+                'LastModifiedDate', 'SystemModstamp', 'LastActivityDate', 'LastReferencedDate', 'LastViewedDate'
+            };
+
+            // Iterate through the fields and filter for Date fields
+            for (String fieldName : objectFields.keySet()) {
+                Schema.DescribeFieldResult fieldDescribe = objectFields.get(fieldName).getDescribe();
+                if (fieldDescribe.getType() == Schema.DisplayType.Date && !auditFieldsToExclude.contains(fieldName)) {
+                    options.add(new Map<String, String>{
+                        'label' => fieldDescribe.getLabel(),
+                        'value' => fieldName
+                    });
+                }
+            }
+
+            return options;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getDateFieldsForPicklist', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+            // throw new AuraHandledException('Error fetching broadcast groups: ' + e.getMessage());
+            return null;
         }
     }
 
