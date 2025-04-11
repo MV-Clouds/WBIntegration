@@ -1,9 +1,12 @@
 // import { LightningElement, track } from 'lwc';
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import { LightningElement, wire, track } from 'lwc';
-import { CurrentPageReference } from 'lightning/navigation';
+import getDateFieldsForPicklist from '@salesforce/apex/BroadcastMessageController.getDateFieldsForPicklist';
+import { NavigationMixin,CurrentPageReference } from 'lightning/navigation';
+import createMarketingCampaign from '@salesforce/apex/MarketingMessageController.createMarketingCampaign';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
-export default class WbCreateMarketingCampaign extends LightningElement {
+export default class WbCreateMarketingCampaign extends NavigationMixin(LightningElement) {
     @track broadcastGroupList = ['Group1', 'Group2', 'Group3'];
     @track templateOptions = []; // Will store the processed template options
     @track templateMap = new Map(); // Store the raw Map from Apex
@@ -12,15 +15,25 @@ export default class WbCreateMarketingCampaign extends LightningElement {
     selectedOption = 'specific';
     
     isLoading = false;
+    campaignName = '';
+    campaignDescription = '';
+    campaignObject = '';
+    isMarketingCampaign = false;
+    campaignStartDate = '';
+    campaignEndDate = '';
+    createBrodcastPopup = false;
 
-    dateFieldOptions = [
-        { label: 'Birthday', value: 'birthday' },
-        { label: 'Anniversary', value: 'anniversary' },
-        { label: 'Signup Date', value: 'signup' }
-    ];
+    // dateFieldOptions = [
+    //     { label: 'Birthday', value: 'birthday' },
+    //     { label: 'Anniversary', value: 'anniversary' },
+    //     { label: 'Signup Date', value: 'signup' }
+    // ];
+
+    @track dateFieldOptions =[];
 
     @track groupNames = [];
     @track selectedTemplate = '';
+    @track groupId = [];
 
     @wire(CurrentPageReference)
     setCurrentPageReference(currentPageReference) {
@@ -32,9 +45,11 @@ export default class WbCreateMarketingCampaign extends LightningElement {
                 // Retrieve the passed data
                 this.selectedObjectName = navigationState.objectName;
                 this.broadcastGroupList = navigationState.groupNames;
-
+                this.groupId = navigationState.groupId;
                 // console.log('Selected Template:', this.selectedTemplate);
                 console.log('Broadcast Group List:', this.broadcastGroupList);
+                this.loadAllTemplates();
+                this.fetchDateFields();
             } catch (error) {
                 console.error('Error decoding navigation state:', error);
             }
@@ -68,6 +83,26 @@ export default class WbCreateMarketingCampaign extends LightningElement {
     @track specificError = ''; // Error for the "specific" option
     @track relatedError = '';  // Error for the "related" option
 
+    fetchDateFields() {
+        getDateFieldsForPicklist({ objectApiName: this.selectedObjectName })
+            .then((result) => {
+                if (result) {
+                    this.dateFieldOptions = result.map((field) => ({
+                        label: field.label,
+                        value: field.value,
+                    }));
+                    console.log('Date Fields:', this.dateFieldOptions);
+                } else {
+                    this.dateFieldOptions = [];
+                    console.warn('No date fields found for the object:', this.selectedObjectName);
+                }
+            })
+            .catch((error) => {
+                this.error = error;
+                console.error('Error fetching date fields:', error);
+            });
+    }
+
     handleSelectChange(event) {
         const selectedDateField = event.detail.value;
         if (this.selectedOption === 'related') {
@@ -88,8 +123,12 @@ export default class WbCreateMarketingCampaign extends LightningElement {
             getTemplatesByObject()
                 .then(result => {
                     // Convert the Apex Map to JavaScript Map
+                    console.log('REsult :::: ',result);
+                    
                     this.templateMap = new Map(Object.entries(result));
+                    console.log('Template Map :::: ',this.templateMap);
                     this.updateTemplateOptions(); // Update options based on selected object
+                    
                 })
                 .catch(error => {
                     this.showToast('Error', 'Failed to load templates', 'error');
@@ -106,13 +145,13 @@ export default class WbCreateMarketingCampaign extends LightningElement {
         @track error = '';
         nextId = 2;
     
-        get templateOptions() {
-            return [
-                { label: 'Welcome Email', value: 'welcome' },
-                { label: 'Reminder Email', value: 'reminder' },
-                { label: 'Follow-up Email', value: 'followup' }
-            ];
-        }
+        // get templateOptions() {
+        //     return [
+        //         { label: 'Welcome Email', value: 'welcome' },
+        //         { label: 'Reminder Email', value: 'reminder' },
+        //         { label: 'Follow-up Email', value: 'followup' }
+        //     ];
+        // }
     
         addRow() {
             if (this.hasDuplicates()) {
@@ -175,8 +214,10 @@ export default class WbCreateMarketingCampaign extends LightningElement {
         updateTemplateOptions() {
             if (!this.selectedObjectName || this.templateMap.size === 0) {
                 this.templateOptions = [];
+                
                 return;
             }
+            console.log(this.selectedObjectName);
     
             let combinedTemplates = [];
     
@@ -192,7 +233,7 @@ export default class WbCreateMarketingCampaign extends LightningElement {
     
             // Convert to combobox options format
             this.templateOptions = combinedTemplates.map(template => ({
-                label: template.MVWB__Template_Name__c,
+                label: template.Template_Name__c,
                 value: template.Id
             }));
     
@@ -202,9 +243,11 @@ export default class WbCreateMarketingCampaign extends LightningElement {
     @track selectedDate = '';
     @track minDate = this.getTodayDate(); // Set the minimum date to today
 
-    connectedCallback() {
-        this.minDate = this.getTodayDate();
-    }
+    // connectedCallback() {
+    //     // this.minDate = this.getTodayDate();       
+    //     // this.loadAllTemplates(); // Load templates on component initialization
+
+    // }
 
     // Get today's date in YYYY-MM-DD format
     getTodayDate() {
@@ -251,6 +294,24 @@ export default class WbCreateMarketingCampaign extends LightningElement {
         if (field === 'timeToSend' || field === 'daysAfter') {
             this.validateDuplicateSchedules();
         }
+    }
+    handleInputChangeModal(event) {
+        const fieldName = event.target.name;
+        const fieldValue = event.target.value;
+
+        if (fieldName === 'campaignName') {
+            this.campaignName = fieldValue;
+        } else if (fieldName === 'campaignDescription') {
+            this.campaignDescription = fieldValue;
+        }
+    }
+
+
+    handleComboboxChange(event) {
+        const index = parseInt(event.target.dataset.index, 10); // Get the index from data-index
+        this.emailConfigs[index].template = event.detail.value; // Update the template value
+        console.log('Updated emailConfigs:', this.emailConfigs); // Debug log
+        this.validateDuplicates(); // Validate for duplicates
     }
 
     // Validate that no two templates have the same time and date
@@ -336,12 +397,100 @@ export default class WbCreateMarketingCampaign extends LightningElement {
         return true; // Return true if all validations pass
     }
 
-    handleSubmit() {
-        if (this.validateInputs()) {
-            // Proceed with form submission
-            console.log('Form submitted successfully!');
-        } else {
-            console.log('Validation failed.');
+    // handleSubmit() {
+    //     if (this.validateInputs()) {
+    //         // Proceed with form submission
+    //         console.log('Form submitted successfully!');
+    //     } else {
+    //         console.log('Validation failed.');
+    //     }
+    // }
+    handlePrevclick(event){
+        event.preventDefault();
+        this.templateMap = [];
+        this.templateOptions = [];
+            // Encode the data as query parameters
+            // const navigationState = {
+            //     groupNames: names,
+            //     objectName : this.selectedObjectName
+            // };
+            // const encodedNavigationState = btoa(JSON.stringify(navigationState));
+
+            // Navigate to the wbCreateMarketingCampaign component
+            this[NavigationMixin.Navigate]({
+                type: 'standard__navItemPage',
+                attributes: {
+                    apiName: 'Broadcast' // Replace with the API name of your Lightning Tab
+                }
+            });
+    }
+
+    handleOpenModal() {
+        this.createBrodcastPopup = true;
+    }
+
+    handleCloseModal() {
+        this.createBrodcastPopup = false;
+    }
+
+    get isSubmitDisabled() {
+        // Check if any required field in emailConfigs is empty
+        const hasEmptyFields = this.emailConfigs.some(config => {
+            return !config.template || !config.timeToSend || config.daysAfter === '';
+        });
+
+        // Check if specific or related option validations fail
+        if (this.selectedOption === 'specific') {
+            return hasEmptyFields || !this.selectedDate || new Date(this.selectedDate) <= new Date();
+        } else if (this.selectedOption === 'related') {
+            return hasEmptyFields || !this.selectedDateField;
         }
+
+        return hasEmptyFields;
+    }
+
+      // Handle checkbox change
+      handleCheckboxChange(event) {
+        this.isMarketingCampaign = event.target.checked;
+    }
+
+
+    createCampaign() {
+
+        console.log('In createCampaign');
+        
+        const campaignData = {
+            name: this.campaignName,
+            description: this.campaignDescription,
+            objectName: this.selectedObjectName,
+            isMarketingCampaign: this.isMarketingCampaign,
+            selectedOption: this.selectedOption,
+            selectedDate: this.selectedDate,
+            selectedDateFields: this.selectedDateField,
+            emailConfigs: this.emailConfigs,
+            groupIdList : this.groupId
+        };
+    
+        console.log('Campaign Data:', JSON.stringify(campaignData));
+        
+        createMarketingCampaign({ campaignData: JSON.stringify(campaignData) })
+            .then((campaignId) => {
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Success',
+                        message: `Marketing Campaign created successfully!`,
+                        variant: 'success'
+                    })
+                );
+            })
+            .catch((error) => {
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Error',
+                        message: error.body.message,
+                        variant: 'error'
+                    })
+                );
+            });
     }
 }

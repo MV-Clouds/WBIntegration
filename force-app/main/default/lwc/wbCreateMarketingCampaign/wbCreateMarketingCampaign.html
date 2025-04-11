@@ -36,7 +36,7 @@
             <div class="slds-col slds-size_1-of-2 slds-p-around_medium">
                 <label class="slds-form-element__label">
                     <abbr class="slds-required" title="required">*</abbr>
-                    How should this Email campaign start?
+                    How should this Whatsapp template marketing campaign start?
                 </label>
                 <div class="slds-form-element__control">
                     <div class="slds-radio">
@@ -44,7 +44,7 @@
                                onchange={handleOptionChange} checked={isSpecific} />
                         <label class="slds-radio__label" for="specific">
                             <span class="slds-radio_faux"></span>
-                            <span class="slds-form-element__label">Sending emails on specific dates</span>
+                            <span class="slds-form-element__label">Sending Whatsapp template on specific dates</span>
                         </label>
                     </div>
                     <div class="slds-radio">
@@ -121,9 +121,21 @@
                                         onchange={handleComboboxChange}
                                         required>
                                     </lightning-combobox> -->
-                                    <lightning-combobox name="whatsappTemplate" label="Whatsapp Template"
+                                    <!-- <lightning-combobox name="whatsappTemplate" label="Whatsapp Template"
                                         options={templateOptions} onchange={handleInputChange} value={selectedTemplate}
                                         required message-when-value-missing=" " class="slds-m-bottom_medium">
+                                    </lightning-combobox> -->
+                                    <lightning-combobox 
+                                        name="whatsappTemplate" 
+                                        label="Whatsapp Template"
+                                        value={config.template}
+                                        placeholder="Select a template"
+                                        options={templateOptions}
+                                        data-index={index}
+                                        onchange={handleComboboxChange} 
+                                        required 
+                                        message-when-value-missing=" " 
+                                        class="slds-m-bottom_medium">
                                     </lightning-combobox>
                                 </div>
         
@@ -181,6 +193,72 @@
             </lightning-card>
         </div>
                 
+        <div class="slds-box slds-theme_default templatebtn">
+            <lightning-button variant="brand-outline" onclick={handlePrevclick} label="Previous"
+                class="slds-m-left_x-small"></lightning-button>
+            <lightning-button variant="brand" label="Submit for Review" onclick={handleOpenModal} class="slds-m-left_x-small" disabled={isSubmitDisabled}></lightning-button>
+        </div>
+        <template if:true={createBrodcastPopup}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal Header -->
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Create Marketing Campaign</h2>
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={handleCloseModal}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse"></lightning-icon>
+                        </button>
+                    </header>
 
+                    <!-- Modal Body -->
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <!-- Input for Name -->
+                        <lightning-input 
+                            type="text" 
+                            label="Name" 
+                            value={campaignName} 
+                            onchange={handleInputChangeModal} 
+                            name="campaignName" 
+                            required 
+                            class="slds-m-bottom_medium">
+                        </lightning-input>
+
+                        <!-- Input for Description -->
+                        <lightning-textarea 
+                            label="Description" 
+                            value={campaignDescription} 
+                            onchange={handleInputChangeModal} 
+                            name="campaignDescription" 
+                            required 
+                            class="slds-m-bottom_medium">
+                        </lightning-textarea>
+
+                        <!-- Checkbox for isMarketingCampaign -->
+                        <lightning-input 
+                            type="checkbox" 
+                            label="Is Marketing Campaign" 
+                            checked={isMarketingCampaign} 
+                            onchange={handleCheckboxChange} 
+                            name="isMarketingCampaign" 
+                            class="slds-m-bottom_medium">
+                        </lightning-input>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <footer class="slds-modal__footer">
+                        <lightning-button 
+                            variant="neutral" 
+                            label="Cancel" 
+                            onclick={handleCloseModal}>
+                        </lightning-button>
+                        <lightning-button 
+                            variant="brand" 
+                            label="Create" 
+                            onclick={createCampaign}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
     </div>
 </template>

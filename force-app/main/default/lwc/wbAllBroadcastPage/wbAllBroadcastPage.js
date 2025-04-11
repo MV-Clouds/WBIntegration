@@ -129,6 +129,8 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             .then(result => {
                 // Convert the Apex Map to JavaScript Map
                 this.templateMap = new Map(Object.entries(result));
+                console.log('Template Map ::: ',this.templateMap);
+                
                 this.updateTemplateOptions(); // Update options based on selected object
             })
             .catch(error => {
@@ -494,7 +496,8 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             // Encode the data as query parameters
             const navigationState = {
                 groupNames: names,
-                objectName : this.selectedObjectName
+                objectName : this.selectedObjectName,
+                groupId : this.selectedGroupIds
             };
             const encodedNavigationState = btoa(JSON.stringify(navigationState));
 
