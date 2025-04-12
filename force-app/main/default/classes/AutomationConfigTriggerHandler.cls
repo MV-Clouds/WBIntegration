@@ -141,7 +141,7 @@ public without sharing class AutomationConfigTriggerHandler {
         System.debug('Template found on orginal messages.');
         
         // Step 3: Map Templates to Automation IDs
-        Map<String, Id> templateIdToAutomationIdMap = fetchAutomationMappings(templateIdsToCheck);
+        Map<String, List<Id>> templateIdToAutomationIdMap = fetchAutomationMappings(templateIdsToCheck);
         if (templateIdToAutomationIdMap.isEmpty()) {
             System.debug('No matching Automations found, exiting.');
             return;
@@ -190,8 +190,8 @@ public without sharing class AutomationConfigTriggerHandler {
         return templateIdsToCheck;
     }
     
-    private static Map<String, Id> fetchAutomationMappings(Set<String> templateIdsToCheck) {
-        Map<String, Id> templateIdToAutomationIdMap = new Map<String, Id>();
+    private static Map<String, List<Id>> fetchAutomationMappings(Set<String> templateIdsToCheck) {
+        Map<String, List<Id>> templateIdToAutomationIdMap = new Map<String, List<Id>>();
         
         for (Automation__c automation : [
             SELECT Id, WB_Template__c
@@ -199,16 +199,26 @@ public without sharing class AutomationConfigTriggerHandler {
             WHERE WB_Template__c IN :templateIdsToCheck
         ]) {
             if (automation.WB_Template__c != null) {
-                templateIdToAutomationIdMap.put(automation.WB_Template__c, automation.Id);
+                String templateId = automation.WB_Template__c;
+                System.debug(templateId + ' => ' + automation.Id);
+                
+                if (!templateIdToAutomationIdMap.containsKey(templateId)) {
+                    templateIdToAutomationIdMap.put(templateId, new List<Id>());
+                }
+                templateIdToAutomationIdMap.get(templateId).add(automation.Id);
             }
         }
         return templateIdToAutomationIdMap;
     }
     
-    private static Map<Id, Map<String, Automation_Path__c>> fetchAutomationPaths(Map<String, Id> templateIdToAutomationIdMap) {
+    private static Map<Id, Map<String, Automation_Path__c>> fetchAutomationPaths(Map<String, List<Id>> templateIdToAutomationIdMap) {
         System.debug('Fetching Automation Paths for template IDs: ' + templateIdToAutomationIdMap);
         Map<Id, Map<String, Automation_Path__c>> automationPathsMap = new Map<Id, Map<String, Automation_Path__c>>();
-        Set<Id> relevantAutomationIds = new Set<Id>(templateIdToAutomationIdMap.values());
+        
+        Set<Id> relevantAutomationIds = new Set<Id>();
+        for (List<Id> automationIds : templateIdToAutomationIdMap.values()) {
+            relevantAutomationIds.addAll(automationIds);
+        }
         System.debug('Relevant Automation IDs: ' + relevantAutomationIds);
         
         for (Automation_Path__c path : [
@@ -217,31 +227,28 @@ public without sharing class AutomationConfigTriggerHandler {
             WHERE Automation__c IN :relevantAutomationIds
         ]) {
             System.debug('Adding to automationPathsMap: ' + path);
-            if (path.Automation__c != null && String.isNotBlank(path.Button_Value__c)) {
-                String normalizedButtonValue = path.Button_Value__c.toLowerCase().trim();
-                
+
+            if (path.Automation__c != null) {
                 if (!automationPathsMap.containsKey(path.Automation__c)) {
                     automationPathsMap.put(path.Automation__c, new Map<String, Automation_Path__c>());
                 }
-                automationPathsMap.get(path.Automation__c).put(normalizedButtonValue, path);
-            }
-            if(path.Automation__c != null && path.Action_Type__c == 'Create a Record' && String.isNotBlank(path.Field_Mapping__c)){
-                String normalizedButtonValue = 'interactive';
-                if (!automationPathsMap.containsKey(path.Automation__c)) {
-                    automationPathsMap.put(path.Automation__c, new Map<String, Automation_Path__c>());
+
+                // If Button_Value__c is provided, use it
+                if (String.isNotBlank(path.Button_Value__c)) {
+                    String normalizedButtonValue = path.Button_Value__c.toLowerCase().trim();
+                    automationPathsMap.get(path.Automation__c).put(normalizedButtonValue, path);
                 }
-                automationPathsMap.get(path.Automation__c).put(normalizedButtonValue, path);
+
+                // Always map 'interactive' if Create a Record path with field mapping
+                if (path.Action_Type__c == 'Create a Record' && String.isNotBlank(path.Field_Mapping__c)) {
+                    automationPathsMap.get(path.Automation__c).put('interactive', path);
+                }
             }
         }
         return automationPathsMap;
     }
     
-    private static void processMatchingChats(
-        List<Chat__c> potentialPathReplies,
-    Map<String, Chat__c> originalChatsMap,
-    Map<String, Id> templateIdToAutomationIdMap,
-    Map<Id, Map<String, Automation_Path__c>> automationPathsMap
-    ) {
+    private static void processMatchingChats(List<Chat__c> potentialPathReplies, Map<String, Chat__c> originalChatsMap, Map<String, List<Id>> templateIdToAutomationIdMap, Map<Id, Map<String, Automation_Path__c>> automationPathsMap) {
         for (Chat__c newChat : potentialPathReplies) {
             
             Chat__c originalChat = new Chat__c();
@@ -256,177 +263,193 @@ public without sharing class AutomationConfigTriggerHandler {
             
             if (originalChat != null && String.isNotBlank(originalChat.Whatsapp_Template__c)) {
                 
-                Id automationId = templateIdToAutomationIdMap.get(originalChat.Whatsapp_Template__c);
-                System.debug('Automation ID: ' + automationId);
+                List<Id> automationIds = templateIdToAutomationIdMap.get(originalChat.Whatsapp_Template__c);
+                System.debug('Automation ID: ' + automationIds);
                 System.debug('automationPathsMap: ' + automationPathsMap);
-                System.debug('automationpathmap.containsKey(automationId): ' + automationPathsMap.containsKey(automationId));
-                
-                if (automationId != null && automationPathsMap.containsKey(automationId)) {
+                for (Id automationId : automationIds) {
+
+                    System.debug('automationpathmap.containsKey(automationId): ' + automationPathsMap.containsKey(automationId));
                     
-                    String normalizedMessageBody = '';
-                    if(newChat.Message_Type__c == 'interactive'){
-                        normalizedMessageBody = 'interactive';
-                    } else{
-                        normalizedMessageBody = newChat.Message__c.toLowerCase().trim();
-                    }
-                    Contact contactRecord = [SELECT Id FROM Contact WHERE Phone = :newChat.Phone__c LIMIT 1];
-                    
-                    Id contactId = contactRecord != null ? contactRecord.Id : null;
-                    
-                    Map<String, Automation_Path__c> pathsForThisAutomation = automationPathsMap.get(automationId);
-                    
-                    if (pathsForThisAutomation.containsKey(normalizedMessageBody)) {
+                    if (automationId != null && automationPathsMap.containsKey(automationId)) {
                         
-                        // *** If ALL CONDITIONS MET ***
-                        Automation_Path__c matchingPath = pathsForThisAutomation.get(normalizedMessageBody);
-                        
-                        System.debug('Matched Path Id: ' + matchingPath.Id);
-                        System.debug('Matched Path: ' + matchingPath);
-                        // System.debug('Chat ID (inserting) is a reply to Template (' + originalChat.Whatsapp_Template__c + ') with Automation (' + automationId + ') and matching Path (' + matchingPath.Id + ') found via Button Value (' + matchingPath.Button_Value__c + ').');
-                        
-                        if (matchingPath.Action_Type__c == 'Send Message') {
-                            
-                            List<Template_Variable__c> tempvar = [SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM Template_Variable__c WHERE Template__c = :matchingPath.Action_Template__c LIMIT 1];
-                            
-                            MVWB__Object_Config__mdt configMdt = [
-                                SELECT ChatWindowConfigInfo__c 
-                                FROM MVWB__Object_Config__mdt 
-                                WHERE DeveloperName = 'objectConfigInfo' 
-                                LIMIT 1
-                            ];
-                            
-                            Map<String, Object> tempData;
-
-                            String phoneNumber = newChat.Phone__c;
-                            // Step 2: Parse JSON
-                            Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(configMdt.ChatWindowConfigInfo__c);
-                            if (!tempvar.isEmpty()) {
-
-                                Map<String, Object> objectApiName = (Map<String, Object>) (configMap.get(tempvar[0].Object_Name__c));
-                                String phoneField = (String) objectApiName.get('phoneField');
-                                
-                                // Step 3: Build dynamic query
-                                String soql = 'SELECT Id FROM ' + tempvar[0].Object_Name__c + ' WHERE ' + phoneField + ' = \'' + phoneNumber + '\' LIMIT 1';
-                                
-                                // Step 4: Execute dynamic SOQL
-                                SObject result = Database.query(soql);
-                                Id objectId = result != null ? result.Id : null;
-                                
-                                tempData = getTemplateData(matchingPath.Action_Template__c, objectId, tempvar[0].Object_Name__c);
-                            } else {
-
-                                String objectName;
-                                if (!configMap.isEmpty()) {
-                                    objectName = configMap.keySet().iterator().next(); // Gets the first (and only) key
-                                }
-                                System.debug('objectName = ' + objectName);
-                                
-                                // Optional: Get inner field values
-                                Map<String, Object> fieldMap = (Map<String, Object>) configMap.get(objectName);
-                                System.debug('fieldMap = ' + fieldMap);
-                                String phoneField = (String) fieldMap.get('phoneField');
-
-                                // Map<String, String> objectApiName = (Map<String,String>) (configMap.get(tempvar.Object_Name__c));
-                                // String phoneField = (String) objectApiName.get('phoneField');
-                                
-                                // Step 3: Build dynamic query
-                                System.debug('newChat.Phone__c = ' + phoneNumber);
-                                String soql = 'SELECT Id FROM ' + objectName + ' WHERE ' + phoneField + ' = \'' + phoneNumber + '\' LIMIT 1';
-
-                                SObject result = Database.query(soql);
-                                Id objectId = result != null ? result.Id : null;
-                                
-                                
-                                tempData = getTemplateData(matchingPath.Action_Template__c, objectId, '');
-                            }
-                            
-                            System.debug('tempData = ' + tempData);
-                            String jsonData = generatePayloadFromTemplateData(tempData, newChat.Phone__c);
-                            System.debug('jsonData = ' + jsonData);
-                            // String phone = '' + newChat.Phone__c;
-                            // String actionTemplate = matchingPath.Action_Template__c;
-                            Map<String, String> chatData = new Map<String, String>();
-                            chatData.put('message', '');
-                            chatData.put('templateId', String.valueOf(matchingPath.Action_Template__c));
-                            chatData.put('messageType', 'Template');
-                            chatData.put('replyToChatId', '');
-                            chatData.put('phoneNumber', String.valueOf(newChat.Phone__c));
-                            Chat__c newChatRecord = createChat(chatData);
-                            System.debug('newChatRecord = ' + newChatRecord);
-                            sendWhatsAppMessage(jsonData, newChatRecord.Id);
-                            Chat__c chatToUpdate = new Chat__c(
-                                Id = newChatRecord.Id,
-                            Date_of_Message__c = Date.today(),
-                            Message_Status__c = 'Sent',
-                            Message_Sent_Time__c = System.now()
-                                );
-                            update chatToUpdate;
-                            
-                        } else if (matchingPath.Action_Type__c == 'Send Email') {
-                            
-                            Contact contactRecord1 = [SELECT Id, Email FROM Contact WHERE Phone = :newChat.Phone__c LIMIT 1];
-                            
-                            if (contactRecord1 != null && String.isNotBlank(contactRecord1.Email) && String.isNotBlank(matchingPath.Action_Email_Template__c)) {
-                                
-                                Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
-                                email.setToAddresses(new String[] { contactRecord1.Email });
-                                email.setTemplateId(matchingPath.Action_Email_Template__c);
-                                email.setTargetObjectId(contactRecord1.Id);
-                                email.setTreatTargetObjectAsRecipient(true);
-                                email.setSaveAsActivity(false);
-                                
-                                try {
-                                    Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
-                                    System.debug('Email sent to: ' + contactRecord1.Email);
-                                    
-                                } catch (Exception e) {
-                                    System.debug('Failed to send email: ' + e.getMessage());
-                                }
-                            } else {
-                                System.debug('Email or TemplateId missing. Cannot send email.');
-                            }
-                            
-                        } else if (matchingPath.Action_Type__c == 'Create a Record') {
-                            
-                            String flowResponseJson = newChat.Flow_Response_JSON__c;
-                            String fieldMappingJson = matchingPath.Field_Mapping__c;
-                            String objectName = matchingPath.Object_Name__c;
-                            
-                            if (String.isNotBlank(flowResponseJson) &&
-                                String.isNotBlank(fieldMappingJson) &&
-                            String.isNotBlank(objectName)) {
-                                
-                                try {
-                                    // Parse flow response and field mapping
-                                    Map<String, Object> flowResponse = (Map<String, Object>) JSON.deserializeUntyped(flowResponseJson);
-                                    Map<String, Object> fieldMapping = (Map<String, Object>) JSON.deserializeUntyped(fieldMappingJson);
-                                    
-                                    // Dynamically create SObject instance
-                                    SObject recordToInsert = (SObject) Type.forName('Schema.' + objectName).newInstance();
-                                    
-                                    // Loop through flow fields and set values to corresponding object fields
-                                    for (String flowField : fieldMapping.keySet()) {
-                                        String objectField = String.valueOf(fieldMapping.get(flowField));
-                                        
-                                        if (flowResponse.containsKey(flowField)) {
-                                            Object fieldValue = flowResponse.get(flowField);
-                                            recordToInsert.put(objectField, fieldValue);
-                                        }
-                                    }
-                                    
-                                    insert recordToInsert;
-                                    System.debug('Record of type ' + objectName + ' inserted successfully: ' + recordToInsert);
-                                    
-                                } catch (Exception e) {
-                                    System.debug('Error processing flow response for record creation: ' + e.getMessage());
-                                }
-                            } else {
-                                System.debug('Missing required data: Flow Response, Field Mapping, or Object Name');
-                            }
+                        String normalizedMessageBody = '';
+                        if(newChat.Message_Type__c == 'interactive'){
+                            normalizedMessageBody = 'interactive';
+                        } else{
+                            normalizedMessageBody = newChat.Message__c.toLowerCase().trim();
                         }
                         
-                    } else {
-                        System.debug('No matching path found for message: "' + newChat.Message__c + '"');
+                        Map<String, Automation_Path__c> pathsForThisAutomation = automationPathsMap.get(automationId);
+                        
+                        if (pathsForThisAutomation.containsKey(normalizedMessageBody)) {
+                            
+                            // *** If ALL CONDITIONS MET ***
+                            Automation_Path__c matchingPath = pathsForThisAutomation.get(normalizedMessageBody);
+                            
+                            System.debug('Matched Path Id: ' + matchingPath.Id);
+                            System.debug('Matched Path: ' + matchingPath);
+                            // System.debug('Chat ID (inserting) is a reply to Template (' + originalChat.Whatsapp_Template__c + ') with Automation (' + automationId + ') and matching Path (' + matchingPath.Id + ') found via Button Value (' + matchingPath.Button_Value__c + ').');
+                            
+                            if (matchingPath.Action_Type__c == 'Send Message') {
+                                
+                                List<Template_Variable__c> tempvar = [SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM Template_Variable__c WHERE Template__c = :matchingPath.Action_Template__c LIMIT 1];
+                                
+                                MVWB__Object_Config__mdt configMdt = [
+                                    SELECT ChatWindowConfigInfo__c 
+                                    FROM MVWB__Object_Config__mdt 
+                                    WHERE DeveloperName = 'objectConfigInfo' 
+                                    LIMIT 1
+                                ];
+                                
+                                Map<String, Object> tempData;
+
+                                String phoneNumber = newChat.Phone__c;
+                                // Step 2: Parse JSON
+                                Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(configMdt.ChatWindowConfigInfo__c);
+                                if (!tempvar.isEmpty()) {
+
+                                    Map<String, Object> objectApiName = (Map<String, Object>) (configMap.get(tempvar[0].Object_Name__c));
+                                    String phoneField = (String) objectApiName.get('phoneField');
+                                    
+                                    // Step 3: Build dynamic query
+                                    String soql = 'SELECT Id FROM ' + tempvar[0].Object_Name__c + ' WHERE ' + phoneField + ' = \'' + phoneNumber + '\' LIMIT 1';
+                                    
+                                    // Step 4: Execute dynamic SOQL
+                                    SObject result = Database.query(soql);
+                                    Id objectId = result != null ? result.Id : null;
+                                    
+                                    tempData = getTemplateData(matchingPath.Action_Template__c, objectId, tempvar[0].Object_Name__c);
+                                } else {
+
+                                    String objectName;
+                                    if (!configMap.isEmpty()) {
+                                        objectName = configMap.keySet().iterator().next(); // Gets the first (and only) key
+                                    }
+                                    System.debug('objectName = ' + objectName);
+                                    
+                                    // Optional: Get inner field values
+                                    Map<String, Object> fieldMap = (Map<String, Object>) configMap.get(objectName);
+                                    System.debug('fieldMap = ' + fieldMap);
+                                    String phoneField = (String) fieldMap.get('phoneField');
+
+                                    // Map<String, String> objectApiName = (Map<String,String>) (configMap.get(tempvar.Object_Name__c));
+                                    // String phoneField = (String) objectApiName.get('phoneField');
+                                    
+                                    // Step 3: Build dynamic query
+                                    System.debug('newChat.Phone__c = ' + phoneNumber);
+                                    String soql = 'SELECT Id FROM ' + objectName + ' WHERE ' + phoneField + ' = \'' + phoneNumber + '\' LIMIT 1';
+
+                                    SObject result = Database.query(soql);
+                                    Id objectId = result != null ? result.Id : null;
+                                    
+                                    
+                                    tempData = getTemplateData(matchingPath.Action_Template__c, objectId, '');
+                                }
+                                
+                                System.debug('tempData = ' + tempData);
+                                String jsonData = generatePayloadFromTemplateData(tempData, newChat.Phone__c);
+                                System.debug('jsonData = ' + jsonData);
+                                // String phone = '' + newChat.Phone__c;
+                                // String actionTemplate = matchingPath.Action_Template__c;
+                                Map<String, String> chatData = new Map<String, String>();
+                                chatData.put('message', '');
+                                chatData.put('templateId', String.valueOf(matchingPath.Action_Template__c));
+                                chatData.put('messageType', 'Template');
+                                chatData.put('replyToChatId', '');
+                                chatData.put('phoneNumber', String.valueOf(newChat.Phone__c));
+                                Chat__c newChatRecord = createChat(chatData);
+                                System.debug('newChatRecord = ' + newChatRecord);
+                                sendWhatsAppMessage(jsonData, newChatRecord.Id);
+                                Chat__c chatToUpdate = new Chat__c(
+                                    Id = newChatRecord.Id,
+                                Date_of_Message__c = Date.today(),
+                                Message_Status__c = 'Sent',
+                                Message_Sent_Time__c = System.now()
+                                    );
+                                update chatToUpdate;
+                                
+                            } else if (matchingPath.Action_Type__c == 'Send Email') {
+                                
+                                Contact contactRecord1 = [SELECT Id, Email FROM Contact WHERE Phone = :newChat.Phone__c LIMIT 1];
+                                
+                                if (contactRecord1 != null && String.isNotBlank(contactRecord1.Email) && String.isNotBlank(matchingPath.Action_Email_Template__c)) {
+                                    
+                                    Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+                                    email.setToAddresses(new String[] { contactRecord1.Email });
+                                    email.setTemplateId(matchingPath.Action_Email_Template__c);
+                                    email.setTargetObjectId(contactRecord1.Id);
+                                    email.setTreatTargetObjectAsRecipient(true);
+                                    email.setSaveAsActivity(false);
+                                    
+                                    try {
+                                        Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
+                                        System.debug('Email sent to: ' + contactRecord1.Email);
+                                        
+                                    } catch (Exception e) {
+                                        System.debug('Failed to send email: ' + e.getMessage());
+                                    }
+                                } else {
+                                    System.debug('Email or TemplateId missing. Cannot send email.');
+                                }
+                                
+                            } else if (matchingPath.Action_Type__c == 'Create a Record') {
+                                
+                                String flowResponseJson = newChat.Flow_Response_JSON__c;
+                                String fieldMappingJson = matchingPath.Field_Mapping__c;
+                                String objectName = matchingPath.Object_Name__c;
+                                
+                                if (String.isNotBlank(flowResponseJson) &&
+                                    String.isNotBlank(fieldMappingJson) &&
+                                String.isNotBlank(objectName)) {
+                                    
+                                    try {
+                                        // Parse flow response and field mapping
+                                        Map<String, Object> flowResponse = (Map<String, Object>) JSON.deserializeUntyped(flowResponseJson);
+                                        Map<String, Object> fieldMapping = (Map<String, Object>) JSON.deserializeUntyped(fieldMappingJson);
+                                        
+                                        // Dynamically create SObject instance
+                                        SObject recordToInsert = (SObject) Type.forName('Schema.' + objectName).newInstance();
+                                        
+                                        // Loop through flow fields and set values to corresponding object fields
+                                        for (String flowField : fieldMapping.keySet()) {
+                                            if (flowResponse.containsKey(flowField)) {
+                                                Object fieldValue = flowResponse.get(flowField);
+                                                Object mappingValue = fieldMapping.get(flowField);
+                                        
+                                                // If fieldValue is a list but the object field expects string, convert to string
+                                                if (fieldValue instanceof List<Object>) {
+                                                    fieldValue = String.join((List<Object>) fieldValue, ', ');
+                                                }
+                                        
+                                                if (mappingValue instanceof List<Object>) {
+                                                    List<Object> objectFields = (List<Object>) mappingValue;
+                                                    for (Object field : objectFields) {
+                                                        String objectField = String.valueOf(field);
+                                                        recordToInsert.put(objectField, fieldValue);
+                                                        System.debug('recordToInsert in for loop: ' + recordToInsert);
+                                                    }
+                                                } else {
+                                                    String objectField = String.valueOf(mappingValue);
+                                                    recordToInsert.put(objectField, fieldValue);
+                                                }
+                                            }
+                                        }                                        
+                                        
+                                        System.debug('recordToInsert before insert: ' + recordToInsert);
+                                        insert recordToInsert;
+                                        System.debug('Record of type ' + objectName + ' inserted successfully: ' + recordToInsert);
+                                        
+                                    } catch (Exception e) {
+                                        System.debug('Error processing flow response for record creation: ' + e.getMessage());
+                                    }
+                                } else {
+                                    System.debug('Missing required data: Flow Response, Field Mapping, or Object Name');
+                                }
+                            }
+                            
+                        } else {
+                            System.debug('No matching path found for message: "' + newChat.Message__c + '"');
+                        }
                     }
                 }
             }

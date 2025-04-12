@@ -5,6 +5,7 @@ import getEmailTemplates from "@salesforce/apex/AutomationConfigController.getEm
 import saveAutomationPaths from '@salesforce/apex/AutomationConfigController.saveAutomationPaths';
 import getAutomationPathsByAutomationId from '@salesforce/apex/AutomationConfigController.getAutomationPathsByAutomationId';
 import getAllObjects from '@salesforce/apex/AutomationConfigController.getAllObjects';
+import getUsedObjectNamesByTemplate from '@salesforce/apex/AutomationConfigController.getUsedObjectNamesByTemplate';
 import getRequiredFields from '@salesforce/apex/AutomationConfigController.getRequiredFields';
 import getObjectFields from '@salesforce/apex/AutomationConfigController.getObjectFields';
 import getFlowIdFromAutomation from '@salesforce/apex/AutomationConfigController.getFlowIdFromAutomation';
@@ -26,6 +27,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track selectedObject = '';
     @track FlowId = '';
     @track FlowRecordId = '';
+    @track isEdit = false;
     // @track isFlowAutomationCreated = false;
 
     // --- Data Properties ---
@@ -35,6 +37,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track automationPaths = {};
     @track allEmailTemplates = [];
     @track allObjects = [];
+    @track usedObjects = [];
     @track requiredFields = [];
     @track objectFields = [];
     @track flowFields = [];
@@ -147,6 +150,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         isRequired: true
                     }));
 
+                    console.log('this.chatWindowRows1:', JSON.stringify(this.chatWindowRows1));
                     // const combinedMap = new Map(
                     //     this.chatWindowRows2.map(row => [row.selectedObjectField, row])
                     // );
@@ -176,13 +180,27 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     );
 
                     // Build the final array based on chatWindowRows2
-                    const finalRows = this.chatWindowRows2.map(row => {
-                        const isRequiredOverride = isRequiredMap.get(row.selectedObjectField);
-                        return {
-                            ...row,
-                            isRequired: isRequiredOverride !== undefined ? isRequiredOverride : row.isRequired
-                        };
-                    });
+                    var finalRows;
+
+                    if (this.isEdit) {
+
+                        finalRows = this.chatWindowRows2.map(row => {
+                            const isRequiredOverride = isRequiredMap.get(row.selectedObjectField);
+                            return {
+                                ...row,
+                                isRequired: isRequiredOverride !== undefined ? isRequiredOverride : row.isRequired
+                            };
+                        });
+                    } else {
+                        finalRows = this.chatWindowRows1.map(row => {
+                            const isRequiredOverride = isRequiredMap.get(row.selectedObjectField);
+                            return {
+                                ...row,
+                                isRequired: isRequiredOverride !== undefined ? isRequiredOverride : row.isRequired
+                            };
+                        });
+                    }
+                    console.log('finalRows:', JSON.stringify(finalRows));
                     this.chatWindowRows = finalRows;
                     console.log('CHAT WINDOW ROWS:', JSON.stringify(this.chatWindowRows));
                     // console.log('this.chatWindowRows1:', JSON.stringify(this.chatWindowRows1));
@@ -334,6 +352,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         id: result.Id,
                         name: result.Name,
                         description: result.MVWB__Description__c,
+                        templateId: result.MVWB__WB_Template__c || '',
                         templateName: result.MVWB__WB_Template__r?.MVWB__Template_Name__c || '',
                         templateType: result.MVWB__WB_Template__r?.MVWB__Template_Type__c || ''
                     };
@@ -404,7 +423,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
 
                     if (existingFlowPath) {
 
-                        // this.isFlowAutomationCreated = true;
+                        this.isEdit = true;
 
                         console.log('Flow Path:', JSON.stringify(existingFlowPath));
                         this.FlowRecordId = existingFlowPath.Id || '';
@@ -419,23 +438,29 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                             .then((result) => {
                                 console.log('fetchFieldsForObjects after apex:- ', JSON.stringify(result))
                                 this.objectFields = result;
+                                
                                 const fieldMapping = JSON.parse(existingFlowPath.MVWB__Field_Mapping__c || '{}');
                                 console.log('fieldMapping :', JSON.stringify(fieldMapping));
 
-                                // console.log('this.objectFields :', JSON.stringify(this.objectFields));
-                                // Convert to chatWindowRows format if needed
-                                this.chatWindowRows2 = Object.entries(fieldMapping).map(([flowField, objectField], index) => ({
-                                    id: `row-${index}`,
-                                    selectedObject: this.selectedObject,
-                                    selectedObjectField: objectField,
-                                    filteredFlowFields: this.getFilteredFlowFields(this.objectFields.find(field => field.value === objectField)?.type || ''), //filteredFlowFields: this.getFilteredFlowFields(fieldType),
-                                    selectedFlowField: flowField,
-                                    isRequired: this.isFieldRequired(objectField),
-                                    isObjectFieldDisabled: this.isFieldRequired(objectField),
-                                }));
+                                this.chatWindowRows2 = [];
+
+                                Object.entries(fieldMapping).forEach(([flowField, objectFields], index) => {
+                                    objectFields.forEach((objectField, subIndex) => {
+                                        this.chatWindowRows2.push({
+                                            id: `row-${index}-${subIndex}`,
+                                            selectedObject: this.selectedObject,
+                                            selectedObjectField: objectField,
+                                            filteredFlowFields: this.getFilteredFlowFields(
+                                                this.objectFields.find(field => field.value === objectField)?.type || ''
+                                            ),
+                                            selectedFlowField: flowField,
+                                            isRequired: this.isFieldRequired(objectField),
+                                            isObjectFieldDisabled: this.isFieldRequired(objectField),
+                                        });
+                                    });
+                                });
 
                                 this.loadRequiredFields();
-
                             })
                             .catch((error) => {
                                 console.error('Error fetching object fields:', error);
@@ -651,7 +676,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         this[NavigationMixin.Navigate]({
             type: "standard__navItemPage",
             attributes: {
-                apiName: 'MVWB__Automation_Configuration'
+                apiName: 'Automation_Configuration'
             },
         });
     }
@@ -707,6 +732,33 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 return;
             }
 
+            // Check for any empty selectedFlowField
+            const hasEmptyFlowField = this.chatWindowRows.some(row => !row.selectedFlowField);
+            if (hasEmptyFlowField) {
+                this.showToast('Error', 'Please map all fields before saving.', 'error');
+                return;
+            }
+
+            // Check for duplicate selectedObjectField values
+            const selectedObjectFields = new Set();
+            let hasDuplicates = false;
+
+            for (let row of this.chatWindowRows) {
+                const field = row.selectedObjectField;
+                if (field) {
+                    if (selectedObjectFields.has(field)) {
+                        hasDuplicates = true;
+                        break;
+                    }
+                    selectedObjectFields.add(field);
+                }
+            }
+
+            if (hasDuplicates) {
+                this.showToast('Error', 'Each object field must be mapped uniquely.', 'error');
+                return;
+            }
+
             fields.MVWB__Automation__c = this.recordId;
             fields.MVWB__Action_Type__c = 'Create a Record';
             // 1. Object Name
@@ -714,9 +766,17 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
 
             // 2. Field Mapping
             const mapping = {};
+            // this.chatWindowRows.forEach(row => {
+            //     if (row.selectedFlowField && row.selectedObjectField) {
+            //         mapping[row.selectedFlowField] = row.selectedObjectField;
+            //     }
+            // });
             this.chatWindowRows.forEach(row => {
                 if (row.selectedFlowField && row.selectedObjectField) {
-                    mapping[row.selectedFlowField] = row.selectedObjectField;
+                    if (!mapping[row.selectedFlowField]) {
+                        mapping[row.selectedFlowField] = [];
+                    }
+                    mapping[row.selectedFlowField].push(row.selectedObjectField);
                 }
             });
 
@@ -760,12 +820,26 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
 
     handleObjectChange(event) {
         try {
+            this.isEdit = false;
             this.selectedObject = event.target.value;
             console.log('Selected Object:', this.selectedObject);
-            this.loadRequiredFields();
-            this.objectFields = [];
-            this.fetchFieldsForObject(this.selectedObject);
+            
+            getUsedObjectNamesByTemplate({ templateId: this.automation.templateId })
+            .then(usedObjects => {
+                console.log('this.templateId:', this.templateId);
+                console.log('Used Objects:', JSON.stringify(usedObjects));
+                if (usedObjects.includes(this.selectedObject)) {
+                    this.showToast('Error', 'This object is already being used in an automation.', 'error');
+                    this.selectedObject = '';
+                }
 
+                this.loadRequiredFields();
+                this.objectFields = [];
+                this.fetchFieldsForObject(this.selectedObject);
+            })
+            .catch(error => {
+                console.error('Error fetching used object names:', JSON.stringify(error));
+            });
         } catch (error) {
             console.error('Error in object change : ', error);
         }

@@ -2,7 +2,7 @@ import { LightningElement, track } from 'lwc';
 import getAllAutomations from '@salesforce/apex/AutomationConfigController.getAllAutomations';
 import getTemplates from '@salesforce/apex/AutomationConfigController.getTemplates';
 import saveAutomations from '@salesforce/apex/AutomationConfigController.saveAutomations';
-// import updateAutomations from '@salesforce/apex/AutomationConfigController.updateAutomations';
+import updateAutomations from '@salesforce/apex/AutomationConfigController.updateAutomations';
 import deleteAutomations from '@salesforce/apex/AutomationConfigController.deleteAutomations';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -115,15 +115,64 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         // const apexMethod = this.isEditMode ? updateAutomations : saveAutomations;
 
         saveAutomations({ automations: [automationRecord] })
-            .then((result) => {
-                this.showToast('Success', `Automation saved successfully.`, 'success');
-                this.closeModal();
-                this.fetchAutomations();
+        .then((result) => {
+            this.showToast('Success', `Automation saved successfully.`, 'success');
+            this.closeModal();
+
+            const savedRecordId = result[0].Id;
+
+            getAllAutomations()
+            .then(data => {
+                this.originalAutomationData = data.map((record, index) => ({
+                    id: record.Id,
+                    srNo: index + 1,
+                    name: record.Name,
+                    description: record.MVWB__Description__c,
+                    template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : '',
+                    templateType: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Type__c : ''
+                }));
+                // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
+                this.automationData = [...this.originalAutomationData];
+
+                console.log('this.automationData in handleSave =', JSON.stringify(this.automationData));
+
+                const savedAutomation = this.automationData.find(auto => auto.id === savedRecordId);
+                console.log('savedRecordId:', savedRecordId, 'savedAutomation:', JSON.stringify(savedAutomation));
+
+                if (savedAutomation) {
+                    let cmpDef = {
+                        componentDef : 'c:automationPath',
+                        attributes: {
+                            recordId: savedAutomation.id,
+                            templateType: savedAutomation.templateType
+                        }
+                    };
+                    console.log('Record ID:', savedAutomation.id, 'Template Type:', savedAutomation.templateType);
+
+                    let encodedDef = btoa(JSON.stringify(cmpDef));
+                    this[NavigationMixin.Navigate]({
+                        type: "standard__webPage",
+                        attributes: {
+                            url: "/one/one.app#" + encodedDef
+                        }
+                    });
+                } else {
+                    console.warn('Saved automation not found in automationData.');
+                }
             })
             .catch(error => {
-                console.error(`Error saving record:`, error);
-                this.showToast('Error', `Failed to save automation.`, 'error');
+                console.error('Error fetching automation records:', error);
+                this.automationData = [];
+            })
+            .finally(() => {
+                this.isLoading = false;
             });
+        })
+        .catch(error => {
+            const message = error.body && error.body.message ? error.body.message : JSON.stringify(error);
+            console.error(`Error saving record:`, message);
+            this.showToast('Error', `Failed to save automation: ${message}`, 'error');
+        });        
     }
 
     get modalTitle() {

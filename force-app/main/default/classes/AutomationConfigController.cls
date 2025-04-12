@@ -336,6 +336,8 @@ public without sharing class AutomationConfigController {
             }
             return automationPaths;
         } catch (Exception e) {
+            System.debug('Error in saveAutomationPaths: ' + e.getMessage());
+            System.debug(e.getLineNumber());
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'AutomationConfigController',
                 'methodName' => 'saveAutomationPaths',
@@ -427,6 +429,61 @@ public without sharing class AutomationConfigController {
         }
         
         return objectList;
+    }
+
+    /**
+    * Method Name : getUsedObjectNamesByTemplate
+    * @description : Fetch used object names by template
+    * @param templateId Id of the template
+    * @return List of String containing used object names
+    */
+    @AuraEnabled
+    public static List<String> getUsedObjectNamesByTemplate(Id templateId) {
+        try {
+            
+            Set<String> usedObjectNames = new Set<String>();
+    
+            // First get Automation records linked to the given Template ID
+            List<Automation__c> automations = [
+                SELECT Id
+                FROM Automation__c
+                WHERE WB_Template__c = :templateId
+            ];
+            
+            Set<Id> automationIds = new Set<Id>();
+            for (Automation__c automation : automations) {
+                automationIds.add(automation.Id);
+            }
+    
+            if (!automationIds.isEmpty()) {
+                // Get Object Names used in related Automation_Path__c records
+                for (Automation_Path__c path : [
+                    SELECT Object_Name__c
+                    FROM Automation_Path__c
+                    WHERE Automation__c IN :automationIds
+                    AND Object_Name__c != null
+                ]) {
+                    usedObjectNames.add(path.Object_Name__c.trim());
+                }
+            }
+    
+            // Convert Set to List before returning (for AuraEnabled compatibility)
+            return new List<String>(usedObjectNames);
+
+        } catch (Exception e) {
+            
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getUsedObjectNamesByTemplate',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
+        }
     }
 
     /**
