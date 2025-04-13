@@ -187,6 +187,11 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
             .then(() => {
                 this.showToast('Success', 'Broadcast Group deleted successfully', 'success');
     
+                // Remove the deleted record from both lists
+                // this.data = this.data.filter(item => item.Id !== recordId);
+                // this.filteredData = this.filteredData.filter(item => item.Id !== recordId);
+
+                // Remove the deleted record from data and remap indexes
                 this.data = this.data
                     .filter(item => item.Id !== recordId)
                     .map((item, index) => ({
@@ -194,6 +199,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                         index: index + 1,
                     }));
 
+                // Update filteredData based on new data
                 this.filteredData = this.data;
     
                 // Update paginatedData to reflect the changes

@@ -22,12 +22,14 @@
     overflow: scroll;
     scrollbar-width: none !important;
     flex-grow: 1;
+    border-radius: 5px;
 }
 
 .filterparent {
     display: flex;
     justify-content: space-between;
     margin: 1rem;
+    margin-bottom: 0;
 }
 
 .filterdiv {
