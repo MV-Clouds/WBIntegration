@@ -35,7 +35,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         this.isLoading = true;
         getAllAutomations()
             .then(data => {
-                this.automationData = data.map((record, index) => ({
+                this.originalAutomationData = data.map((record, index) => ({
                     id: record.Id,
                     srNo: index + 1,
                     name: record.Name,
@@ -43,8 +43,8 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : '',
                     templateType: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Type__c : ''
                 }));
-                console.log('this.automationData =', JSON.stringify(this.automationData));
-                this.originalAutomationData = [...this.automationData];
+                console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
+                this.automationData = [...this.originalAutomationData];
             })
             .catch(error => {
                 console.error('Error fetching automation records:', error);
@@ -115,15 +115,64 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         // const apexMethod = this.isEditMode ? updateAutomations : saveAutomations;
 
         saveAutomations({ automations: [automationRecord] })
-            .then((result) => {
-                this.showToast('Success', `Automation saved successfully.`, 'success');
-                this.closeModal();
-                this.fetchAutomations();
+        .then((result) => {
+            this.showToast('Success', `Automation saved successfully.`, 'success');
+            this.closeModal();
+
+            const savedRecordId = result[0].Id;
+
+            getAllAutomations()
+            .then(data => {
+                this.originalAutomationData = data.map((record, index) => ({
+                    id: record.Id,
+                    srNo: index + 1,
+                    name: record.Name,
+                    description: record.MVWB__Description__c,
+                    template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : '',
+                    templateType: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Type__c : ''
+                }));
+                // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
+                this.automationData = [...this.originalAutomationData];
+
+                console.log('this.automationData in handleSave =', JSON.stringify(this.automationData));
+
+                const savedAutomation = this.automationData.find(auto => auto.id === savedRecordId);
+                console.log('savedRecordId:', savedRecordId, 'savedAutomation:', JSON.stringify(savedAutomation));
+
+                if (savedAutomation) {
+                    let cmpDef = {
+                        componentDef : 'c:automationPath',
+                        attributes: {
+                            recordId: savedAutomation.id,
+                            templateType: savedAutomation.templateType
+                        }
+                    };
+                    console.log('Record ID:', savedAutomation.id, 'Template Type:', savedAutomation.templateType);
+
+                    let encodedDef = btoa(JSON.stringify(cmpDef));
+                    this[NavigationMixin.Navigate]({
+                        type: "standard__webPage",
+                        attributes: {
+                            url: "/one/one.app#" + encodedDef
+                        }
+                    });
+                } else {
+                    console.warn('Saved automation not found in automationData.');
+                }
             })
             .catch(error => {
-                console.error(`Error saving record:`, error);
-                this.showToast('Error', `Failed to save automation.`, 'error');
+                console.error('Error fetching automation records:', error);
+                this.automationData = [];
+            })
+            .finally(() => {
+                this.isLoading = false;
             });
+        })
+        .catch(error => {
+            const message = error.body && error.body.message ? error.body.message : JSON.stringify(error);
+            console.error(`Error saving record:`, message);
+            this.showToast('Error', `Failed to save automation: ${message}`, 'error');
+        });        
     }
 
     get modalTitle() {
@@ -137,13 +186,15 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     * Created By: Kavya Trivedi
     */
     handleSearch(event) {
-        const searchTerm = event.target.value.toLowerCase();
+        console.log('Search term:', event.target.value);
+        const searchTerm = event.target.value.toLowerCase().trim();
         this.automationData = this.originalAutomationData.filter(auto =>
-            auto.name.toLowerCase().includes(searchTerm) ||
-            auto.description.toLowerCase().includes(searchTerm) ||
-            auto.template.toLowerCase().includes(searchTerm)
+            (auto.name || '').toLowerCase().includes(searchTerm) ||
+            (auto.description || '').toLowerCase().includes(searchTerm) ||
+            (auto.template || '').toLowerCase().includes(searchTerm)
         );
-    }    
+        console.log('Filtered Data:', this.automationData);
+    }
 
     handleNew() {
         this.isModalOpen = true;

@@ -64,7 +64,7 @@
 }
 
 /* Custom Buttons */
-.custom-button {
+.save-button {
     display: inline-flex;
     align-items: center;
     background-color: #0077b6;
@@ -78,8 +78,22 @@
     transition: all 0.2s ease-in-out;
 }
 
+.custom-button {
+    display: inline-flex;
+    align-items: center;
+    background-color: white;
+    color: rgb(70 164 245);
+    height: 35px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.18);
+    transition: all 0.2s ease-in-out;
+}
+
 .custom-button:hover {
-    background-color: #005fa3;
+    background-color: #F5F5F5;
 }
 
 .custom-button:active {
@@ -94,13 +108,13 @@
     width: 15px;
     height: 15px;
     border-radius: 50%;
-    border: 1.5px solid white;
+    border: 1.5px solid rgb(70 164 245);
     margin-right: 8px;
 }
 
 .slds-icon {
     transform: scale(0.8);
-    fill: white;
+    fill: rgb(70 164 245);
 }
 
 /* Table */

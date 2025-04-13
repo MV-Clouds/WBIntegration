@@ -2,7 +2,7 @@
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 04-10-2025
+  @last modified on  : 04-13-2025
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
@@ -18,7 +18,7 @@
                     <div class="search-icon">
                         <lightning-icon icon-name="utility:search" size="x-small"></lightning-icon>
                     </div>
-                    <input type="search" class="slds-input" placeholder="Search Name" onchange={handleSearch} />
+                    <input type="search" class="slds-input" placeholder="Search Name" onkeyup={handleSearch} />
                 </div>
 
                 <div class="btns">
@@ -46,6 +46,11 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <template if:false={automationData.length}>
+                        <tr class="no-data">
+                            <td colspan="5">No Automation Configurations Found</td>
+                        </tr>
+                    </template>
                     <template for:each={automationData} for:item="auto">
                         <tr key={auto.id}>
                             <td class="tableData">{auto.srNo}</td>
@@ -101,7 +106,7 @@
                         </lightning-textarea>
                         <footer class="slds-modal__footer">
                             <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
-                            <button class="custom-button" onclick={handleSave}>Save</button>
+                            <button class="save-button" onclick={handleSave}>Save</button>
                         </footer>
                     </div>
                     
