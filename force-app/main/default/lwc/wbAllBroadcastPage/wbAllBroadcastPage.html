@@ -8,8 +8,12 @@
                 <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
             </div>
         </template>
-
-        <h1 class="slds-text-align_center heading">Recent Broadcasts</h1>
+        <template if:true={isBroadCastSelected}>
+            <h1 class="slds-text-align_center heading">Recent Broadcasts</h1>
+        </template>
+        <template if:false={isBroadCastSelected}>
+            <h1 class="slds-text-align_center heading">Recent Broadcasts Campaigns</h1>
+        </template>
 
         <div class="filterparent">
             <div class="filterdiv">
@@ -17,6 +21,14 @@
                     placeholder="Search by Name..." onchange={handleSearch}></lightning-input>
             </div>
             <div class="btns">
+                <lightning-combobox 
+                variant="label-hidden"
+                    name="type"
+                    value={selectedListValue}
+                    placeholder="Select an option"
+                    options={displayListOptions}
+                    onchange={handleListChange}>
+                </lightning-combobox>
                 <button class="custom-button cus-btns" onclick={newBroadcast}>
                     <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                         class="left-icon"></lightning-icon>
@@ -31,27 +43,73 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th class="sr-no">Sr. No</th>
-                            <th>Name</th>
-                            <th>Recipient Count</th>
-                            <th>Status</th>
-                            <th>Total Sent</th>
-                            <th>Total Delivered</th>
-                            <th>Total Read</th>
-                            <th>Total Failed</th>
+                            <template if:true={isBroadCastSelected}>
+                                <th class="sr-no">Sr. No</th>
+                                <th>Name</th>
+                                <th>Recipient Count</th>
+                                <th>Status</th>
+                                <th>Total Sent</th>
+                                <th>Total Delivered</th>
+                                <th>Total Read</th>
+                                <th>Total Failed</th>
+                            </template>
+                            <template if:false={isBroadCastSelected}>
+                                <th class="sr-no">Sr. No</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </template>
                         </tr>
                     </thead>
                     <tbody>
                         <template for:each={paginatedData} for:item="row">
                             <tr key={row.Id}>
-                                <td class="sr-no">{row.index}</td>
+                                <template if:true={isBroadCastSelected}>
+                                    <td class="sr-no">{row.index}</td>
+                                    <td data-id={row.Id} onclick={handleRowClick}>{row.Name}</td>
+                                    <td>{row.MVWB__Recipient_Count__c}</td>
+                                    <td>{row.MVWB__Status__c}</td>
+                                    <td>{row.MVWB__Total_Sent__c}</td>
+                                    <td>{row.MVWB__Total_Delivered__c}</td>
+                                    <td>{row.MVWB__Total_Read__c}</td>
+                                    <td>{row.MVWB__Total_Failed__c}</td>
+                                </template>
+                                <template if:false={isBroadCastSelected}>
+                                    <td class="sr-no">{row.index}</td>
+                                    <td data-id={row.Id} onclick={handleRowClick}>{row.Name}</td>
+                                    <td>{row.MVWB__Description__c}</td>
+                                    <td>{row.startDate}</td>
+                                    <td>{row.endDate}</td>
+                                    <td>{row.MVWB__Status__c}</td>
+                                    <!-- <td>
+                                        <button class="action-buttons" disabled={row.isDisabled} data-value={row.Status__c}>
+                                            <img src="/resource/MVWB__editIcon"  class="action edit"  alt="edit" data-id={row.Id} onclick={editMarketingCampaign} >
+                                        </button>
+                                        <button class="action-buttons" disabled={row.isDisabled} data-value={row.Status__c}>
+                                            <img src="/resource/MVWB__trashIcon" class="action trash" alt="delete" data-id={row.Id} onclick={deleteMarketingCampaign}>
+                                        </button>
+                                    </td> -->
+                                    <td>
+                                        <button class="action-buttons" disabled={row.isDisabled} data-value={row.MVWB__Status__c} onclick={editMarketingCampaign}>
+                                            <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={row.Id}>
+                                        </button>
+                                        <button class="action-buttons" data-value={row.MVWB__Status__c} onclick={deleteMarketingCampaign}>
+                                            <img src="/resource/MVWB__trashIcon" class="action trash" alt="delete" data-id={row.Id}>
+                                        </button>
+                                    </td>
+                                    
+                                </template>
+                                <!-- <td class="sr-no">{row.index}</td>
                                 <td data-id={row.Id}>{row.Name}</td>
                                 <td>{row.Recipient_Count__c}</td>
                                 <td>{row.Status__c}</td>
                                 <td>{row.Total_Sent__c}</td>
                                 <td>{row.Total_Delivered__c}</td>
                                 <td>{row.Total_Read__c}</td>
-                                <td>{row.Total_Failed__c}</td>
+                                <td>{row.Total_Failed__c}</td> -->
                             </tr>
                         </template>
                     </tbody>
@@ -64,7 +122,7 @@
                     <div class="empty-state">
                         <div class="empty-state__content">
                             <div class="empty-state__icon">
-                                <img src="/resource/emptyState" alt="" draggable="false">
+                                <img src="/resource/MVWB__emptyState" alt="" draggable="false">
                             </div>
                             <div class="empty-state__message">No Data Available to Show.</div>
                         </div>
@@ -148,10 +206,10 @@
                                                     </div>
                                                     <div class="">
                                                         <h3 class="slds-text-heading_small">{group.Name}</h3>
-                                                        <p><strong>Members:</strong> {group.Count_of_Members__c}</p>
+                                                        <p><strong>Members:</strong> {group.MVWB__Count_of_Members__c}</p>
                                                         <p><strong>Object of Group Members: </strong>
-                                                            {group.Object_Name__c}</p>
-                                                        <p><strong>Description:</strong> {group.Description__c}</p>
+                                                            {group.MVWB__Object_Name__c}</p>
+                                                        <p><strong>Description:</strong> {group.MVWB__Description__c}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -173,7 +231,7 @@
                                 <template if:false={filteredGroups.length}>
                                     <div class="empty-state__content">
                                         <div class="empty-state__icon">
-                                            <img src="/resource/emptyState" alt="" draggable="false">
+                                            <img src="/resource/MVWB__emptyState" alt="" draggable="false">
                                         </div>
                                         <div class="empty-state__message">No Data Available to Show.</div>
                                     </div>

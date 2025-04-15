@@ -1,11 +1,14 @@
 import { LightningElement, track } from 'lwc';
 import getBroadcastRecs from '@salesforce/apex/BroadcastMessageController.getBroadcastRecs';
+import getCampaignRecs from '@salesforce/apex/MarketingMessageController.getCampaignRecs';
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
 import { subscribe, unsubscribe } from 'lightning/empApi';
 import { NavigationMixin } from 'lightning/navigation';
+import deleteMarketingCampaign from '@salesforce/apex/MarketingMessageController.deleteMarketingCampaign';
+
 
 export default class WbAllBroadcastPage extends NavigationMixin(LightningElement) {
     @track data = [];
@@ -28,6 +31,9 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     @track popUpSecondpage = false;
     @track popUpLastPage = false;
     @track popupHeader = 'Choose Broadcast Groups';
+
+    @track selectedListValue = 'Broadcast';
+    @track isBroadCastSelected = true;
 
 
     subscription = {};
@@ -111,9 +117,37 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     get isNextDisabled() {
         return this.selectedGroupIds.length === 0;
     }
+
+    get displayListOptions() {
+        return [
+            { label: 'Broadcast', value: 'Broadcast' },
+            { label: 'Campaign', value: 'Campaign' }
+        ];
+    }
+
+    checkActionDisabled(event){
+        const status = event.target.dataset.value;
+        console.log('Status ::: ',status);
+        
+        if(status == 'Completed'){
+            return true;
+        } else {
+            return false;
+        }
+    }
     
+    // connectedCallback() {
+    //     this.loadBroadcastGroups();
+    //     this.subscribeToPlatformEvent();
+    //     this.loadAllTemplates(); // Load templates on component initialization
+    // }
+
     connectedCallback() {
-        this.loadBroadcastGroups();
+        if (this.isBroadCastSelected) {
+            this.loadBroadcastGroups();
+        } else {
+            this.loadCampaigns();
+        }
         this.subscribeToPlatformEvent();
         this.loadAllTemplates(); // Load templates on component initialization
     }
@@ -158,19 +192,36 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
 
         // Convert to combobox options format
         this.templateOptions = combinedTemplates.map(template => ({
-            label: template.Template_Name__c,
+            label: template.MVWB__Template_Name__c,
             value: template.Id
         }));
 
         
     }
 
+    // subscribeToPlatformEvent() {
+    //     subscribe(this.channelName, -1, (message) => {
+            
+    //         if(message.data.payload.IsChanged__c === true){
+    //             this.loadBroadcastGroups();
+    //         }            
+    //     })
+    //     .then((response) => {
+    //         this.subscription = response;
+    //     })
+    //     .catch(() => {
+    //         this.showToast('Error', 'Failed to subscribe to platform event.', 'error');
+    //     });
+    // }
     subscribeToPlatformEvent() {
         subscribe(this.channelName, -1, (message) => {
-            
-            if(message.data.payload.IsChanged__c === true){
-                this.loadBroadcastGroups();
-            }            
+            if (message.data.payload.MVWB__IsChanged__c === true) {
+                if (this.isBroadCastSelected) {
+                    this.loadBroadcastGroups();
+                } else {
+                    this.loadCampaigns();
+                }
+            }
         })
         .then((response) => {
             this.subscription = response;
@@ -192,11 +243,14 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
         // this.isLoading = true;
         getBroadcastRecs()
             .then(result => {
+                console.log('Broadcast groups ::: ',result);
+                
                 this.data = result.map((item, index) => ({
                     ...item,
-                    index : index + 1,
+                    index : index + 1
                 }));                
-
+                console.log('Data ::: ',this.data);
+                
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })
@@ -206,6 +260,58 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             .finally(() => {
                 this.isLoading = false;
             });
+    }
+
+    loadCampaigns() {
+        this.isLoading = true;
+        getCampaignRecs() // Replace with the actual Apex method to fetch campaigns
+            .then(result => {
+                this.data = result.map((item, index) => {
+                    return {
+                        ...item,
+                        index: index + 1,
+                        startDate: this.formatDate(item.MVWB__Start_Date__c),
+                        endDate: this.formatDate(item.MVWB__End_Date__c),
+                        isDisabled : item.MVWB__Status__c == 'Completed' ? true : false
+                    };
+                });
+                console.log('Campaigns ::: ',this.data);
+                
+                this.filteredData = [...this.data];
+                this.updateShownData();
+            })
+            .catch(() => {
+                this.showToast('Error', 'Failed to load campaigns', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+    }
+
+    formatDate(dateStr) {
+        if (!dateStr) return '';
+        const dateObj = new Date(dateStr);
+        return new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }).format(dateObj);
+    }
+
+    handleListChange(event) {
+        this.selectedListValue = event.detail.value;
+        this.isBroadCastSelected = this.selectedListValue === 'Broadcast';
+        this.currentPage = 1; // Reset to the first page when changing the list
+        
+    
+        if (this.isBroadCastSelected) {
+            this.loadBroadcastGroups();
+        } else {
+            this.loadCampaigns();
+        }
     }
     
     updateShownData() {
@@ -308,7 +414,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 if (!this.selectedGroupIds.some(group => group.Id === groupId)) {
                     this.selectedGroupIds = [
                         ...this.selectedGroupIds,
-                        { Id: groupId, ObjName: selectedGroup.Object_Name__c,Name:selectedGroup.Name } // Store both Id and Name
+                        { Id: groupId, ObjName: selectedGroup.MVWB__Object_Name__c,Name:selectedGroup.Name } // Store both Id and Name
                     ];
                 }
             } else {
@@ -477,6 +583,12 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             });
     }
 
+    // handleListChange(event){
+    //     const selectedValue = event.detail.value;
+    //     console.log('Selected value ::: ',selectedValue);
+    //     // this.selectedTemplate = selectedValue;
+    // }
+
     handleNextbroadcastOnPopup(event) {
         try {
             const firstObjName = this.selectedGroupIds[0]?.ObjName;
@@ -497,10 +609,11 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             const navigationState = {
                 groupNames: names,
                 objectName : this.selectedObjectName,
-                groupId : this.selectedGroupIds
+                groupId : this.selectedGroupIds,
+                campaignId: ''
             };
             const encodedNavigationState = btoa(JSON.stringify(navigationState));
-
+            this.showPopup = false;
             // Navigate to the wbCreateMarketingCampaign component
             this[NavigationMixin.Navigate]({
                 type: 'standard__navItemPage',
@@ -515,6 +628,62 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             console.error('Error in handleNextbroadcastOnPopup:', error);
             this.showToast('Error!', 'An error occurred while navigating', 'error');
         }
+    }
+
+    editMarketingCampaign(event){
+        const campaignId = event.target.dataset.id; // Get the campaign ID from the button or element
+        if (!campaignId) {
+            this.showToast('Error', 'Campaign ID is missing', 'error');
+            return;
+        }
+        const navigationState = {
+            // groupNames: names,
+            // objectName : this.selectedObjectName,
+            // groupId : this.selectedGroupIds,
+            campaignId: campaignId
+        };
+        const encodedNavigationState = btoa(JSON.stringify(navigationState));
+
+        // Navigate to the wbCreateMarketingCampaign component
+        this[NavigationMixin.Navigate]({
+            type: 'standard__navItemPage',
+            attributes: {
+                apiName: 'create_Marketing' // Replace with the API name of your Lightning Tab
+            },
+            state: {
+                c__navigationState: encodedNavigationState
+            }
+        });
+    }
+
+    deleteMarketingCampaign(event) {
+        const campaignId = event.target.dataset.id; // Get the campaign ID from the button or element
+        if (!campaignId) {
+            this.showToast('Error', 'Campaign ID is missing', 'error');
+            return;
+        }
+    
+        // Confirm deletion
+        // if (!confirm('Are you sure you want to delete this campaign?')) {
+        //     return;
+        // }
+    
+        this.isLoading = true; // Show a loading spinner
+        deleteMarketingCampaign({ campaignId })
+            .then((result) => {
+                if (result === 'Success') {
+                    this.showToast('Success', 'Campaign deleted successfully', 'success');
+                    this.loadCampaigns(); // Reload the campaigns list
+                } else {
+                    this.showToast('Error', result, 'error');
+                }
+            })
+            .catch((error) => {
+                this.showToast('Error', `Failed to delete campaign: ${error.body.message}`, 'error');
+            })
+            .finally(() => {
+                this.isLoading = false; // Hide the loading spinner
+            });
     }
     
     showToast(title ,message, status){

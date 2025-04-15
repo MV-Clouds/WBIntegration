@@ -1,10 +1,13 @@
-// import { LightningElement, track } from 'lwc';
+
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import { LightningElement, wire, track } from 'lwc';
 import getDateFieldsForPicklist from '@salesforce/apex/BroadcastMessageController.getDateFieldsForPicklist';
 import { NavigationMixin,CurrentPageReference } from 'lightning/navigation';
 import createMarketingCampaign from '@salesforce/apex/MarketingMessageController.createMarketingCampaign';
+import updateMarketingCampaign from '@salesforce/apex/MarketingMessageController.updateMarketingCampaign';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import getCampaignDetails from '@salesforce/apex/MarketingMessageController.getCampaignDetails';
+
 
 export default class WbCreateMarketingCampaign extends NavigationMixin(LightningElement) {
     @track broadcastGroupList = ['Group1', 'Group2', 'Group3'];
@@ -23,6 +26,7 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
     campaignEndDate = '';
     createBrodcastPopup = false;
     isImmediateSelected = false;
+    campaignId = '';
 
     // dateFieldOptions = [
     //     { label: 'Birthday', value: 'birthday' },
@@ -35,6 +39,21 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
     @track groupNames = [];
     @track selectedTemplate = '';
     @track groupId = [];
+    
+    @track specificError = ''; // Error for the "specific" option
+    @track relatedError = '';  // Error for the "related" option
+    
+        
+    @track emailConfigs = [
+        { id: 1, template: '', daysAfter: 0, timeToSend: '' , isImmediateSelected : false }
+    ];
+    @track selectedDateField = '';
+    @track error = '';
+    
+    @track selectedDate = '';
+    @track minDate = this.getTodayDate(); // Set the minimum date to today
+
+    // nextId = 2;
 
     @wire(CurrentPageReference)
     setCurrentPageReference(currentPageReference) {
@@ -44,13 +63,24 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
                 const navigationState = JSON.parse(atob(navigationStateString)); // Decode the Base64 string
 
                 // Retrieve the passed data
-                this.selectedObjectName = navigationState.objectName;
-                this.broadcastGroupList = navigationState.groupNames;
-                this.groupId = navigationState.groupId;
-                // console.log('Selected Template:', this.selectedTemplate);
-                console.log('Broadcast Group List:', this.broadcastGroupList);
+                if(navigationState.campaignId == '' ) {
+                    this.selectedObjectName = navigationState.objectName;
+                    this.broadcastGroupList = navigationState.groupNames;
+                    this.groupId = navigationState.groupId;
+                    console.log('Broadcast Group List:', this.broadcastGroupList);
+                    this.fetchDateFields();
+                }
+                else{
+                    this.campaignId = navigationState.campaignId;
+                    console.log('Campaign ID:', this.campaignId);
+                    
+                    // this.loadAllTemplates();
+                    this.loadCampaignDetails();
+                    
+                }
                 this.loadAllTemplates();
-                this.fetchDateFields();
+                // this.campaignId = navigationState.campaignId;
+                // console.log('Selected Template:', this.selectedTemplate);
             } catch (error) {
                 console.error('Error decoding navigation state:', error);
             }
@@ -64,8 +94,8 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         return this.selectedOption === 'related';
     }
 
-    get comboClass() {
-        return this.showError ? 'slds-has-error' : '';
+    get isEditTemplate(){
+        return this.campaignId != '';
     }
 
     handleOptionChange(event) {
@@ -85,9 +115,6 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         this.isImmediateSelected = !this.isImmediateSelected;
         // console.log('isImmediateSelected:', this.isImmediateSelected);
     }
-
-    @track specificError = ''; // Error for the "specific" option
-    @track relatedError = '';  // Error for the "related" option
 
     fetchDateFields() {
         getDateFieldsForPicklist({ objectApiName: this.selectedObjectName })
@@ -124,6 +151,119 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         }
     }
 
+loadCampaignDetails() {
+    if (!this.campaignId) {
+        this.isLoading = false;
+        console.error('Campaign ID is not available.');
+        return;
+    }
+
+    getCampaignDetails({ campaignId: this.campaignId })
+        .then((result) => {
+            console.log('Raw Campaign Details JSON:', result);
+
+            // Parse the JSON string into an object
+            const parsedResult = JSON.parse(result);
+
+            // Assign campaign data
+            this.campaignData = parsedResult.campaign;
+            this.campaignName = this.campaignData.Name;
+            this.campaignDescription = this.campaignData.MVWB__Marketing_Campaign_Description__c;
+            this.selectedObjectName = this.campaignData.MVWB__Object_Name__c;
+            this.isMarketingCampaign = this.campaignData.MVWB__hasExistingMarketingCampaign__c;
+            this.campaignStartDate = this.campaignData.MVWB__Start_Date__c;
+            this.campaignEndDate = this.campaignData.MVWB__End_Date__c;
+            this.groupId = this.campaignData.MVWB__Group_Id_List__c.split(',');
+
+            const listOfGroups = parsedResult.groupNames;
+            console.log('List of Groups:', listOfGroups);
+            
+            if (Array.isArray(listOfGroups)) {
+                this.broadcastGroupList = listOfGroups; // Assign directly if it's already a list
+            } else if (typeof listOfGroups === 'string') {
+                this.broadcastGroupList = listOfGroups.split(','); // Split if it's a comma-separated string
+            } else {
+                this.broadcastGroupList = []; // Default to an empty array if the value is invalid
+            }
+            
+            console.log('Processed Group Names:', this.broadcastGroupList);
+
+            this.fetchDateFields();
+
+            // Assign additional fields
+            this.selectedDate = parsedResult.selectedDate || '';
+            this.selectedDateField = parsedResult.selectedDateFields || '';
+            this.selectedOption = parsedResult.selectedOption || 'specific';
+
+            console.log('Parsed Email Configs:', parsedResult.emailConfigs);
+
+            // Assign email configurations
+            this.emailConfigs = parsedResult.emailConfigs.map((config,index) => ({
+                id:index+1,
+                groupId: config.Id,
+                template: config.MVWB__WB_Template__c,
+                daysAfter: config.MVWB__Days_After__c,
+                timeToSend: this.convertMillisToTime(config.MVWB__Time_To_Send__c),
+                isImmediateSelected: config.MVWB__Is_Send_Immediately__c
+            }));
+
+            console.log('Email Configs (mapped):', this.emailConfigs);
+
+        })
+        .catch((error) => {
+            console.error('Error fetching campaign details:', error);
+            this.showToast('Error', 'Failed to load campaign details', 'error');
+        })
+        .finally(() => {
+            this.isLoading = false;
+        });
+}
+
+    // convertMillisToTime(millis) {
+    //     const date = new Date(millis);
+    //     let hours = date.getUTCHours(); // UTC to avoid local timezone shift
+    //     let minutes = date.getUTCMinutes();
+    //     let period = hours >= 12 ? 'pm' : 'am';
+    
+    //     hours = hours % 12;
+    //     if (hours === 0) hours = 12; // 12 AM / PM edge case
+    
+    //     // Pad minutes to always have two digits
+    //     const minuteStr = minutes.toString().padStart(2, '0');
+    
+    //     return `${hours}:${minuteStr} ${period}`;
+    // }
+
+
+    convertMillisToTime(timeString) {
+        if (!timeString) return '';
+    
+        const [hours, minutes, secondsAndMillis] = timeString.split(':');
+        const [seconds, milliseconds] = secondsAndMillis.split('.');
+    
+        const formattedTime = `${hours}:${minutes}:${seconds}.${milliseconds}`;
+        const timeToSend = formattedTime.replace('Z', '');
+    
+        return timeToSend;
+    }
+    
+
+    // prefillForm() {
+    //     console.log('Prefilling form with campaign data:', this.campaignData);
+    
+    //     // Pre-fill the form fields with the campaign data
+    //     this.campaignName = this.campaignData.Name;
+    //     this.campaignDescription = this.campaignData.Marketing_Campaign_Description__c;
+    //     this.selectedObjectName = this.campaignData.Object_Name__c;
+    //     this.isMarketingCampaign = this.campaignData.hasExistingMarketingCampaign__c;
+    //     this.campaignStartDate = this.campaignData.Start_Date__c;
+    //     this.campaignEndDate = this.campaignData.End_Date__c;
+    
+    //     // Pre-fill email configurations
+    //     console.log('Prefilling email configurations:', this.emailConfigs);
+    //     this.emailConfigs = [...this.emailConfigs];
+    // }
+
     loadAllTemplates() {
             this.isLoading = true;
             getTemplatesByObject()
@@ -143,13 +283,6 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
                     this.isLoading = false;
                 });
         }
-
-        
-        @track emailConfigs = [
-            { id: 1, template: '', daysAfter: 0, timeToSend: '' , isImmediateSelected : false }
-        ];
-        @track error = '';
-        nextId = 2;
     
         // get templateOptions() {
         //     return [
@@ -161,13 +294,14 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
     
         addRow() {
             if (this.hasDuplicates()) {
-                this.error = 'Duplicate template with same send time and date is not allowed.';
+                this.error = 'Duplicate template with the same send time and date is not allowed.';
                 return;
             }
             this.error = '';
+            const nextIndex = this.emailConfigs.length + 1; // Use the current length of the array to calculate the next index
             this.emailConfigs = [
                 ...this.emailConfigs,
-                { id: this.nextId++, template: '', daysAfter: 0, timeToSend: '', isImmediateSelected : false}
+                { id: nextIndex, template: '', daysAfter: 0, timeToSend: '', isImmediateSelected: false }
             ];
         }
     
@@ -250,15 +384,12 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
     
             // Convert to combobox options format
             this.templateOptions = combinedTemplates.map(template => ({
-                label: template.Template_Name__c,
+                label: template.MVWB__Template_Name__c,
                 value: template.Id
             }));
     
             
         }
-
-    @track selectedDate = '';
-    @track minDate = this.getTodayDate(); // Set the minimum date to today
 
     // connectedCallback() {
     //     // this.minDate = this.getTodayDate();       
@@ -276,26 +407,59 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
     }
 
     // Handle date change
+    // handleDateChange(event) {
+    //     const selectedDate = event.target.value;
+    //     console.log("Selected Date ::: ", selectedDate);
+        
+    //     if (this.selectedOption === 'specific') {
+    //         if (!selectedDate) {
+    //             // Handle empty or invalid date
+    //             this.specificError = 'Please select a date.';
+    //             this.showError = false; // Keep the global error flag
+    //         } else if (new Date(selectedDate) < new Date()) {
+    //             // Show error if the selected date is not after today
+    //             this.specificError = 'Selected date must be after today.';
+    //             this.showError = false; // Keep the global error flag
+    //         } else {
+    //             // Valid date
+    //             this.selectedDate = selectedDate;
+    //             this.specificError = ''; // Clear the specific error
+    //             this.showError = false; // Clear the global error flag
+    //         }
+    //     }
+    //     console.log("Selected Date ::: ", selectedDate);
+    // }
     handleDateChange(event) {
         const selectedDate = event.target.value;
         console.log("Selected Date ::: ", selectedDate);
-
+    
         if (this.selectedOption === 'specific') {
             if (!selectedDate) {
                 // Handle empty or invalid date
                 this.specificError = 'Please select a date.';
                 this.showError = false; // Keep the global error flag
-            } else if (new Date(selectedDate) <= new Date()) {
-                // Show error if the selected date is not after today
-                this.specificError = 'Selected date must be after today.';
-                this.showError = false; // Keep the global error flag
             } else {
-                // Valid date
-                this.selectedDate = selectedDate;
-                this.specificError = ''; // Clear the specific error
-                this.showError = false; // Clear the global error flag
+                // Compare only the date parts
+                const selected = new Date(selectedDate);
+                const today = new Date();
+    
+                // Clear time parts
+                selected.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+    
+                if (selected < today) {
+                    // Show error if the selected date is before today
+                    this.specificError = 'Selected date must be today or later.';
+                    this.showError = false; // Keep the global error flag
+                } else {
+                    // Valid date
+                    this.selectedDate = selectedDate;
+                    this.specificError = ''; // Clear the specific error
+                    this.showError = false; // Clear the global error flag
+                }
             }
         }
+        console.log("Selected Date ::: ", selectedDate);
     }
 
     // Handle input change for time and validate duplicates
@@ -394,7 +558,7 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
 
     validateForm() {
         if (this.selectedOption === 'specific') {
-            if (!this.selectedDate || new Date(this.selectedDate) <= new Date()) {
+            if (!this.selectedDate || (new Date(this.selectedDate) < new Date())) {
                 this.specificError = 'Selected date must be after today.';
                 return false;
             }
@@ -419,7 +583,7 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
 
     validateInputs() {
         if (this.selectedOption === 'specific') {
-            if (!this.selectedDate || new Date(this.selectedDate) <= new Date()) {
+            if (!this.selectedDate || (new Date(this.selectedDate) < new Date())) {
                 this.specificError = 'Please select a valid date.';
                 return false;
             } else {
@@ -448,6 +612,7 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         event.preventDefault();
         this.templateMap = [];
         this.templateOptions = [];
+        this.resetValues();
             // Encode the data as query parameters
             // const navigationState = {
             //     groupNames: names,
@@ -472,33 +637,18 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         this.createBrodcastPopup = false;
     }
 
-    // get isSubmitDisabled() {
-    //     // Check if any required field in emailConfigs is empty
-    //     const hasEmptyFields = this.emailConfigs.some(config => {
-    //         return !config.template || !config.timeToSend || config.daysAfter === '';
-    //     });
-
-    //     // Check if specific or related option validations fail
-    //     if (this.selectedOption === 'specific') {
-    //         return hasEmptyFields || !this.selectedDate || new Date(this.selectedDate) <= new Date();
-    //     } else if (this.selectedOption === 'related') {
-    //         return hasEmptyFields || !this.selectedDateField;
-    //     }
-
-    //     return hasEmptyFields;
-    // }
     get isSubmitDisabled() {
         // Check if any required field in emailConfigs is empty, excluding rows where isImmediateSelected is true
         const hasEmptyFields = this.emailConfigs.some(config => {
-            if (config.isImmediateSelected) {
-                return false; // Skip validation for rows with isImmediateSelected = true
-            }
-            return !config.template || !config.timeToSend || config.daysAfter === '';
+            // if (config.isImmediateSelected) {
+            //     return false; // Skip validation for rows with isImmediateSelected = true
+            // }
+            return !config.template || !config.timeToSend || config.daysAfter == '';
         });
     
         // Check if specific or related option validations fail
         if (this.selectedOption === 'specific') {
-            return hasEmptyFields || !this.selectedDate || new Date(this.selectedDate) <= new Date();
+            return hasEmptyFields || !this.selectedDate || (new Date(this.selectedDate) < new Date());
         } else if (this.selectedOption === 'related') {
             return hasEmptyFields || !this.selectedDateField;
         }
@@ -511,26 +661,103 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
         this.isMarketingCampaign = event.target.checked;
     }
 
+    
+    resetValues() {
+        this.broadcastGroupList = ['Group1', 'Group2', 'Group3'];
+        this.templateOptions = []; // Reset template options
+        this.templateMap = new Map(); // Clear the template map
+    
+        this.selectedObjectName = '';
+        this.selectedOption = 'specific';
+    
+        this.isLoading = false;
+        this.campaignName = '';
+        this.campaignDescription = '';
+        this.campaignObject = '';
+        this.isMarketingCampaign = false;
+        this.campaignStartDate = '';
+        this.campaignEndDate = '';
+        this.createBrodcastPopup = false;
+        this.isImmediateSelected = false;
+        this.campaignId = '';
+    
+        this.emailConfigs = [
+            { id: 1, template: '', daysAfter: 0, timeToSend: '', isImmediateSelected: false }
+        ]; // Reset email configurations
+        this.error = ''; // Clear any errors
+        console.log('All values have been reset to their default state.');
+    }
+
+    navigateToAllBroadcastPage(){
+        this.resetValues();
+        this.createBrodcastPopup = false;
+        this[NavigationMixin.Navigate]({
+                    type: 'standard__navItemPage',
+                    attributes: {
+                        apiName: 'Broadcast' // Replace with the API name of your Lightning Tab
+                    }
+                });
+    }
 
     createCampaign() {
 
         console.log('In createCampaign');
+
+         // Validation: Check if any required field in emailConfigs is empty
+        const hasEmptyFields = this.emailConfigs.some(config => {
+            if (!config.template || !config.timeToSend || config.daysAfter === '') {
+                this.showToast('Error', 'Please fill out all required fields in the email configurations.', 'error');
+                return true;
+            }
+            return false;
+        });
+
+        if (hasEmptyFields) {
+            return; // Stop execution if validation fails
+        }
+
+        // Validation: Check specific or related option validations
+        if (this.selectedOption === 'specific') {
+            const selected = new Date(this.selectedDate);
+            const today = new Date();
+
+            // Clear time parts
+            selected.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            if (selected < today) {
+                this.showToast('Error', 'Selected date must be today or later.', 'error');
+                return;
+            }
+        } else if (this.selectedOption === 'related') {
+            if (!this.selectedDateField) {
+                this.showToast('Error', 'Please select a date field.', 'error');
+                return; // Stop execution if validation fails
+            }
+        }
+        
+        const selectedDate1 = this.selectedDate.toString();
+        console.log(selectedDate1);
         
         const campaignData = {
+            id : this.campaignId,
             name: this.campaignName,
             description: this.campaignDescription,
             objectName: this.selectedObjectName,
             isMarketingCampaign: this.isMarketingCampaign,
             selectedOption: this.selectedOption,
-            selectedDate: this.selectedDate,
+            selectedDate: selectedDate1,
             selectedDateFields: this.selectedDateField,
             emailConfigs: this.emailConfigs,
             groupIdList : this.groupId
         };
-    
+        
         console.log('Campaign Data:', JSON.stringify(campaignData));
         
-        createMarketingCampaign({ campaignData: JSON.stringify(campaignData) })
+        // return
+        if(this.campaignId){
+            
+            updateMarketingCampaign({ campaignData: JSON.stringify(campaignData) })
             .then(() => {
                 this.dispatchEvent(
                     new ShowToastEvent({
@@ -539,6 +766,8 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
                         variant: 'success'
                     })
                 );
+                this.navigateToAllBroadcastPage();
+
             })
             .catch((error) => {
                 this.dispatchEvent(
@@ -549,5 +778,34 @@ export default class WbCreateMarketingCampaign extends NavigationMixin(Lightning
                     })
                 );
             });
+        }
+        else{
+
+            createMarketingCampaign({ campaignData: JSON.stringify(campaignData) })
+                .then(() => {
+                    this.dispatchEvent(
+                        new ShowToastEvent({
+                            title: 'Success',
+                            message: `Marketing Campaign created successfully!`,
+                            variant: 'success'
+                        })
+                    );
+                    this.navigateToAllBroadcastPage();
+                })
+                .catch((error) => {
+                    this.dispatchEvent(
+                        new ShowToastEvent({
+                            title: 'Error',
+                            message: error.body.message,
+                            variant: 'error'
+                        })
+                    );
+                });
+        }
+        
+    }
+    
+    showToast(title ,message, status){
+        this.dispatchEvent(new ShowToastEvent({title: title, message: message, variant: status}));
     }
 }
