@@ -44,7 +44,6 @@ export default class ObjectConfigComp extends LightningElement {
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
-            console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }

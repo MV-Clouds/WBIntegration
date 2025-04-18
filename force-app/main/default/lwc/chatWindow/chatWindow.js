@@ -129,7 +129,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
-            console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }

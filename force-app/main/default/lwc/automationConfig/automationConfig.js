@@ -42,7 +42,6 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
-            console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }
@@ -69,7 +68,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : '',
                     templateType: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Type__c : ''
                 }));
-                console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
+                // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
                 this.automationData = [...this.originalAutomationData];
             })
             .catch(error => {
@@ -136,7 +135,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
             MVWB__WB_Template__c: this.selectedTemplateId
         };
 
-        console.log('Automation Record:', JSON.stringify(automationRecord));
+        // console.log('Automation Record:', JSON.stringify(automationRecord));
 
         // const apexMethod = this.isEditMode ? updateAutomations : saveAutomations;
 
@@ -160,10 +159,10 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                 // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
                 this.automationData = [...this.originalAutomationData];
 
-                console.log('this.automationData in handleSave =', JSON.stringify(this.automationData));
+                // console.log('this.automationData in handleSave =', JSON.stringify(this.automationData));
 
                 const savedAutomation = this.automationData.find(auto => auto.id === savedRecordId);
-                console.log('savedRecordId:', savedRecordId, 'savedAutomation:', JSON.stringify(savedAutomation));
+                // console.log('savedRecordId:', savedRecordId, 'savedAutomation:', JSON.stringify(savedAutomation));
 
                 if (savedAutomation) {
                     let cmpDef = {
@@ -173,7 +172,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                             templateType: savedAutomation.templateType
                         }
                     };
-                    console.log('Record ID:', savedAutomation.id, 'Template Type:', savedAutomation.templateType);
+                    // console.log('Record ID:', savedAutomation.id, 'Template Type:', savedAutomation.templateType);
 
                     let encodedDef = btoa(JSON.stringify(cmpDef));
                     this[NavigationMixin.Navigate]({
@@ -212,14 +211,14 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     * Created By: Kavya Trivedi
     */
     handleSearch(event) {
-        console.log('Search term:', event.target.value);
+        // console.log('Search term:', event.target.value);
         const searchTerm = event.target.value.toLowerCase().trim();
         this.automationData = this.originalAutomationData.filter(auto =>
             (auto.name || '').toLowerCase().includes(searchTerm) ||
             (auto.description || '').toLowerCase().includes(searchTerm) ||
             (auto.template || '').toLowerCase().includes(searchTerm)
         );
-        console.log('Filtered Data:', this.automationData);
+        // console.log('Filtered Data:', this.automationData);
     }
 
     handleNew() {
@@ -266,7 +265,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                 templateType: templateType
             }
         };
-        console.log('Record ID:', recordId, 'Template Type:', templateType);
+        // console.log('Record ID:', recordId, 'Template Type:', templateType);
         let encodedDef = btoa(JSON.stringify(cmpDef));
         this[NavigationMixin.Navigate]({
             type: "standard__webPage",
