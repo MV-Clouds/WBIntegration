@@ -75,7 +75,7 @@ public with sharing class PLMSController {
                                 config.Is_License_Valid__c = false;
                             } else {
                                 config.Is_License_Valid__c = true;
-                                DateTime userNextCalloutTime = DateTime.now().addMonths(1);
+                                DateTime userNextCalloutTime = (userExpirationDateTime.date() <= Date.today().addMonths(1)) ? userExpirationDateTime : Date.today().addMonths(1);
                                 config.Next_Callout_Date__c = userNextCalloutTime;
 
                                 String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
