@@ -1,4 +1,16 @@
 <template>
+    <template if:true={showLicenseError}>
+        <div class="license-error">
+            <div class="popup-container">
+                <div class="popup-content">
+                    <h2>⚠️ License Expired</h2>
+                    <p>WBConnect license has expired. Please renew to continue using.</p>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template if:false={showLicenseError}>
+        
     <lightning-spinner alternative-text="Loading" size="small" if:true={showSpinner}></lightning-spinner>
     <div class="main-template-preview-div">
         <div class="header-div template-section-div" if:true={headerBody}>
@@ -62,4 +74,6 @@
             This Template does not exist anymore!
         </div>
     </div>
+
+    </template>
 </template>

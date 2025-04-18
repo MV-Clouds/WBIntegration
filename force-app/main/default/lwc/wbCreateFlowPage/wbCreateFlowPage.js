@@ -10,9 +10,12 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import MonacoEditor from '@salesforce/resourceUrl/MonacoEditor';
 import PublishPopupImage from '@salesforce/resourceUrl/PublishPopupImage';
 import getJSONData from '@salesforce/apex/WhatsAppFlowController.getJSONData';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbCreateFlowPage extends LightningElement {
     @track selectedCategories = [];
+    @track showLicenseError = false;
+
     status = '';
     editor;
     templateType = 'Default';
@@ -61,6 +64,29 @@ export default class WbCreateFlowPage extends LightningElement {
 
     get isDeprecateEnabled(){
         return this.status == 'Published' ? true : false;
+    }
+
+    async connectedCallback(){
+        try {
+            this.showSpinner = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            console.log('isLicenseValid => ', isLicenseValid);
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     handleTypeChange(event) {
