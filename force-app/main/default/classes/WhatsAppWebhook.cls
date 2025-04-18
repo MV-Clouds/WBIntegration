@@ -109,6 +109,12 @@ global without sharing class WhatsAppWebhook{
     private static void processSingleMessage(Map<String, Object> message, Map<String, Object> sender){
 
         try{
+            Boolean isLicenseValid = PLMSController.checkLicenseUsablility();
+            if(!isLicenseValid){
+                System.debug('License is not valid');
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processSingleMessage', 'exceptionObj' => null, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'License Expired.', 'apiResponse' => null});
+                return;
+            }
             String senderId = (String) message.get('from');
             String messageType = (String) message.get('type');
             String whatsAppMessageID = (String) message.get('id');
@@ -127,6 +133,17 @@ global without sharing class WhatsAppWebhook{
                 System.debug('Context ID ==> ' + reactToMessageId);
             }
             Integer timestampValue = Integer.valueOf(message.get('timestamp'));
+            DateTime messageTime = DateTime.newInstanceGmt(1970, 1, 1, 0, 0, 0).addSeconds(timestampValue);
+            // Check if it's within the last 10 minutes
+            DateTime tenMinutesAgo = DateTime.now().addMinutes(-10);
+
+            if (messageTime >= tenMinutesAgo) {
+                System.debug('✅ Timestamp is within the last 10 minutes.');
+            } else {
+                System.debug('❌ Timestamp is older than 10 minutes.');
+                return;
+            }
+
             DateTime currentUTCDateTime = System.now();
             Timezone tzIST = Timezone.getTimeZone('Asia/Kolkata');
             Integer offsetMillis = tzIST.getOffset(currentUTCDateTime);
