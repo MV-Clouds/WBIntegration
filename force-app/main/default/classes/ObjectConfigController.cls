@@ -382,7 +382,7 @@ public with sharing class ObjectConfigController {
             Map<String, Object> objectConfigMap = new Map<String, Object>();
             objectConfigMap.put('objectApiName', 'Contact');
             objectConfigMap.put('phoneField', 'Phone');
-            objectConfigMap.put('requiredFieds', requiredFields);
+            objectConfigMap.put('requiredFields', requiredFields);
 
             String dummyObjectConfig = JSON.serialize(objectConfigMap);
     

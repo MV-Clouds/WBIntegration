@@ -63,7 +63,7 @@ export default class ObjectConfigComp extends LightningElement {
                         this.selectedObject = this.capitalizeFirstLetter(config.objectApiName) || 'Contact';
                         
                         // Store field values in an object
-                        let savedFieldValues = config.requiredFieds?.reduce((acc, field) => {
+                        let savedFieldValues = config.requiredFields?.reduce((acc, field) => {
                             acc[field.name] = field.value;
                             return acc;
                         }, {}) || {};
@@ -364,7 +364,7 @@ export default class ObjectConfigComp extends LightningElement {
             const jsonData = JSON.stringify({
                 objectApiName: this.selectedObject,
                 phoneField: this.selectedPhoneFieldVal,
-                requiredFieds: this.requiredFields.map(field => ({
+                requiredFields: this.requiredFields.map(field => ({
                     name: field.apiName,
                     value: field.value.toString(),
                     type: field.type

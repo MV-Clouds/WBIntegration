@@ -105,6 +105,15 @@ public class WhatsappConfigController {
             instance4.value = appId;
             mdata.values.add(instance4);
 
+            Metadata.CustomMetadataValue instance5 = new Metadata.CustomMetadataValue();
+            instance4.field = 'MVWB__API_Endpoint__c';
+            instance4.value = 'https://graph.facebook.com';
+            mdata.values.add(instance5);
+
+            Metadata.CustomMetadataValue instance6 = new Metadata.CustomMetadataValue();
+            instance4.field = 'MVWB__API_Version__c';
+            instance4.value = 'v22.0';
+            mdata.values.add(instance6);
 
             Metadata.DeployContainer container = new Metadata.DeployContainer();
             container.addMetadata(mdata);

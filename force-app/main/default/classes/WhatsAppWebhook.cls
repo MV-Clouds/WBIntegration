@@ -205,9 +205,9 @@ global without sharing class WhatsAppWebhook{
                 String nameField = (String) chatConfig.get('nameField'); // e.g., 'Name'
                 System.debug('nameField'+ nameField);
                 
-                System.debug('requiredFieds'+ configData.get('requiredFieds'));
+                System.debug('requiredFields'+ configData.get('requiredFields'));
 
-                List<Object> requiredFieldsList = (List<Object>) configData.get('requiredFieds'); 
+                List<Object> requiredFieldsList = (List<Object>) configData.get('requiredFields'); 
 
                 Map<String, Object> requiredFieldsMap = new Map<String, Object>();
                 for (Object obj : requiredFieldsList) {
@@ -519,10 +519,10 @@ global without sharing class WhatsAppWebhook{
     // @future(callout=true)
     public static Blob handleMediaAttachment(String documentId){
         try{
-            String mediaUrl = 'https://graph.facebook.com/v20.0/' + documentId;
             String accessToken = '';
             List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values();
             accessToken = config[0].MVWB__Access_Token__c;
+            String mediaUrl = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__MVWB__API_Version__c + '/' + documentId;
             
             if (accessToken != ''){
                 HttpRequest req = new HttpRequest();
