@@ -110,7 +110,7 @@ global without sharing class WhatsAppWebhook{
 
         try{
             Boolean isLicenseValid = PLMSController.checkLicenseUsablility();
-            if(!isLicenseValid){
+            if(isLicenseValid == false){
                 System.debug('License is not valid');
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processSingleMessage', 'exceptionObj' => null, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'License Expired.', 'apiResponse' => null});
                 return;
