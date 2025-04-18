@@ -1,4 +1,6 @@
 <template>
+    <template if:false={showLicenseError}>
+
     <div class="container">
         <div class="main-configuration-div">
             <div class="configuration-box">
@@ -95,5 +97,16 @@
             </div>
         </div>
     </div>
-
+    
+    </template>
+    <template if:true={showLicenseError}>
+        <div class="license-error">
+            <div class="popup-container">
+                <div class="popup-content">
+                    <h2>⚠️ License Expired</h2>
+                    <p>WBConnect license has expired. Please renew to continue using.</p>
+                </div>
+            </div>
+        </div>
+    </template>
 </template>
