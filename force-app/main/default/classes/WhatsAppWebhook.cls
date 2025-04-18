@@ -260,9 +260,9 @@ global without sharing class WhatsAppWebhook{
                     }
 
                     if(nameField != '' && nameField != null){
-                        newRecord.put(nameField, senderName);
+                        newRecord.put(nameField, senderName.length() > 80 ? senderName.substring(0, 80) : senderName);
                     } else {
-                        newRecord.put('Name', senderName);
+                        newRecord.put('Name', senderName.length() > 80 ? senderName.substring(0, 80) : senderName);
                     }
                     if(phoneField != '' && phoneField != null){
                         newRecord.put(phoneField, senderPhone);
