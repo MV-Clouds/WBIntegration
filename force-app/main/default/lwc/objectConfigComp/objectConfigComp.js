@@ -6,6 +6,7 @@ import saveUserConfig from '@salesforce/apex/ObjectConfigController.saveUserConf
 import getObjectsWithPhoneField from '@salesforce/apex/ObjectConfigController.getObjectsWithPhoneField';
 import getRecordName from '@salesforce/apex/ObjectConfigController.getRecordName';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class ObjectConfigComp extends LightningElement {
     @track selectedObject = 'Contact';
@@ -17,16 +18,39 @@ export default class ObjectConfigComp extends LightningElement {
     @track availableObjectOptions = [];
     @track chatWindowRows = [];
     @track chatConfigCounter = 0;
-    selectedPhoneFieldVal = '';
-    selectedPhoneFieldLabel = '';
-    activeSectionName = 'webhookConfig'; // Default open section
-    isWebhookConfigEdit = false;
-    isChatWindowConfigEdit = false;
-    isLoading = false;
+    @track selectedPhoneFieldVal = '';
+    @track selectedPhoneFieldLabel = '';
+    @track activeSectionName = 'webhookConfig'; // Default open section
+    @track isWebhookConfigEdit = false;
+    @track isChatWindowConfigEdit = false;
+    @track isLoading = false;
+    @track showLicenseError = false;
 
     // Fetch saved metadata on load
-    connectedCallback() {
+    async connectedCallback(){
+        try {
+            this.showSpinner = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            
         this.loadSavedValues();
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            console.log('isLicenseValid => ', isLicenseValid);
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     // Load previously saved configuration

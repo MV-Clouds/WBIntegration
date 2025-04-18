@@ -6,6 +6,8 @@
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
+    <template if:false={showLicenseError}>
+
     <template if:true={isTemplateVisible}>
         <div class="slds-theme_default main">
             <template if:true={isLoading}>
@@ -141,5 +143,18 @@
             </div>
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    </template>
+
+    <template if:true={showLicenseError}>
+        <div class="license-error">
+            <div class="popup-container">
+                <div class="popup-content">
+                    <h2>⚠️ License Expired</h2>
+                    <p>WBConnect license has expired. Please renew to continue using.</p>
+                </div>
+            </div>
+        </div>
     </template>
 </template>

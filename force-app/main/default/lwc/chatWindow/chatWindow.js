@@ -15,6 +15,7 @@ import whatsappAudioIcon from '@salesforce/resourceUrl/whatsAppAudioIcon';
 import { loadScript } from 'lightning/platformResourceLoader';
 import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
 import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 import { subscribe} from 'lightning/empApi';
 
 export default class ChatWindow extends NavigationMixin(LightningElement) {
@@ -61,6 +62,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     @track isAwsSdkInitialized = true;
     @track selectedFilesToUpload = [];
     @track selectedFileName;
+    @track showLicenseError = false;
 
     @wire(CurrentPageReference) pageRef;
     @track objectApiName;
@@ -92,7 +94,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
     get filteredTemplate(){
-        let searchedResult = (this.allTemplates?.filter(template => template.MVWB__Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
+        let searchedResult = (this.allTemplates?.filter(template => template.Template_Name__c.toLowerCase().includes(this.templateSearchKey?.toLowerCase())));
         return this.templateSearchKey ? (searchedResult.length > 0 ? searchedResult : null) : this.allTemplates;
     }
 
@@ -101,11 +103,16 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
     get replyToTemplateId(){
-        return this.allTemplates.find(t => t.Id == this.replyToMessage.MVWB__Whatsapp_Template__c)?.MVWB__Template_Name__c || null;
+        return this.allTemplates.find(t => t.Id == this.replyToMessage.Whatsapp_Template__c)?.Template_Name__c || null;
     }
 
-    connectedCallback(){
+    async connectedCallback(){
         try {
+            this.showSpinner = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
             if(this.pageRef){
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
@@ -116,6 +123,18 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             this.handleSubscribe();
         } catch (e) {
             console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            console.log('isLicenseValid => ', isLicenseValid);
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
         }
     }
 

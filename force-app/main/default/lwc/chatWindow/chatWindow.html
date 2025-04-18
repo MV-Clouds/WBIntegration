@@ -1,4 +1,5 @@
 <template>
+    <template if:false={showLicenseError}>
     <lightning-spinner alternative-text="Loading" size="small" if:true={showSpinner}></lightning-spinner>
     <!-- <div class="slds-backdrop slds-backdrop_open"></div> -->
     <div class="main-chat-window-div">
@@ -404,4 +405,15 @@
             </div>
         </template>
     </div>
+    </template>
+    <template if:true={showLicenseError}>
+        <div class="license-error">
+            <div class="popup-container">
+                <div class="popup-content">
+                    <h2>⚠️ License Expired</h2>
+                    <p>WBConnect license has expired. Please renew to continue using.</p>
+                </div>
+            </div>
+        </div>
+    </template>
 </template>

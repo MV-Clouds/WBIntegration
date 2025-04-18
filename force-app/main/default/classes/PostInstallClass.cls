@@ -24,25 +24,21 @@ global class PostInstallClass implements InstallHandler {
     */
     global void onInstall(InstallContext context) {
         try {
-            List<EmbeddedSignUpConfig__c> embeddedSignUpConfigRecord = new List<EmbeddedSignUpConfig__c>();
+            EmbeddedSignUpConfig__c embeddedConfig = EmbeddedSignUpConfig__c.getInstance();
             List<Profile> systemAdminProfile = [SELECT Id, Name FROM Profile WHERE Name = 'System Administrator'];
-            embeddedSignUpConfigRecord = [SELECT Id, Client_Id__c, Client_Secret__c, Config_Id__c, SetupOwnerId FROM EmbeddedSignUpConfig__c LIMIT 1];
-            if(embeddedSignUpConfigRecord.size() > 0){
-                EmbeddedSignUpConfig__c configRec = embeddedSignUpConfigRecord[0];
-                configRec.Client_Id__c = '514916280628381';
-                configRec.Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
-                configRec.Config_Id__c = '8971126402921271';
-                configRec.SetupOwnerId = systemAdminProfile[0].Id;
-                update configRec;
-            } else {
-                EmbeddedSignUpConfig__c config = new EmbeddedSignUpConfig__c(
-                    Client_Id__c = '514916280628381',
-                    Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b',
-                    Config_Id__c = '8971126402921271',
-                    SetupOwnerId = systemAdminProfile[0].Id
-                );
-                insert config;
-            }
+            embeddedConfig.Client_Id__c = '514916280628381';
+            embeddedConfig.Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
+            embeddedConfig.Config_Id__c = '8971126402921271';
+            embeddedConfig.SetupOwnerId = systemAdminProfile[0].Id;
+            upsert embeddedConfig;
+            
+            LicenseConfig__c licenseConfig = LicenseConfig__c.getInstance();
+            licenseConfig.Client_Id__c = '3MVG9fe4g9fhX0E4o3IT3oGMiqurUSa0NG8pvAJd48VWiX4Nnuf901ij43yVCcLidSdA76x3f64HEf.e.0nLh	';
+            licenseConfig.Client_Secret__c = 'CE75344BC73CEE272C81B8791E24EB6C73A9B66C68F41BA89E90CD5A3900B9E0';
+            licenseConfig.Username__c = 'insightsintegration@00d5g000007qhe9eaa.ext';
+            licenseConfig.Password__c = 'wbconnect@1';
+            upsert licenseConfig;
+
             if(context.previousVersion() == null || Test.isRunningTest()) {
                 String orgDataTable = '';
                 String userDataTable = '';
@@ -177,6 +173,9 @@ global class PostInstallClass implements InstallHandler {
                 email.setSubject('WBConnect New Install - ' + orgId);
                 email.setHtmlBody('<div style="font-family:Verdana;">Congrats WBConnect Team 🎉,<br></br><br></br>The WBConnect app has been installed in an Organization, Below are some Details about the client org.<br></br><br></br>' + orgDataTable+ '<br></br>' + userDataTable + '<br></br><br></br> <|--- BackEnd Use Only Data Start ---|>' + stringToSend +'<|--- BackEnd Use Only Data End ---|> </div>');
                 Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
+
+                // Call the PLMS validity check
+                PLMSController.getPLMSValidity();
             }
         } catch (Exception e) {
             Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
