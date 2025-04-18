@@ -21,7 +21,7 @@ public with sharing class ObjectConfigController {
     @return          : List<Map<String, String>> - return list of objects with phone field.
     ********************************************************
     */
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static List<Map<String, String>> getObjectsWithPhoneField() {
         List<Map<String, String>> objectList = new List<Map<String, String>>();
         try {

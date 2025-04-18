@@ -66,7 +66,7 @@ export default class ObjectConfigComp extends LightningElement {
                         let savedFieldValues = config.requiredFields?.reduce((acc, field) => {
                             acc[field.name] = field.value;
                             return acc;
-                        }, {}) || {};
+                        }, {});
         
                         this.loadRequiredFields(savedFieldValues);
                     } else {

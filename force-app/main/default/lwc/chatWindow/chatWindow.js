@@ -5,29 +5,27 @@ import createChat from '@salesforce/apex/ChatWindowController.createChat';
 import createChatForAWSFiles from '@salesforce/apex/ChatWindowController.createChatForAWSFiles';
 import updateReaction from '@salesforce/apex/ChatWindowController.updateReaction';
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
-import emojiData from '@salesforce/resourceUrl/emojis_data';
-import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import { NavigationMixin } from 'lightning/navigation';
 import updateThemePreference from '@salesforce/apex/ChatWindowController.updateThemePreference';
 import updateStatus from '@salesforce/apex/ChatWindowController.updateStatus';
-import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
-import whatsappAudioIcon from '@salesforce/resourceUrl/whatsAppAudioIcon';
-import { loadScript } from 'lightning/platformResourceLoader';
-import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
 import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+import emojiData from '@salesforce/resourceUrl/emojis_data';
+import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
+import whatsappAudioIcon from '@salesforce/resourceUrl/whatsAppAudioIcon';
+import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
+import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { NavigationMixin } from 'lightning/navigation';
+import { loadScript } from 'lightning/platformResourceLoader';
 import { subscribe} from 'lightning/empApi';
 
 export default class ChatWindow extends NavigationMixin(LightningElement) {
 
-    //Data Variables
     @api recordId;
     @api height;
     @track chats = [];
-
     @track recordData;
     @track groupedChats = [];
-    @track isLightMode = true; // Default : Light mode (Sun)
+    @track isLightMode = true;
     @track messageText = '';
     @track selectedTemplate = null;
     @track allTemplates = [];
@@ -36,17 +34,13 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     @track replyToMessage = null;
     @track reactToMessage = null;
     @track noteText = '';
-
-    //Control Variables
     @track showSpinner = false;
     @track noChatMessages = true;
     @track showEmojiPicker = false;
     @track showAttachmentOptions = false;
-    // showSendOptions = false;
     @track scrollBottom = false;
     @track showReactEmojiPicker = false;
     @track sendOnlyTemplate = false;
-
     @track acceptedFormats = [];
     @track showFileUploader = false;
     @track showTemplateSelection = false;
@@ -63,24 +57,24 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     @track selectedFilesToUpload = [];
     @track selectedFileName;
     @track showLicenseError = false;
-
-    @wire(CurrentPageReference) pageRef;
     @track objectApiName;
     @track phoneNumber;
     @track recordName;
-
     @track replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
-
     @track subscription = {};
     @track channelName = '/event/MVWB__Chat_Message__e';
+
+    @wire(CurrentPageReference) pageRef;
 
     //Get Variables
     get sunClass() {
         return `toggle-button sun-icon ${this.isLightMode ? "" : "hide"}`;
     }
+
     get moonClass() {
         return `toggle-button moon-icon ${this.isLightMode ? "hide" : "show"}`;
     }
+
     get showPopup(){
         return this.showFileUploader || this.showTemplateSelection || this.showTemplatePreview || this.audioPreview;
     }
@@ -212,7 +206,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
 
-// Fetch Initial Data
     getInitialData(){
         this.showSpinner = true;
         try {
@@ -327,9 +320,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 let chat = {
                     ...ch,
                     className: ch.MVWB__Type_of_Message__c === 'Outbound Messages' ? 'sent-message' : 'received-message',
-                    // isSent: ch.MVWB__Message_Status__c === 'Sent',
-                    // isDelivered: ch.MVWB__Message_Status__c === 'Delivered',
-                    // isSeen: ch.MVWB__Message_Status__c === 'Seen',
                     isTick : ['Sent', 'Delivered', 'Seen'].includes(ch.MVWB__Message_Status__c), 
                     isFailed: ch.MVWB__Message_Status__c === 'Failed',
                     isSending: ch.MVWB__Message_Status__c == null,
@@ -390,7 +380,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         }
     }
 
-// Setting the Height
     configureHeight(){
         try {
             if(!this.height || this.height<400) this.height = 400;
@@ -403,7 +392,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             console.error('Error in function configureHeight:::', e.message);
         }
     }
-//Handling the Backdrop
 
     handleBackDropClick(){
         try {
@@ -428,7 +416,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         }
     }
     
-// Theme Toggle
     toggleTheme() {
         try{
             this.isLightMode = !this.isLightMode;
@@ -442,7 +429,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             })
             .catch((e) => {
                 console.error('Failed to update theme preference!.', e.message);
-                
             });
         }catch(e){
             console.error('Error in toggleTheme:::', e.message);
@@ -454,8 +440,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         this.template.host.style.setProperty("--max-height-for-send-options","0rem");
         this.template.host.style.setProperty("--height-for-emoji","0rem");
     }
-
-// Action Options to Message Functionalities (Reply, React, Copy)
 
     handleToggleActions(event){
         try {
@@ -554,11 +538,11 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     
             // Start observing the element
             observer.observe(replyToChatEle);
-            
         } catch (e) {
             console.error('Error in function handleReplyMessageClick:::', e.message);
         }
     }
+
     handleToggleImagePreview(event){
         try {
             let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
@@ -603,7 +587,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         }
     }
 
-// Emoji Support
     generateEmojiCategories() {
         try{
             fetch(emojiData)
@@ -625,7 +608,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             .catch((e) => console.error('There was an error fetching the emoji.', e));
         }catch(e){
             console.error('Error in generateEmojiCategories', e);
-            
         }
     }
 
@@ -654,6 +636,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             console.error('Error in function handleEmojiClick:::', e.message);
         }
     }
+
     handleMessageTextChange(event) {
         try {
             let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); 
@@ -676,7 +659,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         }
     }
     
-// Attachments Support
     handleAttachmentButtonClick(){
         try {
             this.showAttachmentOptions = !this.showAttachmentOptions;
@@ -740,6 +722,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 this.showSpinner = false;
                 return;
             }
+
             var messageType = '';
             if(event.detail.files[0].mimeType.includes('image/')){
                 messageType = 'Image';
@@ -750,6 +733,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             } else if(event.detail.files[0].mimeType.includes('video/')){
                 messageType = 'Video';
             }
+
             createChat({chatData: {message: event.detail.files[0].contentVersionId, templateId: this.selectedTemplate, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
@@ -873,10 +857,11 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     createJSONBody(to, type, replyId, data){
         try {
-                let payload = `{ "messaging_product": "whatsapp", 
-                                "to": "${to}",
-                                "type": "${type}"`;
-                if(replyId) payload += `, "context": {"message_id": "${replyId}"}`;
+                let payload = `{ "messaging_product": "whatsapp", "to": "${to}", "type": "${type}"`;
+
+                if(replyId) {
+                    payload += `, "context": {"message_id": "${replyId}"}`;
+                }
             
                 if (type === "text") {
                     payload += `, "text": { "body": "${data.textBody.replace(/\n/g, "\\n")}" }`;
@@ -884,13 +869,11 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(data.link, "text/html");
                     payload += `, "image": { "link": "${doc.documentElement.textContent}" } `;
-                }
-                else if (type === "Video") {
+                } else if (type === "Video") {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(data.link, "text/html");
                     payload += `, "video": { "link": "${doc.documentElement.textContent}" } `;
-                }
-                else if (type === "Document") {
+                } else if (type === "Document") {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(data.link, "text/html");
                     payload += `, "document": { "link": "${doc.documentElement.textContent}", "filename": "${data.fileName}" } `;
@@ -899,10 +882,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     const doc = parser.parseFromString(data.link, "text/html");
                     payload += `, "audio": { "link": "${doc.documentElement.textContent}" } `;
                 } else if (type === "reaction"){
-                    payload += `, "reaction": { 
-                        "message_id": "${data.reactToId}",
-                        "emoji": "${data.emoji}"
-                        }`;
+                    payload += `, "reaction": { "message_id": "${data.reactToId}", "emoji": "${data.emoji}" }`;
                 }
                 payload += ` }`;
                 
@@ -912,23 +892,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         }
     }
 
-// Sending the message
-    // handleOpenSendOptions(){
-    //     try {
-    //         this.showSendOptions = ! this.showSendOptions;
-    //         this.closeAllPopups();
-    //         this.template.host.style.setProperty("--max-height-for-send-options",this.showSendOptions ? "7rem" : "0rem");
-    //     } catch (e) {
-    //         console.error('Error in function handleOpenSendOptions:::', e.message);
-    //     }
-    // }
-
     updateMessageReaction(chat){
-        // this.showSpinner = true;
         try {
             updateReaction({chatId: chat.Id, reaction:chat.MVWB__Reaction__c})
             .then(ch => {
-                // this.showSpinner = false;
                 this.processChats();
                 let reactPayload = this.createJSONBody(this.phoneNumber, "reaction", this.replyToMessage?.MVWB__WhatsAppMessageId__c || null, {
                     reactToId : chat.MVWB__WhatsAppMessageId__c,
@@ -946,17 +913,14 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     this.processChats();
                 })
                 .catch((e) => {
-                    // this.showSpinner = false;
                     console.error('Error in updateMessageReaction > sendWhatsappMessage :: ', e);
                 })
             })
             .catch((e) => {
-                // this.showSpinner = false;
                 this.showToast('Something went wrong!', 'The reaction could not be updated, please try again.', 'error');
                 console.error('Error in updateMessageReaction > updateReaction :: ', e);
             })
         } catch (e) {
-            // this.showSpinner = false;
             this.showToast('Something went wrong!', 'The reaction could not be updated, please try again.', 'error');
             console.error('Error in function updateMessageReaction:::', e.message);
         }
@@ -1138,6 +1102,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     } else if(this.selectedFilesToUpload[0].type.includes('video/')){
                         messageType = 'Video';
                     }
+
                     createChatForAWSFiles({chatData: {message: awsFileUrl, fileName: objKey, mimeType: this.selectedFilesToUpload[0].type, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
                         .then(chat => {
                             if(chat){
@@ -1148,6 +1113,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                                     link: chat.MVWB__Message__c,
                                     fileName: objKey || 'whatsapp file'
                                 });
+
                                 sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
                                     .then(result => {
                                         if(result.errorMessage == 'METADATA_ERROR'){
@@ -1240,7 +1206,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         }
     }
 
-    // Toast Notification
     showToast(title ,message, status){
         try {
             let evt = new ShowToastEvent({
