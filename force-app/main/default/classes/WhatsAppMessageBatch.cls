@@ -289,6 +289,13 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                 });
             }
 
+            Integer randomCode;
+            String randomCodeStr;
+            if((String)data.get('templateType') == 'Authentication'){
+                randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
+                randomCodeStr = String.valueOf(randomCode);
+            }
+
             // Body Parameters
             List<Object> bodyParameters = (List<Object>)data.get('bodyParameters');
             if (bodyParameters != null && !bodyParameters.isEmpty()) {
@@ -300,8 +307,6 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                 
                 components.add(new Map<String, Object>{ 'type' => 'body', 'parameters' => bodyParams });
             } else if((String)data.get('templateType') == 'Authentication'){
-                Integer randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
-                String randomCodeStr = String.valueOf(randomCode);
                 components.add(new Map<String, Object>{
                     'type' => 'body',
                     'parameters' => new List<Map<String, Object>>{
@@ -338,8 +343,6 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                             });
                         }
                         when 'OTP' {
-                            Integer randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
-                            String randomCodeStr = String.valueOf(randomCode);
                             components.add(new Map<String, Object>{
                                 'type' => 'button',
                                 'sub_type' => 'url',
@@ -372,7 +375,7 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             payload.put('template', template);
             return JSON.serialize(payload);
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'createJSONBody', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => '', 'chatId' => null, 'moreDetails' => '', 'apiResponse' => '' });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'createJSONBody', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return null;
         }
     }
