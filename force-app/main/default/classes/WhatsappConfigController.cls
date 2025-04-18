@@ -119,5 +119,19 @@ public class WhatsappConfigController {
         }
 
     }
-    
+
+    @RemoteAction
+    public static Boolean checkLicenseUsablility(){
+        try {
+            LicenseConfig__c config = LicenseConfig__c.getInstance();
+            if(config != null && config.Is_License_Valid__c && config.Expiration_Date__c != null && config.Expiration_Date__c > Date.today()){
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsappConfigController', 'methodName' => 'checkLicenseUsablility', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            return false;
+        }
+    }
 }
