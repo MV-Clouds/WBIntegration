@@ -3,7 +3,6 @@ import getTemplateData from '@salesforce/apex/ChatWindowController.getTemplateDa
 import sendWhatsappMessage from '@salesforce/apex/ChatWindowController.sendWhatsappMessage';
 import createChat from '@salesforce/apex/ChatWindowController.createChat';
 import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
-import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class TemplatePreview extends LightningElement {
     @api templateId;
@@ -30,33 +29,15 @@ export default class TemplatePreview extends LightningElement {
     NoPreviewAvailableImg = NoPreviewAvailable;
 
     @track showSpinner = false;
-    @track showLicenseError = false;
 
-    async connectedCallback(){
-        try {
-            this.showSpinner = true;
-            await this.checkLicenseStatus();
-            if (this.showLicenseError) {
-                return; // Stops execution if license is expired
-            }
-            
+    connectedCallback(){
+        try{
             this.fetchInitialData();
             if(!this.showButtons){
                 this.template.host.style.setProperty('--max-height-of-the-preview-div', 'fit-content');
             }
         }catch(e){
             console.error('Error in connectedCallback:::', e.message);
-        }
-    }
-
-    async checkLicenseStatus() {
-        try {
-            const isLicenseValid = await checkLicenseUsablility();
-            if (!isLicenseValid) {
-                this.showLicenseError = true;
-            }
-        } catch (error) {
-            console.error('Error checking license:', error);
         }
     }
 
