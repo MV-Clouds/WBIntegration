@@ -251,7 +251,7 @@ public with sharing class ChatWindowController {
                 return resultMap;
             }
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
@@ -436,7 +436,7 @@ public with sharing class ChatWindowController {
         chats = [SELECT Id, WhatsAppMessageId__c, Message_Status__c FROM Chat__c WHERE Id IN :messageIds WITH SECURITY_ENFORCED];
         // List<WBConnect_Configuration__mdt> wbConfig = WBConnect_Configuration__mdt.getAll().values(); 
         String accessToken = wbConfig[0].MVWB__Access_Token__c;
-        String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
+        String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
 
         try {
             for (Chat__c chat : chats) {

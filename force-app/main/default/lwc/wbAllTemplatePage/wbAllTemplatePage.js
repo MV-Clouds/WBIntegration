@@ -20,9 +20,10 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import {loadStyle} from 'lightning/platformResourceLoader';
 import wbPreviewTemplateStyle from '@salesforce/resourceUrl/wbPreviewTemplateStyle';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbAllTemplatePage extends LightningElement {
-    @track isTemplateVisible = true;
+    @track isTemplateVisible = false;
     @track isCreateTemplate = false;
     @track categoryValue='';
     @track timePeriodValue='';
@@ -39,6 +40,7 @@ export default class WbAllTemplatePage extends LightningElement {
     @track editTemplateId='';
     @track subscription = null;
     channelName = '/event/MVWB__Template_Update__e';
+    @track showLicenseError = false;
 
     @wire(getCategoryAndStatusPicklistValues)
     wiredCategoryAndStatus({ error, data }) {
@@ -75,9 +77,30 @@ export default class WbAllTemplatePage extends LightningElement {
         return this.isFilterVisible ? 'combobox-container visible' : 'combobox-container hidden';
     }
 
-    connectedCallback(){
-        this.fetchAllTemplate();
-        this.registerPlatformEventListener();
+    async connectedCallback(){
+        try {
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            this.isTemplateVisible = true;
+            this.fetchAllTemplate();
+            this.registerPlatformEventListener();
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     renderedCallback() {

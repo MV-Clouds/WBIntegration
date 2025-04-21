@@ -39,7 +39,7 @@ import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
 import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
-
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbCreateTemplatePage extends LightningElement {
     maxTempNamelength = 512;
@@ -62,7 +62,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track flowCount = 0;
     @track marketingOpt = 0;
     @track isAllTemplate = false;
-    @track iseditTemplatevisible = true;
+    @track iseditTemplatevisible = false;
     @track isPreviewTemplate = false;
     @track showReviewTemplate=false;
     @track IsHeaderText = false;
@@ -158,6 +158,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track imageurl='';
     @track contentDocumentId='';
     @track isRendered=false;
+    @track showLicenseError = false;
 
     // -----------------------------------------------------------------
     @track isStage1 = true;
@@ -590,20 +591,41 @@ export default class WbCreateTemplatePage extends LightningElement {
         }));
     }
 
-    connectedCallback() {
-        this.fetchCountries();
-        this.fetchLanguages();
-        // this.fetchFields('Lead');
-        this.generateEmojiCategories();
-        this.fetchUpdatedTemplates(false);
-        this.fetchObjectsWithPhoneField();
-        getCompanyName()
-            .then(result => {
-                this.companyName = result;
-            })
-            .catch(error => {
-                console.error('Error fetching company name:', error);
-            });
+    async connectedCallback(){
+        try {
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            this.iseditTemplatevisible = true;
+            this.fetchCountries();
+            this.fetchLanguages();
+            // this.fetchFields('Lead');
+            this.generateEmojiCategories();
+            this.fetchUpdatedTemplates(false);
+            this.fetchObjectsWithPhoneField();
+            getCompanyName()
+                .then(result => {
+                    this.companyName = result;
+                })
+                .catch(error => {
+                    console.error('Error fetching company name:', error);
+                });
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     fetchObjectsWithPhoneField() {

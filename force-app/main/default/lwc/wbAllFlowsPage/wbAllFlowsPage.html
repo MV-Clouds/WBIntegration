@@ -1,11 +1,17 @@
-<!--
-  @description       : 
-  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
-  @group             : 
-  @last modified on  : 04-09-2025
-  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
--->
 <template>
+
+    <template if:true={showLicenseError}>
+        <div class="license-error">
+            <div class="popup-container">
+                <div class="popup-content">
+                    <h2>⚠️ License Expired</h2>
+                    <p>WBConnect license has expired. Please renew to continue using.</p>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template if:false={showLicenseError}>
+
     <template if:true={isFlowVisible}>
         <div class="slds-theme_default main">
             <template if:true={isLoading}>
@@ -127,5 +133,7 @@
     </template>
     <template if:true={iscreateflowvisible}>
         <c-wb-create-flow-page></c-wb-create-flow-page>        
+    </template>
+
     </template>
 </template>
