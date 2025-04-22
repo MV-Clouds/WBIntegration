@@ -2,7 +2,7 @@
  * @description       :
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             :
- * @last modified on  : 04-13-2025
+ * @last modified on  : 04-22-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
  **/
 public without sharing class AutomationConfigTriggerHandler {
@@ -15,6 +15,7 @@ public without sharing class AutomationConfigTriggerHandler {
     private Boolean isDelete = false;
     private Boolean isUndelete = false;
     private static final String CLASS_NAME = 'AutomationConfigTriggerHandler';
+    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
     
     public AutomationConfigTriggerHandler( List<Chat__c> newList,  List<Chat__c> oldList, Map<Id, Chat__c> newMap, Map<Id, Chat__c> oldMap, Boolean isInsert, Boolean isUpdate, Boolean isDelete, Boolean isUndelete) {
         this.recordNewList = newList;
@@ -28,6 +29,8 @@ public without sharing class AutomationConfigTriggerHandler {
     }
     
     public void filterAndProcessValidChats() {
+try {
+            
         List<Chat__c> validChats = new List<Chat__c>();
         Set<Id> replyToIds = new Set<Id>();
         
@@ -58,10 +61,26 @@ public without sharing class AutomationConfigTriggerHandler {
             processAutomationConfiguration(validChats);
         } else {
             System.debug('No valid messages found (Button/Interactive & Inbound Message). Exiting trigger.');
+}
+
+        } catch (Exception e) {
+
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigTriggerHandler',
+                'methodName' => 'filterAndProcessValidChats',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
         }
     }
     
     private Boolean isValidAutomationChat(Chat__c newChat, Chat__c parentChat) {
+try {
+            
         if (newChat.Type_of_Message__c != 'Inbound Messages') {
             System.debug('Not an Inbound Message. Exiting. ' + newChat.Message__c + 'ID = ' + newChat.Id);
             return false;
@@ -80,6 +99,21 @@ public without sharing class AutomationConfigTriggerHandler {
         }
         
         return buttonType == 'QUICK_REPLY' || newChat.Message_Type__c == 'interactive';
+
+        } catch (Exception e) {
+            
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigTriggerHandler',
+                'methodName' => 'isValidAutomationChat',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
+        }
     }
     
     public static String getButtonTypeByText(String jsonInput, String buttonText) {
@@ -96,13 +130,25 @@ public without sharing class AutomationConfigTriggerHandler {
                 }
             }
         } catch (Exception e) {
-            System.debug('Error parsing JSON: ' + e.getMessage());
+            
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigTriggerHandler',
+                'methodName' => 'getButtonTypeByText',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
         }
         return 'Not Found'; // Return "Not Found" if no matching text is found
     }
     
     public static void processAutomationConfiguration(List<Chat__c> newChats) {
         System.debug('Handler method called');
+try {
         
         // Step 1: Collect context message IDs and filter relevant chats
         Set<String> contextMessageIds = new Set<String>();
@@ -158,9 +204,26 @@ public without sharing class AutomationConfigTriggerHandler {
         
         // Step 5: Process matching chats and send responses
         processMatchingChats(potentialPathReplies, originalChatsMap, templateIdToAutomationIdMap, automationPathsMap);
+
+        } catch (Exception e) {
+            
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigTriggerHandler',
+                'methodName' => 'processAutomationConfiguration',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+        }
+
     }
     
     private static Map<String, Chat__c> fetchOriginalChats(Set<String> contextMessageIds) {
+try {
+            
         System.debug('Fetching original chats for context message IDs: ' + contextMessageIds);
         Map<String, Chat__c> originalChatsMap = new Map<String, Chat__c>();
         
@@ -177,6 +240,21 @@ public without sharing class AutomationConfigTriggerHandler {
             }
         }
         return originalChatsMap;
+
+        } catch (Exception e) {
+            
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigTriggerHandler',
+                'methodName' => 'fetchOriginalChats',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
+        }
     }
     
     private static Set<String> extractTemplateIds(Map<String, Chat__c> originalChatsMap) {
@@ -191,7 +269,9 @@ public without sharing class AutomationConfigTriggerHandler {
     }
     
     private static Map<String, List<Id>> fetchAutomationMappings(Set<String> templateIdsToCheck) {
-        Map<String, List<Id>> templateIdToAutomationIdMap = new Map<String, List<Id>>();
+        try {
+            
+            Map<String, List<Id>> templateIdToAutomationIdMap = new Map<String, List<Id>>();
         
         for (Automation__c automation : [
             SELECT Id, WB_Template__c
@@ -209,10 +289,26 @@ public without sharing class AutomationConfigTriggerHandler {
             }
         }
         return templateIdToAutomationIdMap;
+
+    } catch (Exception e) {
+            
+        ExceptionHandler.logException(new Map<String, Object>{
+            'className' => 'AutomationConfigTriggerHandler',
+            'methodName' => 'fetchAutomationMappings',
+            'exceptionObj' => e,
+            'isApiException' => false,
+            'statusCode' => null,
+            'chatId' => null,
+            'moreDetails' => e.getMessage(),
+            'apiResponse' => null
+        });
+        return null;
+    }
     }
     
     private static Map<Id, Map<String, Automation_Path__c>> fetchAutomationPaths(Map<String, List<Id>> templateIdToAutomationIdMap) {
-        System.debug('Fetching Automation Paths for template IDs: ' + templateIdToAutomationIdMap);
+        try {
+            System.debug('Fetching Automation Paths for template IDs: ' + templateIdToAutomationIdMap);
         Map<Id, Map<String, Automation_Path__c>> automationPathsMap = new Map<Id, Map<String, Automation_Path__c>>();
         
         Set<Id> relevantAutomationIds = new Set<Id>();
@@ -246,10 +342,27 @@ public without sharing class AutomationConfigTriggerHandler {
             }
         }
         return automationPathsMap;
+
+    } catch (Exception e) {
+            
+        ExceptionHandler.logException(new Map<String, Object>{
+            'className' => 'AutomationConfigTriggerHandler',
+            'methodName' => 'fetchAutomationPaths',
+            'exceptionObj' => e,
+            'isApiException' => false,
+            'statusCode' => null,
+            'chatId' => null,
+            'moreDetails' => e.getMessage(),
+            'apiResponse' => null
+        });
+        return null;
+    }
     }
     
     private static void processMatchingChats(List<Chat__c> potentialPathReplies, Map<String, Chat__c> originalChatsMap, Map<String, List<Id>> templateIdToAutomationIdMap, Map<Id, Map<String, Automation_Path__c>> automationPathsMap) {
-        for (Chat__c newChat : potentialPathReplies) {
+        try {
+
+            for (Chat__c newChat : potentialPathReplies) {
             
             Chat__c originalChat = new Chat__c();
             
@@ -454,6 +567,19 @@ public without sharing class AutomationConfigTriggerHandler {
                 }
             }
         }
+    } catch (Exception e) {
+            
+        ExceptionHandler.logException(new Map<String, Object>{
+            'className' => 'AutomationConfigTriggerHandler',
+            'methodName' => 'processMatchingChats',
+            'exceptionObj' => e,
+            'isApiException' => false,
+            'statusCode' => null,
+            'chatId' => null,
+            'moreDetails' => e.getMessage(),
+            'apiResponse' => null
+        });
+    }
     }
     
     public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
