@@ -859,8 +859,10 @@ try {
                 resultMap.put('chat', chat);
                 // return resultMap;
             }
-            String accessToken = wbConfig[0].Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].Phone_Number_Id__c + '/messages';
+
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
+
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');

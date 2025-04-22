@@ -21,7 +21,7 @@ public with sharing class ObjectConfigController {
     @return          : List<Map<String, String>> - return list of objects with phone field.
     ********************************************************
     */
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static List<Map<String, String>> getObjectsWithPhoneField() {
         List<Map<String, String>> objectList = new List<Map<String, String>>();
         try {
@@ -382,7 +382,7 @@ public with sharing class ObjectConfigController {
             Map<String, Object> objectConfigMap = new Map<String, Object>();
             objectConfigMap.put('objectApiName', 'Contact');
             objectConfigMap.put('phoneField', 'Phone');
-            objectConfigMap.put('requiredFieds', requiredFields);
+            objectConfigMap.put('requiredFields', requiredFields);
 
             String dummyObjectConfig = JSON.serialize(objectConfigMap);
     

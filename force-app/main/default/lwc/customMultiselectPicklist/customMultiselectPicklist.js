@@ -29,6 +29,14 @@ export default class CustomMultiselectPicklist extends LightningElement {
         });
     }
 
+    connectedCallback() {
+        document.addEventListener('click', this.toggleDropdown);
+    }
+
+    disconnectedCallback() {
+        document.removeEventListener('click', this.toggleDropdown);
+    }    
+
     handleSearchInput(event) {
         this.searchTerm = event.target.value;
     }
@@ -67,7 +75,12 @@ export default class CustomMultiselectPicklist extends LightningElement {
         }
     }
     
-    handleBlur() {
+    handleBlur(event) {
+        const relatedTarget = event.relatedTarget;
+        const dropdown = this.template.querySelector('.dropdown');
+        if (!dropdown || (relatedTarget && dropdown.contains(relatedTarget))) {
+            return;
+        }
         this.isDropdownOpen = false;
     }
 }
