@@ -21,7 +21,7 @@
 
 /* Container and Header Styles */
 .automation-container {
-    border: 1px solid #dddbda; /* Light grey border */
+    border: 1px solid #dddbda;
     border-radius: .25rem;
 }
 
@@ -29,15 +29,15 @@
     background-color: #0070d2; /* Salesforce blue */
     /* border-top-left-radius: .25rem;
     border-top-right-radius: .25rem; */
-    margin: -1px; /* Adjust to align with border */
+    margin: -1px;
     border-radius: 30px;
     font-weight: 600;
 }
 
 /* Ensure buttons stretch and handle selected state */
 .selected-button {
-    background-color: #f3f2f2; /* Light grey background for selected button */
-    border-width: 2px; /* Example: Make border thicker */
+    background-color: #f3f2f2;
+    border-width: 2px;
     font-weight: bold;
 }
 
@@ -56,9 +56,9 @@
 
 /* Style the list items */
 .scrollable-list {
-    max-height: 250px; /* Adjust as needed */
+    max-height: 250px;
     overflow-y: auto;
-    border: 1px solid #dddbda; /* Border around the list */
+    border: 1px solid #dddbda;
     border-radius: .25rem;
 }
 
@@ -68,18 +68,18 @@
 }
 
 .list-item:hover {
-    background-color: #f3f2f2; /* Light hover effect */
+    background-color: #f3f2f2;
 }
 
 .selected-item {
-    background-color: #e0e0e0; /* Darker grey for selected item */
+    background-color: #e0e0e0;
     font-weight: bold;
-    border-left: 3px solid #0070d2; /* Blue indicator */
+    border-left: 3px solid #0070d2;
 }
 
 /* Adjust combo box width if needed */
 .select-box {
-    min-width: 150px; /* Example width */
+    min-width: 150px;
 }
 
 /* Add border to footer */

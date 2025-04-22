@@ -68,6 +68,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : '',
                     templateType: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Type__c : ''
                 }));
+
                 // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
                 this.automationData = [...this.originalAutomationData];
             })
@@ -159,6 +160,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                 // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
                 this.automationData = [...this.originalAutomationData];
 
+
                 // console.log('this.automationData in handleSave =', JSON.stringify(this.automationData));
 
                 const savedAutomation = this.automationData.find(auto => auto.id === savedRecordId);
@@ -172,6 +174,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                             templateType: savedAutomation.templateType
                         }
                     };
+
                     // console.log('Record ID:', savedAutomation.id, 'Template Type:', savedAutomation.templateType);
 
                     let encodedDef = btoa(JSON.stringify(cmpDef));
@@ -212,6 +215,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     */
     handleSearch(event) {
         // console.log('Search term:', event.target.value);
+
         const searchTerm = event.target.value.toLowerCase().trim();
         this.automationData = this.originalAutomationData.filter(auto =>
             (auto.name || '').toLowerCase().includes(searchTerm) ||
