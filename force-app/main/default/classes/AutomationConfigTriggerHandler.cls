@@ -582,8 +582,6 @@ try {
     }
     }
     
-    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
-    
     public static Map<String, object> getTemplateData(String templateId, String recordId, String objectApiName){
         try {
             Map<String, Object> templateData = new Map<String, Object>();
