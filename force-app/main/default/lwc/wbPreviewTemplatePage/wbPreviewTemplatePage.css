@@ -166,7 +166,13 @@ input{
     padding: 0.3rem;
 }
 .phone-input{
-    padding-left: 5rem;
+    padding-left: 0.5rem;
+    -moz-appearance: textfield;
+}
+.phone-input::-webkit-outer-spin-button,
+.phone-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .left{
     width: 100%;
@@ -181,14 +187,13 @@ input{
 }
 .send-btn{
     border-radius: 4px;
-    width: 9rem;
+    width: 12rem;
     border: none;
     color: white;
     font-size: 14px;
     background-color: #0176D3;
     cursor: pointer;
 }
-
 .send-btn-active{
     background-color: #e0e0e0; /* Light gray for inactive state */
     color: #a0a0a0; /* Gray text */
@@ -452,7 +457,6 @@ input{
     border-radius: 3px;
     padding: 0.1rem;
     border: none;
-    width: 4rem;
 }
 .phone-container {
     width: 600px;
@@ -502,12 +506,11 @@ input{
     gap: 0.4rem;
 }
 .urltype{
-    position: absolute;
-    top: 0.3rem;
-    left: 0.2rem;
+    width : 136px;
     padding-right: 0.4rem;
     border-right: 1px solid #d7d7d7;
 }
+
 
 .variable-head{
     font-size: 14px;
