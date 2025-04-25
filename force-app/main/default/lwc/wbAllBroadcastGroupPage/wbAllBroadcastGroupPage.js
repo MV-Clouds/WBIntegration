@@ -2,6 +2,8 @@ import { LightningElement, track } from 'lwc';
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
 import deleteBroadcastGroup from '@salesforce/apex/BroadcastMessageController.deleteBroadcastGroup';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+
 export default class WbAllBroadcastGroupPage extends LightningElement {
     @track data = [];
     @track filteredData = [];
@@ -11,7 +13,8 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
     @track visiblePages = 5;
     @track isLoading = false;
     @track isNewBroadcast = false;
-    @track isAllGroupPage = true;
+    @track isAllGroupPage = false;
+    @track showLicenseError = false;
 
     broadcastGroupId = null;
 
@@ -90,8 +93,29 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
         return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
     }
     
-    connectedCallback() {
+    async connectedCallback(){
+        try {
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            this.isAllGroupPage = true;
         this.loadBroadcastGroups();
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     loadBroadcastGroups() {

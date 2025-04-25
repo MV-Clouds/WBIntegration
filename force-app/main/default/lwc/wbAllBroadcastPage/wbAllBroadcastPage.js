@@ -5,6 +5,7 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
 import { subscribe, unsubscribe } from 'lightning/empApi';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbAllBroadcastPage extends LightningElement {
     @track data = [];
@@ -27,8 +28,8 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track popUpSecondpage = false;
     @track popUpLastPage = false;
     @track popupHeader = 'Choose Broadcast Groups';
-
-
+    @track isTemplateVisible = false;
+    @track showLicenseError = false;
 
     subscription = {};
     channelName = '/event/MVWB__BroadcastUpdateEvent__e';
@@ -111,11 +112,36 @@ export default class WbAllBroadcastPage extends LightningElement {
     get isNextDisabled() {
         return this.selectedGroupIds.length === 0;
     }
-    
-    connectedCallback() {
-        this.loadBroadcastGroups();
-        this.subscribeToPlatformEvent();
-        this.loadAllTemplates(); // Load templates on component initialization
+    async connectedCallback(){
+        try {
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            this.isTemplateVisible = true;
+            if (this.isBroadCastSelected) {
+                this.loadBroadcastGroups();
+            } else {
+                this.loadCampaigns();
+            }
+            this.subscribeToPlatformEvent();
+            this.loadAllTemplates(); // Load templates on component initialization
+            
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     disconnectedCallback(){

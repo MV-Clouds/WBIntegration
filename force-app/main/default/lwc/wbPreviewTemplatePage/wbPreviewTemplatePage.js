@@ -20,9 +20,10 @@ import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchD
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
 import CountryJson from '@salesforce/resourceUrl/CountryJson';
 import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbPreviewTemplatePage extends LightningElement {
-    @track ispreviewTemplate=true;
+    @track ispreviewTemplate=false;
     @track filepreview;
     @track originalHeader;
     @track originalBody;
@@ -57,6 +58,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track NoPreviewAvailableImg = NoPreviewAvailable;
     @track headerPramsCustomList = [];
     @track bodyPramsCustomList = [];
+    @track showLicenseError = false;
+
 
     get contactFields() {
         return Object.entries(this.contactDetails)
@@ -106,9 +109,29 @@ export default class WbPreviewTemplatePage extends LightningElement {
         return this.selectedContactId ? 'standard:contact' : ''; 
     }
 
-    connectedCallback() {
-        this.fetchCountries();
-        this.fetchReplaceVariableTemplate(this.templateid,null);
+    async connectedCallback(){
+        try {
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            this.fetchCountries();
+            this.fetchReplaceVariableTemplate(this.templateid,null);
+            this.ispreviewTemplate = true;
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     getIconName(btntype) {

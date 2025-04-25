@@ -16,7 +16,7 @@ public without sharing class AutomationConfigController {
     @AuraEnabled
     public static List<Automation__c> getAllAutomations() {
         try {
-            return [SELECT Id, Name, Description__c, WB_Template__r.Template_Name__c, WB_Template__r.MVWB__Template_Type__c FROM Automation__c];
+            return [SELECT Id, Name, Description__c, WB_Template__r.Template_Name__c, WB_Template__r.Template_Type__c FROM Automation__c];
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'AutomationConfigController',
@@ -36,12 +36,53 @@ public without sharing class AutomationConfigController {
     /**
     * Method Name : getTemplates
     * @description : Get all Template records
-    * @return MVWB__Template__c records
+    * @return Template__c records
     */
     @AuraEnabled
-    public static List<MVWB__Template__c> getTemplates() {
+    public static List<Template__c> getTemplates() {
         try {
-            return [SELECT Id, MVWB__Template_Name__c, MVWB__Template_Type__c FROM MVWB__Template__c WITH USER_MODE];
+            // Step 1: Fetch valid object names from ChatWindowConfigInfo
+            Set<String> validObjectNames = new Set<String>();
+            
+            MVWB__Object_Config__mdt config = [
+                SELECT MVWB__ChatWindowConfigInfo__c 
+                FROM MVWB__Object_Config__mdt 
+                WHERE DeveloperName = 'objectConfigInfo' 
+                LIMIT 1
+            ];
+    
+            if (String.isNotBlank(config.MVWB__ChatWindowConfigInfo__c)) {
+                Map<String, Object> chatConfig = (Map<String, Object>) JSON.deserializeUntyped(config.MVWB__ChatWindowConfigInfo__c);
+                validObjectNames.addAll(chatConfig.keySet());
+            }
+    
+            if (validObjectNames.isEmpty()) return new List<Template__c>();
+    
+            // Step 2: Gather valid template IDs from Template Variables
+            Set<Id> templatesWithValidObjects = new Set<Id>();
+            Set<Id> templatesWithAnyVariables = new Set<Id>();
+    
+            for (Template_Variable__c tv : [
+                SELECT Template__c, Object_Name__c 
+                FROM Template_Variable__c
+            ]) {
+                templatesWithAnyVariables.add(tv.Template__c);
+                if (validObjectNames.contains(tv.Object_Name__c)) {
+                    templatesWithValidObjects.add(tv.Template__c);
+                }
+            }
+    
+            // Step 3: Return templates with valid variables or no variables, and matching status
+            List<Template__c> finalTemplates = [
+                SELECT Id, Template_Name__c, Template_Type__c 
+                FROM Template__c 
+                WHERE Status__c = 'Active-Quality Pending'
+                  AND (Id IN :templatesWithValidObjects OR Id NOT IN :templatesWithAnyVariables)
+                WITH USER_MODE
+            ];
+    
+            return finalTemplates;
+    
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'AutomationConfigController',
@@ -195,7 +236,7 @@ public without sharing class AutomationConfigController {
     @AuraEnabled
     public static Automation__c getAutomationById(Id recordId) {
         try {
-            return [SELECT Id, Name, Description__c, WB_Template__r.MVWB__Template_Name__c, WB_Template__r.MVWB__Template_Type__c, WB_Template__r.MVWB__WBButton_Body__c FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
+            return [SELECT Id, Name, Description__c, WB_Template__r.Template_Name__c, WB_Template__r.Template_Type__c, WB_Template__r.WBButton_Body__c FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'AutomationConfigController',
@@ -295,6 +336,8 @@ public without sharing class AutomationConfigController {
             }
             return automationPaths;
         } catch (Exception e) {
+            System.debug('Error in saveAutomationPaths: ' + e.getMessage());
+            System.debug(e.getLineNumber());
             ExceptionHandler.logException(new Map<String, Object>{
                 'className' => 'AutomationConfigController',
                 'methodName' => 'saveAutomationPaths',
@@ -386,6 +429,61 @@ public without sharing class AutomationConfigController {
         }
         
         return objectList;
+    }
+
+    /**
+    * Method Name : getUsedObjectNamesByTemplate
+    * @description : Fetch used object names by template
+    * @param templateId Id of the template
+    * @return List of String containing used object names
+    */
+    @AuraEnabled
+    public static List<String> getUsedObjectNamesByTemplate(Id templateId) {
+        try {
+            
+            Set<String> usedObjectNames = new Set<String>();
+    
+            // First get Automation records linked to the given Template ID
+            List<Automation__c> automations = [
+                SELECT Id
+                FROM Automation__c
+                WHERE WB_Template__c = :templateId
+            ];
+            
+            Set<Id> automationIds = new Set<Id>();
+            for (Automation__c automation : automations) {
+                automationIds.add(automation.Id);
+            }
+    
+            if (!automationIds.isEmpty()) {
+                // Get Object Names used in related Automation_Path__c records
+                for (Automation_Path__c path : [
+                    SELECT Object_Name__c
+                    FROM Automation_Path__c
+                    WHERE Automation__c IN :automationIds
+                    AND Object_Name__c != null
+                ]) {
+                    usedObjectNames.add(path.Object_Name__c.trim());
+                }
+            }
+    
+            // Convert Set to List before returning (for AuraEnabled compatibility)
+            return new List<String>(usedObjectNames);
+
+        } catch (Exception e) {
+            
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'AutomationConfigController',
+                'methodName' => 'getUsedObjectNamesByTemplate',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+            return null;
+        }
     }
 
     /**
@@ -531,13 +629,13 @@ public without sharing class AutomationConfigController {
 
         // Step 1: Query the template related to the automation
         Automation__c automation = [
-            SELECT WB_Template__r.MVWB__WBButton_Body__c 
+            SELECT WB_Template__r.WBButton_Body__c 
             FROM Automation__c 
             WHERE Id = :automationId 
             LIMIT 1
         ];
     
-        String buttonBodyJson = automation.WB_Template__r.MVWB__WBButton_Body__c;
+        String buttonBodyJson = automation.WB_Template__r.WBButton_Body__c;
         if (String.isBlank(buttonBodyJson)) { return null; }
     
             // Step 2: Parse the JSON string into a list of objects
@@ -570,7 +668,7 @@ public without sharing class AutomationConfigController {
 
     /**
     * Method Name : getFlowFields
-    * @description : Fetch flow fields from MVWB__Flow__c record
+    * @description : Fetch flow fields from Flow__c record
     * @param flowId Id of the flow
     * @return String flow fields JSON
     */
@@ -578,12 +676,12 @@ public without sharing class AutomationConfigController {
     public static String getFlowFields(String flowId) {
         try {
             
-            MVWB__Flow__c flow =  [SELECT Id, MVWB__Flow_JSON__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED];
+            Flow__c flow =  [SELECT Id, Flow_JSON__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED];
     
-            if (flow == null || String.isBlank(flow.MVWB__Flow_JSON__c)) {
+            if (flow == null || String.isBlank(flow.Flow_JSON__c)) {
                 return null; // or handle the error as needed
             }
-            return flow.MVWB__Flow_JSON__c;
+            return flow.Flow_JSON__c;
             
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{
