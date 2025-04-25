@@ -70,6 +70,7 @@ global class PostInstallClass implements InstallHandler {
                     mapOfData.put('Org_Type__c',org.OrganizationType);
                     mapOfData.put('Environment__c', environment);
                     mapOfData.put('Domain__c', orgDomain);
+                    mapOfData.put('Expiration_DateTime__c', Date.today().addMonths(1));
                     mapOfData.put('Installed_Product__c', 'WBConnect');
                     orgDataTable = '<table border="1" style="border-collapse: collapse;text-align:left; color: black;" cellpadding="4px">' +
                                     '<tr style="text-align:center;">' +
