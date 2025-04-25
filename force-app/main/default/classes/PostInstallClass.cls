@@ -24,20 +24,36 @@ global class PostInstallClass implements InstallHandler {
     */
     global void onInstall(InstallContext context) {
         try {
-            EmbeddedSignUpConfig__c embeddedConfig = EmbeddedSignUpConfig__c.getInstance();
+            MVWB__EmbeddedSignUpConfig__c embeddedConfig = MVWB__EmbeddedSignUpConfig__c.getInstance();
             List<Profile> systemAdminProfile = [SELECT Id, Name FROM Profile WHERE Name = 'System Administrator'];
-            embeddedConfig.Client_Id__c = '514916280628381';
-            embeddedConfig.Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
-            embeddedConfig.Config_Id__c = '8971126402921271';
-            embeddedConfig.SetupOwnerId = systemAdminProfile[0].Id;
+            embeddedConfig.MVWB__Client_Id__c = '514916280628381';
+            embeddedConfig.MVWB__Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
+            embeddedConfig.MVWB__Config_Id__c = '8971126402921271';
+            embeddedConfig.MVWB__SetupOwnerId = systemAdminProfile[0].Id;
             upsert embeddedConfig;
             
-            LicenseConfig__c licenseConfig = LicenseConfig__c.getInstance();
-            licenseConfig.Client_Id__c = '3MVG9fe4g9fhX0E4o3IT3oGMiqurUSa0NG8pvAJd48VWiX4Nnuf901ij43yVCcLidSdA76x3f64HEf.e.0nLh	';
-            licenseConfig.Client_Secret__c = 'CE75344BC73CEE272C81B8791E24EB6C73A9B66C68F41BA89E90CD5A3900B9E0';
-            licenseConfig.Username__c = 'insightsintegration@00d5g000007qhe9eaa.ext';
-            licenseConfig.Password__c = 'wbconnect@1';
-            upsert licenseConfig;
+            List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Client_Id__c, MVWB__Client_Secret__c, MVWB__Is_License_Valid__c, MVWB__Expiration_Date__c, MVWB__Next_Callout_Date__c, MVWB__Password__c, MVWB__Username__c FROM MVWB__LicenseConfig__c LIMIT 1];
+            MVWB__LicenseConfig__c licenseConfig = new MVWB__LicenseConfig__c();
+            if (configList != null && configList.size() > 0) {
+                licenseConfig = configList[0];
+                licenseConfig.MVWB__Client_Id__c = '3MVG9fe4g9fhX0E4o3IT3oGMiqurUSa0NG8pvAJd48VWiX4Nnuf901ij43yVCcLidSdA76x3f64HEf.e.0nLh';
+                licenseConfig.MVWB__Client_Secret__c = 'CE75344BC73CEE272C81B8791E24EB6C73A9B66C68F41BA89E90CD5A3900B9E0';
+                licenseConfig.MVWB__Username__c = 'insightsintegration@00d5g000007qhe9eaa.ext';
+                licenseConfig.MVWB__Password__c = 'wbconnect@1';
+                licenseConfig.MVWB__Is_License_Valid__c = true;
+                licenseConfig.MVWB__Expiration_Date__c = Date.today().addMonths(1);
+                licenseConfig.MVWB__Next_Callout_Date__c = Date.today().addMonths(1);
+                update licenseConfig;
+            } else {
+                licenseConfig.MVWB__Client_Id__c = '3MVG9fe4g9fhX0E4o3IT3oGMiqurUSa0NG8pvAJd48VWiX4Nnuf901ij43yVCcLidSdA76x3f64HEf.e.0nLh';
+                licenseConfig.MVWB__Client_Secret__c = 'CE75344BC73CEE272C81B8791E24EB6C73A9B66C68F41BA89E90CD5A3900B9E0';
+                licenseConfig.MVWB__Username__c = 'insightsintegration@00d5g000007qhe9eaa.ext';
+                licenseConfig.MVWB__Password__c = 'wbconnect@1';
+                licenseConfig.MVWB__Is_License_Valid__c = true;
+                licenseConfig.MVWB__Expiration_Date__c = Date.today().addMonths(1);
+                licenseConfig.MVWB__Next_Callout_Date__c = Date.today().addMonths(1);
+                insert licenseConfig;
+            }
 
             if(context.previousVersion() == null || Test.isRunningTest()) {
                 String orgDataTable = '';
@@ -175,7 +191,10 @@ global class PostInstallClass implements InstallHandler {
                 Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
 
                 // Call the PLMS validity check
-                PLMSController.getPLMSValidity();
+                DateTime userNextCalloutTime = Date.today().addMonths(1);
+                String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
+                String jobName = 'PLMS_Validity_Check_' + System.currentTimeMillis();
+                System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
             }
         } catch (Exception e) {
             Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();

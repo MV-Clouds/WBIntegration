@@ -245,15 +245,21 @@ public with sharing class ObjectConfigController {
     @AuraEnabled
     public static String saveUserConfig(String jsonData, String jsonDataForChat) {
         try {
-            List<MVWB__Object_Config__mdt> config = [SELECT MasterLabel, DeveloperName FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
-            Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
-            if(config.size() > 0){
-                mdata.fullName = 'MVWB__Object_Config__mdt.' + config[0].DeveloperName; 
-                mdata.label = config[0].MasterLabel;
-            } else {
-                mdata.fullName = 'MVWB__Object_Config__mdt.objectConfigInfo'; 
-                mdata.label = 'objectConfigInfo';
+            String devName = 'objectConfigInfo';
+            String masterLabel = 'objectConfigInfo';
+
+            List<MVWB__Object_Config__mdt> configList = [SELECT MasterLabel, DeveloperName, MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            MVWB__Object_Config__mdt config = new MVWB__Object_Config__mdt();
+
+            if (!configList.isEmpty()) {
+                config = configList[0];
+                devName = config.DeveloperName;
+                masterLabel = config.MasterLabel;
             }
+
+            Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
+            mdata.fullName = 'MVWB__Object_Config__mdt.' + devName; 
+            mdata.label = masterLabel;
 
             if(jsonData != null){
                 Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
@@ -274,7 +280,7 @@ public with sharing class ObjectConfigController {
 
             Metadata.Operations.enqueueDeployment(container, null);
 
-            return 'sucess';
+            return 'Success';
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ObjectConfigController', 'methodName' => 'saveUserConfig', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return 'Error: ' + e.getMessage();

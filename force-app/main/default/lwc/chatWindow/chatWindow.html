@@ -1,5 +1,6 @@
 <template>
     <template if:false={showLicenseError}>
+
     <lightning-spinner alternative-text="Loading" size="small" if:true={showSpinner}></lightning-spinner>
     
     <div class="main-chat-window-div">
@@ -65,14 +66,15 @@
                                     <img class="message-image" src={chat.MVWB__Message__c} onerror={handleImageError} alt="Photo"/>
                                 </div>
                                 <div if:true={chat.isVideo}>
-                                    <video class="message-video" src={chat.MVWB__Message__c} onerror={handleImageError} alt="Video" controls></video>
+                                    <video class="message-video" src={chat.MVWB__Message__c} alt="Video" controls></video>
                                 </div>
                                 <div if:true={chat.isDoc}>
                                     <template if:false={chat.isAWSFile}>
                                         <div class="doc-preview">
                                             <div class="slds-file slds-file_card slds-has-title">
                                                 <figure>
-                                                    <a href={chat.filePreviewUrl} class="slds-file__crop" onclick={handlePreview} data-id={chat.contentDocumentId}>
+                                                    <a href={chat.filePreviewUrl} class="slds-file__crop" onclick={handlePreview}
+                                                        data-id={chat.contentDocumentId}>
                                                         <img class="thumbnail" src={chat.fileThumbnail} alt="No Preview Available" onerror={handleDocError} />
                                                     </a>
                                                     <figcaption class="slds-file__title slds-file__title_card">
@@ -82,7 +84,11 @@
                                                             </p>
                                                         </div>
                                                         <a href={chat.fileUrl} >
-                                                            <lightning-button-icon icon-name="utility:download" variant="bare" alternative-text="Download File"></lightning-button-icon>
+                                                            <lightning-button-icon
+                                                                icon-name="utility:download"
+                                                                variant="bare"
+                                                                alternative-text="Download File">
+                                                            </lightning-button-icon>
                                                         </a>
                                                     </figcaption>
                                                 </figure>
@@ -141,7 +147,18 @@
                                     <c-template-preview template-id={chat.MVWB__Whatsapp_Template__c} record-id={recordId} object-api-name={objectApiName}></c-template-preview>
                                 </div>
                                 <div class="timestamp">
-                                    <lightning-formatted-date-time value={chat.CreatedDate} hour="2-digit" minute="2-digit"></lightning-formatted-date-time>
+                                    <lightning-formatted-date-time 
+                                        value={chat.CreatedDate}
+                                        hour="2-digit"
+                                        minute="2-digit"
+                                    ></lightning-formatted-date-time>
+                                    <!-- <div class="status-icon" if:true={chat.isSent}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m3.125 7.5 3.125 3.125L12.5 4.375" stroke-width="1.5"></path></svg>
+                                    </div>
+                                    <div class="status-icon" if:true={chat.isDelivered}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke="darkgray" stroke-linecap="round" stroke-linejoin="round"><path d="m4.375 7.5 3.125 3.125L13.75 4.375" stroke-width="1.5"></path><path d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125" stroke-width="1.5"></path></svg>
+                                    </div> -->
+                                    
                                     <div class="status-icon" data-status={chat.MVWB__Message_Status__c} if:true={chat.isTick}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="10" width="16" viewBox="0 3 16 10" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path class="first-tick" stroke="#34B7F1" d="m4.375 7.5 3.125 3.125L13.75 4.375"></path><path class="second-tick" stroke="#34B7F1" d="m1.25 7.5 3.125 3.125m3.125 -3.125 3.125 -3.125"></path></svg>
                                     </div>
@@ -207,7 +224,8 @@
         <div class="popup-div" if:true={showPopup}>
             <div class="files-uploader-div" if:true={showFileUploader}>
                 <template if:false={isAWSEnabled}>
-                    <lightning-file-upload class="file-uploader" label={uploadLabel} name="fileUploader" accept={acceptedFormats} record-id={recordId} onuploadfinished={handleUploadFinished} variant="label-hidden"></lightning-file-upload>
+                    <lightning-file-upload class="file-uploader" label={uploadLabel} name="fileUploader" accept={acceptedFormats}
+                        record-id={recordId} onuploadfinished={handleUploadFinished} variant="label-hidden"></lightning-file-upload>
                 </template>
                 <template if:true={isAWSEnabled}>
                     <div class="upload-container">
