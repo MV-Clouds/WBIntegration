@@ -8,8 +8,9 @@ import { LightningElement, track, api } from 'lwc';
 import saveConfiguration from '@salesforce/apex/StorageIntegrationConfigController.saveConfiguration';
 import getConfiguration from '@salesforce/apex/StorageIntegrationConfigController.getConfiguration';
 import deleteRecordByAccessKey from '@salesforce/apex/StorageIntegrationConfigController.deleteRecordByAccessKey';
-import AWS_logo from '@salesforce/resourceUrl/AWS_logo';
-import NoData from '@salesforce/resourceUrl/NoData';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+import AWS_logo from '@salesforce/resourceUrl/MVWB__AWS_logo';
+import NoData from '@salesforce/resourceUrl/MVWB__NoData';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class StorageIntegration extends LightningElement {
@@ -30,6 +31,7 @@ export default class StorageIntegration extends LightningElement {
     @track isEditing = false;
     @track isDisabled = true;
     @track isFirstTime = false;
+    @track showLicenseError = false;
 
     @track showNoData = true;
     AWS_logo = AWS_logo;
@@ -71,8 +73,32 @@ export default class StorageIntegration extends LightningElement {
             });
     }
 
-    connectedCallback() {
-        this.fetchConfiguration();
+    async connectedCallback() {
+        try {
+            
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            if(this.pageRef){
+                this.objectApiName = this.pageRef.attributes.objectApiName;
+            }
+            this.fetchConfiguration();
+        } catch (error) {
+            
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            console.log('isLicenseValid => ', isLicenseValid);
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     /** 

@@ -1,99 +1,110 @@
 <template>
-    <div class="container">
-        <div class="main-configuration-div">
-            <div class="configuration-box">
-                <div class="logo">
-                    <img src={AWS_logo} alt="AWSLOGO" class="aws-logo">
-                </div>
-                <template if:true={showNoData}>
-                    <div class="container">
-                        <img src={NoData} alt="No Data Available" class="no-data-image"/>
+    <template if:false={showLicenseError}>
+        <div class="container">
+            <div class="main-configuration-div">
+                <div class="configuration-box">
+                    <div class="logo">
+                        <img src={AWS_logo} alt="AWSLOGO" class="aws-logo">
                     </div>
-                    <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleNewClick} label="New"></lightning-button>
-                </template>
-
-                <template if:false={showNoData}>
-                    <div class="field-container">
-                        <form action="">
-        
-                            <div class="row">
-                                <div class="col-25">
-                                    <label for="lname">Access Key</label>
-                                </div>
-                                <div class="col-75">
-                                    <input type="text" id="accesskey" name="AccessKey" placeholder="Your Access Key.." value={accessKey} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-25">
-                                    <label for="lname">Secret Access Key</label>
-                                </div>
-                                <div class="col-75">
-                                    <input type="text" id="secretaccesskey" name="SecretAccessKey" placeholder="Your Secret Access Key.." value={secretAccessKey} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
-                                </div>
-                            </div>
-        
-                            <div class="row">
-                                <div class="col-25">
-                                    <label for="lname">S3 Bucket Name</label>
-                                </div>
-                                <div class="col-75">
-                                    <input type="text" id="s3bucketname" name="S3BucketName" placeholder="Your S3 Bucket Name.." value={s3BucketName} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-25">
-                                    <label for="lname">S3 Region Name</label>
-                                </div>
-                                <div class="col-75">
-                                    <input type="text" id="s3regionname" name="S3RegionName" placeholder="Your S3 Region Name.." value={s3RegionName} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
-                                </div>
-                            </div>
-        
-                            <template if:true={hasDates}>
+                    <template if:true={showNoData}>
+                        <div class="container">
+                            <img src={NoData} alt="No Data Available" class="no-data-image"/>
+                        </div>
+                        <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleNewClick} label="New"></lightning-button>
+                    </template>
+    
+                    <template if:false={showNoData}>
+                        <div class="field-container">
+                            <form action="">
+            
                                 <div class="row">
                                     <div class="col-25">
-                                        <label for="lname">Created Date</label>
+                                        <label for="lname">Access Key</label>
                                     </div>
                                     <div class="col-75">
-                                        <input type="text" id="createddate" name="CreatedDate" placeholder="Your Created Date.." autocomplete="off" value={createdDate} disabled onchange={handleInput}>
+                                        <input type="text" id="accesskey" name="AccessKey" placeholder="Your Access Key.." value={accessKey} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
+                                    </div>
+                                </div>
+    
+                                <div class="row">
+                                    <div class="col-25">
+                                        <label for="lname">Secret Access Key</label>
+                                    </div>
+                                    <div class="col-75">
+                                        <input type="text" id="secretaccesskey" name="SecretAccessKey" placeholder="Your Secret Access Key.." value={secretAccessKey} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
+                                    </div>
+                                </div>
+            
+                                <div class="row">
+                                    <div class="col-25">
+                                        <label for="lname">S3 Bucket Name</label>
+                                    </div>
+                                    <div class="col-75">
+                                        <input type="text" id="s3bucketname" name="S3BucketName" placeholder="Your S3 Bucket Name.." value={s3BucketName} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
                                     </div>
                                 </div>
                                 
                                 <div class="row">
                                     <div class="col-25">
-                                        <label for="lname">Last Modified Date</label>
+                                        <label for="lname">S3 Region Name</label>
                                     </div>
                                     <div class="col-75">
-                                        <input type="text" id="lastmodifieddate" name="LastModifiedDate" placeholder="Your Last Modified Date.." autocomplete="off" value={lastModifiedDate} disabled onchange={handleInput}>
+                                        <input type="text" id="s3regionname" name="S3RegionName" placeholder="Your S3 Region Name.." value={s3RegionName} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
                                     </div>
                                 </div>
-                            </template>
-                        </form>
-                    </div>
-    
-                    <template if:true={isEditing}>
-                        <div class="button-container">
-                            <lightning-button variant="brand-outline" class="slds-m-left_x-small" onclick={handleCancel} label="Cancel"></lightning-button>
-                            <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleSave} label="Save"></lightning-button>
+            
+                                <template if:true={hasDates}>
+                                    <div class="row">
+                                        <div class="col-25">
+                                            <label for="lname">Created Date</label>
+                                        </div>
+                                        <div class="col-75">
+                                            <input type="text" id="createddate" name="CreatedDate" placeholder="Your Created Date.." autocomplete="off" value={createdDate} disabled onchange={handleInput}>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-25">
+                                            <label for="lname">Last Modified Date</label>
+                                        </div>
+                                        <div class="col-75">
+                                            <input type="text" id="lastmodifieddate" name="LastModifiedDate" placeholder="Your Last Modified Date.." autocomplete="off" value={lastModifiedDate} disabled onchange={handleInput}>
+                                        </div>
+                                    </div>
+                                </template>
+                            </form>
                         </div>
-                    </template>
-                    <template if:true={isFirstTime}>
-                        <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleSave} label="Save"></lightning-button>
-                    </template>
-                    <template if:false={isEditing}>
-                        <template if:false={isFirstTime}>
+        
+                        <template if:true={isEditing}>
                             <div class="button-container">
-                                <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleEdit} label="Edit"></lightning-button>
-                                <lightning-button variant="brand-outline" class="slds-m-left_x-small" onclick={handleDeactivate} label="Deactivate"></lightning-button>
+                                <lightning-button variant="brand-outline" class="slds-m-left_x-small" onclick={handleCancel} label="Cancel"></lightning-button>
+                                <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleSave} label="Save"></lightning-button>
                             </div>
                         </template>
+                        <template if:true={isFirstTime}>
+                            <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleSave} label="Save"></lightning-button>
+                        </template>
+                        <template if:false={isEditing}>
+                            <template if:false={isFirstTime}>
+                                <div class="button-container">
+                                    <lightning-button variant="brand" class="slds-m-left_x-small" onclick={handleEdit} label="Edit"></lightning-button>
+                                    <lightning-button variant="brand-outline" class="slds-m-left_x-small" onclick={handleDeactivate} label="Deactivate"></lightning-button>
+                                </div>
+                            </template>
+                        </template>
                     </template>
-                </template>
+                </div>
             </div>
         </div>
-    </div>
-
+    </template>
+    <template if:true={showLicenseError}>
+        <div class="license-error">
+            <div class="popup-container">
+                <div class="popup-content">
+                    <h2>⚠️ License Expired</h2>
+                    <p>WBConnect license has expired. Please renew to continue using.</p>
+                </div>
+            </div>
+        </div>
+    </template>
 </template>

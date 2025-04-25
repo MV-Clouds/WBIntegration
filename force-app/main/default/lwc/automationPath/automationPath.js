@@ -10,6 +10,7 @@ import getRequiredFields from '@salesforce/apex/AutomationConfigController.getRe
 import getObjectFields from '@salesforce/apex/AutomationConfigController.getObjectFields';
 import getFlowIdFromAutomation from '@salesforce/apex/AutomationConfigController.getFlowIdFromAutomation';
 import getFlowFields from '@salesforce/apex/AutomationConfigController.getFlowFields';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 import { createRecord, updateRecord } from 'lightning/uiRecordApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -28,6 +29,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track FlowId = '';
     @track FlowRecordId = '';
     @track isEdit = false;
+    @track showLicenseError = false;
     // @track isFlowAutomationCreated = false;
 
     // --- Data Properties ---
@@ -66,23 +68,49 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     };
 
 
-    connectedCallback() {
-        console.log('Automation Path Loaded with Record ID:', this.recordId);
-        console.log('Automation Path Loaded with Template Type:', this.templateType);
+    async connectedCallback() {
+        try {
+            
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            if(this.pageRef){
+                this.objectApiName = this.pageRef.attributes.objectApiName;
+            }
 
-        if (!this.recordId) return;
+            console.log('Automation Path Loaded with Record ID:', this.recordId);
+            console.log('Automation Path Loaded with Template Type:', this.templateType);
+    
+            if (!this.recordId) return;
+    
+            this.isFlowTemplate = this.templateType === 'Flow';
+            this.selectedAction = this.isFlowTemplate ? 'create' : 'whatsapp';
+    
+            console.log('isFlowTemplate:', this.isFlowTemplate);
+    
+            this.isFlowTemplate
+                ? (this.loadObjects(), this.loadRequiredFields(), this.setFlowId())
+                : (this.fetchTemplates(), this.loadEmailTemplates());
+    
+            this.fetchAutomationName();
+            this.fetchAutomationPaths();
+            
+        } catch (error) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
 
-        this.isFlowTemplate = this.templateType === 'Flow';
-        this.selectedAction = this.isFlowTemplate ? 'create' : 'whatsapp';
-
-        console.log('isFlowTemplate:', this.isFlowTemplate);
-
-        this.isFlowTemplate
-            ? (this.loadObjects(), this.loadRequiredFields(), this.setFlowId())
-            : (this.fetchTemplates(), this.loadEmailTemplates());
-
-        this.fetchAutomationName();
-        this.fetchAutomationPaths();
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            console.log('isLicenseValid => ', isLicenseValid);
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     loadObjects() {

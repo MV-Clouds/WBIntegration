@@ -2,8 +2,9 @@ import { LightningElement, track } from 'lwc';
 import getAllAutomations from '@salesforce/apex/AutomationConfigController.getAllAutomations';
 import getTemplates from '@salesforce/apex/AutomationConfigController.getTemplates';
 import saveAutomations from '@salesforce/apex/AutomationConfigController.saveAutomations';
-import updateAutomations from '@salesforce/apex/AutomationConfigController.updateAutomations';
+// import updateAutomations from '@salesforce/apex/AutomationConfigController.updateAutomations';
 import deleteAutomations from '@salesforce/apex/AutomationConfigController.deleteAutomations';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
 
@@ -17,12 +18,35 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     @track description = '';
     @track selectedTemplateId = '';
     @track recordId = null;
-
-    // @track isEditMode = false;
+    @track showLicenseError = false;
     
-    connectedCallback() {
-        this.fetchAutomations();
-        this.fetchTemplates();
+    async connectedCallback() {
+        try {
+            
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            if(this.pageRef){
+                this.objectApiName = this.pageRef.attributes.objectApiName;
+            }
+            this.fetchAutomations();
+            this.fetchTemplates();
+        } catch (error) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            console.log('isLicenseValid => ', isLicenseValid);
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     /** 
@@ -64,7 +88,12 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     fetchTemplates() {
         getTemplates()
             .then(data => {
-                this.templateOptions = data.map(template => ({
+                const filteredTemplates = data.filter(template => {
+                    const buttons = JSON.parse(template.MVWB__Button_Body__c || '[]');
+                    return buttons.some(button => button.type === "QUICK_REPLY" || button.type === "FLOW");
+                });
+                this.templateOptions = filteredTemplates
+                .map(template => ({
                     label: template.MVWB__Template_Name__c,
                     value: template.Id
                 }));

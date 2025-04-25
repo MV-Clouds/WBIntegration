@@ -15,6 +15,7 @@ public without sharing class AutomationConfigTriggerHandler {
     private Boolean isDelete = false;
     private Boolean isUndelete = false;
     private static final String CLASS_NAME = 'AutomationConfigTriggerHandler';
+    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
     
     public AutomationConfigTriggerHandler( List<Chat__c> newList,  List<Chat__c> oldList, Map<Id, Chat__c> newMap, Map<Id, Chat__c> oldMap, Boolean isInsert, Boolean isUpdate, Boolean isDelete, Boolean isUndelete) {
         this.recordNewList = newList;
@@ -321,29 +322,30 @@ public without sharing class AutomationConfigTriggerHandler {
                                     tempData = getTemplateData(matchingPath.Action_Template__c, objectId, tempvar[0].Object_Name__c);
                                 } else {
 
-                                    String objectName;
-                                    if (!configMap.isEmpty()) {
-                                        objectName = configMap.keySet().iterator().next(); // Gets the first (and only) key
-                                    }
-                                    System.debug('objectName = ' + objectName);
+                                    System.debug('No template variables found for the template ID: ' + matchingPath.Action_Template__c);
+                                    // String objectName;
+                                    // if (!configMap.isEmpty()) {
+                                    //     objectName = configMap.keySet().iterator().next(); // Gets the first (and only) key
+                                    // }
+                                    // System.debug('objectName = ' + objectName);
                                     
                                     // Optional: Get inner field values
-                                    Map<String, Object> fieldMap = (Map<String, Object>) configMap.get(objectName);
-                                    System.debug('fieldMap = ' + fieldMap);
-                                    String phoneField = (String) fieldMap.get('phoneField');
+                                    // Map<String, Object> fieldMap = (Map<String, Object>) configMap.get(objectName);
+                                    // System.debug('fieldMap = ' + fieldMap);
+                                    // String phoneField = (String) fieldMap.get('phoneField');
 
                                     // Map<String, String> objectApiName = (Map<String,String>) (configMap.get(tempvar.Object_Name__c));
                                     // String phoneField = (String) objectApiName.get('phoneField');
                                     
                                     // Step 3: Build dynamic query
-                                    System.debug('newChat.Phone__c = ' + phoneNumber);
-                                    String soql = 'SELECT Id FROM ' + objectName + ' WHERE ' + phoneField + ' = \'' + phoneNumber + '\' LIMIT 1';
+                                    // System.debug('newChat.Phone__c = ' + phoneNumber);
+                                    // String soql = 'SELECT Id FROM ' + objectName + ' WHERE ' + phoneField + ' = \'' + phoneNumber + '\' LIMIT 1';
 
-                                    SObject result = Database.query(soql);
-                                    Id objectId = result != null ? result.Id : null;
+                                    // SObject result = Database.query(soql);
+                                    // Id objectId = result != null ? result.Id : null;
                                     
                                     
-                                    tempData = getTemplateData(matchingPath.Action_Template__c, objectId, '');
+                                    tempData = getTemplateData(matchingPath.Action_Template__c, '', '');
                                 }
                                 
                                 System.debug('tempData = ' + tempData);
@@ -455,9 +457,7 @@ public without sharing class AutomationConfigTriggerHandler {
             }
         }
     }
-    
-    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
-    
+        
     public static Map<String, object> getTemplateData(String templateId, String recordId, String objectApiName){
         try {
             Map<String, Object> templateData = new Map<String, Object>();
@@ -476,14 +476,14 @@ public without sharing class AutomationConfigTriggerHandler {
             // Fetch template details
             if (!matchingTemplateIds.isEmpty()) {
                 templates.addAll([
-                    SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
+                    SELECT Id, Template_Name__c, WBButton_Body__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
                         (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId AND Id IN :matchingTemplateIds
                 ]);
             }
             
             // Fetch templates without child variables
             List<Template__c> templatesWithoutVariables = [
-                SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
+                SELECT Id, Template_Name__c, WBButton_Body__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
                     (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId
             ];
             templates.addAll(templatesWithoutVariables);
