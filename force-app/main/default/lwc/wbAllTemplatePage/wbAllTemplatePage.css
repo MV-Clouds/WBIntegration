@@ -125,7 +125,7 @@
 .table-container {
     /* border-radius: 0.4rem;  */
     
-    margin-top: 0 1rem;
+    margin-top: 1rem;
     border-top-left-radius: 0.4rem; 
     border-top-right-radius: 0.4rem; 
     overflow-y:auto; 

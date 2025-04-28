@@ -1,7 +1,7 @@
-public with sharing class PLMSController {
+global with sharing class PLMSController {
     
     @AuraEnabled
-    public static void getPLMSValidity() {
+    global static void getPLMSValidity() {
         List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Client_Id__c, MVWB__Client_Secret__c, MVWB__Is_License_Valid__c, MVWB__Expiration_Date__c, MVWB__Next_Callout_Date__c, MVWB__Password__c, MVWB__Username__c FROM MVWB__LicenseConfig__c LIMIT 1];
         MVWB__LicenseConfig__c config = new MVWB__LicenseConfig__c();
         if(configList != null && configList.size() > 0){

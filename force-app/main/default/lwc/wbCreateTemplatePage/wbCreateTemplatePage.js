@@ -1307,6 +1307,7 @@ export default class WbCreateTemplatePage extends LightningElement {
         this.isAllTemplate = true;
         this.iseditTemplatevisible = true;
         this.clearEditTemplateData();
+        this.handleDelete();
         
         if(this.isStage2){
             this.isStage2 = false;

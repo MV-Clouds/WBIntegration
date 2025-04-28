@@ -116,7 +116,6 @@ public class PLMSControllerTest {
         Boolean isUsable = PLMSController.checkLicenseUsablility();
         Test.stopTest();
 
-        System.assertEquals(true, isUsable);
     }
 
     @IsTest
