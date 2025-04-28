@@ -140,14 +140,10 @@
                     <label for="phone" class="phone-label">Phone No.</label>
                     <div class="inputs">
                         <div class="urltype">
-                            <select class="conInput" name="selectedCountryType" onchange={handleCountryChange} disabled={isFieldDisabled}>
-                                <template for:each={countryType} for:item="option">
-                                    <option key={option.value} value={option.value} selected={option.isSelected}>{option.label}</option>
-                                </template>
-                            </select>
+                            <lightning-combobox class="conInput" name="selectedCountryType" variant="label-hidden" value={selectedCountryType} options={countryType} onchange={handleCountryChange} disabled={isFieldDisabled}></lightning-combobox>
                         </div>
                         
-                        <input type="text" name="phone-num" class="phone-input" value={phoneNumber} oninput={handlePhoneChange} disabled={isFieldDisabled}>
+                        <input type="number" name="phone-num" class="phone-input" value={phoneNumber} oninput={handlePhoneChange} disabled={isFieldDisabled}>
                         <button class={sendButtonClass} onclick={sendTemplatePreview} disabled={isSendDisabled}>Send Preview</button>
                         <button class="close-btn" onclick={closePreview}>Close</button>
                     </div>

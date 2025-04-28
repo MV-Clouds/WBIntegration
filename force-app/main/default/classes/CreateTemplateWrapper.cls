@@ -82,6 +82,13 @@
                     'type' => 'BUTTONS',
                     'buttons' => buttonComponents
                 });
+            } else if (templateWrapper.templateCategory == 'Authentication' && templateWrapper.isCodeExpiration){
+                System.debug('templateWrapper.expireTime ::: '+templateWrapper.expireTime);
+                Integer expirationMinutes = (Integer)Math.floor(templateWrapper.expireTime / 60);
+                components.add(new Map<String, Object>{
+                    'type' => 'FOOTER',
+                    'code_expiration_minutes' => expirationMinutes
+                });
             }
             return components;
 
@@ -143,7 +150,8 @@
             Map<String, Object> bodyComponent;
             if (templateWrapper.templateCategory == 'Authentication') {
                 bodyComponent = new Map<String, Object>{
-                    'type' => 'BODY'
+                    'type' => 'BODY',
+                    'add_security_recommendation' => templateWrapper.isSecurityRecommedation
                 };
             } else {
                 bodyComponent = new Map<String, Object>{
@@ -603,6 +611,8 @@
         @AuraEnabled public String templateMiscellaneousData;
         
         @AuraEnabled public String selectedFlow;
+        @AuraEnabled public Boolean isSecurityRecommedation;
+        @AuraEnabled public Boolean isCodeExpiration;
         
     }
 

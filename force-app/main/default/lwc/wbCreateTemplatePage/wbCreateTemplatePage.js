@@ -2589,6 +2589,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                 isDocFileUploader : this.isDocFileUploader,
                 isVideoFile : this.isVideoFile,
                 isDocFile : this.isDocFile,
+                isSecurityRecommedation : this.prevContent,
+                isCodeExpiration : this.isExpiration,
+                expireTime: this.expirationTime
 
             }
 
@@ -2619,7 +2622,9 @@ export default class WbCreateTemplatePage extends LightningElement {
                 packagename: formData.length > 0 ? formData.map(pkg => pkg.packagename) : null,
                 signaturename: formData.length > 0 ? formData.map(pkg => pkg.signaturename) : null,
                 selectedFlow : this.selectedFlow ? JSON.stringify(this.selectedFlow) : null,
-                templateMiscellaneousData : templateMiscellaneousData ? JSON.stringify(templateMiscellaneousData) : null
+                templateMiscellaneousData : templateMiscellaneousData ? JSON.stringify(templateMiscellaneousData) : null,
+                isSecurityRecommedation : this.prevContent ? this.prevContent : null,
+                isCodeExpiration : this.isExpiration==null ? false : true
 
             };
             

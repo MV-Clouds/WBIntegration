@@ -58,6 +58,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track NoPreviewAvailableImg = NoPreviewAvailable;
     @track headerPramsCustomList = [];
     @track bodyPramsCustomList = [];
+    @track isSecurityRecommedation = false;
+    @track isCodeExpiration = false;
     @track showLicenseError = false;
 
 
@@ -205,9 +207,14 @@ export default class WbPreviewTemplatePage extends LightningElement {
             fetch(CountryJson)
             .then((response) => response.json())
             .then((data) => {
-                this.countryType = data.map(country => {
-                    return { label: `(${country.callingCode})`, value: country.callingCode,isSelected: country.callingCode === this.selectedCountryType };
-                });
+                this.countryType = data
+                    .filter(country => country.callingCode != null && country.name != null)
+                    .map(country => {
+                        return {
+                            label: ` (${country.callingCode}) ${country.name}`,
+                            value: country.callingCode
+                        };
+                    });
             })
             .catch((e) => console.error('Error fetching country data:', e));
         }catch(e){
@@ -327,6 +334,9 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     this.originalHeader = result.template.MVWB__WBHeader_Body__c;
                     this.originalBody = result.template.MVWB__WBTemplate_Body__c;
                     const variableMappings = result.templateVariables;
+                    this.isSecurityRecommedation = JSON.parse(result.template.MVWB__Template_Miscellaneous_Data__c).isSecurityRecommedation;
+                    this.isCodeExpiration = JSON.parse(result.template.MVWB__Template_Miscellaneous_Data__c).isCodeExpiration;
+                    this.expireTime = JSON.parse(result.template.MVWB__Template_Miscellaneous_Data__c).expireTime;
                     
                     if(result.template.MVWB__Header_Type__c=='Image'){
                         this.isImgSelected = result.isImgUrl;
@@ -410,6 +420,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     this.formatedTempBody = this.formatText(this.tempBody);
                     if(result.template.MVWB__Template_Category__c == 'Authentication'){
                         this.formatedTempBody = '{{code}} ' + this.formatedTempBody;
+                        if(this.isSecurityRecommedation){
+                            this.formatedTempBody += '\n For your security, do not share this code.';
+                        }
+                        if(this.isCodeExpiration){
+                            this.tempFooter = 'This code expires in '+this.expireTime+' seconds.'
+                        }
                     }
                     this.isLoading = false;
                 }
@@ -462,7 +478,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
             }
             let phonenum = this.selectedContactId 
                 ? this.contactDetails.Phone 
-                : (this.selectedCountryType && this.phoneNumber && this.phoneNumber.length >= 10) 
+                : (this.selectedCountryType && this.phoneNumber) 
                     ? `${this.selectedCountryType}${this.phoneNumber}`
                     : null;
             

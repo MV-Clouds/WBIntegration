@@ -245,15 +245,21 @@ public with sharing class ObjectConfigController {
     @AuraEnabled
     public static String saveUserConfig(String jsonData, String jsonDataForChat) {
         try {
-            List<MVWB__Object_Config__mdt> config = [SELECT MasterLabel, DeveloperName FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
-            Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
-            if(config.size() > 0){
-                mdata.fullName = 'MVWB__Object_Config__mdt.' + config[0].DeveloperName; 
-                mdata.label = config[0].MasterLabel;
-            } else {
-                mdata.fullName = 'MVWB__Object_Config__mdt.objectConfigInfo'; 
-                mdata.label = 'objectConfigInfo';
+            String devName = 'objectConfigInfo';
+            String masterLabel = 'objectConfigInfo';
+
+            List<MVWB__Object_Config__mdt> configList = [SELECT MasterLabel, DeveloperName, MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            MVWB__Object_Config__mdt config = new MVWB__Object_Config__mdt();
+
+            if (!configList.isEmpty()) {
+                config = configList[0];
+                devName = config.DeveloperName;
+                masterLabel = config.MasterLabel;
             }
+
+            Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
+            mdata.fullName = 'MVWB__Object_Config__mdt.' + devName; 
+            mdata.label = masterLabel;
 
             if(jsonData != null){
                 Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
@@ -274,7 +280,7 @@ public with sharing class ObjectConfigController {
 
             Metadata.Operations.enqueueDeployment(container, null);
 
-            return 'sucess';
+            return 'Success';
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ObjectConfigController', 'methodName' => 'saveUserConfig', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return 'Error: ' + e.getMessage();
@@ -300,119 +306,6 @@ public with sharing class ObjectConfigController {
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ObjectConfigController', 'methodName' => 'getRecordName', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return '';
-        }
-    }
-
-    /*
-    *********************************************************
-    @description     : Method to insert dummy metadata record when package is installed
-    @return          : none
-    ********************************************************
-    */
-    public static void initializeDummyConfig() {
-        try {
-            // Check if any record already exists
-            List<MVWB__Object_Config__mdt> existingConfigs = [SELECT Id FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
-            if (!existingConfigs.isEmpty() && !Test.isRunningTest()) {
-                return;
-            }
-
-            // Dynamically build requiredFields based on Contact object schema
-            List<Map<String, Object>> requiredFields = new List<Map<String, Object>>();
-            Schema.DescribeSObjectResult objectDescribe = Schema.getGlobalDescribe().get('Contact').getDescribe();
-            Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
-
-            for (Schema.SObjectField field : fieldMap.values()) {
-                Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
-
-                // Skip fields that shouldn't be included
-                if (fieldDescribe.isNillable() || fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || 
-                    !fieldDescribe.isUpdateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
-                    continue;
-                }
-
-                Map<String, Object> fieldInfo = new Map<String, Object>();
-                fieldInfo.put('name', fieldDescribe.getName());
-                fieldInfo.put('type', fieldDescribe.getType().name());
-
-                // Handle picklist fields
-                if (fieldDescribe.getType() == Schema.DisplayType.Picklist) {
-                    List<Schema.PicklistEntry> picklistEntries = fieldDescribe.getPicklistValues();
-                    List<Map<String, String>> picklistValuesSet = new List<Map<String, String>>();
-                    for (Schema.PicklistEntry entry : picklistEntries) {
-                        Map<String, String> picklistSet = new Map<String, String>();
-                        picklistSet.put('label', entry.getLabel());
-                        picklistSet.put('value', entry.getValue());
-                        picklistValuesSet.add(picklistSet);
-                    }
-
-                    String defaultValue = fieldDescribe.getDefaultValue() != null ? 
-                        String.valueOf(fieldDescribe.getDefaultValue()) : 
-                        (picklistValuesSet.isEmpty() ? '' : picklistValuesSet[0].get('value'));
-                    fieldInfo.put('value', defaultValue);
-                }
-                // Handle text fields (STRING type)
-                else if (fieldDescribe.getType() == Schema.DisplayType.STRING) {
-                    fieldInfo.put('value', 'Default Value');
-                }
-                // Handle date fields
-                else if (fieldDescribe.getType() == Schema.DisplayType.DATE) {
-                    fieldInfo.put('value', Date.today());
-                }
-                // Handle datetime fields
-                else if (fieldDescribe.getType() == Schema.DisplayType.DATETIME) {
-                    fieldInfo.put('value', DateTime.now());
-                }
-                // Handle boolean fields
-                else if (fieldDescribe.getType() == Schema.DisplayType.BOOLEAN) {
-                    fieldInfo.put('value', false);
-                }
-                // Handle reference fields
-                else if (fieldDescribe.getType() == Schema.DisplayType.REFERENCE) {
-                    String relatedObject = fieldDescribe.getReferenceTo()[0].getDescribe().getName();
-                    List<SObject> relatedRecords = Database.query('SELECT Id FROM ' + relatedObject + ' LIMIT 1');
-                    String defaultValue = !relatedRecords.isEmpty() ? relatedRecords[0].Id : '';
-                    fieldInfo.put('value', defaultValue);
-                }
-
-                requiredFields.add(fieldInfo);
-            }
-
-            // Build the ObjectConfigInfo__c JSON dynamically
-            Map<String, Object> objectConfigMap = new Map<String, Object>();
-            objectConfigMap.put('objectApiName', 'Contact');
-            objectConfigMap.put('phoneField', 'Phone');
-            objectConfigMap.put('requiredFields', requiredFields);
-
-            String dummyObjectConfig = JSON.serialize(objectConfigMap);
-    
-            // Define dummy data for ChatWindowConfigInfo__c
-            String dummyChatConfig = '{"Contact":{"nameField":"LastName","phoneField":"Phone"}}';
-    
-            // Create new custom metadata record
-            Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
-            mdata.fullName = 'MVWB__Object_Config__mdt.objectConfigInfo'; // Default DeveloperName
-            mdata.label = 'objectConfigInfo';
-    
-            // Add ChatWindowConfigInfo__c field with dummy data
-            Metadata.CustomMetadataValue instance = new Metadata.CustomMetadataValue();
-            instance.field = 'MVWB__ChatWindowConfigInfo__c';
-            instance.value = dummyChatConfig;
-            mdata.values.add(instance);
-
-            // Add ObjectConfigInfo__c field with dynamic dummy data
-            Metadata.CustomMetadataValue instance1 = new Metadata.CustomMetadataValue();
-            instance1.field = 'MVWB__ObjectConfigInfo__c';
-            instance1.value = dummyObjectConfig;
-            mdata.values.add(instance1);
-    
-            // Deploy the new record
-            Metadata.DeployContainer container = new Metadata.DeployContainer();
-            container.addMetadata(mdata);
-    
-            Metadata.Operations.enqueueDeployment(container, null);
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ObjectConfigController', 'methodName' => 'initializeDummyConfig', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     }
 }

@@ -17,8 +17,6 @@ import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhats
 import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import {loadStyle} from 'lightning/platformResourceLoader';
-import wbPreviewTemplateStyle from '@salesforce/resourceUrl/wbPreviewTemplateStyle';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
@@ -101,13 +99,6 @@ export default class WbAllTemplatePage extends LightningElement {
         } catch (error) {
             console.error('Error checking license:', error);
         }
-    }
-
-    renderedCallback() {
-        loadStyle(this, wbPreviewTemplateStyle).then(() => {
-        }).catch(error => {
-            console.error("Error in loading the colors",error)
-        })
     }
 
     disconnectedCallback() {
