@@ -54,9 +54,6 @@ export default class WbAllTemplatePage extends LightningElement {
         }
     }
 
-    // get actionButtonClass(){
-    //     return this.allRecords?.length >= 5 ? 'custom-button create-disabled' : 'custom-button cus-btns' ;
-    // }
     get actionButtonClass(){
         return 'custom-button cus-btns' ;
     }
