@@ -29,7 +29,7 @@ public with sharing class ChatWindowController {
     */
     /* ---------------- Start ---------------- */
     public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-    public static List<User_Theme_Preference__c> userPreferences = [SELECT Theme__c FROM User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED];
+    public static List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Theme__c FROM MVWB__User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED LIMIT 1];
     /* ----------------  End  ---------------- */
 
 
@@ -47,8 +47,8 @@ public with sharing class ChatWindowController {
             List<Chat__c> chats = new List<Chat__c>();
             List<Template__c> templates = new List<Template__c>();
             // Contact recordData = new Contact();
-            User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
-            String theme = userPreference != null && userPreference.Theme__c != null ? userPreference.Theme__c : 'light'; // Default to Light
+            MVWB__User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
+            String theme = userPreference != null && userPreference.MVWB__Theme__c != null ? userPreference.MVWB__Theme__c : 'light'; // Default to Light
 
             // Fetch metadata record from Object_Config__mdt
             List<MVWB__Object_Config__mdt> objectConfigList = [SELECT Id, MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt LIMIT 1];
@@ -206,13 +206,13 @@ public with sharing class ChatWindowController {
     public static Boolean updateThemePreference(String theme) {
         Boolean isSuccess = false;
         try {
-            User_Theme_Preference__c userPreference = new User_Theme_Preference__c();
+            MVWB__User_Theme_Preference__c userPreference = new MVWB__User_Theme_Preference__c();
             if (userPreferences.isEmpty()) {
                 userPreference.SetupOwnerId = UserInfo.getUserId();
             }else{
                 userPreference = userPreferences[0];
             }
-            userPreference.Theme__c = theme;
+            userPreference.MVWB__Theme__c = theme;
             upsert as User userPreference;
             isSuccess = true;
         } catch (Exception e) {

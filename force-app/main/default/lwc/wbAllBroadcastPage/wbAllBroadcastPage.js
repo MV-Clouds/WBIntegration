@@ -120,11 +120,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 return; // Stops execution if license is expired
             }
             this.isTemplateVisible = true;
-            if (this.isBroadCastSelected) {
-                this.loadBroadcastGroups();
-            } else {
-                this.loadCampaigns();
-            }
+            this.loadBroadcastGroups();
             this.subscribeToPlatformEvent();
             this.loadAllTemplates(); // Load templates on component initialization
             

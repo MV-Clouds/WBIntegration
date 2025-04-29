@@ -166,8 +166,15 @@ input{
     padding: 0.3rem;
 }
 .phone-input{
-    padding-left: 5rem;
+    padding-left: 0.5rem;
+    -moz-appearance: textfield;
 }
+
+.phone-input::-webkit-outer-spin-button, .phone-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .left{
     width: 100%;
     position: relative;
@@ -181,7 +188,7 @@ input{
 }
 .send-btn{
     border-radius: 4px;
-    width: 9rem;
+    width: 12rem;
     border: none;
     color: white;
     font-size: 14px;
@@ -452,7 +459,7 @@ input{
     border-radius: 3px;
     padding: 0.1rem;
     border: none;
-    width: 4rem;
+    width: 100%;
 }
 .phone-container {
     width: 600px;
@@ -502,11 +509,12 @@ input{
     gap: 0.4rem;
 }
 .urltype{
-    position: absolute;
-    top: 0.3rem;
-    left: 0.2rem;
+    width: 30%;
     padding-right: 0.4rem;
     border-right: 1px solid #d7d7d7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .variable-head{

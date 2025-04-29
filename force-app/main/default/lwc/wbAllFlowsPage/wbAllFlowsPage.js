@@ -22,6 +22,7 @@ export default class WbAllFlowsPage extends LightningElement {
     @track flowPreviewURL = '';
     @track showPopup = false;
     @track isFlowDraft = false;
+    @track showLicenseError = false;
     @track selectedFlowId = '';
 
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
