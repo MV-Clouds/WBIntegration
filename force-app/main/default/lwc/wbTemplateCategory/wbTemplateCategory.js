@@ -6,7 +6,7 @@ export default class WbTemplateCategory extends NavigationMixin(LightningElement
     @api selectedOption = 'custom';    // ✅ Now parent can set
     @track defaultPreview = true;
     @track activeTemplateId = 'defaultPreview';
-    @track activeTab = 'Marketing';
+    @api activeTab = 'Marketing';
     showLicenseError = false;
 
     @track tabOptions = [

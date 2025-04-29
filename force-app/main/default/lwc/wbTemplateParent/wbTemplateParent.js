@@ -4,13 +4,19 @@ export default class wbTemplateParent extends LightningElement {
     @track showTemplateCategory = true;
     @track showCreateTemplateTest = false;
 
+    @api edittemplateid;
+
     selectedOption = 'custom';
     selectedTab = 'section1';
     activeTab;
     showLicenseError = false;
 
     connectedCallback(){
-        console.log('Connected Callnack ::: ');
+        console.log('Connected Callnack ::: '+this.edittemplateid);
+        if((this.edittemplateid != undefined) && (this.edittemplateid != '') && (this.edittemplateid != null)){
+            this.showTemplateCategory = false;
+            this.showCreateTemplateTest = true;
+        }
         
     }
 
