@@ -132,8 +132,8 @@ public class WhatsappConfigController {
     @RemoteAction
     public static Boolean checkLicenseUsablility(){
         try {
-            LicenseConfig__c config = LicenseConfig__c.getInstance();
-            if(config != null && config.Is_License_Valid__c && config.Expiration_Date__c != null && config.Expiration_Date__c > Date.today()){
+            MVWB__LicenseConfig__c config = MVWB__LicenseConfig__c.getInstance();
+            if(config != null && config.MVWB__Is_License_Valid__c && config.MVWB__Expiration_Date__c != null && config.MVWB__Expiration_Date__c > Date.today()){
                 return true;
             } else {
                 return false;

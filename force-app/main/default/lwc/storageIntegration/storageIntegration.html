@@ -72,6 +72,13 @@
                                         <input type="text" id="lastmodifieddate" name="LastModifiedDate" placeholder="Your Last Modified Date.." autocomplete="off" value={lastModifiedDate} disabled onchange={handleInput}>
                                     </div>
                                 </div>
+
+                                <template if:false={isEditing}>
+                                    <div class="note-text">
+                                        <strong>Note:</strong> To enable AWS as the primary storage in Salesforce for WBConnect:<br>
+                                        Go to <b>Setup</b> → Search <b>Remote Site Settings</b> → Click <b>New Remote Site</b> → Set <b>Remote Site Name</b> as <code>"AWS_Bucket_URL"</code> and <b>Remote Site URL</b> as <code>"<u>https://{s3BucketName}.s3.amazonaws.com</u>"</code>. Ensure the <b>Active</b> checkbox is ticked and click Save.
+                                    </div>                                      
+                                </template>
                             </template>
                         </form>
                     </div>

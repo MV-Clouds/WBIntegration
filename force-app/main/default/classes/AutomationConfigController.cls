@@ -18,16 +18,7 @@ public without sharing class AutomationConfigController {
         try {
             return [SELECT Id, Name, Description__c, WB_Template__r.Template_Name__c, WB_Template__r.Template_Type__c FROM Automation__c];
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getAllAutomations',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAllAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             System.debug('Error in getAllAutomations: ' + e.getMessage());
             return null;
         }
@@ -84,16 +75,7 @@ public without sharing class AutomationConfigController {
             return finalTemplates;
     
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getTemplates',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getTemplates','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -117,16 +99,7 @@ public without sharing class AutomationConfigController {
             }
             return automations;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'saveAutomations',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'saveAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             System.debug('Error in saveAutomations: ' + e.getMessage());
             return null;
         }
@@ -173,16 +146,7 @@ public without sharing class AutomationConfigController {
             return recordsToUpdate;
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'updateAutomations',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'updateAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -215,16 +179,7 @@ public without sharing class AutomationConfigController {
             }
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'deleteAutomations',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'deleteAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     }
 
@@ -238,16 +193,7 @@ public without sharing class AutomationConfigController {
         try {
             return [SELECT Id, Name, Description__c, WB_Template__r.Template_Name__c, WB_Template__r.Template_Type__c, WB_Template__r.WBButton_Body__c FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getAutomationById',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAutomationById','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -262,16 +208,7 @@ public without sharing class AutomationConfigController {
         try {
             return [SELECT Id, Name FROM EmailTemplate WITH SECURITY_ENFORCED];
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getTemplates',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getTemplates','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -338,16 +275,7 @@ public without sharing class AutomationConfigController {
         } catch (Exception e) {
             System.debug('Error in saveAutomationPaths: ' + e.getMessage());
             System.debug(e.getLineNumber());
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'saveAutomationPaths',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'saveAutomationPaths','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -376,16 +304,7 @@ public without sharing class AutomationConfigController {
             // Return an empty list if no records are found
             return automationPaths != null ? automationPaths : new List<Automation_Path__c>();
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getAutomationPathsByAutomationId',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAutomationPathsByAutomationId','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -415,16 +334,7 @@ public without sharing class AutomationConfigController {
                 }
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getAllObjects',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAllObjects','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
         
@@ -472,16 +382,7 @@ public without sharing class AutomationConfigController {
 
         } catch (Exception e) {
             
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getUsedObjectNamesByTemplate',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getUsedObjectNamesByTemplate','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -560,16 +461,7 @@ public without sharing class AutomationConfigController {
             return finalResponse;
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getRequiredFields',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getRequiredFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -603,16 +495,7 @@ public without sharing class AutomationConfigController {
             
             return objectFields;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getObjectFields',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getObjectFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -650,16 +533,7 @@ public without sharing class AutomationConfigController {
             }
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getFlowIdFromAutomation',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getFlowIdFromAutomation','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     
@@ -684,16 +558,7 @@ public without sharing class AutomationConfigController {
             return flow.Flow_JSON__c;
             
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'AutomationConfigController',
-                'methodName' => 'getFlowFields',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getFlowFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }

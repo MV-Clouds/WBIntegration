@@ -26,7 +26,7 @@
             }
 
             .logo-image{
-                max-width: 8rem;
+                max-width: 10rem;
             }
     
             .config-component-div {
@@ -362,10 +362,9 @@
                     </div>
                 </div>
                 <div class="resource-cards">
-                    <!-- User Guide -->
                     <div class="resource-card">
                         <div class="card-container">
-                            <a target="_blank" class="buttonCSS buttonCSS-blue buttonCSS-bg-userguide card-redirect" href="https://mvclouds.com/wbconnect/user-guide/">
+                            <a target="_blank" class="buttonCSS buttonCSS-blue buttonCSS-bg-userguide card-redirect" href="https://mvclouds.com/products/wbconnect/user-guide/">
                                 <h3>User Guide</h3>
                                 <div class="go-corner">
                                     <div class="go-arrow">
@@ -377,10 +376,9 @@
                             </a>
                         </div>
                     </div>
-                    <!-- FAQs -->
                     <div class="resource-card">
                         <div class="card-container">
-                            <a target="_blank" class="buttonCSS buttonCSS-blue buttonCSS-bg-faqs card-redirect" href="https://mvclouds.com/wbconnect/faqs/">
+                            <a target="_blank" class="buttonCSS buttonCSS-blue buttonCSS-bg-faqs card-redirect" href="https://mvclouds.com/products/wbconnect/faqs/">
                                 <h3>Frequently Asked Questions</h3>
                                 <div class="go-corner">
                                     <div class="go-arrow">

@@ -1,5 +1,6 @@
 * {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    user-select: none;
 }
 
 .preview-container{
@@ -71,7 +72,6 @@
 .filter {
     width: 11rem;
     height: -webkit-fill-available;
-    border: none;
     border-radius: 5px;
 }
 .custom-select{
@@ -84,6 +84,7 @@
 .filterparent {
     display: flex;
     justify-content: space-between;
+    padding: 0 5px;
 }
 
 .filterdiv {
@@ -124,7 +125,7 @@
 .table-container {
     /* border-radius: 0.4rem;  */
     
-    margin-top: 1.5%;
+    margin-top: 1rem;
     border-top-left-radius: 0.4rem; 
     border-top-right-radius: 0.4rem; 
     overflow-y:auto; 
@@ -184,7 +185,7 @@ thead{
 
 .heading {
     display: flex;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     margin-top: 1rem;
     justify-content: center;
     align-items: center;
@@ -201,16 +202,6 @@ table{
 
 tr{
     border: none;
-}
-
-/* custom table CSS */
-.tableHead {
-    background-color: #0077B6;
-    color: white;
-    font-size: 16px;
-    padding: 10px;
-    font-weight: 600;
-    text-align: center;
 }
 
 .tableData {
@@ -234,12 +225,10 @@ tr{
 
 tr:nth-child(odd) {
     background-color: #CAF0F866;
-    opacity: 0.8; 
 }
 
 tr:nth-child(even) {
     background-color: white;
-    opacity: 0.8;
 }
 
 .tablebtns {
@@ -335,7 +324,7 @@ tr:nth-child(even) {
 }
 
 .search-div {
-    width: 20rem;
+    width: 45%;
 }
 
 img {
@@ -411,18 +400,6 @@ img {
     flex-direction: column;
 }
 
-/* Fixed Header */
-.table-header {
-    background-color: #f3f3f3;
-    overflow: hidden;
-}
-
-/* Ensuring header doesn't scroll */
-.table-header table {
-    width: 100%;
-    table-layout: fixed;
-}
-
 /* Scrollable Body */
 .table-body {
     overflow-y: auto;
@@ -452,6 +429,13 @@ img {
     border-bottom: 1px solid #ddd;
 }
 
+.table-container th {
+    background-color: #0077B6 ;
+    color: white ;
+    padding: 12px ;
+    font-size: 16px ;
+    font-weight: 600 ;
+}
 
 /* Backdrop covers the entire component */
 .license-error {

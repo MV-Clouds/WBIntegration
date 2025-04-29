@@ -373,7 +373,7 @@ export default class ObjectConfigComp extends LightningElement {
     
             saveUserConfig({ jsonData : jsonData })
                 .then(response => {
-                    if(response == 'sucess'){
+                    if(response == 'Success'){
                         this.showToast('Success', 'Configuration saved successfully', 'success');
                         this.populateReferenceNames();
                         this.isWebhookConfigEdit = false;
@@ -594,7 +594,7 @@ export default class ObjectConfigComp extends LightningElement {
     
             saveUserConfig({ jsonDataForChat : configJson })
                 .then(response => {
-                    if(response == 'sucess'){
+                    if(response == 'Success'){
                         this.showToast('Success', 'Configuration saved successfully', 'success');
                         this.isChatWindowConfigEdit = false;
                     } else {
