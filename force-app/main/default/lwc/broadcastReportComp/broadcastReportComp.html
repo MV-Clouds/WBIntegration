@@ -1,12 +1,7 @@
 <template>
     <template if:true={isAnyReportActive}>
         <div class="wrapper">
-            <lightning-spinner 
-                alternative-text="Loading" 
-                size="medium"
-                variant="base"
-                if:true={isLoading}
-            ></lightning-spinner>
+            <lightning-spinner alternative-text="Loading" size="medium" variant="base" if:true={isLoading}></lightning-spinner>
     
             <div class="heading-container slds-grid slds-grid">
                 <lightning-button label="Back" variant="brand" icon-position="left" icon-name="utility:chevronleft" onclick={handleBack}></lightning-button>
@@ -52,13 +47,7 @@
                                             <tr key={row.Id} class="slds-table_bordered">
                                                 <td class="sr-no">{row.index}</td>
                                                 <td>
-                                                    <a href="javascript:void(0);" 
-                                                    class="clickable-name" 
-                                                    data-record-id={row.Id} 
-                                                    data-object-name={row.MVWB__Object_Name__c}
-                                                    onclick={handleNameClick}>
-                                                    {row.Name}
-                                                    </a>
+                                                    <a href="javascript:void(0);" class="clickable-name" data-record-id={row.Id} data-object-name={row.MVWB__Object_Name__c} onclick={handleNameClick}>{row.Name}</a>
                                                 </td>
                                                 <td>{row.MVWB__Count_of_Members__c}</td>
                                             </tr>
@@ -87,8 +76,7 @@
                         <div class="pagination-container">
                             <button class="pagination-button" disabled={isFirstPage} onclick={handlePrevious}>
                                 <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
-                                    <path
-                                        d="M342 477 134 272c-6-6-6-16 0-22L342 45c6-6 16-6 22 0l22 22c6 6 6 16 0 22L221 250c-6 6-6 16 0 22l163 161c6 6 6 16 0 22l-22 22c-5 5-14 5-20 0z" />
+                                    <path d="M342 477 134 272c-6-6-6-16 0-22L342 45c6-6 16-6 22 0l22 22c6 6 6 16 0 22L221 250c-6 6-6 16 0 22l163 161c6 6 6 16 0 22l-22 22c-5 5-14 5-20 0z" />
                                 </svg>
                                 Previous
                             </button>
@@ -108,8 +96,7 @@
                             <button class="pagination-button" disabled={isLastPage} onclick={handleNext}>
                                 Next
                                 <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
-                                    <path
-                                        d="m179 44 207 205c6 6 6 16 0 22L179 476c-6 6-16 6-22 0l-22-22c-6-6-6-16 0-22l163-161c6-6 6-16 0-22L136 88c-6-6-6-16 0-22l22-22c6-5 15-5 21 0z" />
+                                    <path d="m179 44 207 205c6 6 6 16 0 22L179 476c-6 6-16 6-22 0l-22-22c-6-6-6-16 0-22l163-161c6-6 6-16 0-22L136 88c-6-6-6-16 0-22l22-22c6-5 15-5 21 0z" />
                                 </svg>
                             </button>
                         </div>
@@ -133,10 +120,6 @@
                     </div>
                 </div>
             
-                <!-- <template if:true={groupData}>
-                   
-            
-                </template>   -->
                 <div class="slds-m-around_medium container">
                     <!-- Custom Table -->
                     <template if:true={paginatedGrpData.length}>
@@ -155,11 +138,7 @@
                                         <tr key={row.Id} class="slds-table_bordered">
                                             <td class="sr-no">{row.index}</td>
                                             <td>
-                                                <a href="javascript:void(0);" 
-                                                class="clickable-name" 
-                                                data-record-id={row.Id}>
-                                                {row.name}
-                                                </a>
+                                                <a href="javascript:void(0);" class="clickable-name" data-record-id={row.Id}>{row.name}</a>
                                             </td>
                                             <td>{row.phone}</td>
                                             <td class="tableData" data-label="Status">
@@ -191,8 +170,7 @@
                     <div class="pagination-container">
                         <button class="pagination-button" disabled={isFirstGrpPage} onclick={handleGrpPrevious}>
                             <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
-                                <path
-                                    d="M342 477 134 272c-6-6-6-16 0-22L342 45c6-6 16-6 22 0l22 22c6 6 6 16 0 22L221 250c-6 6-6 16 0 22l163 161c6 6 6 16 0 22l-22 22c-5 5-14 5-20 0z" />
+                                <path d="M342 477 134 272c-6-6-6-16 0-22L342 45c6-6 16-6 22 0l22 22c6 6 6 16 0 22L221 250c-6 6-6 16 0 22l163 161c6 6 6 16 0 22l-22 22c-5 5-14 5-20 0z" />
                             </svg>
                             Previous
                         </button>
@@ -212,8 +190,7 @@
                         <button class="pagination-button" disabled={isLastGrpPage} onclick={handleGrpNext}>
                             Next
                             <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
-                                <path
-                                    d="m179 44 207 205c6 6 6 16 0 22L179 476c-6 6-16 6-22 0l-22-22c-6-6-6-16 0-22l163-161c6-6 6-16 0-22L136 88c-6-6-6-16 0-22l22-22c6-5 15-5 21 0z" />
+                                <path d="m179 44 207 205c6 6 6 16 0 22L179 476c-6 6-16 6-22 0l-22-22c-6-6-6-16 0-22l163-161c6-6 6-16 0-22L136 88c-6-6-6-16 0-22l22-22c6-5 15-5 21 0z" />
                             </svg>
                         </button>
                     </div>

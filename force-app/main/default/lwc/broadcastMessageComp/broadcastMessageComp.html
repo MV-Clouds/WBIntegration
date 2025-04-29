@@ -9,11 +9,10 @@
                 </div>
             </template>
     
-    
             <div class="heading-container slds-grid slds-grid slds-grid_vertical-align-center slds-p-top_small">
                 <lightning-button label="Back" variant="brand" icon-position="left" icon-name="utility:chevronleft" onclick={handleBack}></lightning-button>
                 <h1 class="heading slds-grow">{broadcastHeading}</h1>
-                    <lightning-button label={createBtnLabel} variant="brand" onclick={handleModalOpen} disabled={isBtnDisabled}></lightning-button>
+                <lightning-button label={createBtnLabel} variant="brand" onclick={handleModalOpen} disabled={isBtnDisabled}></lightning-button>
             </div>
     
             <div class="slds-m-around_medium container">
@@ -21,22 +20,11 @@
                 <!-- Comboboxes in Grid -->
                 <div class="slds-grid slds-gutters">
                     <div class="slds-col">
-                        <lightning-combobox
-                            label="Select Object"
-                            value={selectedObject}
-                            options={objectOptions}
-                            onchange={handleObjectChange}>
-                        </lightning-combobox>
+                        <lightning-combobox label="Select Object" value={selectedObject} options={objectOptions} onchange={handleObjectChange}></lightning-combobox>
                     </div>
     
                     <div class="slds-col">
-                        <lightning-combobox
-                            label="Select List View"
-                            value={selectedListView}
-                            options={listViewOptions}
-                            onchange={handleListViewChange}
-                            disabled={isListViewDropdownDisabled}>
-                        </lightning-combobox>
+                        <lightning-combobox label="Select List View" value={selectedListView} options={listViewOptions} onchange={handleListViewChange} disabled={isListViewDropdownDisabled}></lightning-combobox>
                     </div>
                 </div>
     
@@ -51,12 +39,7 @@
                             <thead>
                                 <tr>
                                     <th class="checkbox-column">
-                                        <lightning-input 
-                                            type="checkbox" 
-                                            checked={isAllSelected}
-                                            onchange={handleSelectAll}
-                                            indeterminate={isIndeterminate}>
-                                        </lightning-input>
+                                        <lightning-input type="checkbox" checked={isAllSelected} onchange={handleSelectAll} indeterminate={isIndeterminate}></lightning-input>
                                     </th>
                                     <th class="sr-no">Sr. No</th>
                                     <th>Name</th>
@@ -67,12 +50,7 @@
                                 <template for:each={paginatedData} for:item="row">
                                     <tr key={row.Id}>
                                         <td>
-                                            <lightning-input 
-                                                type="checkbox" 
-                                                checked={row.isSelected}
-                                                data-recordid={row.Id}
-                                                onchange={handleRecordSelection}>
-                                            </lightning-input>
+                                            <lightning-input type="checkbox" checked={row.isSelected} data-recordid={row.Id} onchange={handleRecordSelection}></lightning-input>
                                         </td>
                                         <td class="sr-no">{row.index}</td>
                                         <td>{row.name}</td>
@@ -144,19 +122,9 @@
                                 <p class="modal-heading">Create Broadcast Group</p>
                                 <div class="modal-body">
                                     <div class="modal-body-content">
-    
                                         <lightning-input placeholder="Enter Name Here" type="text" label="Name" name="name" onchange={handleInputChange} value={broadcastGroupName} class="slds-m-bottom_medium" required message-when-value-missing=" "></lightning-input>
 
-                                        <lightning-textarea 
-                                            name="message"
-                                            label="Description"
-                                            placeholder="Enter Descriptive Message Here"
-                                            class="slds-m-bottom_medium"
-                                            value={messageText}
-                                            required
-                                            message-when-value-missing=" "
-                                            onchange={handleInputChange}>
-                                        </lightning-textarea>
+                                        <lightning-textarea name="message" label="Description" placeholder="Enter Descriptive Message Here" class="slds-m-bottom_medium" value={messageText} required message-when-value-missing=" " onchange={handleInputChange}></lightning-textarea>
                                     </div>
                                 </div>
                                 <div class="footer">
@@ -169,9 +137,7 @@
                 </section>
                 <div class="slds-backdrop slds-backdrop_open"></div>
             </template>        
-        
         </div>
-
     </template>
 
     <template if:true={isAllBroadcastGroupPage}>

@@ -452,7 +452,7 @@ export default class BroadcastMessageComp extends LightningElement {
             })
             .then(success => {
                 if (success) {
-                    console.log('All fetched results:', this.fetchedResults);
+                    // console.log('All fetched results:', this.fetchedResults);
                     // Do something with this.fetchedResults, e.g. render or pass to another method
                 }
             });

@@ -120,7 +120,7 @@ export default class WbCreateTemplatePage extends LightningElement {
     @track selectedContentType = 'None';  
     @track selectedLanguage = 'en_US';
     @track selectedActionType = '';
-    @track selectedCountryType = '+91';  
+    @track selectedCountryType = '+971';  
     @track originalTempBody = '';
     @track placeholderMap = {};
     @track buttonList = [];

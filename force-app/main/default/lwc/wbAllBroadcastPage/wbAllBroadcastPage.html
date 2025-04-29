@@ -1,5 +1,6 @@
 <template>
     <template if:false={selectedRecordId}>
+
         <template if:true={showLicenseError}>
             <div class="license-error">
                 <div class="popup-container">
@@ -14,15 +15,16 @@
         <template if:false={showLicenseError}>
             <template if:true={isTemplateVisible}>
                 <div class="wrapper">
-            
+
                     <!-- Spinner -->
                     <template if:true={isLoading}>
                         <div class="spinner-container">
                             <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
                         </div>
                     </template>
+
                     <h1 class="slds-text-align_center heading">Recent Broadcasts</h1>
-            
+
                     <div class="filterparent">
                         <div class="filterdiv">
                             <lightning-input variant="label-hidden" class="filter search-div" name="searchInput" type="search"
@@ -36,7 +38,7 @@
                             </button>
                         </div>
                     </div>
-            
+
                     <div class="slds-m-around_medium container">
                         <!-- Custom Table -->
                         <template if:true={paginatedData.length}>
@@ -71,7 +73,7 @@
                                 </tbody>
                             </table>
                         </template>
-            
+
                         <!-- No Records Message -->
                         <template if:true={showNoRecordsMessage}>
                             <div class="no-records-message">
@@ -86,7 +88,7 @@
                             </div>
                         </template>
                     </div>
-            
+
                     <template if:true={paginatedData.length}>
                         <div class="pagination-container">
                             <button class="pagination-button" disabled={isFirstPage} onclick={handlePrevious}>
@@ -96,7 +98,7 @@
                                 </svg>
                                 Previous
                             </button>
-            
+
                             <template for:each={pageNumbers} for:item="page">
                                 <template if:false={page.isEllipsis}>
                                     <button key={page.number} data-id={page.number} class={page.className}
@@ -108,7 +110,7 @@
                                     <span key={page.number} class="pagination-ellipsis">...</span>
                                 </template>
                             </template>
-            
+
                             <button class="pagination-button" disabled={isLastPage} onclick={handleNext}>
                                 Next
                                 <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
@@ -118,19 +120,19 @@
                             </button>
                         </div>
                     </template>
-            
+
                     <template if:true={showPopup}>
                         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
                             aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
                             <div class="slds-modal__container">
-            
+
                                 <!-- Close Button -->
                                 <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
                                     title="Close" onclick={handleCloseOnPopup}>
                                     <lightning-icon icon-name="utility:close" alternative-text="Close"
                                         size="small"></lightning-icon>
                                 </button>
-            
+
                                 <div class="slds-modal__content slds-p-around_medium pop-up" id="modal-content-id-2">
                                     <div class="pop-heading">
                                         {popupHeader}
@@ -147,7 +149,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-            
+
                                             <!-- Groups List -->
                                             <div class="box-container">
                                                 <template if:true={filteredGroups.length}>
@@ -172,7 +174,7 @@
                                                     </template>
                                                 </template>
                                             </div>
-            
+
                                             <template if:true={filteredGroups.length}>
                                                 <div class="popUpFooter slds-text-align--center">
                                                     <lightning-button variant="brand-outline" onclick={handleCloseOnPopup}
@@ -181,7 +183,7 @@
                                                         class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
                                                 </div>
                                             </template>
-            
+
                                             <template if:false={filteredGroups.length}>
                                                 <div class="empty-state__content">
                                                     <div class="empty-state__icon">
@@ -211,30 +213,27 @@
                                         </div>
                                     </template>
                                     <template if:true={popUpLastPage}>
-                                        <div
-                                            class="slds-grid slds-grid_vertical-align-center slds-grid_align-center slds-m-around_medium">
-                                            <lightning-input type="datetime-local" name="dateTime" value={selectedDateTime}
-                                                onchange={handleInputChange} class="slds-align_absolute-center"></lightning-input>
+                                        <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center slds-m-around_medium">
+                                            <lightning-input type="datetime-local" name="dateTime" value={selectedDateTime} onchange={handleInputChange} class="slds-align_absolute-center"></lightning-input>
                                         </div>
-            
+
                                         <div class="popUpFooter slds-text-align_center slds-p-bottom_large">
-                                            <lightning-button variant="brand-outline" onclick={handlePreviousLastpage}
-                                                label="Previous" class="slds-m-left_x-small"></lightning-button>
-                                            <lightning-button variant="brand" label="Schedule and Send" onclick={handleSchedule}
-                                                class="slds-m-left_x-small"></lightning-button>
+                                            <lightning-button variant="brand-outline" onclick={handlePreviousLastpage} label="Previous" class="slds-m-left_x-small"></lightning-button>
+                                            
+                                            <lightning-button variant="brand" label="Schedule and Send" onclick={handleSchedule} class="slds-m-left_x-small"></lightning-button>
                                         </div>
                                     </template>
                                 </div>
-            
+
                             </div>
                         </section>
                         <div class="slds-backdrop slds-backdrop_open"></div>
                     </template>
-            
                 </div>
             </template>
         </template>
     </template>
+    
     <template if:true={selectedRecordId}>
         <c-broadcast-report-comp record-id={selectedRecordId}></c-broadcast-report-comp>
     </template>
