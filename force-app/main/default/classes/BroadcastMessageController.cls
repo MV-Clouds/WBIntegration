@@ -514,4 +514,99 @@ public with sharing class BroadcastMessageController {
         }
     }
 
+        /*
+    *********************************************************
+    @description     : Get broadcast group members by broadcast group ID
+    @param           : groupId - ID of the broadcast group
+    @return          : List of Broadcast_Group_Member__c records associated with the broadcast group
+    ********************************************************
+    */
+
+    public class BroadcastMemberWrapper {
+        @AuraEnabled public SObject record;
+        @AuraEnabled public String status;
+    }
+
+    @AuraEnabled
+    public static List<BroadcastMemberWrapper> getBroadcastMembersByGroupId(String groupId, String objectName) {
+        try {
+            if (String.isBlank(groupId) || String.isBlank(objectName)) {
+                throw new AuraHandledException('Broadcast Group ID and Object Name are required');
+            }
+
+            Map<String, Object> fullConfig = getObjectConfigs();
+            Map<String, Object> configMap = (Map<String, Object>) fullConfig.get('configMap');
+            Map<String, String> objectConfig = (Map<String, String>) configMap.get(objectName);
+
+            if (objectConfig == null) {
+                throw new AuraHandledException('Invalid object configuration for: ' + objectName);
+            }
+
+            String phoneField = objectConfig.get('phoneField');
+            String nameField = objectConfig.get('nameField');
+
+            if (String.isBlank(phoneField) || String.isBlank(nameField)) {
+                throw new AuraHandledException('Missing phone or name field config for object: ' + objectName);
+            }
+
+            // Step 2: Get phone numbers and statuses
+            List<Broadcast_Group_Member__c> members = [ SELECT Phone_Number__c, Status__c FROM Broadcast_Group_Member__c  WHERE Broadcast_Group_ID__c = :groupId  AND Phone_Number__c != null WITH SECURITY_ENFORCED];
+
+            Map<String, String> phoneToStatus = new Map<String, String>();
+            Set<String> phoneNumbers = new Set<String>();
+
+            for (Broadcast_Group_Member__c member : members) {
+                phoneToStatus.put(member.Phone_Number__c, member.Status__c);
+                phoneNumbers.add(member.Phone_Number__c);
+            }
+
+            if (phoneNumbers.isEmpty()) {
+                return new List<BroadcastMemberWrapper>();
+            }
+
+            // Step 3: Build and run the dynamic query
+            String query = 'SELECT Id, Name, ' + phoneField +
+                            ' FROM ' + objectName +
+                            ' WHERE ' + phoneField + ' IN :phoneNumbers LIMIT 1';
+            List<SObject> matchedRecords = Database.query(query);
+
+            // Step 4: Wrap with status
+            List<BroadcastMemberWrapper> result = new List<BroadcastMemberWrapper>();
+            for (SObject record : matchedRecords) {
+                String phoneValue = (String)record.get(phoneField);
+                BroadcastMemberWrapper wrapper = new BroadcastMemberWrapper();
+                wrapper.record = record;
+                wrapper.status = phoneToStatus.get(phoneValue);
+                result.add(wrapper);
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastMembersByGroupId','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+            throw new AuraHandledException('Error fetching records: ' + e.getMessage());
+        }
+    }
+
+    /*
+    *********************************************************
+    @description      : Method is used to fetch the Query and count of records from the query
+    @param {none}
+    @return           : {String} - current session Id
+    ********************************************************
+    */
+    @AuraEnabled
+    public static String getSessionId(){
+        String sessionId;
+        try{
+            if(Test.isRunningTest()) { 
+                sessionId = 'testSessionId';
+            }else{
+                sessionId = Page.UserSessionIdPage.getContent().toString();
+            }
+        }catch(Exception e){
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getSessionId', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+        }
+        return sessionId;
+    }
 }

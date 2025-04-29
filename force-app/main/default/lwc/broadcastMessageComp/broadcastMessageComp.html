@@ -54,8 +54,8 @@
                                         <lightning-input 
                                             type="checkbox" 
                                             checked={isAllSelected}
-                                            indeterminate={isIndeterminate}
-                                            onchange={handleSelectAll}>
+                                            onchange={handleSelectAll}
+                                            indeterminate={isIndeterminate}>
                                         </lightning-input>
                                     </th>
                                     <th class="sr-no">Sr. No</th>
@@ -70,7 +70,7 @@
                                             <lightning-input 
                                                 type="checkbox" 
                                                 checked={row.isSelected}
-                                                data-record-id={row.Id}
+                                                data-recordid={row.Id}
                                                 onchange={handleRecordSelection}>
                                             </lightning-input>
                                         </td>
