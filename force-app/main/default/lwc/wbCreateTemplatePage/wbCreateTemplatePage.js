@@ -39,7 +39,7 @@ import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
 import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
-// import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbCreateTemplatePage extends NavigationMixin(LightningElement) {
     maxTempNamelength = 512;
@@ -724,11 +724,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     async connectedCallback(){
         try {
-            // this.isLoading = true;
-            // await this.checkLicenseStatus();
-            // if (this.showLicenseError) {
-            //     return;
-            // }
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return;
+            }
             
             this.iseditTemplatevisible = true;
             if (this.selectedTab != undefined && this.selectedOption != undefined) {

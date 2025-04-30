@@ -6,10 +6,9 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 05/03/2025
- * Updated By : Mitrajsinh Gohil
- * Removed the limitation for only 5 templates : Beta 12 changes
- * Change Description :Beta 10 bug resolved
+ * Last Update Date : 30/04/2025
+ * Updated By : Divij Modi
+ * Change Description :Code Rework
  ********************************************************************** */
 
 import { LightningElement, track, wire,api } from 'lwc';

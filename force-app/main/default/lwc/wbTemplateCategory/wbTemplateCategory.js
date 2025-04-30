@@ -1,9 +1,16 @@
+/**
+ * Component Name: WbTemplateCategory
+ * @description: Used LWC components to select template category and template type.
+ * Date: 30/04/2025
+ * Created By: Divij Modi
+ */
+
 import { LightningElement,track,api } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 
 export default class WbTemplateCategory extends NavigationMixin(LightningElement) {
-    @api selectedTab = 'section1';     // ✅ Now parent can set
-    @api selectedOption = 'custom';    // ✅ Now parent can set
+    @api selectedTab = 'section1';    
+    @api selectedOption = 'custom';   
     @track defaultPreview = true;
     @track activeTemplateId = 'defaultPreview';
     @api activeTab = 'Marketing';
@@ -125,7 +132,6 @@ export default class WbTemplateCategory extends NavigationMixin(LightningElement
     }
 
     connectedCallback() {
-        console.log('Prefill tab: ', this.selectedTab, 'Prefill option: ', this.selectedOption);
         if(this.selectedTab!= undefined && this.selectedOption != undefined){
             this.handleTabClick(this.selectedTab);      
             this.handleRadioChange(this.selectedOption);
@@ -171,12 +177,10 @@ export default class WbTemplateCategory extends NavigationMixin(LightningElement
         if (typeof eventOrTab === 'string') {
             tabValue = eventOrTab; // manual call
         } else {
-            console.log('Event');
             
             tabValue = eventOrTab.target.dataset.tab; // click event
         }
         this.selectedTab = tabValue;
-        console.log('tabs :: ',this.selectedTab +' :: ',this.selectedOption +' :: ',this.selectedOption +' :: ',this.selectedOption +' ::');
         
         // Update button styles dynamically
         this.tabOptions = this.tabOptions.map(tab => ({
@@ -214,12 +218,9 @@ export default class WbTemplateCategory extends NavigationMixin(LightningElement
             tabValue = eventOrTab; // manual call
         } else {
             
-            console.log('Event r');
             tabValue = eventOrTab.target.value; // click event
         }
         this.selectedOption = tabValue;
-
-        console.log('Selected OPtion ::: ',this.selectedOption);
 
         const updatedOptions = this.activeSection.options.map(option => ({
             ...option,
@@ -265,7 +266,6 @@ export default class WbTemplateCategory extends NavigationMixin(LightningElement
             componentDef : 'c:wbAllTemplatePage',
             
         };
-        // console.log('Record ID:', savedAutomation.id, 'Template Type:', savedAutomation.templateType);
 
         let encodedDef = btoa(JSON.stringify(cmpDef));
         this[NavigationMixin.Navigate]({

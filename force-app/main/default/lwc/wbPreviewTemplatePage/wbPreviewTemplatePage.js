@@ -6,7 +6,7 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 23/12/2024
+ * Last Update Date : 30/04/2025
  * Updated By : Divij Modi
  * Change Description :Code Rework
  ********************************************************************** */
@@ -76,17 +76,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
         return false;
     }
 
-    formatText(inputText) {
-        try {
-            let formattedText = inputText.replaceAll('\n', '<br/>');
-            formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
-            formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
-            formattedText = formattedText.replace(/~(.*?)~/g, '<s>$1</s>');
-            formattedText = formattedText.replace(/```(.*?)```/g, '<code>$1</code>');
-            return formattedText;
-        } catch (error) {
-            console.error('Something went wrong in formatting text.',error);  
-        }
+    get contactIcon() {
+        return this.selectedContactId ? 'standard:contact' : ''; 
     }
 
     get getObjectName(){
@@ -104,10 +95,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
         if (this._templateid) {
             this.fetchTemplateData();
         }
-    }
-
-    get contactIcon() {
-        return this.selectedContactId ? 'standard:contact' : ''; 
     }
 
     async connectedCallback(){
@@ -132,6 +119,19 @@ export default class WbPreviewTemplatePage extends LightningElement {
             }
         } catch (error) {
             console.error('Error checking license:', error);
+        }
+    }
+
+    formatText(inputText) {
+        try {
+            let formattedText = inputText.replaceAll('\n', '<br/>');
+            formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
+            formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
+            formattedText = formattedText.replace(/~(.*?)~/g, '<s>$1</s>');
+            formattedText = formattedText.replace(/```(.*?)```/g, '<code>$1</code>');
+            return formattedText;
+        } catch (error) {
+            console.error('Something went wrong in formatting text.',error);  
         }
     }
 
