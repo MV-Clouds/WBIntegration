@@ -255,6 +255,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     get typeactionOption() {
         // Options for call-to-action buttons
+
         return [
             { label: 'Call Phone Number', value: 'PHONE_NUMBER' },
             { label: 'Visit Website', value: 'URL' },
@@ -483,20 +484,30 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             }));
     }
 
+    get isZeroTapSelected() {
+        return this.value === 'zero_tap';
+    }
+    
+    get isOneTapSelected() {
+        return this.value === 'ONE_TAP';
+    }
+    
+    get isCopyCodeSelected() {
+        return this.value === 'COPY_CODE';
+    }
+
     // ============================
     // API PROPERTIES (GET/SET)
     // ============================
 
     @api
     get edittemplateid() {
-        console.log('EDit create :: '+this._edittemplateid);
         // API exposed getter for edittemplateid
         return this._edittemplateid;
     }
 
     set edittemplateid(value) {
         // Setter to control template states when edittemplateid is set
-        console.log('EDit create :: '+this._edittemplateid);
         this._edittemplateid = value;
         if (this._edittemplateid) {
             this.isNewTemplate = false;
@@ -568,9 +579,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     handleTabClick(sectionname) {
         this.activeSection = sectionname;
-        console.log('Tab Click');
-
-
         this.isFlowMarketing = false;
         this.isFlowUtility = false;
         this.showMsgValidity = false;
@@ -721,7 +729,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             // if (this.showLicenseError) {
             //     return;
             // }
-            console.log('Edit c ::: '+this._edittemplateid);
             
             this.iseditTemplatevisible = true;
             if (this.selectedTab != undefined && this.selectedOption != undefined) {
@@ -844,10 +851,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 
                 this.handleTabClick(this.selectedTab);
                 this.handleRadioChange(this.selectedOption);
-                // this.handleNextclick();
-                console.log('Data ::: ',data);
                 
-
                 setTimeout(() => {
                     
                     this.templateName = template.Template_Name__c || '';
@@ -887,12 +891,27 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         this.prevContent = templateMiscellaneousData.isSecurityRecommedation
                         this.isExpiration = templateMiscellaneousData.isCodeExpiration
                         this.expirationTime = templateMiscellaneousData.expireTime
-                        
+                        this.value = templateMiscellaneousData.authRadioButton
+                        this.isautofillChecked = templateMiscellaneousData.autofillCheck
+                        this.isVisitSite = templateMiscellaneousData.isVisitSite
+                        this.isCheckboxChecked = templateMiscellaneousData.isCheckboxChecked
+                        this.flowBooleanCheck = templateMiscellaneousData.flowBooleanCheck
+                        this.isFlowSelected = templateMiscellaneousData.isFlowSelected
+                        this.selectedFlow = templateMiscellaneousData.isFlowSelected
+                        this.isFeatureEnabled = templateMiscellaneousData.isFeatureEnabled
                     }
                     catch(error){
                         console.error('templateMiscellaneousData Error ::: ',error)
                     }
-                    
+
+                    if (this.activeTab === 'Authentication' && this.value) {
+                        const event = {
+                            target: {
+                                value: this.value
+                            }
+                        };
+                        this.handleChange(event);
+                    }
 
                     // const parser = new DOMParser();
                     // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
@@ -948,7 +967,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         this.copyOfferCode = 0;
                         this.flowCount = 0;
                         this.marketingOpt = 0;
-                        console.log('Button list ::: ',buttonDataList);
                         
                         buttonDataList.forEach((button, index) => {
                             if (button.type === 'QUICK_REPLY' || button.type === 'Marketing opt-out') {
@@ -974,7 +992,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                                     }
                                 });
                             } else {
-                                console.log('Button ::: ',button);
                                 
                                 // Handle regular buttons
                                 let newButton = {
@@ -1359,7 +1376,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     }
 
     handlePrevclick() {
-        console.log('Previous');
         if(this.contentVersionId != null){
             this.handleDelete();
         }
@@ -1373,8 +1389,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 activeTab: this.activeTab
             }
         });
-        console.log('Prev ev ::: ', previousEvent);
-
         this.dispatchEvent(previousEvent);
 
     }
@@ -1485,11 +1499,22 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     this.isautofillChecked = checked;
                     break;
                 // Change
-                case 'selectContent':
-                    this.selectContent = value;
-                    this.isExpiration = value.includes('Add expiry time for the code');
-                    this.addSecurityRecommendation = value.includes('Add security recommendation');
-                    this.prevContent = this.addSecurityRecommendation;
+                case 'prevContent':
+                    if(this.prevContent){
+                        this.prevContent = false;
+                    }
+                    else{
+                        this.prevContent = true;
+                    }
+                    break;
+
+                case 'isExpiration':
+                    if(this.isExpiration){
+                        this.isExpiration = false;
+                    }
+                    else{
+                        this.isExpiration = true;
+                    }
                     break;
             
                 case 'autofill':
@@ -1604,9 +1629,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const selectedValue = event.currentTarget.dataset.value; 
             this.menuButtonSelected = selectedValue;
             let buttonData=event.currentTarget.dataset.buttonData;
-            console.log('Seleected Value ::: ',selectedValue);
-            
-        
             let newButton = buttonData ? buttonData:{
                 id: this.buttonList.length + 1,
                 selectedActionType: selectedValue,
@@ -2551,8 +2573,15 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 isDocFile : this.isDocFile,
                 isSecurityRecommedation : this.prevContent,
                 isCodeExpiration : this.isExpiration,
-                expireTime: this.expirationTime
-
+                expireTime: this.expirationTime,
+                authRadioButton : this.value,
+                autofillCheck : this.isautofillChecked,
+                isVisitSite : this.isVisitSite,
+                isCheckboxChecked : this.isCheckboxChecked,
+                flowBooleanCheck : this.flowBooleanCheck,
+                isFlowSelected : this.isFlowSelected,
+                selectedFlow : this.selectedFlow,
+                isFeatureEnabled : this.isFeatureEnabled
             }
 
             

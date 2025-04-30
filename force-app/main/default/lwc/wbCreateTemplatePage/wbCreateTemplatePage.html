@@ -710,7 +710,7 @@
                                     <div class="radio-group">
                                         <div class="radio-item">
                                             <div class="radio">
-                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="zero_tap" onchange={handleChange} checked></lightning-input>
+                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="zero_tap" onchange={handleChange} checked={isZeroTapSelected}></lightning-input>
                                                 <p class="radio-label">Zero-tap auto-fill</p>
                                             </div>
                                         
@@ -724,7 +724,7 @@
                                         </template>
                                         <div class="radio-item">
                                             <div class="radio">
-                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="ONE_TAP" onchange={handleChange}></lightning-input>
+                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="ONE_TAP" onchange={handleChange} checked={isOneTapSelected}></lightning-input>
                                                 <p class="radio-label">One-tap auto-fill</p>
                                             </div>
                                         
@@ -733,7 +733,7 @@
                                         </div>
                                         <div class="radio-item">
                                             <div class="radio">
-                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="COPY_CODE" onchange={handleChange}></lightning-input>
+                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="COPY_CODE" onchange={handleChange} checked={isCopyCodeSelected}></lightning-input>
                                                 <p class="radio-label">Copy code</p>
                                             </div>
                                             <p class="description">Basic authentication with quick setup. Your customers copy and paste the code into your app.
@@ -817,12 +817,29 @@
                                         <p>Content for authentication message templates can't be edited. You can add additional content from the options below.
                                         </p>
                                     </div>
-                                    <lightning-checkbox-group
+                                    <!-- <lightning-checkbox-group
                                         options={contentOption}
                                         name="selectContent"
                                         value={selectContent}
                                         onchange={handleInputChange}>
-                                    </lightning-checkbox-group>
+                                    </lightning-checkbox-group> -->
+                                    <lightning-input
+                                        type="checkbox"
+                                        name="prevContent"
+                                        label="Add security recommendation"
+                                        value="Add security recommendation"
+                                        checked={prevContent}
+                                        onchange={handleInputChange}>
+                                    </lightning-input>
+
+                                    <lightning-input
+                                        type="checkbox"
+                                        name="isExpiration"
+                                        label="Add expiry time for the code"
+                                        value="Add expiry time for the code"
+                                        checked={isExpiration}
+                                        onchange={handleInputChange}>
+                                    </lightning-input>
         
                                     <template if:true={isExpiration}>
                                         <div class="expiration">
@@ -987,28 +1004,17 @@
                                                 </div> 
                                             </template>                                
                                         </template>
-                                        <!-- <template if:true={isFlowMarketing}>
-                                            
-                                        </template>
-                                      
-                                        <template if:true={isFlowUtility}>
-                                            <iframe src={flowPreviewURL} width="430" height="800" ></iframe>
-                                        </template> -->
+                                  
         
                                         <div class="TextTimeWP">
                                             <p class="timefooterWP">11:59</p>
                                         </div>
-                                        <!-- Remeber to change -->
-                                        
-        
-                                        
-                        
+                                    
                                     </div>
 
                                     
                                     <div class="codelinktempprev">
                                         <template for:each={buttonList} for:item="button" for:index="index">
-                                            <!-- <hr key={button.id} class="separator-line"/> -->
         
                                             <div key={button.id} class="button-label-preview button-tabs">
                                                 <lightning-icon  icon-name={button.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
@@ -1016,7 +1022,6 @@
                                             </div>
                                         </template>
                                         <template for:each={customButtonList} for:item="customButton" for:index="index">
-                                            <!-- <hr key={customButton.id} class="separator-line"/> -->
         
                                             <div key={customButton.id} class="button-label-preview button-tabs">
                                                 <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
@@ -1025,8 +1030,6 @@
                                             </div>
                                         </template>
                                         <template if:true={showAuthBtn}>
-
-                                            <!-- <hr class="separator-line"/> -->
         
                                             <div class="button-label-preview button-tabs">
                                                 <lightning-icon  icon-name='utility:copy'  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
@@ -1034,7 +1037,6 @@
                                             </div>
                                         </template>
                                         <template if:true={showOneTap}>
-                                            <!-- <hr class="separator-line"/> -->
         
                                             <div class="button-label-preview button-tabs">
                                                 <lightning-icon  icon-name='utility:copy'  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
