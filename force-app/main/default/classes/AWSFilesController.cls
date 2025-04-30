@@ -213,7 +213,7 @@ public with sharing class AWSFilesController {
     }
 
     @AuraEnabled
-    public static AWS_Config__c getS3ConfigSettings(){
+    public static MVWB__AWS_Config__c getS3ConfigSettings(){
         try {
             MVWB__AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;
             return configData;

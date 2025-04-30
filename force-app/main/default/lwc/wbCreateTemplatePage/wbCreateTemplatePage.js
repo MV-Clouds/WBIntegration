@@ -4,18 +4,19 @@
  * Date: 25/11/2024
  * Created By: Kajal Tiwari
  */
- /***********************************************************************
+/***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 29/04/2025
- * Updated By : Divij Modi
- * Change Description : Code Rework
- ********************************************************************** */
+* Last Update Date : 29/04/2025
+* Updated By : Divij Modi
+* Change Description : Code Rework
+********************************************************************** */
 
-import { LightningElement, track,api } from 'lwc';
-import {loadStyle} from 'lightning/platformResourceLoader';
+import { LightningElement, track, api } from 'lwc';
+import { loadStyle } from 'lightning/platformResourceLoader';
+import { loadScript } from 'lightning/platformResourceLoader';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
 import { NavigationMixin } from 'lightning/navigation';
+import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
 import richTextZip from '@salesforce/resourceUrl/richTextZip';
 import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
@@ -36,10 +37,11 @@ import docUploadPreview from '@salesforce/resourceUrl/documentPreviewIcon';
 import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
 import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
 import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
-import getPublicLink  from '@salesforce/apex/FileUploaderController.getPublicLink';
+import getPublicLink from '@salesforce/apex/FileUploaderController.getPublicLink';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
 import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
-import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+// import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 
 export default class WbCreateTemplatePage extends NavigationMixin(LightningElement) {
     maxTempNamelength = 512;
@@ -214,6 +216,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     @track iframeSrc;
     @track isModalPreview = false;
     @track showCategoryPage = true;
+    @track isAWSEnabled = false;
+    @track confData;
+    @track s3;
+    @track isAwsSdkInitialized = true;
+    @track selectedFilesToUpload = [];
+    @track awsFileName;
     @api activeTab;
     @api selectedTab;
     @api selectedOption;
@@ -487,11 +495,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     get isZeroTapSelected() {
         return this.value === 'zero_tap';
     }
-    
+
     get isOneTapSelected() {
         return this.value === 'ONE_TAP';
     }
-    
+
     get isCopyCodeSelected() {
         return this.value === 'COPY_CODE';
     }
@@ -512,7 +520,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         if (this._edittemplateid) {
             this.isNewTemplate = false;
             this.isEditTemplate = true;
-            
+
             // this.isAllTemplate = false;
             this.fetchTemplateData(); // Load template data when ID is set
         }
@@ -530,24 +538,24 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         this.isModalOpen = false;
         this.isModalPreview = false;
     }
-    modalPreview(){
+    modalPreview() {
         this.isModalPreview = true;
     }
 
     handleFlowSelection(event) {
-        const { selectedFlow, iframeSrc ,flows } = event.detail; // Destructure the received data
-    
+        const { selectedFlow, iframeSrc, flows } = event.detail; // Destructure the received data
+
         this.selectedFlowId = selectedFlow; // Get selected Flow ID
         this.iframeSrc = iframeSrc;
         this.selectedFlow = flows; // Store the entire list of flows
-    
-    
+
+
         this.isFlowSelected = true; // Hide "Choose Flow" button after selection
         this.NoFileSelected = false; // Hide text after selection
         this.closeModal();
     }
 
-    handleFlowDeleteClick(event){
+    handleFlowDeleteClick(event) {
         this.isFlowSelected = false;
         this.selectedFlowId = ''; // Get selected Flow ID
         this.selectedFlow = undefined;
@@ -572,9 +580,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             'PHONE_NUMBER': 'utility:call',
             'URL': 'utility:new_window',
             'COPY_CODE': 'utility:copy',
-            'Flow':'utility:file'
+            'Flow': 'utility:file'
         };
-        return iconMap[type] || 'utility:question'; 
+        return iconMap[type] || 'utility:question';
     }
 
     handleTabClick(sectionname) {
@@ -689,30 +697,30 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     handleChange(event) {
         this.value = event.target.value;
-    
+
         this.authZeroTab = false;
         this.isAppSetup = false;
         this.showAutofill = false;
         this.showAuthBtn = false;
         this.showOneTap = false;
-    
+
         switch (this.value) {
             case 'zero_tap':
                 this.authZeroTab = true;
                 this.isAppSetup = true;
                 this.showAutofill = true;
                 break;
-    
+
             case 'COPY_CODE':
                 this.showAuthBtn = true;
                 break;
-    
+
             case 'ONE_TAP':
                 this.isAppSetup = true;
                 this.showAutofill = true;
                 this.showOneTap = true;
                 break;
-    
+
             default:
                 break;
         }
@@ -720,21 +728,23 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     addOutsideClickListener() {
         document.addEventListener('click', this.handleOutsideClick.bind(this));
-    }    
+    }
 
-    async connectedCallback(){
+    async connectedCallback() {
         try {
-            this.isLoading = true;
-            await this.checkLicenseStatus();
-            if (this.showLicenseError) {
-                return;
-            }
-            
+            // this.isLoading = true;
+            // await this.checkLicenseStatus();
+            // if (this.showLicenseError) {
+            //     return;
+            // }
+
             this.iseditTemplatevisible = true;
             if (this.selectedTab != undefined && this.selectedOption != undefined) {
-                this.handleTabClick(this.selectedTab);      
+                this.handleTabClick(this.selectedTab);
                 this.handleRadioChange(this.selectedOption);
             }
+
+            this.getS3ConfigDataAsync();
             this.fetchCountries();
             this.fetchLanguages();
             this.generateEmojiCategories();
@@ -763,6 +773,22 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
+    getS3ConfigDataAsync() {
+        try {
+            getS3ConfigSettings()
+                .then(result => {
+                    if (result != null) {
+                        this.confData = result;
+                        this.isAWSEnabled = true;
+                    }
+                }).catch(error => {
+                    console.error('error in apex -> ', error.stack);
+                });
+        } catch (error) {
+            console.error('error in getS3ConfigDataAsync -> ', error.stack);
+        }
+    }
+
     removeOutsideClickListener() {
         document.removeEventListener('click', this.handleOutsideClick.bind(this));
     }
@@ -773,9 +799,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     handleOutsideClick(event) {
         const emojiContainer = this.template.querySelector('.toolbar-button');
-        const button = this.template.querySelector('button');        
+        const button = this.template.querySelector('button');
         if (
-            (emojiContainer && !emojiContainer.contains(event.target)) && 
+            (emojiContainer && !emojiContainer.contains(event.target)) &&
             (button && !button.contains(event.target))
         ) {
             this.showEmojis = false;
@@ -792,260 +818,275 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     fetchObjectsWithPhoneField() {
         this.isLoading = true;
         getObjectsWithPhoneField()
-        .then((result) => {            
-            this.availableObjects = result;
-            this.selectedObject = this.availableObjects[0].value;
-            this.fetchFields(this.selectedObject);
-        })
-        .catch((error) => {
-            console.error('Error fetching objects with phone field: ', error);
-            this.showToastError('Error fetching objects with phone field: '+error.message);
-        })
-        .finally(() => {
-            this.isLoading = false;
-        });
-    }
-    
-    renderedCallback() {
-
-        loadStyle(this, wbCreateTempStyle).then().catch(error => {
-            console.error("Error in loading the colors",error);
-        })
-
-        
-        if (this.isRendered) return;
-        this.isRendered = true;
-        let headerEls = this.template.querySelectorAll('.field-header-dd');
-        if(headerEls!=null && this.addHeaderVar) {
-            for(let i=0; i< this.header_variables.length; i++){
-                this.header_variables.forEach((hv, i) => {
-                    headerEls[i].value = hv.field;
-                })
-            }
-            this.addHeaderVar=false;
-        }
-        let bodyEls = this.template.querySelectorAll('.field-body-dd');
-        if(bodyEls !=null && this.addVar) {
-            this.variables.forEach((bv, i) => {
-                bodyEls[i].value = bv.field;
+            .then((result) => {
+                this.availableObjects = result;
+                this.selectedObject = this.availableObjects[0].value;
+                this.fetchFields(this.selectedObject);
             })
-            this.addVar=false;
+            .catch((error) => {
+                console.error('Error fetching objects with phone field: ', error);
+                this.showToastError('Error fetching objects with phone field: ' + error.message);
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+    }
+
+    renderedCallback() {
+        try {
+            loadStyle(this, wbCreateTempStyle).then().catch(error => {
+                console.error("Error in loading the colors", error);
+            })
+
+
+            if (this.isRendered) return;
+            this.isRendered = true;
+            let headerEls = this.template.querySelectorAll('.field-header-dd');
+            if (headerEls != null && this.addHeaderVar) {
+                for (let i = 0; i < this.header_variables.length; i++) {
+                    this.header_variables.forEach((hv, i) => {
+                        headerEls[i].value = hv.field;
+                    })
+                }
+                this.addHeaderVar = false;
+            }
+            let bodyEls = this.template.querySelectorAll('.field-body-dd');
+            if (bodyEls != null && this.addVar) {
+                this.variables.forEach((bv, i) => {
+                    bodyEls[i].value = bv.field;
+                })
+                this.addVar = false;
+            }
+
+            if (this.isAwsSdkInitialized) {
+                Promise.all([loadScript(this, AWS_SDK)])
+                    .then(() => {
+                        // console.log('Script loaded successfully');
+                    })
+                    .catch((error) => {
+                        console.error("error -> ", error);
+                    });
+
+                this.isAwsSdkInitialized = false;
+            }
+        } catch (error) {
+            console.error('Error in function renderedCallback:::', e.message);
         }
     }
 
     fetchTemplateData() {
         try {
-            getDynamicObjectData({templateId:this.edittemplateid})
-            .then((data) => {
-                const { template, templateVariables } = data;
+            getDynamicObjectData({ templateId: this.edittemplateid })
+                .then((data) => {
+                    const { template, templateVariables } = data;
 
-                this.selectedOption = template.MVWB__Template_Type__c;
-                this.activeTab = template.MVWB__Template_Category__c;
-                if (this.activeTab === 'Marketing') {
-                    this.selectedTab = 'section1';
-                } else if (this.activeTab === 'Utility') {
-                    this.selectedTab = 'section2';
-                } else if (this.activeTab === 'Authentication') {
-                    this.selectedTab = 'section3';
-                }
-                
-                this.handleTabClick(this.selectedTab);
-                this.handleRadioChange(this.selectedOption);
-                
-                setTimeout(() => {
-                    
-                    this.templateName = template.MVWB__Template_Name__c || '';
-                    this.metaTemplateId = template.MVWB__Template_Id__c || '';
-                    const headerBody = template.MVWB__WBHeader_Body__c || '';
-                    
-                    const headerType = template.MVWB__Header_Type__c || 'None';
-                    
-                    this.footer = template.MVWB__WBFooter_Body__c || '';
-                    this.selectedLanguage = template.MVWB__Language__c;
-                    this.languageOptions = this.languageOptions.map(option => ({
-                        ...option,
-                        isSelected: option.value === this.selectedLanguage
-                    }));
-                    
-                    this.tempBody = template.MVWB__WBTemplate_Body__c || 'Hello';
-                    
-                    this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
-                    
-                    
-                    
-                    try{
-                        const templateMiscellaneousData = JSON.parse(template.MVWB__Template_Miscellaneous_Data__c);
-                        this.contentVersionId = templateMiscellaneousData.contentVersionId
-                        this.isImageFile = templateMiscellaneousData.isImageFile
-                        this.isImgSelected = templateMiscellaneousData.isImgSelected
-                        this.isDocSelected = templateMiscellaneousData.isDocSelected
-                        this.isVidSelected = templateMiscellaneousData.isVidSelected
-                        this.IsHeaderText = templateMiscellaneousData.isHeaderText
-                        this.addHeaderVar = templateMiscellaneousData.addHeaderVar
-                        this.addMedia = templateMiscellaneousData.addMedia
-                        this.isImageFileUploader = templateMiscellaneousData.isImageFileUploader
-                        this.isVideoFileUploader = templateMiscellaneousData.isVideoFileUploader
-                        this.isDocFileUploader = templateMiscellaneousData.isDocFileUploader
-                        this.isVideoFile = templateMiscellaneousData.isVideoFile
-                        this.isDocFile = templateMiscellaneousData.isDocFile
-                        this.prevContent = templateMiscellaneousData.isSecurityRecommedation
-                        this.isExpiration = templateMiscellaneousData.isCodeExpiration
-                        this.expirationTime = templateMiscellaneousData.expireTime
-                        this.value = templateMiscellaneousData.authRadioButton
-                        this.isautofillChecked = templateMiscellaneousData.autofillCheck
-                        this.isVisitSite = templateMiscellaneousData.isVisitSite
-                        this.isCheckboxChecked = templateMiscellaneousData.isCheckboxChecked
-                        this.flowBooleanCheck = templateMiscellaneousData.flowBooleanCheck
-                        this.isFlowSelected = templateMiscellaneousData.isFlowSelected
-                        this.selectedFlow = templateMiscellaneousData.isFlowSelected
-                        this.isFeatureEnabled = templateMiscellaneousData.isFeatureEnabled
-                    }
-                    catch(error){
-                        console.error('templateMiscellaneousData Error ::: ',error)
+                    this.selectedOption = template.Template_Type__c;
+                    this.activeTab = template.Template_Category__c;
+                    if (this.activeTab === 'Marketing') {
+                        this.selectedTab = 'section1';
+                    } else if (this.activeTab === 'Utility') {
+                        this.selectedTab = 'section2';
+                    } else if (this.activeTab === 'Authentication') {
+                        this.selectedTab = 'section3';
                     }
 
-                    if (this.activeTab === 'Authentication' && this.value) {
-                        const event = {
-                            target: {
-                                value: this.value
-                            }
-                        };
-                        this.handleChange(event);
-                    }
+                    this.handleTabClick(this.selectedTab);
+                    this.handleRadioChange(this.selectedOption);
 
-                    // const parser = new DOMParser();
-                    // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
-                    // this.previewHeader = doc.documentElement.textContent;
-                    if(template.MVWB__Header_Type__c=='Image' || template.MVWB__Header_Type__c=='Video' || template.MVWB__Header_Type__c=='Document'){
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
-                        this.previewHeader = doc.documentElement.textContent||"";
-                        
-                        this.fileName = template.MVWB__File_Name__c;
-                        this.fileType = template.MVWB__Header_Type__c;
-                        
-                        this.filePreview = template.MVWB__WBHeader_Body__c;
-                        
-                    }else{
-                        this.previewHeader= this.formatText(headerBody) ||'';
-                    }
-                    
-                    
-                    // this.previewHeader= this.formatText(headerBody) ||'';
-                    this.selectedContentType=template.MVWB__Header_Type__c || 'None';
-                    this.btntext = template.MVWB__Button_Label__c || '';
-                    let tvs =templateVariables.map(tv=>{
-                        let temp = {
-                            object:tv.objName,
-                            field:tv.fieldName,
-                            alternateText:tv.alternateText?tv.alternateText:'',
-                            id:tv.variable.slice(2,3),
-                            index:tv.variable,
-                            type:tv.type
-                        };
-                        return temp;
-                    })
-                    
-                    this.variables = tvs.filter(tv=>tv.type=='Body') || [];
-                    this.header_variables = tvs.filter(tv=>tv.type=='Header') || [];
-                    this.updatePreviewContent(this.previewHeader,'header');
-                    this.updatePreviewContent(this.previewBody,'body');
-                    this.addHeaderVar=this.header_variables?.length>0?true:false;
-                    this.addVar=this.variables?.length>0?true:false;
-                    if (this.addHeaderVar) {
-                        this.buttonDisabled = true;
-                    }  
-                    if (template.MVWB__WBButton_Body__c) {
-                        // Parse JSON from WBButton_Body__c
-                        let buttonDataList = JSON.parse(template.MVWB__WBButton_Body__c);
-                    
-                        // Clear existing button and custom button lists before populating
-                        this.buttonList = [];
-                        this.customButtonList = [];
-                        this.callPhoneNumber = 0;
-                        this.visitWebsiteCount = 0;
-                        this.copyOfferCode = 0;
-                        this.flowCount = 0;
-                        this.marketingOpt = 0;
-                        
-                        buttonDataList.forEach((button, index) => {
-                            if (button.type === 'QUICK_REPLY' || button.type === 'Marketing opt-out') {
-                                // Handle custom buttons
-                                try{
-                                    if(button.isMarketingOpt){
-                                        button.type = 'Marketing opt-out';
-                                    }
+                    setTimeout(() => {
+
+                        this.templateName = template.Template_Name__c || '';
+                        this.metaTemplateId = template.Template_Id__c || '';
+                        const headerBody = template.WBHeader_Body__c || '';
+
+                        const headerType = template.Header_Type__c || 'None';
+
+                        this.footer = template.WBFooter_Body__c || '';
+                        this.selectedLanguage = template.Language__c;
+                        this.languageOptions = this.languageOptions.map(option => ({
+                            ...option,
+                            isSelected: option.value === this.selectedLanguage
+                        }));
+
+                        this.tempBody = template.WBTemplate_Body__c || 'Hello';
+
+                        this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
+
+
+
+                        try {
+                            const templateMiscellaneousData = JSON.parse(template.Template_Miscellaneous_Data__c);
+                            this.contentVersionId = templateMiscellaneousData.contentVersionId
+                            this.isImageFile = templateMiscellaneousData.isImageFile
+                            this.isImgSelected = templateMiscellaneousData.isImgSelected
+                            this.isDocSelected = templateMiscellaneousData.isDocSelected
+                            this.isVidSelected = templateMiscellaneousData.isVidSelected
+                            this.IsHeaderText = templateMiscellaneousData.isHeaderText
+                            this.addHeaderVar = templateMiscellaneousData.addHeaderVar
+                            this.addMedia = templateMiscellaneousData.addMedia
+                            this.isImageFileUploader = templateMiscellaneousData.isImageFileUploader
+                            this.isVideoFileUploader = templateMiscellaneousData.isVideoFileUploader
+                            this.isDocFileUploader = templateMiscellaneousData.isDocFileUploader
+                            this.isVideoFile = templateMiscellaneousData.isVideoFile
+                            this.isDocFile = templateMiscellaneousData.isDocFile
+                            this.prevContent = templateMiscellaneousData.isSecurityRecommedation
+                            this.isExpiration = templateMiscellaneousData.isCodeExpiration
+                            this.expirationTime = templateMiscellaneousData.expireTime
+                            this.value = templateMiscellaneousData.authRadioButton
+                            this.isautofillChecked = templateMiscellaneousData.autofillCheck
+                            this.isVisitSite = templateMiscellaneousData.isVisitSite
+                            this.isCheckboxChecked = templateMiscellaneousData.isCheckboxChecked
+                            this.flowBooleanCheck = templateMiscellaneousData.flowBooleanCheck
+                            this.isFlowSelected = templateMiscellaneousData.isFlowSelected
+                            this.selectedFlow = templateMiscellaneousData.isFlowSelected
+                            this.isFeatureEnabled = templateMiscellaneousData.isFeatureEnabled
+                        }
+                        catch (error) {
+                            console.error('templateMiscellaneousData Error ::: ', error)
+                        }
+
+                        if (this.activeTab === 'Authentication' && this.value) {
+                            const event = {
+                                target: {
+                                    value: this.value
                                 }
-                                catch(error){
-                                    console.error(error);
-                                }
-                                let buttonData = {
-                                    btntext : button.text
-                                }
-                                
-                                this.handleMenuSelect({
-                                    currentTarget: {
-                                        dataset: {
-                                            value: button.type,
-                                            buttonData: buttonData
+                            };
+                            this.handleChange(event);
+                        }
+
+                        // const parser = new DOMParser();
+                        // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
+                        // this.previewHeader = doc.documentElement.textContent;
+                        if (template.Header_Type__c == 'Image' || template.Header_Type__c == 'Video' || template.Header_Type__c == 'Document') {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
+                            this.previewHeader = doc.documentElement.textContent || "";
+
+                            this.fileName = template.File_Name__c;
+                            this.fileType = template.Header_Type__c;
+
+                            this.filePreview = template.WBHeader_Body__c;
+
+                        } else {
+                            this.previewHeader = this.formatText(headerBody) || '';
+                        }
+
+
+                        // this.previewHeader= this.formatText(headerBody) ||'';
+                        this.selectedContentType = template.Header_Type__c || 'None';
+                        this.btntext = template.Button_Label__c || '';
+                        let tvs = templateVariables.map(tv => {
+                            let temp = {
+                                object: tv.objName,
+                                field: tv.fieldName,
+                                alternateText: tv.alternateText ? tv.alternateText : '',
+                                id: tv.variable.slice(2, 3),
+                                index: tv.variable,
+                                type: tv.type
+                            };
+                            return temp;
+                        })
+
+                        this.variables = tvs.filter(tv => tv.type == 'Body') || [];
+                        this.header_variables = tvs.filter(tv => tv.type == 'Header') || [];
+                        this.updatePreviewContent(this.previewHeader, 'header');
+                        this.updatePreviewContent(this.previewBody, 'body');
+                        this.addHeaderVar = this.header_variables?.length > 0 ? true : false;
+                        this.addVar = this.variables?.length > 0 ? true : false;
+                        if (this.addHeaderVar) {
+                            this.buttonDisabled = true;
+                        }
+                        if (template.WBButton_Body__c) {
+                            // Parse JSON from WBButton_Body__c
+                            let buttonDataList = JSON.parse(template.WBButton_Body__c);
+
+                            // Clear existing button and custom button lists before populating
+                            this.buttonList = [];
+                            this.customButtonList = [];
+                            this.callPhoneNumber = 0;
+                            this.visitWebsiteCount = 0;
+                            this.copyOfferCode = 0;
+                            this.flowCount = 0;
+                            this.marketingOpt = 0;
+
+                            buttonDataList.forEach((button, index) => {
+                                if (button.type === 'QUICK_REPLY' || button.type === 'Marketing opt-out') {
+                                    // Handle custom buttons
+                                    try {
+                                        if (button.isMarketingOpt) {
+                                            button.type = 'Marketing opt-out';
                                         }
                                     }
-                                });
-                            } else {
-                                
-                                // Handle regular buttons
-                                let newButton = {
-                                    id: index + 1, // Unique ID for button
-                                    selectedActionType: button.type || '',
-                                    iconName: this.getButtonIcon(button.type),
-                                    btntext: button.text || '',
-                                    webURL: button.url || '',
-                                    phonenum: button.phone_number || '',
-                                    offercode: button.example || '',
-                                    selectedUrlType: button.type === 'URL' ? 'Static' : '',
-                                    selectedCountryType: button.phone_number ? button.phone_number.split(' ')[0] : '',
-                                    isCallPhone: button.type === 'PHONE_NUMBER',
-                                    isVisitSite: button.type === 'URL',
-                                    isOfferCode: button.type === 'COPY_CODE',
-                                    isFlow : button.type === 'FLOW',
-                                    hasError: false,
-                                    errorMessage: ''
-                                };
-                    
-                                // Call handleMenuSelect() to process button creation correctly
-                                this.handleMenuSelect({
-                                    currentTarget: {
-                                        dataset: {
-                                            value: button.type,
-                                            buttonData: newButton
-                                        }
+                                    catch (error) {
+                                        console.error(error);
                                     }
-                                });
-                            }
-                        });
-                    
-                    }
-                    
-                    
-                    if(headerType.toLowerCase()=='image' || headerType.toLowerCase() == 'video'){
-                        this.headerHandle=template.MVWB__WBImage_Header_Handle__c;
-                        this.imageurl=template.MVWB__WBHeader_Body__c;
-                        this.NoFileSelected = false;
-                        this.isfilename=true;
-                        this.fileName=template.MVWB__File_Name__c;
-                        this.fileType = template.MVWB__Header_Type__c.toLowerCase();
-                        
-                            this.filePreview=headerBody;
-                    }
-                    else{
-                        this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
-                    }
-                 
-                }, 1000);
-            })
-            .catch((error) => {
-                console.error('Error fetching fields: ', error);
-            });
+                                    let buttonData = {
+                                        btntext: button.text
+                                    }
+
+                                    this.handleMenuSelect({
+                                        currentTarget: {
+                                            dataset: {
+                                                value: button.type,
+                                                buttonData: buttonData
+                                            }
+                                        }
+                                    });
+                                } else {
+
+                                    // Handle regular buttons
+                                    let newButton = {
+                                        id: index + 1, // Unique ID for button
+                                        selectedActionType: button.type || '',
+                                        iconName: this.getButtonIcon(button.type),
+                                        btntext: button.text || '',
+                                        webURL: button.url || '',
+                                        phonenum: button.phone_number || '',
+                                        offercode: button.example || '',
+                                        selectedUrlType: button.type === 'URL' ? 'Static' : '',
+                                        selectedCountryType: button.phone_number ? button.phone_number.split(' ')[0] : '',
+                                        isCallPhone: button.type === 'PHONE_NUMBER',
+                                        isVisitSite: button.type === 'URL',
+                                        isOfferCode: button.type === 'COPY_CODE',
+                                        isFlow: button.type === 'FLOW',
+                                        hasError: false,
+                                        errorMessage: ''
+                                    };
+
+                                    // Call handleMenuSelect() to process button creation correctly
+                                    this.handleMenuSelect({
+                                        currentTarget: {
+                                            dataset: {
+                                                value: button.type,
+                                                buttonData: newButton
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+
+                        }
+
+
+                        if (headerType.toLowerCase() == 'image' || headerType.toLowerCase() == 'video') {
+                            this.headerHandle = template.WBImage_Header_Handle__c;
+                            this.imageurl = template.WBHeader_Body__c;
+                            this.NoFileSelected = false;
+                            this.isfilename = true;
+                            this.fileName = template.File_Name__c;
+                            this.fileType = template.Header_Type__c.toLowerCase();
+
+                            this.filePreview = headerBody;
+                        }
+                        else {
+                            this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
+                        }
+
+                    }, 1000);
+                })
+                .catch((error) => {
+                    console.error('Error fetching fields: ', error);
+                });
         } catch (error) {
             console.error('Error fetching template data: ', error);
         }
@@ -1054,50 +1095,154 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     //fetch object related fields
     fetchFields(objectName) {
         try {
-            getObjectFields({objectName: objectName})
-            .then((result) => {
-                this.fields = result.map((field) => ({ label: field, value: field }));
-            })
-            .catch((error) => {
-                console.error('Error fetching fields: ', error);
-            });
+            getObjectFields({ objectName: objectName })
+                .then((result) => {
+                    this.fields = result.map((field) => ({ label: field, value: field }));
+                })
+                .catch((error) => {
+                    console.error('Error fetching fields: ', error);
+                });
         } catch (error) {
             console.error('Error fetching objects fields: ', error);
         }
     }
 
     // Handle file selection
-    handleFileChange(event) {
-        const file = event.target.files[0];
-        
-        if (file) {
-            this.file = file ;
-            this.fileName = file.name;
-            this.fileType = file.type;
-            this.fileSize = file.size;
-            // Optional: File size limit (10 MB)
-            const MAX_FILE_SIZE = 10 * 1024 * 1024;
-            if (file.size > MAX_FILE_SIZE) {
-                this.showToastError('File size exceeds 10 MB. Please select a smaller file.');
+    async handleFileChange(event) {
+        try {
+            const file = event.target.files[0];
+            console.log('File');
+            
+            if (file) {
+                this.file = file;
+                this.fileName = file.name;
+                this.fileType = file.type;
+                this.fileSize = file.size;
 
-                return;
+                if (this.isAWSEnabled) {
+                    let isValid = false;
+                    let maxSize = 0;
+                    let fileSizeMB = Math.floor(file.size / (1024 * 1024));
+                    if (this.fileType.includes('image/')) {
+                        maxSize = 5;
+                        isValid = fileSizeMB <= maxSize;
+                    } else if (this.fileType.includes('video/') || this.fileType.includes('audio/')) {
+                        maxSize = 16;
+                        isValid = fileSizeMB <= maxSize;
+                    } else if (this.fileType.includes('application/') || this.fileType.includes('text/')) {
+                        maxSize = 100;
+                        isValid = fileSizeMB <= maxSize;
+                    }
+
+                    if (isValid) {
+                        this.selectedFilesToUpload.push(file);
+                        this.fileName = file.name;
+                    } else {
+                        this.showToast('Error', `${file.name} exceeds the ${maxSize}MB limit`, 'error');
+                    }
+                    if (file.length > 0) {
+                        this.isLoading = true;
+                        await this.uploadToAWS(this.selectedFilesToUpload);
+                    }
+                }
+                else {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        this.fileData = reader.result.split(',')[1];
+                        // this.generatePreview(file);
+                        this.handleUpload(); // Auto-upload
+                    };
+                    reader.readAsDataURL(file);
+                }
+
             }
+        } catch (error) {
+            console.error('Error in file upload:', error);
+        }
+    }
 
-            const reader = new FileReader();
-            reader.onload = () => {
-                this.fileData = reader.result.split(',')[1];
-                // this.generatePreview(file);
-                this.handleUpload(); // Auto-upload
-            };
-            reader.readAsDataURL(file);
+    async uploadToAWS() {
+        try {
+            this.isLoading = true;
+            this.initializeAwsSdk(this.confData);
+            const uploadPromises = this.selectedFilesToUpload.map(async (file) => {
+                this.isLoading = true;
+                let objKey = this.renameFileName(this.fileName);
 
+                let params = {
+                    Key: objKey,
+                    ContentType: file.type,
+                    Body: file,
+                    ACL: "public-read"
+                };
+
+                let upload = this.s3.upload(params);
+
+                return await upload.promise();
+            });
+            // Wait for all uploads to complete
+            const results = await Promise.all(uploadPromises);
+            results.forEach((result) => {
+                if (result) {
+                    let bucketName = this.confData.S3_Bucket_Name__c;
+                    let objKey = result.Key;
+                    let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
+   
+                    this.awsFileName = objKey;
+                    this.generatePreview(awsFileUrl);
+                    this.
+                    this.uploadFile();
+                }
+            });
+
+        } catch (error) {
+            this.isLoading = false;
+            console.error("Error in uploadToAWS: ", error);
+        }
+    }
+
+    initializeAwsSdk(confData) {
+        try {
+            let AWS = window.AWS;
+
+            AWS.config.update({
+                accessKeyId: confData.AWS_Access_Key__c,
+                secretAccessKey: confData.AWS_Secret_Access_Key__c
+            });
+
+            AWS.config.region = confData.S3_Region_Name__c;
+
+            this.s3 = new AWS.S3({
+                apiVersion: "2006-03-01",
+                params: {
+                    Bucket: confData.S3_Bucket_Name__c
+                }
+            });
+
+        } catch (error) {
+            console.error("error initializeAwsSdk ", error);
+        }
+    }
+
+    renameFileName(filename) {
+        try {
+            let originalFileName = filename;
+            let extensionIndex = originalFileName.lastIndexOf('.');
+            let baseFileName = originalFileName.substring(0, extensionIndex);
+            let extension = originalFileName.substring(extensionIndex + 1);
+
+            let objKey = `${baseFileName}.${extension}`
+                .replace(/\s+/g, "_");
+            return objKey;
+        } catch (error) {
+            console.error('error in renameFileName -> ', error.stack);
         }
     }
 
     // Generate file preview
     generatePreview(publicUrl) {
         let typeCategory = '';
-    
+
         if (this.fileType.startsWith('image/')) {
             typeCategory = 'image';
         } else if (this.fileType.startsWith('video/')) {
@@ -1107,7 +1252,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         } else {
             typeCategory = 'unsupported';
         }
-    
+
         switch (typeCategory) {
             case 'image':
                 this.isImgSelected = true;
@@ -1116,7 +1261,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.isImageFile = false;
                 this.filePreview = publicUrl;
                 break;
-    
+
             case 'video':
                 this.isImgSelected = false;
                 this.isDocSelected = false;
@@ -1124,7 +1269,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.isVideoFile = false;
                 this.filePreview = publicUrl;
                 break;
-    
+
             case 'pdf':
                 this.isDocSelected = true;
                 this.isImgSelected = false;
@@ -1132,7 +1277,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.isDocFile = false;
                 this.filePreview = publicUrl;
                 break;
-    
+
             case 'unsupported':
             default:
                 this.isImgSelected = false;
@@ -1141,11 +1286,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.showToastError('Unsupported file type! Please select an image, PDF, or video.');
                 break;
         }
-    
+
         this.isfilename = true;
         this.NoFileSelected = false;
     }
-    
+
 
     // Upload file to Apex
     handleUpload() {
@@ -1155,20 +1300,20 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 .then((result) => {
                     this.contentVersionId = result; // Store the returned ContentVersion Id
                     getPublicLink({ contentVersionId: this.contentVersionId })
-                    .then((publicUrl) => {
-                        this.generatePreview(publicUrl.replace('/sfc/p/#', '/sfc/p/'));
-                    })
-                    .catch((error) => {
-                        
-                     this.isLoading = false;
-                        console.error('❌ Error fetching public link:', error);
-                    });
+                        .then((publicUrl) => {
+                            this.generatePreview(publicUrl.replace('/sfc/p/#', '/sfc/p/'));
+                        })
+                        .catch((error) => {
+
+                            this.isLoading = false;
+                            console.error('❌ Error fetching public link:', error);
+                        });
                     this.uploadFile();
                 })
                 .catch((error) => {
                     console.error('Error uploading file: ', error);
-                    
-                     this.isLoading = false;
+
+                    this.isLoading = false;
                     this.showToastError('Error uploading file!');
                 });
         } else {
@@ -1179,7 +1324,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     // Delete file from ContentVersion
     handleDelete() {
-        
+
         if (this.contentVersionId) {
             deleteFile({ contentVersionId: this.contentVersionId })
                 .then((result) => {
@@ -1190,7 +1335,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     console.error('Error deleting file: ', error);
                     this.showToastError('Error deleting file!');
 
-                    
+
                 });
         } else {
             this.showToastError('No file to delete!');
@@ -1208,17 +1353,17 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         this.filePreview = null;
 
         const fileInput = this.template.querySelector('.file-input');
-        if(fileInput) {
+        if (fileInput) {
             fileInput.value = '';
         }
-        
-        if(this.isImgSelected){
+
+        if (this.isImgSelected) {
             this.isImageFile = true;
         }
-        else if(this.isVidSelected){
+        else if (this.isVidSelected) {
             this.isVideoFile = true;
         }
-        else if(this.isDocSelected){
+        else if (this.isDocSelected) {
             this.isDocFile = true;
         }
         this.isImgSelected = false;
@@ -1231,36 +1376,36 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     }
 
     uploadFile() {
-        this.isLoading=true;
+        this.isLoading = true;
         if (!this.file) {
-            this.isLoading =false;
+            this.isLoading = false;
             this.showToastError('Please select a file to upload.');
 
             return;
         }
         try {
-            
-           startUploadSession({
+
+            startUploadSession({
                 fileName: this.fileName,
                 fileLength: this.fileSize,
                 fileType: this.fileType
-            }).then(result=>{
+            }).then(result => {
                 if (result) {
                     this.uploadSessionId = result;
                     this.uploadChunks();
                 } else {
                     console.error('Failed to start upload session.');
                     this.showToastError('Failed to start upload session.');
-                    this.isLoading=false;
+                    this.isLoading = false;
                 }
             })
-            .catch(error=>{
-                console.error('Failed upload session.', error.body);
-                this.isLoading=false;
-            })
+                .catch(error => {
+                    console.error('Failed upload session.', error.body);
+                    this.isLoading = false;
+                })
         } catch (error) {
             console.error('Error starting upload session: ', error);
-            this.isLoading=false;
+            this.isLoading = false;
         }
     }
 
@@ -1268,55 +1413,57 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         try {
             let chunkStart = 0;
             const uploadNextChunk = () => {
-                
+
                 const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
                 const chunk = this.file.slice(chunkStart, chunkEnd);
                 const reader = new FileReader();
-    
+
                 reader.onloadend = async () => {
-                    const base64Data = reader.result.split(',')[1]; 
+                    const base64Data = reader.result.split(',')[1];
                     const fileChunkWrapper = {
                         uploadSessionId: this.uploadSessionId,
                         fileContent: base64Data,
                         chunkStart: chunkStart,
                         chunkSize: base64Data.length,
-                        fileName: this.fileName,
+                        fileName: this.fileName
                     };
                     const serializedWrapper = JSON.stringify(fileChunkWrapper);
-                    
-                        uploadFileChunk({serializedWrapper:serializedWrapper})
-                        .then(result=>{
+
+                    uploadFileChunk({ serializedWrapper: serializedWrapper , isAWSEnabled: this.isAWSEnabled })
+                        .then(result => {
                             if (result) {
-                                let serializeResult = JSON.parse(result); 
+                                let serializeResult = JSON.parse(result);
                                 this.headerHandle = serializeResult.headerHandle;
-                                this.contentDocumentId =serializeResult.contentDocumentId;
+                                if(!isAWSEnabled){
+                                    this.contentDocumentId = serializeResult.contentDocumentId;
+                                }
 
                                 chunkStart += this.chunkSize;
                                 if (chunkStart < this.fileSize) {
-                                    uploadNextChunk(); 
+                                    uploadNextChunk();
                                 } else {
-                                    this.isLoading=false;
+                                    this.isLoading = false;
                                     this.showToastSuccess('File upload successfully.');
                                 }
                             } else {
                                 console.error('Failed to upload file chunk.');
-                                this.isLoading=false;
+                                this.isLoading = false;
                                 this.showToastError('Failed to upload file chunk.');
                             }
                         })
-                        .catch(error=>{
+                        .catch(error => {
                             console.error('Failed upload session.', error);
-                            this.isLoading=false;
+                            this.isLoading = false;
                             this.showToastError(error.body.message || 'An error occurred while uploading image.');
                         })
                 };
 
-                reader.readAsDataURL(chunk); 
+                reader.readAsDataURL(chunk);
             };
 
             uploadNextChunk();
         } catch (error) {
-            this.isLoading=false;
+            this.isLoading = false;
             console.error('Error uploading file chunk: ', error);
         }
     }
@@ -1376,11 +1523,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     }
 
     handlePrevclick() {
-        if(this.contentVersionId != null){
+        if (this.contentVersionId != null) {
             this.handleDelete();
         }
         this.clearEditTemplateData();
-        
+
 
         const previousEvent = new CustomEvent('previous', {
             detail: {
@@ -1438,7 +1585,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
 
     }
- 
+
     handleCustom(event) {
         this.selectedCustomType = event.target.value;
     }
@@ -1448,13 +1595,13 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const { name, value, checked, dataset } = event.target;
             const index = dataset.index;
 
-            
+
 
             switch (name) {
                 case 'templateName':
-                    
+
                     this.templateName = value.replace(/\s+/g, '_').toLowerCase();
-                    
+
                     this.checkTemplateExistence();
                     break;
                 case 'language':
@@ -1470,7 +1617,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 case 'tempBody':
                     this.tempBody = value.replace(/(\n\s*){3,}/g, '\n\n');
                     this.formatedTempBody = this.formatText(this.tempBody);
-                    this.updatePreviewContent(this.formatedTempBody,'body');
+                    this.updatePreviewContent(this.formatedTempBody, 'body');
                     break;
                 case 'btntext':
                     this.updateButtonProperty(index, 'btntext', value);
@@ -1500,23 +1647,23 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     break;
                 // Change
                 case 'prevContent':
-                    if(this.prevContent){
+                    if (this.prevContent) {
                         this.prevContent = false;
                     }
-                    else{
+                    else {
                         this.prevContent = true;
                     }
                     break;
 
                 case 'isExpiration':
-                    if(this.isExpiration){
+                    if (this.isExpiration) {
                         this.isExpiration = false;
                     }
-                    else{
+                    else {
                         this.isExpiration = true;
                     }
                     break;
-            
+
                 case 'autofill':
                     this.autofilLabel = value;
                     break;
@@ -1524,7 +1671,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 case 'expirationTime':
                     this.expirationTime = value;
                     break;
-                
+
                 case 'selectedTime':
                     this.selectedTime = value;
                     this.expirationTime = this.convertTimeToSeconds(value); // Convert selected time to seconds
@@ -1532,12 +1679,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 case 'autoCopyCode':
                     this.autoCopyCode = value;
                     break;
-                    
+
                 case 'toggle':
-                    if(this.isFeatureEnabled){
+                    if (this.isFeatureEnabled) {
                         this.isFeatureEnabled = false;
                     }
-                    else{
+                    else {
                         this.isFeatureEnabled = checked;
                     }
                     break;
@@ -1550,7 +1697,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         this.headerError = '';
                         this.updatePreviewContent(this.header, 'header');
                     }
-                
+
                     break;
                 default:
                     break;
@@ -1559,11 +1706,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             console.error('Something went wrong: ', error);
         }
     }
-    
+
 
     validateButtonText(index, newValue) {
         const isDuplicate = this.buttonList.some((button, idx) => button.btntext === newValue && idx !== parseInt(index));
-        
+
         if (index === 0) {
             this.buttonList[index].hasError = false;
             this.buttonList[index].errorMessage = '';
@@ -1572,8 +1719,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             this.buttonList[index].errorMessage = isDuplicate ? 'You have entered the same text for multiple buttons.' : '';
         }
 
-        this.btntext = newValue;  
-        this.updateButtonErrors(); 
+        this.btntext = newValue;
+        this.updateButtonErrors();
     }
 
     updateButtonProperty(index, property, value) {
@@ -1582,10 +1729,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     checkTemplateExistence() {
         try {
-            
+
             if (Array.isArray(this.allTemplates)) {
                 this.templateExists = this.allTemplates.some(
-                    template => template.MVWB__Template_Name__c?.toLowerCase() === this.templateName?.toLowerCase()
+                    template => template.Template_Name__c?.toLowerCase() === this.templateName?.toLowerCase()
                 );
             } else {
                 console.warn('allTemplates is not an array or is null/undefined');
@@ -1595,7 +1742,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             console.error(error.message);
             this.showToastError(error.message || 'An error occurred while checking template existence.');
         }
-        
+
     }
 
     handleRemove(event) {
@@ -1619,17 +1766,17 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             this.totalButtonsCount--;
             this.updateButtonDisabledState();
         } catch (error) {
-            console.error('Error while removing button.',error);
+            console.error('Error while removing button.', error);
         }
     }
 
     handleMenuSelect(event) {
         try {
             // const selectedValue = event.detail.value;
-            const selectedValue = event.currentTarget.dataset.value; 
+            const selectedValue = event.currentTarget.dataset.value;
             this.menuButtonSelected = selectedValue;
-            let buttonData=event.currentTarget.dataset.buttonData;
-            let newButton = buttonData ? buttonData:{
+            let buttonData = event.currentTarget.dataset.buttonData;
+            let newButton = buttonData ? buttonData : {
                 id: this.buttonList.length + 1,
                 selectedActionType: selectedValue,
                 iconName: this.getButtonIcon(selectedValue),
@@ -1642,22 +1789,22 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 isCallPhone: false,
                 isVisitSite: false,
                 isOfferCode: false,
-                isFlow:false,
-                hasError: false,  
-                errorMessage: '' 
+                isFlow: false,
+                hasError: false,
+                errorMessage: ''
             };
 
 
-            
+
             this.isAddCallPhoneNumber = false;
             this.isAddVisitWebsiteCount = false;
             this.isAddCopyOfferCode = false;
             this.isAddFlow = false;
-        
+
             switch (selectedValue) {
                 case 'QUICK_REPLY':
                     this.isCustom = true;
-                    
+
                     const quickReplyText = buttonData && buttonData.btntext ? buttonData.btntext : 'Quick reply';
                     this.createCustomButton('QUICK_REPLY', quickReplyText);
                     this.isStopMarketing = false;
@@ -1665,7 +1812,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 case 'Marketing opt-out':
                     if (this.marketingOpt < 1) {
                         this.isCustom = true;
-                        
+
                         this.isStopMarketing = true;
                         const stopPromoText = buttonData && buttonData.btntext ? buttonData.btntext : 'Stop promotions';
                         this.createCustomButton('Marketing opt-out', stopPromoText);
@@ -1695,37 +1842,37 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     break;
                 case 'COPY_CODE':
                     if (this.copyOfferCode < 1) {
-                        
+
                         this.createButton = true;
                         newButton.isOfferCode = true;
                         newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
                         this.btntext = buttonData?.btntext || 'Copy Offer Code';
-                        
+
                         // newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
                         // this.btntext = buttonData?.btntext || 'Copy Offer Code';
                         this.copyOfferCode++;
                         this.isAddCopyOfferCode = true;
                     }
                     break;
-                    case 'FLOW':
-                        
-                        if (this.flowCount < 1) {
-                            
-                            this.createButton = true;
-                            newButton.isFlow = true;
-                            newButton.btntext = buttonData?.btntext || 'View flow';
-                            this.btntext = buttonData?.btntext || 'View flow';
-                            
-                            // newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
-                            // this.btntext = buttonData?.btntext || 'Copy Offer Code';
-                            this.flowCount++;
-                            this.isAddFlow = true;
-                        }
-                        break;
+                case 'FLOW':
+
+                    if (this.flowCount < 1) {
+
+                        this.createButton = true;
+                        newButton.isFlow = true;
+                        newButton.btntext = buttonData?.btntext || 'View flow';
+                        this.btntext = buttonData?.btntext || 'View flow';
+
+                        // newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
+                        // this.btntext = buttonData?.btntext || 'Copy Offer Code';
+                        this.flowCount++;
+                        this.isAddFlow = true;
+                    }
+                    break;
                 default:
                     newButton.btntext = 'Add Button';
             }
-        
+
             const isDuplicate = this.buttonList.some(button => button.btntext === newButton.btntext);
             if (isDuplicate) {
                 newButton.hasError = true;
@@ -1734,34 +1881,34 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 newButton.hasError = false;
                 newButton.errorMessage = '';
             }
-        
+
             if (newButton.selectedActionType != 'QUICK_REPLY' && newButton.selectedActionType != 'Marketing opt-out') {
-                if(this.isAddCallPhoneNumber || this.isAddCopyOfferCode || this.isAddVisitWebsiteCount || this.isAddFlow){
-                    
-                    this.buttonList.push(newButton); 
+                if (this.isAddCallPhoneNumber || this.isAddCopyOfferCode || this.isAddVisitWebsiteCount || this.isAddFlow) {
+
+                    this.buttonList.push(newButton);
                     this.totalButtonsCount++;
                 }
             }
-        
+
             this.updateButtonErrors();
             this.updateButtonDisabledState();
         } catch (error) {
             console.error('Error handling menu selection:', error);
         }
     }
-       
+
     updateButtonErrors(isCustom = false) {
         const buttonListToCheck = isCustom ? this.customButtonList : this.buttonList;
         const buttonTexts = buttonListToCheck.map(button => isCustom ? button.Cbtntext : button.btntext);
-        
+
         const duplicates = {};
         buttonTexts.forEach(text => {
             duplicates[text] = (duplicates[text] || 0) + 1;
         });
-    
+
         buttonListToCheck.forEach((button, idx) => {
             const isDuplicate = duplicates[isCustom ? button.Cbtntext : button.btntext] > 1;
-    
+
             if (idx === 0) {
                 button.hasError = false;
                 button.errorMessage = '';
@@ -1776,12 +1923,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             }
         });
     }
-    
+
     createCustomButton(btnType, btnText) {
         try {
             const btnTextExists = this.customButtonList.some(button => button.Cbtntext === btnText);
-            
-            
+
+
             let newCustomButton = {
                 id: this.customButtonList.length + 1,
                 selectedCustomType: btnType,
@@ -1789,10 +1936,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 buttonClass: 'button-label-preview',
                 showFooterText: btnType === 'Marketing opt-out',
                 iconName: this.getButtonIcon(btnType),
-                hasError: false,  
-                errorMessage: ''  
+                hasError: false,
+                errorMessage: ''
             };
-    
+
             if (btnTextExists) {
                 newCustomButton.hasError = true;
                 newCustomButton.errorMessage = 'You have entered same text for multiple buttons.';
@@ -1800,27 +1947,27 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 newCustomButton.hasError = false;
                 newCustomButton.errorMessage = '';
             }
-    
+
             this.customButtonList.push(newCustomButton);
             this.customButtonList = [...this.customButtonList]
-            
+
             this.totalButtonsCount++;
-    
+
             this.updateButtonErrors(true);
             this.updateButtonDisabledState();
         } catch (error) {
             console.error('Error creating custom button:', error);
         }
     }
-    
+
     handleButtonClick(event) {
         try {
-            const buttonId = event.currentTarget.dataset.id;        
+            const buttonId = event.currentTarget.dataset.id;
             const clickedButton = this.customButtonList.find(button => button.id == buttonId);
-        
+
             if (clickedButton) {
-                if (clickedButton.isDisabled) {                    
-                    return; 
+                if (clickedButton.isDisabled) {
+                    return;
                 }
                 let replyMessage = {
                     id: Date.now(),
@@ -1830,31 +1977,31 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         body: this.formatedTempBody,
                     }
                 };
-        
+
                 this.chatMessages = [...this.chatMessages, replyMessage];
-    
+
                 clickedButton.isDisabled = true;
-                clickedButton.buttonClass = 'button-label-preview disabled'; 
-    
+                clickedButton.buttonClass = 'button-label-preview disabled';
+
                 this.customButtonList = [...this.customButtonList];
                 this.isRefreshEnabled = false;
             }
         } catch (error) {
-            console.error('Error while replying to template.',error);
+            console.error('Error while replying to template.', error);
         }
-    }    
+    }
 
     handleCustomText(event) {
         try {
-            const index = event.currentTarget.dataset.index; 
+            const index = event.currentTarget.dataset.index;
             const newValue = event.target.value;
-            this.customButtonList[index].Cbtntext = newValue;  
-        
+            this.customButtonList[index].Cbtntext = newValue;
+
             const isDuplicate = this.customButtonList.some((button, idx) => button.Cbtntext === newValue && idx !== parseInt(index));
-        
+
             if (index === 0) {
-                this.customButtonList[index].hasError = false;  
-                this.customButtonList[index].errorMessage = ''; 
+                this.customButtonList[index].hasError = false;
+                this.customButtonList[index].errorMessage = '';
             } else {
                 if (isDuplicate) {
                     this.customButtonList[index].hasError = true;
@@ -1864,11 +2011,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     this.customButtonList[index].errorMessage = '';
                 }
             }
-        
-            this.Cbtntext = newValue;  
-            this.updateButtonErrors(true); 
+
+            this.Cbtntext = newValue;
+            this.updateButtonErrors(true);
         } catch (error) {
-            console.error('Error while handling the custom text.',error);
+            console.error('Error while handling the custom text.', error);
         }
     }
 
@@ -1876,17 +2023,17 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         try {
             const index = event.currentTarget.dataset.index;
             const removedButton = this.customButtonList[index];
-        
+
             if (removedButton && removedButton.showFooterText) {
                 this.marketingOpt--;
-            }    
+            }
             this.customButtonList = this.customButtonList.filter((_, i) => i !== parseInt(index));
             if (this.customButtonList.length === 0) {
                 this.isCustom = false;
             }
-        
+
             this.totalButtonsCount--;
-        
+
             if (removedButton?.Cbtntext) {
                 const filteredMessages = this.chatMessages.filter(message => {
                     const isReplyToRemoved = message.replyToMessage?.body === this.formatedTempBody && message.body === removedButton.Cbtntext;
@@ -1894,37 +2041,37 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 });
                 this.chatMessages = [...filteredMessages];
             }
-        
+
             this.customButtonList = [...this.customButtonList];
             this.updateButtonDisabledState();
         } catch (error) {
-            console.error('Error while removing custom buttons.',error);
-            
+            console.error('Error while removing custom buttons.', error);
+
         }
-    }    
+    }
 
     updateButtonDisabledState() {
-        this.isDropdownOpen=false;
+        this.isDropdownOpen = false;
         this.isButtonDisabled = this.totalButtonsCount >= 10;
         this.buttonList.forEach(button => {
             button.isDisabled = button.selectedActionType === 'COPY_CODE';
         });
     }
 
-    refreshTempPreview(){
+    refreshTempPreview() {
         try {
             this.customButtonList = this.customButtonList.map(button => {
                 return {
                     ...button,
-                    isDisabled: false, 
-                    buttonClass: 'button-label-preview' 
+                    isDisabled: false,
+                    buttonClass: 'button-label-preview'
                 };
             });
             this.chatMessages = [];
             this.isRefreshEnabled = true;
-            
+
         } catch (error) {
-            console.error('Error while refreshing the template.',error);
+            console.error('Error while refreshing the template.', error);
         }
     }
 
@@ -1932,41 +2079,41 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         try {
             this.addVar = true;
             const maxId = this.variables.reduce((max, variable) => {
-                return Math.max(max, parseInt(variable.id)); 
-            }, 0); 
-            
+                return Math.max(max, parseInt(variable.id));
+            }, 0);
+
             this.nextIndex = maxId + 1;
-            const defaultField = this.fields[0].value; 
-            
+            const defaultField = this.fields[0].value;
+
             const newVariable = {
                 id: this.nextIndex,
                 object: this.selectedObject,
                 field: defaultField,
                 alternateText: '',
-                index: `{{${this.nextIndex}}}`,        
+                index: `{{${this.nextIndex}}}`,
             };
             this.variables = [...this.variables, newVariable];
 
             this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
-            this.formatedTempBody=this.formatText(this.tempBody);
+            this.formatedTempBody = this.formatText(this.tempBody);
             this.updateTextarea();
             this.updatePreviewContent(this.formatedTempBody, 'body');
             this.nextIndex++;
         } catch (error) {
-            console.error('Error in adding variables.',error); 
-        } 
+            console.error('Error in adding variables.', error);
+        }
     }
 
     handleVarFieldChange(event) {
         try {
             const variableIndex = String(event.target.dataset.index);
-            const fieldName = event.target.value;             
-            this.variables = this.variables.map((varItem) =>                
+            const fieldName = event.target.value;
+            this.variables = this.variables.map((varItem) =>
                 String(varItem.index) === variableIndex
                     ? {
-                          ...varItem,
-                          field: fieldName, 
-                      }
+                        ...varItem,
+                        field: fieldName,
+                    }
                     : varItem
             );
             this.formatedTempBody = this.formatText(this.tempBody);
@@ -1974,9 +2121,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         } catch (error) {
             console.error('Something went wrong while updating variable field.', error);
         }
-    }    
+    }
 
-    handleObjectChange(event){
+    handleObjectChange(event) {
         try {
             const selectedObject = event.target.value;
             this.selectedObject = selectedObject;
@@ -1992,17 +2139,17 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                     // Update variables for both header and body
                     this.variables = this.variables.map(varItem => ({
-                            ...varItem,
-                            object: selectedObject,
-                            field: this.fields[0].value
+                        ...varItem,
+                        object: selectedObject,
+                        field: this.fields[0].value
                     }));
-        
+
                     this.header_variables = this.header_variables.map(varItem => ({
-                            ...varItem,
-                            object: selectedObject,
-                            field: this.fields[0].value
+                        ...varItem,
+                        object: selectedObject,
+                        field: this.fields[0].value
                     }));
-        
+
                     this.formatedTempBody = this.formatText(this.tempBody);
                     this.updateTextarea();
                     this.updatePreviewContent(this.header, 'header');
@@ -2049,7 +2196,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     index: `{{${newIndex}}}`
                 };
             });
-            
+
             let placeholders = updatedTempBody.match(/\{\{\d+\}\}/g) || [];
             placeholders.forEach((placeholder, idx) => {
                 const newIndex = `{{${idx + 1}}}`;
@@ -2057,7 +2204,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             });
             this.tempBody = updatedTempBody.trim();
             this.originalTempBody = this.tempBody;
-            this.formatedTempBody=this.originalTempBody;
+            this.formatedTempBody = this.originalTempBody;
             this.updatePreviewContent(this.tempBody, 'body');
             this.nextIndex = this.variables.length + 1;
             if (this.variables.length === 0) {
@@ -2066,10 +2213,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             }
             this.updateTextarea();
         } catch (error) {
-            console.error('Something wrong while removing the variable.',error);
+            console.error('Something wrong while removing the variable.', error);
         }
     }
-  
+
     // Header variable add-remove functionality start here
     addheadervariable() {
         try {
@@ -2080,7 +2227,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 object: this.selectedObject,
                 field: defaultField,
                 alternateText: '',
-                index: `{{${this.headIndex}}}`,        
+                index: `{{${this.headIndex}}}`,
             };
 
             this.header_variables = [...this.header_variables, newVariable];
@@ -2090,35 +2237,35 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             this.headIndex++;
             this.buttonDisabled = true;
         } catch (error) {
-            console.error('Error in adding header variables.',error); 
-        } 
+            console.error('Error in adding header variables.', error);
+        }
     }
 
     handleFieldChange(event) {
         try {
             // const variableId = event.target.dataset.id;
-            const variableId = String(event.target.dataset.id); 
+            const variableId = String(event.target.dataset.id);
             const fieldName = event.target.value;
             this.header_variables = this.header_variables.map(varItem =>
-            String(varItem.id) === variableId
-                ? {
+                String(varItem.id) === variableId
+                    ? {
                         ...varItem,
                         field: fieldName,
                     }
-                : varItem
+                    : varItem
             );
             this.updatePreviewContent(this.header, 'header');
         } catch (error) {
-            console.error('Something wrong while header variable input.',error);
+            console.error('Something wrong while header variable input.', error);
         }
     }
 
     handleAlternateTextChange(event) {
-        const variableId = String(event.target.dataset.id); 
+        const variableId = String(event.target.dataset.id);
         const alternateText = event.target.value;
         this.header_variables = this.header_variables.map(varItem =>
             String(varItem.id) === variableId
-                ? { ...varItem, alternateText } 
+                ? { ...varItem, alternateText }
                 : varItem
         );
     }
@@ -2126,26 +2273,26 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     updatePreviewContent(inputContent, type) {
         try {
             let updatedContent = inputContent;
-            
+
             const variables = type === 'header' ? this.header_variables : this.variables;
             variables.forEach(varItem => {
-                const variablePlaceholder = varItem.index; 
+                const variablePlaceholder = varItem.index;
                 const replacementValue = `{{${varItem.object}.${varItem.field}}}`;
-    
+
                 let index = updatedContent.indexOf(variablePlaceholder);
                 while (index !== -1) {
                     updatedContent = updatedContent.slice(0, index) + replacementValue + updatedContent.slice(index + variablePlaceholder.length);
-                    index = updatedContent.indexOf(variablePlaceholder, index + replacementValue.length); 
+                    index = updatedContent.indexOf(variablePlaceholder, index + replacementValue.length);
                 }
             });
-        
+
             if (type === 'header') {
                 this.previewHeader = updatedContent;
             } else if (type === 'body') {
                 this.previewBody = updatedContent;
             }
         } catch (error) {
-            console.error('Something wrong while updating preview.',error);   
+            console.error('Something wrong while updating preview.', error);
         }
     }
 
@@ -2180,110 +2327,110 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.headIndex = 1;
             }
         } catch (error) {
-            console.error('Something wrong while removing header variable.',error);   
+            console.error('Something wrong while removing header variable.', error);
         }
     }
 
     generateEmojiCategories() {
-        try{
+        try {
             fetch(emojiData)
-            .then((response) => response.json())
-            .then((data) => {
-                let groupedEmojis = Object.values(
-                    data.reduce((acc, item) => {
-                        let category = item.category;
-                        if (!acc[category]) {
-                            acc[category] = { category, emojis: [] };
-                        }
-                        acc[category].emojis.push(item);
-                        return acc;
-                    }, {})
-                );
-        
-                this.emojiCategories = groupedEmojis; 
-            })
-            .catch((e) => console.error('There was an error fetching the emoji.', e));
-        }catch(e){
+                .then((response) => response.json())
+                .then((data) => {
+                    let groupedEmojis = Object.values(
+                        data.reduce((acc, item) => {
+                            let category = item.category;
+                            if (!acc[category]) {
+                                acc[category] = { category, emojis: [] };
+                            }
+                            acc[category].emojis.push(item);
+                            return acc;
+                        }, {})
+                    );
+
+                    this.emojiCategories = groupedEmojis;
+                })
+                .catch((e) => console.error('There was an error fetching the emoji.', e));
+        } catch (e) {
             console.error('Error in generateEmojiCategories', e);
         }
     }
     fetchCountries() {
-        try{
+        try {
             fetch(CountryJson)
-            .then((response) => response.json())
-            .then((data) => {
-                this.countryType = data.map(country => {
-                    return { label: `${country.name} (${country.callingCode})`, value: country.callingCode };
-                });
-            })
-            .catch((e) => console.error('Error fetching country data:', e));
-        }catch(e){
+                .then((response) => response.json())
+                .then((data) => {
+                    this.countryType = data.map(country => {
+                        return { label: `${country.name} (${country.callingCode})`, value: country.callingCode };
+                    });
+                })
+                .catch((e) => console.error('Error fetching country data:', e));
+        } catch (e) {
             console.error('Something wrong while fetching country data:', e);
         }
     }
 
     fetchLanguages() {
-        try{
+        try {
             fetch(LanguageJson)
-            .then((response) => response.json())
-            .then((data) => {
-                this.languageOptions = data.map(lang => {
-                    return { label: `${lang.language}`, value: lang.code, isSelected: lang.code === this.selectedLanguage  };
-                });
-                  if (!this.languageOptions.some(option => option.isSelected)) {
-                    this.selectedLanguage = this.languageOptions[0]?.value || '';
-                    if (this.languageOptions[0]) {
-                        this.languageOptions[0].isSelected = true;
+                .then((response) => response.json())
+                .then((data) => {
+                    this.languageOptions = data.map(lang => {
+                        return { label: `${lang.language}`, value: lang.code, isSelected: lang.code === this.selectedLanguage };
+                    });
+                    if (!this.languageOptions.some(option => option.isSelected)) {
+                        this.selectedLanguage = this.languageOptions[0]?.value || '';
+                        if (this.languageOptions[0]) {
+                            this.languageOptions[0].isSelected = true;
+                        }
                     }
-                }
-            })
-            .catch((e) => console.error('Error fetching language data:', e));
-        }catch(e){
+                })
+                .catch((e) => console.error('Error fetching language data:', e));
+        } catch (e) {
             console.error('Something wrong while fetching language data:', e);
         }
     }
 
     handleEmoji(event) {
-        event.stopPropagation();        
+        event.stopPropagation();
         this.showEmojis = !this.showEmojis;
-    
+
         if (this.showEmojis) {
             this.addOutsideClickListener();
         } else {
             this.removeOutsideClickListener();
-        }    
-    }
-    
-    handleEmojiSelection(event) {
-        try {
-            event.stopPropagation();        
-            const emojiChar = event.target.textContent;    
-            const textarea = this.template.querySelector('textarea');        
-            const currentText = textarea.value || '';
-            const cursorPos = textarea.selectionStart;
-        
-            const newText = currentText.slice(0, cursorPos) + emojiChar + currentText.slice(cursorPos);    
-            this.tempBody = newText;
-            this.formatedTempBody=this.tempBody;
-            this.previewBody=this.formatedTempBody;
-            textarea.value = newText;
-        
-            setTimeout(() => {
-                const newCursorPos = cursorPos + emojiChar.length;    
-                textarea.focus();    
-                textarea.setSelectionRange(newCursorPos, newCursorPos);
-            }, 0); 
-        } catch (error) {
-            console.error('Error in emoji selection.',error);
-            
         }
     }
-    
+
+    handleEmojiSelection(event) {
+        try {
+            event.stopPropagation();
+            const emojiChar = event.target.textContent;
+            const textarea = this.template.querySelector('textarea');
+            const currentText = textarea.value || '';
+            const cursorPos = textarea.selectionStart;
+
+            const newText = currentText.slice(0, cursorPos) + emojiChar + currentText.slice(cursorPos);
+            this.tempBody = newText;
+            this.formatedTempBody = this.tempBody;
+            this.previewBody = this.formatedTempBody;
+            textarea.value = newText;
+
+            setTimeout(() => {
+                const newCursorPos = cursorPos + emojiChar.length;
+                textarea.focus();
+                textarea.setSelectionRange(newCursorPos, newCursorPos);
+            }, 0);
+        } catch (error) {
+            console.error('Error in emoji selection.', error);
+
+        }
+    }
+
     handleFormat(event) {
         try {
             const button = event.target.closest('button');
             const formatType = button.dataset.format;
-            
+
             const textarea = this.template.querySelector('textarea');
             const cursorPos = textarea.selectionStart;
             const currentText = textarea.value;
@@ -2311,11 +2458,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             }
             const newText = this.applyFormattingAfter(currentText, cursorPos, marker);
             const newCursorPos = cursorPos + markerLength;
-           
+
             this.tempBody = newText;
             this.updateCursor(newCursorPos);
         } catch (error) {
-            console.error('Something wrong while handling rich text.',error);
+            console.error('Something wrong while handling rich text.', error);
         }
     }
 
@@ -2331,10 +2478,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
             formattedText = formattedText.replace(/~(.*?)~/g, '<s>$1</s>');
             formattedText = formattedText.replace(/```(.*?)```/g, '<code>$1</code>');
-    
+
             return formattedText;
         } catch (error) {
-            console.error('Error while returning formatted text.',error);
+            console.error('Error while returning formatted text.', error);
         }
     }
 
@@ -2351,18 +2498,18 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.showToastError('Template Name is required');
                 return false;
             }
-        
+
             if (!this.selectedLanguage) {
                 this.showToastError('Please select a language');
                 return false;
             }
-        
+
             if (!this.tempBody || this.tempBody.trim() === '') {
                 this.showToastError('Template Body is required');
                 return false;
             }
-        
-            const buttonData = [...this.buttonList, ...this.customButtonList];    
+
+            const buttonData = [...this.buttonList, ...this.customButtonList];
             for (let button of buttonData) {
                 if (button.isVisitSite) {
                     if (!button.selectedUrlType || !button.webURL || !this.validateUrl(button.webURL)) {
@@ -2374,14 +2521,14 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         this.showToastError('Please provide a valid country and phone number for the "Call Phone Number" button');
                         return false;
                     }
-                } else if (button.isOfferCode) {            
+                } else if (button.isOfferCode) {
                     const alphanumericPattern = /^[a-zA-Z0-9]+$/;
                     if (!alphanumericPattern.test(button.offercode.trim())) {
                         this.showToastError('Offer code must only contain alphanumeric characters (letters and numbers)');
                         return false;
                     }
                 }
-        
+
                 if (button.isCustom) {
                     if (!button.Cbtntext || button.Cbtntext.trim() === '') {
                         this.showToastError('Button text is required for the custom button');
@@ -2391,32 +2538,32 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             }
             return true;
         } catch (error) {
-            console.error('Something went wrong while validating template.',error);
+            console.error('Something went wrong while validating template.', error);
             return false;
         }
-       
+
     }
-   
+
     validateUrl(value) {
         const urlPattern = new RegExp(
             '^(https?:\\/\\/)?(www\\.)?([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}($|\\/.*)$'
         );
         const isValid = urlPattern.test(value);
         return isValid;
-    }    
+    }
 
     validatePhoneNumber(value) {
         const phonePattern = /^[0-9]{10,}$/;
         return phonePattern.test(value);
     }
 
-    handleConfirm(){
-        this.showReviewTemplate=true;
+    handleConfirm() {
+        this.showReviewTemplate = true;
     }
-    handleCloseTemplate(){
-        this.showReviewTemplate=false;
-        this.iseditTemplatevisible=true;
-        this.isLoading=false;
+    handleCloseTemplate() {
+        this.showReviewTemplate = false;
+        this.iseditTemplatevisible = true;
+        this.isLoading = false;
     }
 
     handlePackagename(event) {
@@ -2430,20 +2577,20 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
 
         this.packages[index].packagename = value;
-        this.packages[index].curPackageName = value.length; 
+        this.packages[index].curPackageName = value.length;
 
         const isDuplicate = this.packages.some((pkg, i) => i < index && pkg.packagename === value);
-       
+
         if (isDuplicate) {
             this.showToastError('Package name must be unique');
-           
+
         }
         this.updateErrorMessages();
 
 
     }
 
-    
+
     handleSignaturehash(event) {
         const index = parseInt(event.target.dataset.index, 10);
         const value = event.target.value;
@@ -2456,16 +2603,16 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
         this.packages[index].signature = value;
         this.packages[index].curHashCode = value.length;
-    
+
         const isDuplicate = this.packages.some((pkg, i) => i < index && pkg.signature === value);
-    
+
         if (isDuplicate) {
             this.showToastError('Signature hash must be unique');
-           
+
         }
         this.updateErrorMessages();
 
-    }  
+    }
     updateErrorMessages() {
         this.uniqueErrorMessages.packageErrors = [];
         this.uniqueErrorMessages.signatureErrors = [];
@@ -2474,11 +2621,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         this.packages.forEach(pkg => {
             if (pkg.errorPackageMessage && !this.uniqueErrorMessages.packageErrors.includes(pkg.errorPackageMessage)) {
                 this.uniqueErrorMessages.packageErrors.push(pkg.errorPackageMessage);
-                this.appError = true; 
+                this.appError = true;
             }
             if (pkg.errorSignature && !this.uniqueErrorMessages.signatureErrors.includes(pkg.errorSignature)) {
                 this.uniqueErrorMessages.signatureErrors.push(pkg.errorSignature);
-                this.appError = true; 
+                this.appError = true;
             }
         });
     }
@@ -2501,13 +2648,13 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     removePackageApp(event) {
         const index = parseInt(event.target.dataset.index, 10);
-    
+
         if (index >= 0 && index < this.packages.length) {
             this.packages = this.packages.filter((pkg, i) => i !== index);
-    
+
             this.packages = this.packages.map((pkg, i) => ({
                 ...pkg,
-                id: i + 1  
+                id: i + 1
             }));
         } else {
             console.warn('Invalid package index for removal.');
@@ -2516,26 +2663,26 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     get showRemoveButton() {
         return this.packages.length > 1;
     }
-    
-     
+
+
     handleSubmit() {
         try {
-            if((this.activeTab == 'Marketing' || this.activeTab == 'Utiltiy')&& !this.isCheckboxChecked && this.visitWebsiteCount > 0){
+            if ((this.activeTab == 'Marketing' || this.activeTab == 'Utiltiy') && !this.isCheckboxChecked && this.visitWebsiteCount > 0) {
                 this.showToastError('Please select check-box to report website clicks.');
-                return ;
+                return;
             }
-            this.isLoading=true;
+            this.isLoading = true;
             this.showReviewTemplate = false;
             if (!this.validateTemplate()) {
-                this.isLoading=false;
+                this.isLoading = false;
 
                 return;
-            }     
+            }
             const formData = this.packages.map(pkg => ({
                 packagename: pkg.packagename,
                 signaturename: pkg.signature
             }));
-        
+
             const buttonData = [];
 
             if (this.buttonList && this.buttonList.length > 0) {
@@ -2543,63 +2690,63 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             }
 
             if (this.customButtonList && this.customButtonList.length > 0) {
-                
+
                 buttonData.push(...this.customButtonList);
             }
             let fileUrl = null;
-                if (this.filePreview) {
-                    fileUrl = this.filePreview; // Use ContentVersion if available
-                } 
-            
-            
+            if (this.filePreview) {
+                fileUrl = this.filePreview; // Use ContentVersion if available
+            }
+
+
             // Change
-            if(this.activeTab=='Authentication'){
+            if (this.activeTab == 'Authentication') {
                 this.tempBody = ' is your verification code';
             }
 
             const templateMiscellaneousData = {
-                contentVersionId : this.contentVersionId ,
-                isImageFile : this.isImageFile,
-                isImgSelected : this.isImgSelected,
-                isDocSelected : this.isDocSelected,
-                isVidSelected : this.isVidSelected,
-                isHeaderText : this.IsHeaderText,
-                addHeaderVar : this.addHeaderVar,
+                contentVersionId: this.contentVersionId,
+                isImageFile: this.isImageFile,
+                isImgSelected: this.isImgSelected,
+                isDocSelected: this.isDocSelected,
+                isVidSelected: this.isVidSelected,
+                isHeaderText: this.IsHeaderText,
+                addHeaderVar: this.addHeaderVar,
                 addMedia: this.addMedia,
-                isImageFileUploader : this.isImageFileUploader,
-                isVideoFileUploader : this.isVideoFileUploader,
-                isDocFileUploader : this.isDocFileUploader,
-                isVideoFile : this.isVideoFile,
-                isDocFile : this.isDocFile,
-                isSecurityRecommedation : this.prevContent,
-                isCodeExpiration : this.isExpiration,
+                isImageFileUploader: this.isImageFileUploader,
+                isVideoFileUploader: this.isVideoFileUploader,
+                isDocFileUploader: this.isDocFileUploader,
+                isVideoFile: this.isVideoFile,
+                isDocFile: this.isDocFile,
+                isSecurityRecommedation: this.prevContent,
+                isCodeExpiration: this.isExpiration,
                 expireTime: this.expirationTime,
-                authRadioButton : this.value,
-                autofillCheck : this.isautofillChecked,
-                isVisitSite : this.isVisitSite,
-                isCheckboxChecked : this.isCheckboxChecked,
-                flowBooleanCheck : this.flowBooleanCheck,
-                isFlowSelected : this.isFlowSelected,
-                selectedFlow : this.selectedFlow,
-                isFeatureEnabled : this.isFeatureEnabled
+                authRadioButton: this.value,
+                autofillCheck: this.isautofillChecked,
+                isVisitSite: this.isVisitSite,
+                isCheckboxChecked: this.isCheckboxChecked,
+                flowBooleanCheck: this.flowBooleanCheck,
+                isFlowSelected: this.isFlowSelected,
+                selectedFlow: this.selectedFlow,
+                isFeatureEnabled: this.isFeatureEnabled
             }
 
-            
-            
+
+
             const template = {
                 templateName: this.templateName ? this.templateName : null,
                 templateCategory: this.activeTab ? this.activeTab : null,
                 templateType: this.selectedOption ? this.selectedOption : null,
                 tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
                 tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
-                tempImgUrl:this.filePreview ? this.filePreview : null,
-                tempImgId:this.contentDocumentId ? this.contentDocumentId : null,
-                tempImgName:this.fileName ? this.fileName : null,
+                tempImgUrl: this.filePreview ? this.filePreview : null,
+                tempImgId: this.contentDocumentId ? this.contentDocumentId : null,
+                tempImgName: this.fileName ? this.fileName : null,
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
                 tempHeaderText: this.header ? this.header : '',
                 varAlternateTexts: (this.templateCategory === 'Authentication')
-                ? [null]  // Placeholder {{1}} is automatically handled, so no alternate text required
-                : this.variables.map(varItem => varItem.alternateText || null),
+                    ? [null]  // Placeholder {{1}} is automatically handled, so no alternate text required
+                    : this.variables.map(varItem => varItem.alternateText || null),
                 tempHeaderExample: (this.tempHeaderExample && this.tempHeaderExample.length > 0) ? this.tempHeaderExample : null,
                 headAlternateTexts: this.header_variables.map(varItem => varItem.alternateText || null),
                 templateBody: this.tempBody ? this.tempBody : '',
@@ -2610,100 +2757,100 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 expireTime: this.expirationTime ? this.expirationTime : 300,
                 packagename: formData.length > 0 ? formData.map(pkg => pkg.packagename) : null,
                 signaturename: formData.length > 0 ? formData.map(pkg => pkg.signaturename) : null,
-                selectedFlow : this.selectedFlow ? JSON.stringify(this.selectedFlow) : null,
-                templateMiscellaneousData : templateMiscellaneousData ? JSON.stringify(templateMiscellaneousData) : null,
-                isSecurityRecommedation : this.prevContent ? this.prevContent : null,
-                isCodeExpiration : this.isExpiration==null ? false : true
+                selectedFlow: this.selectedFlow ? JSON.stringify(this.selectedFlow) : null,
+                templateMiscellaneousData: templateMiscellaneousData ? JSON.stringify(templateMiscellaneousData) : null,
+                isSecurityRecommedation: this.prevContent ? this.prevContent : null,
+                isCodeExpiration: this.isExpiration == null ? false : true
 
             };
-            
+
 
             const serializedWrapper = JSON.stringify(template);
-            if(this.metaTemplateId){
-                editWhatsappTemplate({ serializedWrapper: serializedWrapper,templateId:this.metaTemplateId })
-                .then(result => {
-                    if (result && result.success) { 
-                        this.showToastSuccess('Template successfully edited.');
-                        // this.isAllTemplate=true;
-                        // this.iseditTemplatevisible=false;
-                        // this.isLoading=false;
-                        // const templateId = result.templateId;  
-                        // this.templateId = templateId;
-                        // this.fetchUpdatedTemplates();
-                        this.navigateToAllTemplatePage();
-                    } else {
-                        const errorResponse = JSON.parse(result.errorMessage); 
-                        const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error'; 
-            
-                        this.showToastError('Template updation failed, reason - '+errorMsg);
-                        this.isLoading = false; 
-                    }
-                })
-                .catch(error => {
-                    console.error('Error creating template', error);
-                    const errorTitle = 'Template creation failed: ';
-                    let errorMsg;        
-                    if (error.body && error.body.message) {
-                        if (error.body.message.includes('Read timed out')) {
-                            errorMsg = 'The request timed out. Please try again.';
+            if (this.metaTemplateId) {
+                editWhatsappTemplate({ serializedWrapper: serializedWrapper, templateId: this.metaTemplateId })
+                    .then(result => {
+                        if (result && result.success) {
+                            this.showToastSuccess('Template successfully edited.');
+                            // this.isAllTemplate=true;
+                            // this.iseditTemplatevisible=false;
+                            // this.isLoading=false;
+                            // const templateId = result.templateId;  
+                            // this.templateId = templateId;
+                            // this.fetchUpdatedTemplates();
+                            this.navigateToAllTemplatePage();
                         } else {
-                            errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+                            const errorResponse = JSON.parse(result.errorMessage);
+                            const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error';
+
+                            this.showToastError('Template updation failed, reason - ' + errorMsg);
+                            this.isLoading = false;
                         }
-                    } else {
-                        errorMsg = 'An unknown error occurred';
-                    }
-                
-                    this.showToastError(errorTitle, errorMsg);
-                    this.isLoading = false;
-                });
-                
-            }else{
+                    })
+                    .catch(error => {
+                        console.error('Error creating template', error);
+                        const errorTitle = 'Template creation failed: ';
+                        let errorMsg;
+                        if (error.body && error.body.message) {
+                            if (error.body.message.includes('Read timed out')) {
+                                errorMsg = 'The request timed out. Please try again.';
+                            } else {
+                                errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+                            }
+                        } else {
+                            errorMsg = 'An unknown error occurred';
+                        }
+
+                        this.showToastError(errorTitle, errorMsg);
+                        this.isLoading = false;
+                    });
+
+            } else {
                 createWhatsappTemplate({ serializedWrapper: serializedWrapper })
-                .then(result => {
-                    if (result && result.success) { 
-                        this.showToastSuccess('Template successfully created');
-                        
-                        this.navigateToAllTemplatePage();
-                    } else {
-                        const errorResponse = JSON.parse(result.errorMessage); 
-                        const errorMsg = errorResponse.error.error_user_msg || errorResponse.error.message || 'Due to unknown error'; 
-            
-                        this.showToastError('Template creation failed, reason - '+errorMsg);
-                        this.isLoading = false; 
-                    }
-                })
-                .catch(error => {
-                    console.error('Error creating template', error);
-                    const errorTitle = 'Template creation failed: ';
-                    let errorMsg;        
-                    if (error.body && error.body.message) {
-                        if (error.body.message.includes('Read timed out')) {
-                            errorMsg = 'The request timed out. Please try again.';
+                    .then(result => {
+                        if (result && result.success) {
+                            this.showToastSuccess('Template successfully created');
+
+                            this.navigateToAllTemplatePage();
                         } else {
-                            errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+                            const errorResponse = JSON.parse(result.errorMessage);
+                            const errorMsg = errorResponse.error.error_user_msg || errorResponse.error.message || 'Due to unknown error';
+
+                            this.showToastError('Template creation failed, reason - ' + errorMsg);
+                            this.isLoading = false;
                         }
-                    } else {
-                        errorMsg = 'An unknown error occurred';
-                    }
-                
-                    this.showToastError(errorTitle, errorMsg);
-                    this.isLoading = false;
-                });
-               
+                    })
+                    .catch(error => {
+                        console.error('Error creating template', error);
+                        const errorTitle = 'Template creation failed: ';
+                        let errorMsg;
+                        if (error.body && error.body.message) {
+                            if (error.body.message.includes('Read timed out')) {
+                                errorMsg = 'The request timed out. Please try again.';
+                            } else {
+                                errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+                            }
+                        } else {
+                            errorMsg = 'An unknown error occurred';
+                        }
+
+                        this.showToastError(errorTitle, errorMsg);
+                        this.isLoading = false;
+                    });
+
             }
-           
+
 
         } catch (error) {
             console.error('Unexpected error occurred', error);
             this.showToastError('An unexpected error occurred while submitting the template.');
             this.isLoading = false;
-        }       
+        }
     }
 
     fetchUpdatedTemplates(dispatchEvent = true) {
         getWhatsAppTemplates()
             .then(data => {
-                this.allTemplates = data; 
+                this.allTemplates = data;
                 if (dispatchEvent) {
                     const event = new CustomEvent('templateupdate', { detail: data });
                     this.dispatchEvent(event);
@@ -2714,7 +2861,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.showToastError('Failed to fetch updated templates.');
             });
     }
-    
+
     showToastError(message) {
         const toastEvent = new ShowToastEvent({
             title: 'Error',
@@ -2732,10 +2879,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         });
         this.dispatchEvent(toastEvent);
     }
-    
+
     closePreview() {
         this.navigateToAllTemplatePage();
-    }  
+    }
 
     getButtonPath(iconName) {
         return `${buttonIconsZip}/button-sectionIcons/${iconName}.png`;
