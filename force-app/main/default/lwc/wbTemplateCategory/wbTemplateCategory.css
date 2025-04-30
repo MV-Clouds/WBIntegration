@@ -3,7 +3,7 @@
 }
 .main {
     padding: 1%;
-    background-image: url(/resource/MVWB__wbiTemplateBg);
+    background-image: url('/resource/MVWB__wbiTemplateBg');
     background-repeat: no-repeat;
     background-size: cover;
     border-radius: 5px;
@@ -139,7 +139,7 @@
 }
 
 .templatePreviewBlock{
-    /* background: url('/resource/MVWB__wbiBg'); */
+    background: url('/resource/MVWB__wbiBg');
     background-color: antiquewhite;
     padding: 15px;
     height: 76%;
