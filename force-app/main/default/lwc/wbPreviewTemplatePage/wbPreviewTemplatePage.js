@@ -47,7 +47,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track inputValues = {};
     @track groupedVariables=[];
     @track noContact=true;
-    @track selectedCountryType = '+91';  
+    @track selectedCountryType = '+971';  
     @track countryType=[];
     @track filteredTableData = []; 
     @track variableMapping = { header: {}, body: {} };
