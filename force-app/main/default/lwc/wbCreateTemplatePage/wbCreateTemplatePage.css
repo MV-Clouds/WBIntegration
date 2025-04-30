@@ -1088,6 +1088,12 @@ textarea {
     border-radius: 4px;
 }
 
+.select-button.disabled{
+    
+    cursor: not-allowed;
+    background-color: rgb(189, 189, 189);
+}
+
 
 /* Backdrop covers the entire component */
 .license-error {
