@@ -74,6 +74,13 @@
                     'type' => 'FOOTER',
                     'text' => templateWrapper.tempFooterText
                 });
+            }  else if (templateWrapper.templateCategory == 'Authentication' && templateWrapper.isCodeExpiration){
+                System.debug('templateWrapper.expireTime ::: '+templateWrapper.expireTime);
+                Integer expirationMinutes = (Integer)Math.floor(templateWrapper.expireTime / 60);
+                components.add(new Map<String, Object>{
+                    'type' => 'FOOTER',
+                    'code_expiration_minutes' => expirationMinutes
+                });
             }
     
             List<Map<String, Object>> buttonComponents = buildButtonComponent(templateWrapper);
@@ -81,13 +88,6 @@
                 components.add(new Map<String, Object>{
                     'type' => 'BUTTONS',
                     'buttons' => buttonComponents
-                });
-            } else if (templateWrapper.templateCategory == 'Authentication' && templateWrapper.isCodeExpiration){
-                System.debug('templateWrapper.expireTime ::: '+templateWrapper.expireTime);
-                Integer expirationMinutes = (Integer)Math.floor(templateWrapper.expireTime / 60);
-                components.add(new Map<String, Object>{
-                    'type' => 'FOOTER',
-                    'code_expiration_minutes' => expirationMinutes
                 });
             }
             return components;

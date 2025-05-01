@@ -36,7 +36,8 @@ private class BroadcastMessageControllerTest {
         // Create a Broadcast Group Member
         Broadcast_Group_Member__c member = new Broadcast_Group_Member__c(
             Broadcast_Group_ID__c = broadcastGroupId,
-            Phone_Number__c = '1234567890'
+            Phone_Number__c = '1234567890',
+            Status__c = 'Sent'
         );
         insert member;
         broadcastMemberId = member.Id;
@@ -309,6 +310,28 @@ private class BroadcastMessageControllerTest {
 
         System.assertNotEquals(null, groups, 'Returned list should not be null');
         System.assertEquals(0, groups.size(), 'There should be no broadcast groups returned');
+    }
+
+    @isTest
+    static void testGetBroadcastMembersByGroupId() {
+        Test.startTest();
+
+        // Provide the groupId and objectName
+        Broadcast_Group__c groups = [SELECT Id FROM Broadcast_Group__c LIMIT 1];
+        String objectName = 'Contact'; // Make sure 'Lead' is configured correctly in getObjectConfigs()
+
+        List<BroadcastMessageController.BroadcastMemberWrapper> result = BroadcastMessageController.getBroadcastMembersByGroupId(groups.Id, objectName);
+
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testGetSessionId() {
+        Test.startTest();
+        String sessionId = BroadcastMessageController.getSessionId();
+        Test.stopTest();
+
+        System.assertEquals('testSessionId', sessionId, 'Should return test session Id when running tests');
     }
 
 }
