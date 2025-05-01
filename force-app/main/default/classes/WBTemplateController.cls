@@ -8,10 +8,10 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 24/12/2024
- * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : restrictTemplates,sendPreviewTemplate
- * Change Description : 
+ * Last Update Date : 01/05/2025
+ * Updated By : Divij Modi
+ * Name of methods changed (Comma separated if more then one) : uploadFileChunk
+ * Change Description : Added condition for aws
  ***********************************************************************/
 
  public with sharing class WBTemplateController {
