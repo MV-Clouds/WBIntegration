@@ -40,8 +40,11 @@ import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink from '@salesforce/apex/FileUploaderController.getPublicLink';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
 import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
-// import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
+import deleteImagesFromS3 from '@salesforce/apex/AWSFilesController.deleteImagesFromS3';
+import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
+
 
 export default class WbCreateTemplatePage extends NavigationMixin(LightningElement) {
     maxTempNamelength = 512;
@@ -732,11 +735,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     async connectedCallback() {
         try {
-            // this.isLoading = true;
-            // await this.checkLicenseStatus();
-            // if (this.showLicenseError) {
-            //     return;
-            // }
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return;
+            }
 
             this.iseditTemplatevisible = true;
             if (this.selectedTab != undefined && this.selectedOption != undefined) {
@@ -778,6 +781,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             getS3ConfigSettings()
                 .then(result => {
                     if (result != null) {
+                        console.log('Reuskt ::: ',result);
+                        
                         this.confData = result;
                         this.isAWSEnabled = true;
                     }
@@ -870,7 +875,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.isAwsSdkInitialized = false;
             }
         } catch (error) {
-            console.error('Error in function renderedCallback:::', e.message);
+            console.error('Error in function renderedCallback:::', error.message);
         }
     }
 
@@ -936,10 +941,19 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.isautofillChecked = templateMiscellaneousData.autofillCheck
                             this.isVisitSite = templateMiscellaneousData.isVisitSite
                             this.isCheckboxChecked = templateMiscellaneousData.isCheckboxChecked
-                            this.flowBooleanCheck = templateMiscellaneousData.flowBooleanCheck
+                            // this.flowBooleanCheck = templateMiscellaneousData.flowBooleanCheck
+                            this.isFlowMarketing = templateMiscellaneousData.isFlowMarketing
+                            this.isFlowUtility = templateMiscellaneousData.isFlowUtility
                             this.isFlowSelected = templateMiscellaneousData.isFlowSelected
                             this.selectedFlow = templateMiscellaneousData.isFlowSelected
                             this.isFeatureEnabled = templateMiscellaneousData.isFeatureEnabled
+                            this.awsFileName = templateMiscellaneousData.awsFileName
+                            
+                            console.log('FETCH ::: ',this.awsFileName);
+                            
+                            if(this.awsFileName && !this.isAWSEnabled){
+                                this.showToastError('AWS Configration missing')
+                            }
                         }
                         catch (error) {
                             console.error('templateMiscellaneousData Error ::: ', error)
@@ -1112,35 +1126,42 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         try {
             const file = event.target.files[0];
             console.log('File');
+            console.log(file);
             
             if (file) {
                 this.file = file;
                 this.fileName = file.name;
                 this.fileType = file.type;
                 this.fileSize = file.size;
-
+                console.log('Is AWS ENnabled ::: ',this.isAWSEnabled);
+                
                 if (this.isAWSEnabled) {
                     let isValid = false;
                     let maxSize = 0;
                     let fileSizeMB = Math.floor(file.size / (1024 * 1024));
-                    if (this.fileType.includes('image/')) {
+                    if (this.fileType.startsWith('image/')) {
                         maxSize = 5;
                         isValid = fileSizeMB <= maxSize;
-                    } else if (this.fileType.includes('video/') || this.fileType.includes('audio/')) {
+                    } else if (this.fileType.startsWith('video/')) {
                         maxSize = 16;
                         isValid = fileSizeMB <= maxSize;
                     } else if (this.fileType.includes('application/') || this.fileType.includes('text/')) {
                         maxSize = 100;
                         isValid = fileSizeMB <= maxSize;
                     }
-
+                    else{
+                        console.log('Else OUT');
+                    }
+                    console.log('Is Valid ::: '+isValid);
+                    
                     if (isValid) {
                         this.selectedFilesToUpload.push(file);
-                        this.fileName = file.name;
+                        // this.fileName = file.name;
                     } else {
                         this.showToast('Error', `${file.name} exceeds the ${maxSize}MB limit`, 'error');
                     }
-                    if (file.length > 0) {
+                    if (file) {
+                        console.log('Handle File Change',this.selectedFilesToUpload)
                         this.isLoading = true;
                         await this.uploadToAWS(this.selectedFilesToUpload);
                     }
@@ -1161,6 +1182,68 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
+    
+    initializeAwsSdk(confData) {
+        try {
+            let AWS = window.AWS;
+
+            AWS.config.update({
+                accessKeyId: confData.MVWB__AWS_Access_Key__c,
+                secretAccessKey: confData.MVWB__AWS_Secret_Access_Key__c
+            });
+
+            AWS.config.region = confData.MVWB__S3_Region_Name__c;
+
+            this.s3 = new AWS.S3({
+                apiVersion: "2006-03-01",
+                params: {
+                    Bucket: confData.MVWB__S3_Bucket_Name__c
+                }
+            });
+
+        } catch (error) {
+            console.error("error initializeAwsSdk ", error);
+        }
+    }
+
+    // renameFileName(filename) {
+    //     try {
+    //         let originalFileName = filename;
+    //         let extensionIndex = originalFileName.lastIndexOf('.');
+    //         let baseFileName = originalFileName.substring(0, extensionIndex);
+    //         let extension = originalFileName.substring(extensionIndex + 1);
+
+    //         let objKey = `${baseFileName}.${extension}`
+    //             .replace(/\s+/g, "_");
+    //         return objKey;
+    //     } catch (error) {
+    //         console.error('error in renameFileName -> ', error.stack);
+    //     }
+    // }
+    renameFileName(filename) {
+        try {
+            let extensionIndex = filename.lastIndexOf('.');
+            let baseFileName = filename.substring(0, extensionIndex);
+            let extension = filename.substring(extensionIndex + 1);
+    
+            // Get current timestamp in YYYYMMDD_HHmmss format
+            let now = new Date();
+            let timestamp = `${now.getFullYear()}${(now.getMonth() + 1)
+                .toString().padStart(2, '0')}${now.getDate()
+                .toString().padStart(2, '0')}_${now.getHours()
+                .toString().padStart(2, '0')}${now.getMinutes()
+                .toString().padStart(2, '0')}${now.getSeconds()
+                .toString().padStart(2, '0')}`;
+    
+            let uniqueFileName = `${baseFileName}_${timestamp}.${extension}`.replace(/\s+/g, "_");
+            return uniqueFileName;
+        } catch (error) {
+            console.error('error in renameFileName -> ', error.stack);
+        }
+    }
+    
+
+
     async uploadToAWS() {
         try {
             this.isLoading = true;
@@ -1178,19 +1261,29 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                 let upload = this.s3.upload(params);
 
+                console.log('Upload to aws ::: ');
+                console.log('Object Key ::: ',objKey);
+                console.log('Params ::: ',params);
+                console.log('Upload :: ',upload)
+                
+                
+                
+
                 return await upload.promise();
             });
             // Wait for all uploads to complete
             const results = await Promise.all(uploadPromises);
             results.forEach((result) => {
                 if (result) {
-                    let bucketName = this.confData.S3_Bucket_Name__c;
+                    let bucketName = this.confData.MVWB__S3_Bucket_Name__c;
                     let objKey = result.Key;
                     let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
-   
+                    console.log('AWS Url :: ',awsFileUrl);
+                    
                     this.awsFileName = objKey;
                     this.generatePreview(awsFileUrl);
-                    this.
+                    // this.
+                    
                     this.uploadFile();
                 }
             });
@@ -1198,44 +1291,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         } catch (error) {
             this.isLoading = false;
             console.error("Error in uploadToAWS: ", error);
-        }
-    }
-
-    initializeAwsSdk(confData) {
-        try {
-            let AWS = window.AWS;
-
-            AWS.config.update({
-                accessKeyId: confData.AWS_Access_Key__c,
-                secretAccessKey: confData.AWS_Secret_Access_Key__c
-            });
-
-            AWS.config.region = confData.S3_Region_Name__c;
-
-            this.s3 = new AWS.S3({
-                apiVersion: "2006-03-01",
-                params: {
-                    Bucket: confData.S3_Bucket_Name__c
-                }
-            });
-
-        } catch (error) {
-            console.error("error initializeAwsSdk ", error);
-        }
-    }
-
-    renameFileName(filename) {
-        try {
-            let originalFileName = filename;
-            let extensionIndex = originalFileName.lastIndexOf('.');
-            let baseFileName = originalFileName.substring(0, extensionIndex);
-            let extension = originalFileName.substring(extensionIndex + 1);
-
-            let objKey = `${baseFileName}.${extension}`
-                .replace(/\s+/g, "_");
-            return objKey;
-        } catch (error) {
-            console.error('error in renameFileName -> ', error.stack);
         }
     }
 
@@ -1337,6 +1392,21 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
 
                 });
+        }
+        else if(this.isAWSEnabled){
+            console.log('this.awsFileName ::: ',this.awsFileName);
+            
+            deleteImagesFromS3({ fileNames: [this.awsFileName] })
+                .then(() => {
+                    this.showToastSuccess('File deleted successfully');
+                    this.resetFileData(); // Reset file data after deletion
+                })
+                .catch((error) => {
+                    console.error('Error deleting file: ', error);
+                    this.showToastError('Error deleting file!');
+
+
+                });
         } else {
             this.showToastError('No file to delete!');
 
@@ -1373,6 +1443,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         this.NoFileSelected = true;
         this.contentVersionId = null;
         this.headerHandle = '';
+        this.awsFileName = '';
     }
 
     uploadFile() {
@@ -1428,13 +1499,14 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         fileName: this.fileName
                     };
                     const serializedWrapper = JSON.stringify(fileChunkWrapper);
-
+                    console.log('this.isAWSEnabled ::: ',this.isAWSEnabled);
+                    
                     uploadFileChunk({ serializedWrapper: serializedWrapper , isAWSEnabled: this.isAWSEnabled })
                         .then(result => {
                             if (result) {
                                 let serializeResult = JSON.parse(result);
                                 this.headerHandle = serializeResult.headerHandle;
-                                if(!isAWSEnabled){
+                                if(!this.isAWSEnabled){
                                     this.contentDocumentId = serializeResult.contentDocumentId;
                                 }
 
@@ -2725,10 +2797,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 autofillCheck: this.isautofillChecked,
                 isVisitSite: this.isVisitSite,
                 isCheckboxChecked: this.isCheckboxChecked,
-                flowBooleanCheck: this.flowBooleanCheck,
+                isFlowMarketing : this.isFlowMarketing,
+                isFlowUtility : this.isFlowUtility,
                 isFlowSelected: this.isFlowSelected,
                 selectedFlow: this.selectedFlow,
-                isFeatureEnabled: this.isFeatureEnabled
+                isFeatureEnabled: this.isFeatureEnabled,
+                awsFileName : this.awsFileName
             }
 
 
