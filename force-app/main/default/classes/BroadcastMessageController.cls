@@ -138,7 +138,7 @@ public with sharing class BroadcastMessageController {
     public static List<Broadcast__c> getBroadcastRecs(){
         List<Broadcast__c> broadcastRecs = new List<Broadcast__c>();
         try {
-            broadcastRecs =  [SELECT Id, Name, Recipient_Count__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c FROM Broadcast__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];        
+            broadcastRecs =  [SELECT Id, Name, Recipient_Count__c,Template__c, Template__r.Template_Name__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c FROM Broadcast__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];        
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastRecs', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
@@ -567,7 +567,7 @@ public with sharing class BroadcastMessageController {
             // Step 3: Build and run the dynamic query
             String query = 'SELECT Id, Name, ' + phoneField +
                             ' FROM ' + objectName +
-                            ' WHERE ' + phoneField + ' IN :phoneNumbers LIMIT 1';
+                            ' WHERE ' + phoneField + ' IN :phoneNumbers';
             List<SObject> matchedRecords = Database.query(query);
 
             // Step 4: Wrap with status

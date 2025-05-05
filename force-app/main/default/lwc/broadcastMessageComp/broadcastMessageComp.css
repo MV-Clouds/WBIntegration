@@ -41,6 +41,9 @@
     overflow: auto;
 }
 
+.comboboxdiv{
+    padding-left: 2px;
+}
 
 /* Custom Table Styling */
 .table-container {

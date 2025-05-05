@@ -21,6 +21,7 @@ export default class BroadcastReportComp extends LightningElement {
     @track pageGrpSize = 15;
     @track visibleGrpPages = 5;
     @track selectedGroupObject='';
+    @track templateName = '—';
 
     connectedCallback() {
         this.fetchBroadcast();
@@ -210,6 +211,7 @@ export default class BroadcastReportComp extends LightningElement {
         .then(result => {
             // Find the record that matches the given recordId
             this.record = result.find(item => item.Id === this.recordId);
+            this.templateName = this.record.MVWB__Template__r?.MVWB__Template_Name__c || '—';
         })
         .catch(error => {
             console.error('Error fetching records:', error);
@@ -224,7 +226,6 @@ export default class BroadcastReportComp extends LightningElement {
                     ...item,
                     index: index + 1,
                 }));
-                console.log(JSON.stringify(this.data));
                 this.selectedGroupObject = this.data.MVWB__Object_Name__c;
                 this.filteredData = [...this.data];
                 this.updateShownData();
@@ -335,7 +336,6 @@ export default class BroadcastReportComp extends LightningElement {
             const startIndex = (this.currentGrpPage - 1) * this.pageGrpSize;
             const endIndex = Math.min(startIndex + this.pageGrpSize, this.totalGrpItems);
             this.paginatedGrpData = this.filteredGrpData.slice(startIndex, endIndex);
-            console.log('group member: ',JSON.stringify(this.paginatedGrpData));
             
         } catch (error) {
             this.showToast('Error', 'Error updating shown data', 'error');
