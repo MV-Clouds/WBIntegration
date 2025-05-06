@@ -11,9 +11,10 @@ import { NavigationMixin } from 'lightning/navigation';
 export default class WbTemplateCategory extends NavigationMixin(LightningElement) {
     @api selectedTab = 'section1';    
     @api selectedOption = 'custom';   
-    @track defaultPreview = true;
-    @track activeTemplateId = 'defaultPreview';
     @api activeTab = 'Marketing';
+    
+    defaultPreview = true;
+    activeTemplateId = 'defaultPreview';
     showLicenseError = false;
 
     @track tabOptions = [
@@ -131,6 +132,15 @@ export default class WbTemplateCategory extends NavigationMixin(LightningElement
         }
     }
 
+    
+    get activeSection() {
+        return this.sections[this.selectedTab];
+    }
+
+    get currentTemplate() {
+        return this.templates[this.activeTemplateId] || null;
+    }    
+    
     connectedCallback() {
         if(this.selectedTab!= undefined && this.selectedOption != undefined){
             this.handleTabClick(this.selectedTab);      
@@ -154,14 +164,6 @@ export default class WbTemplateCategory extends NavigationMixin(LightningElement
 
         this.dispatchEvent(selectionEvent);
     }
-
-    get activeSection() {
-        return this.sections[this.selectedTab];
-    }
-
-    get currentTemplate() {
-        return this.templates[this.activeTemplateId] || null;
-    }    
 
     renderedCallback() {
         const hey = this.template.querySelector('.chatBubbleHeyMessage');

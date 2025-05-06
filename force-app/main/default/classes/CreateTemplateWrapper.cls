@@ -8,12 +8,23 @@
  /***********************************************************************
  MODIFICATION LOG*
  * Last Update Date : 12/12/2024
- * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : handleSuccessResponse
- * Change Description : Store actual variable {{1}} in the name field of template variable.
+ * Updated By : Divij Modi
+ * Change Description : Added Comments and public variable where needed.
  ***********************************************************************/
 
  public without sharing class CreateTemplateWrapper {
+
+    private static final String HEADER = 'HEADER';
+    private static final String BODY = 'BODY';
+    private static final String FOOTER = 'FOOTER';
+    private static final String BUTTONS = 'BUTTONS';
+    private static final String Authentication = 'Authentication';
+    private static final String COPY_CODE = 'COPY_CODE';
+    private static final String PHONE_NUMBER = 'PHONE_NUMBER';
+    private static final String QUICK_REPLY = 'QUICK_REPLY';
+    private static final String URL = 'URL';
+    private static final String FLOW = 'FLOW';
+    
     /*
     *********************************************************
     @description     : Main method to build overall payload to pass in create template
@@ -34,7 +45,7 @@
             if (!components.isEmpty()) {
                 payload.put('components', components);
             }
-            if(templateWrapper.templateCategory == 'Authentication' || templateWrapper.templateCategory == 'Utility'){
+            if(templateWrapper.templateCategory == Authentication || templateWrapper.templateCategory == 'Utility'){
                 if (templateWrapper.expireTime != null) {
                     payload.put('message_send_ttl_seconds', templateWrapper.expireTime);
                 } else {
@@ -43,8 +54,8 @@
             }
             return payload;
 
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildPayload', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+        } catch (Exception exception) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildPayload', 'exceptionObj' => exception, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exception.getMessage(), 'apiResponse' => null});
         }
         return new Map<String, Object>(); 
     }
@@ -71,14 +82,14 @@
     
             if (templateWrapper.tempFooterText != null) {
                 components.add(new Map<String, Object>{
-                    'type' => 'FOOTER',
+                    'type' => FOOTER,
                     'text' => templateWrapper.tempFooterText
                 });
-            } else if (templateWrapper.templateCategory == 'Authentication' && templateWrapper.isCodeExpiration){
-                System.debug('templateWrapper.expireTime ::: '+templateWrapper.expireTime);
+            } else if (templateWrapper.templateCategory == Authentication && templateWrapper.isCodeExpiration){
+                // System.debug('templateWrapper.expireTime ::: '+templateWrapper.expireTime);
                 Integer expirationMinutes = (Integer)Math.floor(templateWrapper.expireTime / 60);
                 components.add(new Map<String, Object>{
-                    'type' => 'FOOTER',
+                    'type' => FOOTER,
                     'code_expiration_minutes' => expirationMinutes
                 });
             }
@@ -86,14 +97,14 @@
             List<Map<String, Object>> buttonComponents = buildButtonComponent(templateWrapper);
             if (!buttonComponents.isEmpty()) {
                 components.add(new Map<String, Object>{
-                    'type' => 'BUTTONS',
+                    'type' => BUTTONS,
                     'buttons' => buttonComponents
                 });
             }
             return components;
 
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildMarketingOrUtilityComponents', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+        } catch (Exception exception) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildMarketingOrUtilityComponents', 'exceptionObj' => exception, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exception.getMessage(), 'apiResponse' => null});
         }
         return new List<Map<String, Object>>(); 
     }
@@ -112,7 +123,7 @@
             if (templateWrapper.tempHeaderFormat == null || templateWrapper.tempHeaderFormat=='None' ) {
                 return headerComponent;
             }  
-            headerComponent.put('type', 'HEADER'); 
+            headerComponent.put('type', HEADER); 
             headerComponent.put('format', templateWrapper.tempHeaderFormat);
                       
             if (templateWrapper.tempHeaderFormat == 'Text' && templateWrapper.tempHeaderText != null) {
@@ -131,8 +142,8 @@
                 });
                 return headerComponent;
             }
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildHeaderComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+        } catch (Exception exception) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildHeaderComponent', 'exceptionObj' => exception, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exception.getMessage(), 'apiResponse' => null});
         }
         return headerComponent;
     }
@@ -148,14 +159,14 @@
         try {
 
             Map<String, Object> bodyComponent;
-            if (templateWrapper.templateCategory == 'Authentication') {
+            if (templateWrapper.templateCategory == Authentication) {
                 bodyComponent = new Map<String, Object>{
-                    'type' => 'BODY',
+                    'type' => BODY,
                     'add_security_recommendation' => templateWrapper.isSecurityRecommedation
                 };
             } else {
                 bodyComponent = new Map<String, Object>{
-                    'type' => 'BODY',
+                    'type' => BODY,
                     'text' => templateWrapper.templateBody.replace('\\n', '\n')
                 };
             }
@@ -168,8 +179,8 @@
             }
             
             return bodyComponent;
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildBodyComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+        } catch (Exception exception) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'buildBodyComponent', 'exceptionObj' => exception, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exception.getMessage(), 'apiResponse' => null});
         }
         return new Map<String, Object>(); 
     }
@@ -186,11 +197,11 @@
     
         try {
             // Force OTP button for Authentication category
-            if (templateWrapper.templateCategory == 'Authentication') {
+            if (templateWrapper.templateCategory == Authentication) {
                 Map<String, Object> buttonComponent = new Map<String, Object>{
                     'type' => 'OTP',
                     'text' => 'Verify Code', // Plain text without variables or emojis
-                    'otp_type' => 'COPY_CODE' // Use 'COPY_CODE' or 'ONE_TAP' as needed
+                    'otp_type' => COPY_CODE // Use COPY_CODE or 'ONE_TAP' as needed
                 };
                 buttonComponents.add(buttonComponent);
                 return buttonComponents; // Return immediately to prevent adding other buttons
@@ -202,48 +213,39 @@
             }
     
             List<Object> untypedList;
-            try {
-                untypedList = (List<Object>) JSON.deserializeUntyped(templateWrapper.typeOfButton);
-            } catch (Exception e) {
-                
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'handleSuccessResponse','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
-                throw new IllegalArgumentException('Invalid JSON format for typeOfButton: ' + e.getMessage());
-            }
+            untypedList = (List<Object>) JSON.deserializeUntyped(templateWrapper.typeOfButton);
+            
             // Loop through buttons for non-Authentication categories
             for (Object item : untypedList) {
-                // if (buttonComponents.size() >= 1) {
-                //     break; // Limit to 1 button if required
-                // }
-                
-                
+        
                 Map<String, Object> button = (Map<String, Object>) item;
                 String actionType = (String) button.get('selectedActionType');
                 String customActionType = (String) button.get('selectedCustomType');
                 String phoneNumber = (String) button.get('selectedCountryType') + ' ' + (String) button.get('phonenum');
                 Map<String, Object> buttonComponent = new Map<String, Object>();
-                if ('PHONE_NUMBER'.equals(actionType)) {
-                    buttonComponent.put('type', 'PHONE_NUMBER');
+                if (PHONE_NUMBER.equals(actionType)) {
+                    buttonComponent.put('type', PHONE_NUMBER);
                     buttonComponent.put('text', (String) button.get('btntext'));
                     buttonComponent.put('phone_number', phoneNumber);
-                } else if ('QUICK_REPLY'.equals(customActionType) || 'Marketing opt-out'.equals(customActionType)) {
-                    buttonComponent.put('type', 'QUICK_REPLY');
+                } else if (QUICK_REPLY.equals(customActionType) || 'Marketing opt-out'.equals(customActionType)) {
+                    buttonComponent.put('type', QUICK_REPLY);
                     buttonComponent.put('text', (String) button.get('Cbtntext'));
                     if('Marketing opt-out'.equals(customActionType)){
                         templateWrapper.marketingOptText = (String) button.get('Cbtntext');
                     }
-                } else if ('URL'.equals(actionType)) {
-                    buttonComponent.put('type', 'URL');
+                } else if (URL.equals(actionType)) {
+                    buttonComponent.put('type', URL);
                     buttonComponent.put('text', (String) button.get('btntext'));
                     buttonComponent.put('url', (String) button.get('webURL'));
-                } else if ('COPY_CODE'.equals(actionType)) {
-                    buttonComponent.put('type', 'COPY_CODE');
+                } else if (COPY_CODE.equals(actionType)) {
+                    buttonComponent.put('type', COPY_CODE);
                     buttonComponent.put('text', 'Copy offer code');
                     buttonComponent.put('example', (String) button.get('offercode'));
                 }
                 else if ('Flow'.equals(actionType)) {
                     Map<String,Object> selectedFlowMap= new Map<String,Object>();
                     selectedFlowMap = (Map<String,Object>) JSON.deserializeUntyped(templateWrapper.selectedFlow);
-                    buttonComponent.put('type', 'FLOW');
+                    buttonComponent.put('type', FLOW);
                     buttonComponent.put('text', (String) button.get('btntext'));
                     buttonComponent.put('flow_id', (String) selectedFlowMap.get('id'));
                 }
@@ -252,8 +254,8 @@
                 }
             }
     
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'buildButtonComponent','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+        } catch (Exception exception) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'buildButtonComponent','exceptionObj' => exception,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => exception.getMessage(),'apiResponse' => null});
         }
     
         return buttonComponents;
@@ -336,14 +338,15 @@
 
             
 
-                if(whatsAppTemplate.Template_Category__c == 'Authentication'){
+                if(whatsAppTemplate.Template_Category__c == Authentication){
                     component.put('text',templateWrapper.templateBody);
                 }
 
     
                 // HEADER Component
-                if (type == 'HEADER') {
+                if (type == HEADER) {
                     whatsAppTemplate.Header_Type__c = (String) component.get('format');
+                    String placeholder = '';
                     if (((String) component.get('format') == 'IMAGE')||(((String) component.get('format') == 'VIDEO'))||(((String) component.get('format') == 'DOCUMENT'))) {
                         whatsAppTemplate.WBHeader_Body__c = templateWrapper.tempImgUrl;
                         whatsAppTemplate.File_Name__c = templateWrapper.tempImgName;
@@ -354,12 +357,16 @@
                     }
                     if (example != null && example.containsKey('header_text') && example.get('header_text') instanceof List<Object>) {
                         List<Object> headerExampleObj = (List<Object>) example.get('header_text');
+
+                        // Compile a regex pattern to match placeholders like {{1}}, {{2}}, etc., in the component text
                         Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
+                        // Apply the regex pattern to the text of the current component to find all placeholder matches
                         Matcher matcher = pattern.matcher((String) component.get('text'));
+
 
                         if (!headerExampleObj.isEmpty()) {
                             while (matcher.find()) {
-                                String placeholder = matcher.group();  
+                                placeholder = matcher.group();  
                                 headerMergeText = (String) headerExampleObj[0];
                                 headerMergeText = headerMergeText.replace('{{', '').replace('}}', '');
                                 List<String> parts = headerMergeText.split('\\.');
@@ -369,6 +376,7 @@
                                         FROM Template_Variable__c
                                         WHERE Template__c = :whatsAppTemplate.Id
                                         AND Type__c = 'Header'
+                                        WITH SECURITY_ENFORCED
                                     ];
                 
                                     if (!existingHeaderVar.isEmpty()) {
@@ -394,18 +402,21 @@
                     }
                 }
                 // BODY Component
-                else if (type == 'BODY') {
+                else if (type == BODY) {
                     Map<String, Object> result = handleBodyComponent(whatsAppTemplate.Template_Category__c, component, example);
                     
                     if(((String) result.get('bodyText')) != null){
                         whatsAppTemplate.WBTemplate_Body__c = String.isNotBlank((String) result.get('bodyText')) ? (String) result.get('bodyText') : '';
 
-                        if(whatsAppTemplate.Template_Category__c != 'Authentication'){
+                        if(whatsAppTemplate.Template_Category__c != Authentication){
                             List<Map<String, String>> parsedFields = (List<Map<String, String>>) result.get('parsedFields');
                             String bodyMergeText = (String) result.get('bodyMergeText');
         
+                            // Compile a regex pattern to match placeholders like {{1}}, {{2}}, etc., in the component text
                             Pattern pattern = Pattern.compile('\\{\\{(\\d+)\\}\\}');
+                            // Apply the regex pattern to the text of the current component to find all placeholder matches
                             Matcher matcher = pattern.matcher((String) result.get('bodyText'));
+
                             Set<String> processedBodyPlaceholders = new Set<String>();
         
                             List<Template_Variable__c> existingBodyVars = [
@@ -413,6 +424,7 @@
                                 FROM Template_Variable__c
                                 WHERE Template__c = :whatsAppTemplate.Id
                                 AND Type__c = 'Body'
+                                WITH SECURITY_ENFORCED
                             ];
         
                             if (!existingBodyVars.isEmpty()) {
@@ -420,7 +432,7 @@
                             }
         
                             while (matcher.find()) {
-                                String placeholder = matcher.group();
+                                placeholder = matcher.group();
         
                                 if (!processedBodyPlaceholders.contains(placeholder)) {
                                     processedBodyPlaceholders.add(placeholder);
@@ -443,11 +455,11 @@
                     }
                 }
                 // FOOTER Component
-                else if (type == 'FOOTER') {
+                else if (type == FOOTER) {
                     whatsAppTemplate.WBFooter_Body__c = (String) component.get('text');
                 }
                 // BUTTONS Component
-                else if (type == 'BUTTONS') {
+                else if (type == BUTTONS) {
                     List<Object> buttons = (List<Object>) component.get('buttons');
                     for (Object buttonObj : buttons) {
                         if (buttonObj instanceof Map<String, Object>) {
@@ -482,11 +494,11 @@
             response.put('success', true);
             response.put('templateId', templateId);
     
-        } catch (Exception e) {
+        } catch (Exception exception) {
             // Error response handling
             response.put('success', false);
-            response.put('errorMessage', e.getMessage());
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'handleSuccessResponse','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+            response.put('errorMessage', exception.getMessage());
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper','methodName' => 'handleSuccessResponse','exceptionObj' => exception,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => exception.getMessage(),'apiResponse' => null});
         }
         return templateId; 
     }
@@ -520,12 +532,20 @@
                                 String fieldRef = (String) obj;
                                 stringList.add(fieldRef);
     
+                                // Check if the field reference contains a dot, indicating an object-field relationship (e.g., Account.Name)
                                 if (fieldRef.contains('.')) {
+                                    // Remove the placeholder syntax {{ and }} from the field reference
                                     fieldRef = fieldRef.replace('{{', '').replace('}}', '');
+                                    
+                                    // Split the field reference into object and field parts using the dot as delimiter
                                     List<String> parts = fieldRef.split('\\.');
+                                    
+                                    // Create a map to store the object and field names separately
                                     Map<String, String> fieldMap = new Map<String, String>();
-                                    fieldMap.put('objectName',parts[0]);
-                                    fieldMap.put('fieldName', parts[1]); 
+                                    fieldMap.put('objectName', parts[0]);
+                                    fieldMap.put('fieldName', parts[1]);
+                                    
+                                    // Add the map to the list of parsed fields for further processing
                                     parsedFields.add(fieldMap);
                                 }
                             }
@@ -542,8 +562,8 @@
             result.put('bodyMergeText', bodyMergeText);
             result.put('parsedFields', parsedFields); 
     
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleBodyComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+        } catch (Exception exception) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleBodyComponent', 'exceptionObj' => exception, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exception.getMessage(), 'apiResponse' => null});
             result.put('bodyText', '');  
             result.put('bodyMergeText', '');
             result.put('parsedFields', new List<Map<String, String>>()); 
@@ -568,20 +588,19 @@
                 buttonList = (String) JSON.serialize(buttons);
                 
             }
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleButtonComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+        } catch (Exception exception) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleButtonComponent', 'exceptionObj' => exception, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exception.getMessage(), 'apiResponse' => null});
         }
         return buttonList; 
     }
     
-      /*
+    /*
     *********************************************************
-    @description     : Used to format text
-    @param           : bodyText - text that need to format.
-    @return          : bodyText (String) - formatted bodytext.
-    ********************************************************
+    @description     : Wrapper class used to store and transfer WhatsApp template-related data.
+                        This class is used primarily for formatting, managing, and passing template 
+                        configuration from Apex to LWC or Aura components.
+    *********************************************************
     */
-    
 
     public class TemplateWrapper {      
         @AuraEnabled public String templateName;
@@ -603,13 +622,11 @@
         @AuraEnabled public String tempImgName;
         @AuraEnabled public String tempImgId;
         @AuraEnabled public Integer expireTime;
-        
         @AuraEnabled public Boolean autofillCheck;  
         @AuraEnabled public List<String> packagename;  
         @AuraEnabled public List<String> signaturename;  
         @AuraEnabled public String marketingOptText;  
         @AuraEnabled public String templateMiscellaneousData;
-        
         @AuraEnabled public String selectedFlow;
         @AuraEnabled public Boolean isSecurityRecommedation;
         @AuraEnabled public Boolean isCodeExpiration;

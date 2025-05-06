@@ -19,7 +19,7 @@ import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchD
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
 import CountryJson from '@salesforce/resourceUrl/CountryJson';
 import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
-import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+// import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=false;
@@ -35,7 +35,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track buttonList=[];
     @track formatedTempBody;
     @track phoneNumber='';
-    @track objectNames = []; 
+    @track objectNamesList = []; 
     @track fieldNames = [];
     @track isImgSelected = false;
     @track isVidSelected = false;
@@ -60,30 +60,16 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track isSecurityRecommedation = false;
     @track isCodeExpiration = false;
     @track showLicenseError = false;
+    @track objectName = '';
 
+    // get isDisabled(){
+    //     return false;
+    // }
 
-    get contactFields() {
-        return Object.entries(this.contactDetails)
-            .filter(([key, value]) => value !== null && value !== undefined)
-            .map(([key, value]) => ({ label: key, value }));
-    }
-
-    get isDisabled(){
-        // if(this.objectNames && this.fieldNames.length>0){
-        //     return false;
-        // }
-        // return !(this.objectNames && this.fieldNames);
-        return false;
-    }
-
-    get contactIcon() {
-        return this.selectedContactId ? 'standard:contact' : ''; 
-    }
-
-    get getObjectName(){
+    // get getObjectName(){
         
-        return this.objectNames[0];
-    }
+    //     return this.objectName;
+    // }
 
     @api
     get templateid() {
@@ -97,13 +83,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
         }
     }
 
-    async connectedCallback(){
+    connectedCallback(){
         try {
-            this.isLoading = true;
-            await this.checkLicenseStatus();
-            if (this.showLicenseError) {
-                return; // Stops execution if license is expired
-            }
             this.fetchCountries();
             this.fetchReplaceVariableTemplate(this.templateid,null);
             this.ispreviewTemplate = true;
@@ -111,27 +92,26 @@ export default class WbPreviewTemplatePage extends LightningElement {
             console.error('Error in connectedCallback:::', e.message);
         }
     }
-    async checkLicenseStatus() {
-        try {
-            const isLicenseValid = await checkLicenseUsablility();
-            if (!isLicenseValid) {
-                this.showLicenseError = true;
-            }
-        } catch (error) {
-            console.error('Error checking license:', error);
-        }
-    }
 
     formatText(inputText) {
         try {
-            let formattedText = inputText.replaceAll('\n', '<br/>');
-            formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
-            formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
-            formattedText = formattedText.replace(/~(.*?)~/g, '<s>$1</s>');
-            formattedText = formattedText.replace(/```(.*?)```/g, '<code>$1</code>');
+            const patterns = [
+                { regex: /\n/g, replacement: '<br/>' },
+                { regex: /\*(.*?)\*/g, replacement: '<b>$1</b>' },
+                { regex: /_(.*?)_/g, replacement: '<i>$1</i>' },
+                { regex: /~(.*?)~/g, replacement: '<s>$1</s>' },
+                { regex: /```(.*?)```/g, replacement: '<code>$1</code>' }
+            ];
+    
+            // Loop through all patterns, apply them to the input text one after the other
+            let formattedText = inputText;
+            patterns.forEach(({ regex, replacement }) => {
+                formattedText = formattedText.replace(regex, replacement);
+            });
+    
             return formattedText;
         } catch (error) {
-            console.error('Something went wrong in formatting text.',error);  
+            console.error('Something went wrong in formatting text.', error);
         }
     }
 
@@ -224,7 +204,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     fetchContactData() {
         try {
             fetchDynamicRecordData({
-                objectName: this.objectNames[0], 
+                objectName: this.objectName, 
                 fieldNames: this.fieldNames, 
                 recordId: this.selectedContactId
             })
@@ -327,8 +307,6 @@ export default class WbPreviewTemplatePage extends LightningElement {
             .then((result) => {
                 if (result) {
 
-                    
-                    
                     this.IsHeaderText = !result.isImgUrl;            
                     this.originalHeader = result.template.MVWB__WBHeader_Body__c;
                     this.originalBody = result.template.MVWB__WBTemplate_Body__c;
@@ -337,31 +315,27 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     this.isCodeExpiration = JSON.parse(result.template.MVWB__Template_Miscellaneous_Data__c).isCodeExpiration;
                     this.expireTime = JSON.parse(result.template.MVWB__Template_Miscellaneous_Data__c).expireTime;
                     
-                    if(result.template.MVWB__Header_Type__c=='Image'){
-                        this.isImgSelected = result.isImgUrl;
+                    switch(result.template.MVWB__Header_Type__c) {
+                        case 'Image':
+                            this.isImgSelected = result.isImgUrl;
+                            break;
+                        case 'Video':
+                            this.isVidSelected = result.isImgUrl;
+                            break;
+                        case 'Document':
+                            this.isDocSelected = result.isImgUrl;
+                            break;
+                        default:
+                            this.tempHeader = this.originalHeader || '';
+                            return; // Exit the function if the default case is hit
+                    }
+                    
+                    
+                    // Common parsing for all cases (if it wasn't the default)
+                    if(result.template.MVWB__Header_Type__c in ['Image', 'Video', 'Document']){
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(this.originalHeader, "text/html");
                         this.tempHeader = doc.documentElement.textContent || "";
-                        
-                    }
-                    else if(result.template.MVWB__Header_Type__c=='Video'){
-                        
-                        this.isVidSelected = result.isImgUrl;
-                        
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(this.originalHeader, "text/html");
-                        this.tempHeader = doc.documentElement.textContent || "";
-                    }
-                    else if(result.template.MVWB__Header_Type__c=='Document'){
-                        
-                        this.isDocSelected = result.isImgUrl;
-                        
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(this.originalHeader, "text/html");
-                        this.tempHeader = doc.documentElement.textContent || "";
-                    }
-                    else{
-                        this.tempHeader = this.originalHeader ||'';
                     }
                     this.tempBody = this.originalBody;
                     this.formattedtempHeader = this.originalHeader;
@@ -411,10 +385,10 @@ export default class WbPreviewTemplatePage extends LightningElement {
                         this.noContact=false;
                     }
 
-                    this.objectNames = result.objectNames == undefined? ['Contact'] : result.objectNames;
+                    this.objectName = result.objectNamesList == undefined? 'Contact' : result.objectNamesList[0];
                     this.fieldNames = result.fieldNames;
 
-                    this.options.push({ label: this.objectNames[0], value: this.objectNames[0], isSelected: true });
+                    this.options.push({ label: this.objectName, value: this.objectName, isSelected: true });
                    
                     this.formatedTempBody = this.formatText(this.tempBody);
                     if(result.template.MVWB__Template_Category__c == 'Authentication'){
@@ -726,7 +700,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
         this.tempBody='';
         this.tempFooter='';
         this.buttonList=[];
-        this.objectNames=[];
+        this.objectNamesList=[];
         this.fieldNames=[];
         this.contactDetails=[];
         this.formatedTempBody='';

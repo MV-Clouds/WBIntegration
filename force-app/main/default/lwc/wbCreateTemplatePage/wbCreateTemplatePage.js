@@ -40,28 +40,30 @@ import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getPublicLink from '@salesforce/apex/FileUploaderController.getPublicLink';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
 import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
-import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+// import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import deleteImagesFromS3 from '@salesforce/apex/AWSFilesController.deleteImagesFromS3';
 import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
 
 
 export default class WbCreateTemplatePage extends NavigationMixin(LightningElement) {
-    maxTempNamelength = 512;
-    maxShortlength = 60;
-    maxTempBodyLength = 1024;
-    maxWebsiteUrl = 2000;
-    maxBtnTxt = 25;
-    maxPhonetxt = 20;
-    maxCodetxt = 15;
-    maxPackTxt = 224;
-    maxHashTxt = 11;
+    LIMITS = {
+        maxTempNamelength: 512,
+        maxShortlength: 60,
+        maxTempBodyLength: 1024,
+        maxWebsiteUrl: 2000,
+        maxBtnTxt: 25,
+        maxPhonetxt: 20,
+        maxCodetxt: 15,
+        maxPackTxt: 224,
+        maxHashTxt: 11,
+        chunkSize: 5242880
+    };
     _edittemplateid;
     file;
     fileName = '';
     fileSize = 0;
     fileType = '';
-    chunkSize = 5242880;
     uploadSessionId = '';
     companyName = '';
 
@@ -733,13 +735,13 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         document.addEventListener('click', this.handleOutsideClick.bind(this));
     }
 
-    async connectedCallback() {
+    connectedCallback() {
         try {
-            this.isLoading = true;
-            await this.checkLicenseStatus();
-            if (this.showLicenseError) {
-                return;
-            }
+            // this.isLoading = true;
+            // await this.checkLicenseStatus();
+            // if (this.showLicenseError) {
+            //     return;
+            // }
 
             this.iseditTemplatevisible = true;
             if (this.selectedTab != undefined && this.selectedOption != undefined) {
@@ -765,24 +767,24 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
-    async checkLicenseStatus() {
-        try {
-            const isLicenseValid = await checkLicenseUsablility();
-            if (!isLicenseValid) {
-                this.showLicenseError = true;
-            }
-        } catch (error) {
-            console.error('Error checking license:', error);
-        }
-    }
+    // async checkLicenseStatus() {
+    //     try {
+    //         const isLicenseValid = await checkLicenseUsablility();
+    //         if (!isLicenseValid) {
+    //             this.showLicenseError = true;
+    //         }
+    //     } catch (error) {
+    //         console.error('Error checking license:', error);
+    //     }
+    // }
 
     getS3ConfigDataAsync() {
         try {
             getS3ConfigSettings()
                 .then(result => {
                     if (result != null) {
-                        console.log('Reuskt ::: ',result);
-                        
+                        console.log('Reuskt ::: ', result);
+
                         this.confData = result;
                         this.isAWSEnabled = true;
                     }
@@ -948,10 +950,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.selectedFlow = templateMiscellaneousData.isFlowSelected
                             this.isFeatureEnabled = templateMiscellaneousData.isFeatureEnabled
                             this.awsFileName = templateMiscellaneousData.awsFileName
-                            
-                            console.log('FETCH ::: ',this.awsFileName);
-                            
-                            if(this.awsFileName && !this.isAWSEnabled){
+
+                            console.log('FETCH ::: ', this.awsFileName);
+
+                            if (this.awsFileName && !this.isAWSEnabled) {
                                 this.showToastError('AWS Configration missing')
                             }
                         }
@@ -1127,14 +1129,14 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const file = event.target.files[0];
             console.log('File');
             console.log(file);
-            
+
             if (file) {
                 this.file = file;
                 this.fileName = file.name;
                 this.fileType = file.type;
                 this.fileSize = file.size;
-                console.log('Is AWS ENnabled ::: ',this.isAWSEnabled);
-                
+                console.log('Is AWS ENnabled ::: ', this.isAWSEnabled);
+
                 if (this.isAWSEnabled) {
                     let isValid = false;
                     let maxSize = 0;
@@ -1149,11 +1151,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         maxSize = 100;
                         isValid = fileSizeMB <= maxSize;
                     }
-                    else{
+                    else {
                         console.log('Else OUT');
                     }
-                    console.log('Is Valid ::: '+isValid);
-                    
+                    console.log('Is Valid ::: ' + isValid);
+
                     if (isValid) {
                         this.selectedFilesToUpload.push(file);
                         // this.fileName = file.name;
@@ -1161,7 +1163,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         this.showToast('Error', `${file.name} exceeds the ${maxSize}MB limit`, 'error');
                     }
                     if (file) {
-                        console.log('Handle File Change',this.selectedFilesToUpload)
+                        console.log('Handle File Change', this.selectedFilesToUpload)
                         this.isLoading = true;
                         await this.uploadToAWS(this.selectedFilesToUpload);
                     }
@@ -1182,7 +1184,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
-    
+
     initializeAwsSdk(confData) {
         try {
             let AWS = window.AWS;
@@ -1225,24 +1227,22 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             let extensionIndex = filename.lastIndexOf('.');
             let baseFileName = filename.substring(0, extensionIndex);
             let extension = filename.substring(extensionIndex + 1);
-    
+
             // Get current timestamp in YYYYMMDD_HHmmss format
             let now = new Date();
             let timestamp = `${now.getFullYear()}${(now.getMonth() + 1)
                 .toString().padStart(2, '0')}${now.getDate()
-                .toString().padStart(2, '0')}_${now.getHours()
-                .toString().padStart(2, '0')}${now.getMinutes()
-                .toString().padStart(2, '0')}${now.getSeconds()
-                .toString().padStart(2, '0')}`;
-    
+                    .toString().padStart(2, '0')}_${now.getHours()
+                        .toString().padStart(2, '0')}${now.getMinutes()
+                            .toString().padStart(2, '0')}${now.getSeconds()
+                                .toString().padStart(2, '0')}`;
+
             let uniqueFileName = `${baseFileName}_${timestamp}.${extension}`.replace(/\s+/g, "_");
             return uniqueFileName;
         } catch (error) {
             console.error('error in renameFileName -> ', error.stack);
         }
     }
-    
-
 
     async uploadToAWS() {
         try {
@@ -1262,12 +1262,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 let upload = this.s3.upload(params);
 
                 console.log('Upload to aws ::: ');
-                console.log('Object Key ::: ',objKey);
-                console.log('Params ::: ',params);
-                console.log('Upload :: ',upload)
-                
-                
-                
+                console.log('Object Key ::: ', objKey);
+                console.log('Params ::: ', params);
+                console.log('Upload :: ', upload)
+
+
+
 
                 return await upload.promise();
             });
@@ -1278,12 +1278,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     let bucketName = this.confData.MVWB__S3_Bucket_Name__c;
                     let objKey = result.Key;
                     let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
-                    console.log('AWS Url :: ',awsFileUrl);
-                    
+                    console.log('AWS Url :: ', awsFileUrl);
+
                     this.awsFileName = objKey;
                     this.generatePreview(awsFileUrl);
                     // this.
-                    
+
                     this.uploadFile();
                 }
             });
@@ -1353,21 +1353,16 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             this.isLoading = true;
             uploadFile({ base64Data: this.fileData, fileName: this.fileName })
                 .then((result) => {
-                    this.contentVersionId = result; // Store the returned ContentVersion Id
-                    getPublicLink({ contentVersionId: this.contentVersionId })
-                        .then((publicUrl) => {
-                            this.generatePreview(publicUrl.replace('/sfc/p/#', '/sfc/p/'));
-                        })
-                        .catch((error) => {
+                    this.contentVersionId = result.contentVersionId;
+                    const publicUrl = result.publicLink;
 
-                            this.isLoading = false;
-                            console.error('❌ Error fetching public link:', error);
-                        });
-                    this.uploadFile();
+                    // Replace '/sfc/p/#' with '/sfc/p/' if needed
+                    this.generatePreview(publicUrl.replace('/sfc/p/#', '/sfc/p/'));
+
+                    this.uploadFile(); // If this is a different method, otherwise consider renaming
                 })
                 .catch((error) => {
-                    console.error('Error uploading file: ', error);
-
+                    console.error('❌ Error uploading file: ', error);
                     this.isLoading = false;
                     this.showToastError('Error uploading file!');
                 });
@@ -1393,9 +1388,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                 });
         }
-        else if(this.isAWSEnabled){
-            console.log('this.awsFileName ::: ',this.awsFileName);
-            
+        else if (this.isAWSEnabled) {
+            console.log('this.awsFileName ::: ', this.awsFileName);
+
             deleteImagesFromS3({ fileNames: [this.awsFileName] })
                 .then(() => {
                     this.showToastSuccess('File deleted successfully');
@@ -1407,9 +1402,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
 
                 });
-        } else {
-            this.showToastError('No file to delete!');
-
         }
     }
 
@@ -1454,7 +1446,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
             return;
         }
-        try {
 
             startUploadSession({
                 fileName: this.fileName,
@@ -1474,10 +1465,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     console.error('Failed upload session.', error.body);
                     this.isLoading = false;
                 })
-        } catch (error) {
-            console.error('Error starting upload session: ', error);
-            this.isLoading = false;
-        }
     }
 
     uploadChunks() {
@@ -1485,9 +1472,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             let chunkStart = 0;
             const uploadNextChunk = () => {
 
-                const chunkEnd = Math.min(chunkStart + this.chunkSize, this.fileSize);
+                const chunkEnd = Math.min(chunkStart + this.LIMITS.chunkSize, this.fileSize);
                 const chunk = this.file.slice(chunkStart, chunkEnd);
                 const reader = new FileReader();
+                const isLastChunk = (chunkEnd >= this.fileSize);
+
 
                 reader.onloadend = async () => {
                     const base64Data = reader.result.split(',')[1];
@@ -1496,21 +1485,22 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         fileContent: base64Data,
                         chunkStart: chunkStart,
                         chunkSize: base64Data.length,
-                        fileName: this.fileName
+                        fileName: this.fileName,
+                        isLastChunk: isLastChunk
                     };
                     const serializedWrapper = JSON.stringify(fileChunkWrapper);
-                    console.log('this.isAWSEnabled ::: ',this.isAWSEnabled);
-                    
-                    uploadFileChunk({ serializedWrapper: serializedWrapper , isAWSEnabled: this.isAWSEnabled })
+                    console.log('this.isAWSEnabled ::: ', this.isAWSEnabled);
+
+                    uploadFileChunk({ serializedWrapper: serializedWrapper, isAWSEnabled: this.isAWSEnabled })
                         .then(result => {
                             if (result) {
                                 let serializeResult = JSON.parse(result);
                                 this.headerHandle = serializeResult.headerHandle;
-                                if(!this.isAWSEnabled){
+                                if (!this.isAWSEnabled) {
                                     this.contentDocumentId = serializeResult.contentDocumentId;
                                 }
 
-                                chunkStart += this.chunkSize;
+                                chunkStart += this.LIMITS.chunkSize;
                                 if (chunkStart < this.fileSize) {
                                     uploadNextChunk();
                                 } else {
@@ -1777,22 +1767,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         } catch (error) {
             console.error('Something went wrong: ', error);
         }
-    }
-
-
-    validateButtonText(index, newValue) {
-        const isDuplicate = this.buttonList.some((button, idx) => button.btntext === newValue && idx !== parseInt(index));
-
-        if (index === 0) {
-            this.buttonList[index].hasError = false;
-            this.buttonList[index].errorMessage = '';
-        } else {
-            this.buttonList[index].hasError = isDuplicate;
-            this.buttonList[index].errorMessage = isDuplicate ? 'You have entered the same text for multiple buttons.' : '';
-        }
-
-        this.btntext = newValue;
-        this.updateButtonErrors();
     }
 
     updateButtonProperty(index, property, value) {
@@ -2404,62 +2378,53 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     }
 
     generateEmojiCategories() {
-        try {
-            fetch(emojiData)
-                .then((response) => response.json())
-                .then((data) => {
-                    let groupedEmojis = Object.values(
-                        data.reduce((acc, item) => {
-                            let category = item.category;
-                            if (!acc[category]) {
-                                acc[category] = { category, emojis: [] };
-                            }
-                            acc[category].emojis.push(item);
-                            return acc;
-                        }, {})
-                    );
+        fetch(emojiData)
+            .then((response) => response.json())
+            .then((data) => {
+                let groupedEmojis = Object.values(
+                    data.reduce((acc, item) => {
+                        let category = item.category;
+                        if (!acc[category]) {
+                            acc[category] = { category, emojis: [] };
+                        }
+                        acc[category].emojis.push(item);
+                        return acc;
+                    }, {})
+                );
 
-                    this.emojiCategories = groupedEmojis;
-                })
-                .catch((e) => console.error('There was an error fetching the emoji.', e));
-        } catch (e) {
-            console.error('Error in generateEmojiCategories', e);
-        }
+                this.emojiCategories = groupedEmojis;
+            })
+            .catch((e) => console.error('There was an error fetching the emoji.', e));
     }
     fetchCountries() {
-        try {
-            fetch(CountryJson)
-                .then((response) => response.json())
-                .then((data) => {
-                    this.countryType = data.map(country => {
-                        return { label: `${country.name} (${country.callingCode})`, value: country.callingCode };
-                    });
-                })
-                .catch((e) => console.error('Error fetching country data:', e));
-        } catch (e) {
-            console.error('Something wrong while fetching country data:', e);
-        }
+        fetch(CountryJson)
+            .then((response) => response.json())
+            .then((data) => {
+                this.countryType = data.map(country => {
+                    return { label: `${country.name} (${country.callingCode})`, value: country.callingCode };
+                });
+            })
+            .catch((e) => console.error('Error fetching country data:', e));
+
     }
 
     fetchLanguages() {
-        try {
-            fetch(LanguageJson)
-                .then((response) => response.json())
-                .then((data) => {
-                    this.languageOptions = data.map(lang => {
-                        return { label: `${lang.language}`, value: lang.code, isSelected: lang.code === this.selectedLanguage };
-                    });
-                    if (!this.languageOptions.some(option => option.isSelected)) {
-                        this.selectedLanguage = this.languageOptions[0]?.value || '';
-                        if (this.languageOptions[0]) {
-                            this.languageOptions[0].isSelected = true;
-                        }
+
+        fetch(LanguageJson)
+            .then((response) => response.json())
+            .then((data) => {
+                this.languageOptions = data.map(lang => {
+                    return { label: `${lang.language}`, value: lang.code, isSelected: lang.code === this.selectedLanguage };
+                });
+                if (!this.languageOptions.some(option => option.isSelected)) {
+                    this.selectedLanguage = this.languageOptions[0]?.value || '';
+                    if (this.languageOptions[0]) {
+                        this.languageOptions[0].isSelected = true;
                     }
-                })
-                .catch((e) => console.error('Error fetching language data:', e));
-        } catch (e) {
-            console.error('Something wrong while fetching language data:', e);
-        }
+                }
+            })
+            .catch((e) => console.error('Error fetching language data:', e));
+
     }
 
     handleEmoji(event) {
@@ -2627,6 +2592,21 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     validatePhoneNumber(value) {
         const phonePattern = /^[0-9]{10,}$/;
         return phonePattern.test(value);
+    }
+
+    validateButtonText(index, newValue) {
+        const isDuplicate = this.buttonList.some((button, idx) => button.btntext === newValue && idx !== parseInt(index));
+
+        if (index === 0) {
+            this.buttonList[index].hasError = false;
+            this.buttonList[index].errorMessage = '';
+        } else {
+            this.buttonList[index].hasError = isDuplicate;
+            this.buttonList[index].errorMessage = isDuplicate ? 'You have entered the same text for multiple buttons.' : '';
+        }
+
+        this.btntext = newValue;
+        this.updateButtonErrors();
     }
 
     handleConfirm() {
@@ -2797,12 +2777,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 autofillCheck: this.isautofillChecked,
                 isVisitSite: this.isVisitSite,
                 isCheckboxChecked: this.isCheckboxChecked,
-                isFlowMarketing : this.isFlowMarketing,
-                isFlowUtility : this.isFlowUtility,
+                isFlowMarketing: this.isFlowMarketing,
+                isFlowUtility: this.isFlowUtility,
                 isFlowSelected: this.isFlowSelected,
                 selectedFlow: this.selectedFlow,
                 isFeatureEnabled: this.isFeatureEnabled,
-                awsFileName : this.awsFileName
+                awsFileName: this.awsFileName
             }
 
 

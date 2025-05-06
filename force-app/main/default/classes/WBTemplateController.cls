@@ -30,16 +30,15 @@
    @return          : listName - Whatsapp Template record.
    ********************************************************
    */
- @AuraEnabled(cacheable=false)
+ @AuraEnabled
    public static List<Template__c> getWhatsAppTemplates() {
        try {
            List<Template__c> listName = [SELECT Id, Name,Template_Name__c, Template_Category__c, toLabel(Language__c) LanguageLabel,File_Name__c,WBImage_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate 
-
            FROM Template__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
 
            return listName;
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
            return null;
        }
    }
@@ -62,8 +61,8 @@
                    }
                } 
            }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'restrictTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'restrictTemplates', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
        }
    }
    
@@ -99,8 +98,8 @@
                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => null, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
            }
 
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null });
        }
        return errorMessage;
    }
@@ -123,8 +122,8 @@
                fieldNames.add(fieldsMap.get(fieldName).getDescribe().getName()); 
            }
            fieldNames.sort();
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getObjectFields', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getObjectFields', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
        }
        return fieldNames;
    }
@@ -142,15 +141,13 @@
        List<sObject> records = new List<sObject>();
        
        try {
-           String query = 'SELECT Id, Name, Phone FROM ' + sObjectName + ' WHERE Phone != null LIMIT 200';           
+           String query = 'SELECT Id, Name, Phone FROM ' + sObjectName + ' WHERE Phone != null LIMIT 200 WITH SECURITY_ENFORCED';           
            records = Database.query(query);
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getRecordsBySObject', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getRecordsBySObject', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
        }
        return records;
    }
-
-
 
 
    /*
@@ -220,9 +217,9 @@
                wrapper.fieldNames = new List<String>(fieldNames);
            }
 
-       } catch (Exception e) {
+       } catch (Exception exceptionCatch) {
            ExceptionHandler.logException(new Map<String, Object>{
-               'className' => 'WBTemplateController','methodName' => 'getDynamicObjectData','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
+               'className' => 'WBTemplateController','methodName' => 'getDynamicObjectData','exceptionObj' => exceptionCatch,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => exceptionCatch.getMessage(),'apiResponse' => null
            });
        }
 
@@ -250,7 +247,7 @@
            }
            String fields = String.join(fieldNames, ',');
            
-           String queryString = 'SELECT ' + fields + ' FROM ' + objectName + ' WHERE Id = :recordId LIMIT 1';            
+           String queryString = 'SELECT ' + fields + ' FROM ' + objectName + ' WHERE Id = :recordId LIMIT 1 WITH SECURITY_ENFORCED';            
            List<SObject> queriedData = Database.query(queryString);
 
            if (!queriedData.isEmpty()) {
@@ -259,9 +256,9 @@
                resultMap.put('queriedData', null);
            }
 
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'fetchDynamicRecordData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-           resultMap.put('error', e.getMessage());
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'fetchDynamicRecordData', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
+           resultMap.put('error', exceptionCatch.getMessage());
        }
 
        return resultMap;
@@ -298,40 +295,40 @@
                    // Scenario 1: Contact ID is passed
                    if (String.isNotBlank(contactId)) {
                        Set<String> fieldSelectionCause = new Set<String>();
-                       for (Template_Variable__c tv : template.WB_Template_Variables__r) {
-                           if (tv.Object_Name__c == 'Contact') {
-                               fieldSelectionCause.add(tv.Field_Name__c);
+                       for (Template_Variable__c templateVariable : template.WB_Template_Variables__r) {
+                           if (templateVariable.Object_Name__c == 'Contact') {
+                               fieldSelectionCause.add(templateVariable.Field_Name__c);
                            } else {
-                               fieldSelectionCause.add(tv.Object_Name__c + '.' + tv.Field_Name__c);
+                               fieldSelectionCause.add(templateVariable.Object_Name__c + '.' + templateVariable.Field_Name__c);
                            }
                        }
 
                        if (fieldSelectionCause.size() > 0) {
-                           String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM Contact WHERE Id =:contactId';
+                           String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM Contact WHERE Id =:contactId WITH SECURITY_ENFORCED';
                            List<Contact> contacts = Database.query(query);
                            if (contacts.size() > 0) {
                                Contact contactRecord = contacts[0];
-                               for (Template_Variable__c tv : template.WB_Template_Variables__r) {
+                               for (Template_Variable__c templateVariable : template.WB_Template_Variables__r) {
                                    Object valueToReplace = '';
-                                   if (tv.Object_Name__c == 'Contact') {
-                                       valueToReplace = contactRecord.get(tv.Field_Name__c);
+                                   if (templateVariable.Object_Name__c == 'Contact') {
+                                       valueToReplace = contactRecord.get(templateVariable.Field_Name__c);
                                    } else {
-                                       valueToReplace = contactRecord.getSObject(tv.Object_Name__c) != null ? 
-                                                       contactRecord.getSObject(tv.Object_Name__c).get(tv.Field_Name__c) : null;
+                                       valueToReplace = contactRecord.getSObject(templateVariable.Object_Name__c) != null ? 
+                                                       contactRecord.getSObject(templateVariable.Object_Name__c).get(templateVariable.Field_Name__c) : null;
                                    }
                                    
-                                   if (tv.Type__c == 'Header') {
+                                   if (templateVariable.Type__c == 'Header') {
                                        String replacement = (valueToReplace != null ? valueToReplace.toString() : 
-                                                             (tv.Alternate_Text__c != null ? tv.Alternate_Text__c : ''));
+                                                             (templateVariable.Alternate_Text__c != null ? templateVariable.Alternate_Text__c : ''));
                                    
                                        headerVariables.add(replacement);
-                                       template.WBHeader_Body__c = template.WBHeader_Body__c.replace(tv.Name, replacement);
-                                   } else if (tv.Type__c == 'Body') {
+                                       template.WBHeader_Body__c = template.WBHeader_Body__c.replace(templateVariable.Name, replacement);
+                                   } else if (templateVariable.Type__c == 'Body') {
                                        String replacement = (valueToReplace != null ? valueToReplace.toString() : 
-                                                             (tv.Alternate_Text__c != null ? tv.Alternate_Text__c : ''));
+                                                             (templateVariable.Alternate_Text__c != null ? templateVariable.Alternate_Text__c : ''));
                                    
                                        bodyVariables.add(replacement);
-                                       template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(tv.Name, replacement);
+                                       template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(templateVariable.Name, replacement);
                                    }
                                    
                                }
@@ -340,17 +337,17 @@
                    } 
                    // Scenario 2: Contact ID not passed
                    else {
-                       for (Template_Variable__c tv : template.WB_Template_Variables__r) {
-                           if (tv.Type__c == 'Header') {
-                               headerVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
-                               template.WBHeader_Body__c = template.WBHeader_Body__c.replace(tv.Name, 
-                                                           tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
-                           } else if (tv.Type__c == 'Body') {
-                               // bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
-                               bodyVariables.add(tv.Alternate_Text__c != null ? tv.Alternate_Text__c : tv.Name);
-                               template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(tv.Name, 
-                                                           tv.Alternate_Text__c != null ? tv.Alternate_Text__c : tv.Name);
-                                                           // tv.Alternate_Text__c != null ? tv.Alternate_Text__c : '{{' + tv.Name + '}}');
+                       for (Template_Variable__c templateVariable : template.WB_Template_Variables__r) {
+                           if (templateVariable.Type__c == 'Header') {
+                               headerVariables.add(templateVariable.Alternate_Text__c != null ? templateVariable.Alternate_Text__c : '{{' + templateVariable.Name + '}}');
+                               template.WBHeader_Body__c = template.WBHeader_Body__c.replace(templateVariable.Name, 
+                                                           templateVariable.Alternate_Text__c != null ? templateVariable.Alternate_Text__c : '{{' + templateVariable.Name + '}}');
+                           } else if (templateVariable.Type__c == 'Body') {
+                               // bodyVariables.add(templateVariable.Alternate_Text__c != null ? templateVariable.Alternate_Text__c : '{{' + templateVariable.Name + '}}');
+                               bodyVariables.add(templateVariable.Alternate_Text__c != null ? templateVariable.Alternate_Text__c : templateVariable.Name);
+                               template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(templateVariable.Name, 
+                                                           templateVariable.Alternate_Text__c != null ? templateVariable.Alternate_Text__c : templateVariable.Name);
+                                                           // templateVariable.Alternate_Text__c != null ? templateVariable.Alternate_Text__c : '{{' + templateVariable.Name + '}}');
                            }
                        }
                    }
@@ -364,8 +361,8 @@
 
                return templateData;
            }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'getTemplateData','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'getTemplateData','exceptionObj' => exceptionCatch,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => exceptionCatch.getMessage(),'apiResponse' => null
            });
        }
        return null;
@@ -402,8 +399,8 @@
            picklistValues.put('statuses', statusValues);
 
            return picklistValues;
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getCategoryAndStatusPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getCategoryAndStatusPicklistValues', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
            return null;
        }
        
@@ -440,15 +437,15 @@
            req.setBody(JSON.serialize(payload));
    
            Http http = new Http();
-           HttpResponse res = http.send(req);
+           HttpResponse httpResponse = http.send(req);
 
-           if (res.getStatusCode() == 200) {
-               Id templateId = CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
+           if (httpResponse.getStatusCode() == 200) {
+               Id templateId = CreateTemplateWrapper.handleSuccessResponse(httpResponse, payload, response, templateWrapper);
                response.put('success', true);
                response.put('templateId', templateId); 
            } else {
                response.put('success', false);
-               response.put('errorMessage', res.getBody());
+               response.put('errorMessage', httpResponse.getBody());
                if (String.isNotBlank(templateWrapper.tempImgId)) {
                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
@@ -461,16 +458,16 @@
                    'methodName' => 'createWhatsappTemplate',
                    'exceptionObj' => null,
                    'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
+                   'statusCode' => httpResponse.getStatusCode(),
                    'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
+                   'moreDetails' => 'HTTP callout failed with status: ' + httpResponse.getStatusCode(),
+                   'apiResponse' => httpResponse.getBody()
                });
            }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
            response.put('status', 'error');
-           response.put('message', e.getMessage());
+           response.put('message', exceptionCatch.getMessage());
        }
 
        return response;
@@ -503,9 +500,9 @@
            req.setHeader('Authorization', 'OAuth ' + accessToken);
            req.setBody(JSON.serialize(payload));
 
-           HttpResponse res = http.send(req);
-           if (res.getStatusCode() == 200) {
-               Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+           HttpResponse httpResponse = http.send(req);
+           if (httpResponse.getStatusCode() == 200) {
+               Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(httpResponse.getBody());
                String sessionId = (String) responseMap.get('id');
                if (sessionId != null && sessionId.startsWith('upload:')) {
                    sessionId = sessionId.replace('upload:', ''); 
@@ -514,10 +511,10 @@
                return sessionId; 
            } else {
 
-               ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'startUploadSession','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
+               ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'startUploadSession','exceptionObj' => null,'isApiException' => true,'statusCode' => httpResponse.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + httpResponse.getStatusCode(),'apiResponse' => httpResponse.getBody()});
            }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'startUploadSession', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'startUploadSession', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
        }
        return null;
    }        
@@ -549,27 +546,23 @@
            
            req.setBodyAsBlob(fileBlob);
 
-           HttpResponse res = http.send(req);
+           HttpResponse httpResponse = http.send(req);
 
-           if (res.getStatusCode() == 200) {
-               Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+           if (httpResponse.getStatusCode() == 200) {
+               Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(httpResponse.getBody());
                String headerHandle = (String) responseMap.get('h');
-               if(!isAWSEnabled){
-                   Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
-                   String imageurl = fileUrls.get('ContentDownloadUrl');
-                   String contentDocumentId = fileUrls.get('ContentDocumentId');
-                   
-                   return JSON.serialize(new Map<String, String>{
-                       'headerHandle' => headerHandle,
-                       'imageurl' => imageurl,
-                       'contentDocumentId' => contentDocumentId
-                   });
-               }
-               else{
-                return JSON.serialize(new Map<String, String>{
-                    'headerHandle' => headerHandle
-                });
-               }
+               if (!isAWSEnabled && fileWrapper.isLastChunk) {
+                    Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
+                    return JSON.serialize(new Map<String, String>{
+                        'headerHandle' => headerHandle,
+                        'imageurl' => fileUrls.get('ContentDownloadUrl'),
+                        'contentDocumentId' => fileUrls.get('ContentDocumentId')
+                    });
+                } else {
+                    return JSON.serialize(new Map<String, String>{
+                        'headerHandle' => headerHandle
+                    });
+                }
                // return headerHandle; 
            } else {
                ExceptionHandler.logException(new Map<String, Object>{
@@ -577,14 +570,14 @@
                    'methodName' => 'uploadFileChunk',
                    'exceptionObj' => null,
                    'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
+                   'statusCode' => httpResponse.getStatusCode(),
                    'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
+                   'moreDetails' => 'HTTP callout failed with status: ' + httpResponse.getStatusCode(),
+                   'apiResponse' => httpResponse.getBody()
                });
            }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'uploadFileChunk', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'uploadFileChunk', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
        }
        return '';
    }
@@ -632,8 +625,8 @@
            result.put('ContentDocumentId', contentDocumentId);
    
            return result;
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'createContentVersionAndDocument','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'createContentVersionAndDocument','exceptionObj' => exceptionCatch,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => exceptionCatch.getMessage(),'apiResponse' => null
            });
            return null;
        }
@@ -664,10 +657,10 @@
            req.setHeader('Content-Type', 'application/json');
            req.setHeader('Authorization', 'Bearer ' + accessToken);
            Http http = new Http();
-           HttpResponse res = http.send(req);
+           HttpResponse httpResponse = http.send(req);
 
-           if (res.getBody() != null && res.getBody() != '') {
-               Map<String, Object> jsonResponse = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+           if (httpResponse.getBody() != null && httpResponse.getBody() != '') {
+               Map<String, Object> jsonResponse = (Map<String, Object>) JSON.deserializeUntyped(httpResponse.getBody());
                Boolean success = (Boolean) jsonResponse.get('success');
                if (success) {
                    if(Template__c.sObjectType.getDescribe().isDeletable()){
@@ -675,7 +668,7 @@
                    }
                    return 'Template deleted successfully';
                } else {
-                   ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'deleteTemplete','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()
+                   ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'deleteTemplete','exceptionObj' => null,'isApiException' => true,'statusCode' => httpResponse.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + httpResponse.getStatusCode(),'apiResponse' => httpResponse.getBody()
                    });
                    return 'Template is not deleted';
                }
@@ -683,9 +676,9 @@
 
                return 'Template is not deleted';
            }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'deleteTemplete', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-           return e.getMessage();
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'deleteTemplete', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
+           return exceptionCatch.getMessage();
        }
    }
 
@@ -714,14 +707,14 @@
    
 
            Http http = new Http();
-           HttpResponse res = http.send(req);
+           HttpResponse httpResponse = http.send(req);
 
-           if (res.getStatusCode() == 200) {
-               CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
+           if (httpResponse.getStatusCode() == 200) {
+               CreateTemplateWrapper.handleSuccessResponse(httpResponse, payload, response, templateWrapper);
                response.put('success', true);
            } else {
                response.put('success', false);
-               response.put('errorMessage', res.getBody());
+               response.put('errorMessage', httpResponse.getBody());
                if (String.isNotBlank(templateWrapper.tempImgId)) {
                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
@@ -733,16 +726,16 @@
                    'methodName' => 'editWhatsappTemplate',
                    'exceptionObj' => null,
                    'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
+                   'statusCode' => httpResponse.getStatusCode(),
                    'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
+                   'moreDetails' => 'HTTP callout failed with status: ' + httpResponse.getStatusCode(),
+                   'apiResponse' => httpResponse.getBody()
                });
            }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
            response.put('status', 'error');
-           response.put('message', e.getMessage());
+           response.put('message', exceptionCatch.getMessage());
        }
 
        return response;
@@ -751,9 +744,9 @@
    @AuraEnabled(cacheable=true)
    public static List<Flow__c> getAllFlows() {
        try {
-           return [SELECT Id,Flow_Id__c, Flow_Name__c,Flow_JSON__c, LastModifiedDate,Status__c FROM Flow__c  where Status__c =: 'Published' ORDER BY CreatedDate DESC ];
-       } catch (Exception e) {
-        ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+           return [SELECT Id,Flow_Id__c, Flow_Name__c,Flow_JSON__c, LastModifiedDate,Status__c FROM Flow__c  where Status__c =: 'Published' WITH SECURITY_ENFORCED ORDER BY CreatedDate DESC ];
+       } catch (Exception exceptionCatch) {
+        ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => exceptionCatch.getMessage(), 'apiResponse' => null});
            return new List<Flow__c>();
        }
    }
@@ -780,8 +773,8 @@
            } else {
                return 'failed';
            }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getPreviewURLofWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+       } catch (Exception exceptionCatch) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getPreviewURLofWhatsAppFlow', 'exceptionObj' => exceptionCatch, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
            return 'failed';
        }
    }
@@ -812,8 +805,8 @@
                     processedObjects.add(objectName);
                 }
             }
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'getObjectsWithPhoneField','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+        } catch (Exception exceptionCatch) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'getObjectsWithPhoneField','exceptionObj' => exceptionCatch,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => exceptionCatch.getMessage(),'apiResponse' => null});
         }
     
         return objectList;
@@ -821,7 +814,7 @@
 
     @AuraEnabled(cacheable=true)
     public static String getCompanyName() {
-        return [SELECT Name FROM Organization LIMIT 1].Name;
+        return [SELECT Name FROM Organization WITH SECURITY_ENFORCED LIMIT 1 ].Name;
     }
 
    public class FileChunkWrapper {
@@ -830,10 +823,10 @@
        @AuraEnabled public Integer chunkStart;
        @AuraEnabled public Integer chunkSize;
        @AuraEnabled public String fileName;
+       @AuraEnabled public Boolean isLastChunk;
    }
    public class TemplateDataWrapper {
        @AuraEnabled public Template__c template;
-       // @AuraEnabled public Object queriedData;
        @AuraEnabled public List<String> objectNames;
        @AuraEnabled public List<String> fieldNames;
        @AuraEnabled public List<Map<String, String>> templateVariables; 

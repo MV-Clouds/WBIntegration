@@ -1,3 +1,11 @@
+/**
+ * Component Name: WbTemplateParent
+ * @description: Used LWC components to display child lwc component that are wbcreateTemplatePage and wbTemplateCategory.
+ * Date: 30/04/2025
+ * Created By: Divij Modi
+ */
+
+
 import { LightningElement,track,api } from 'lwc';
 
 export default class wbTemplateParent extends LightningElement {
@@ -12,7 +20,6 @@ export default class wbTemplateParent extends LightningElement {
     showLicenseError = false;
 
     connectedCallback(){
-        console.log('Connected Callnack ::: '+this.edittemplateid);
         if((this.edittemplateid != undefined) && (this.edittemplateid != '') && (this.edittemplateid != null)){
             this.showTemplateCategory = false;
             this.showCreateTemplateTest = true;

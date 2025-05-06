@@ -52,7 +52,7 @@
                                     <input class="nameInput" type="text" id="templateName" name="templateName"
                                         value={templateName} maxlength="512" placeholder="Enter template name"
                                         disabled={isEditTemplate} oninput={handleInputChange} />
-                                    <p class="char-count tempname-count">{templateName.length}/{maxTempNamelength}
+                                    <p class="char-count tempname-count">{templateName.length}/{LIMITS.maxTempNamelength}
                                     </p>
                                 </div>
                                 <div class="landiv">
@@ -235,7 +235,7 @@
                                                     value={header} oninput={handleInputChange}
                                                     placeholder="Enter text in English" />
 
-                                                <p class="char-count header-count">{header.length}/{maxShortlength}
+                                                <p class="char-count header-count">{header.length}/{LIMITS.maxShortlength}
                                                 </p>
                                             </div>
                                             <button class="custom-add-button" onclick={addheadervariable}
@@ -311,7 +311,7 @@
                                     <textarea name="tempBody" class="body-area" oninput={handleInputChange}
                                         onkeypress={handleKeyDown} maxlength="1024" rows="4"
                                         cols="50">{tempBody}</textarea>
-                                    <p class="char-count body-count">{tempBody.length}/{maxTempBodyLength}</p>
+                                    <p class="char-count body-count">{tempBody.length}/{LIMITS.maxTempBodyLength}</p>
                                 </div>
                                 <div class="rich-button">
                                     <template if:true={showEmojis}>
@@ -427,7 +427,7 @@
                                     <div class="footer-input">
                                         <input class="footerInput" type="text" name="footer" value={footer}
                                             oninput={handleInputChange} maxlength="60" placeholder="Enter text" />
-                                        <p class="char-count footer-count">{footer.length}/{maxShortlength}</p>
+                                        <p class="char-count footer-count">{footer.length}/{LIMITS.maxShortlength}</p>
 
                                     </div>
                                 </div>
@@ -529,7 +529,7 @@
                                                                 data-index={index} oninput={handleInputChange}
                                                                 disabled={button.isDisabled} />
                                                             <p class="char-count btn-count">
-                                                                {button.btntext.length}/{maxBtnTxt}</p>
+                                                                {button.btntext.length}/{LIMITS.maxBtnTxt}</p>
                                                         </div>
                                                         <template if:true={button.hasError}>
                                                             <p class="slds-text-color_error">{button.errorMessage}
@@ -556,7 +556,7 @@
                                                                 data-index={index} oninput={handleInputChange}
                                                                 required />
                                                             <p class="char-count web-count">
-                                                                {button.webURL.length}/{maxWebsiteUrl}</p>
+                                                                {button.webURL.length}/{LIMITS.maxWebsiteUrl}</p>
                                                         </div>
                                                     </template>
 
@@ -580,7 +580,7 @@
                                                                     data-index={index} oninput={handleInputChange}
                                                                     required />
                                                                 <p class="char-count btn-count">
-                                                                    {button.phonenum.length}/{maxPhonetxt}</p>
+                                                                    {button.phonenum.length}/{LIMITS.maxPhonetxt}</p>
                                                             </div>
 
                                                         </div>
@@ -597,7 +597,7 @@
                                                                     data-index={index} oninput={handleInputChange}
                                                                     required />
                                                                 <p class="char-count btn-count">
-                                                                    {button.offercode.length}/{maxCodetxt}</p>
+                                                                    {button.offercode.length}/{LIMITS.maxCodetxt}</p>
                                                             </div>
 
                                                         </div>
@@ -653,7 +653,7 @@
                                                                     disabled={button.isDisabled} maxlength="25"
                                                                     data-index={index} oninput={handleCustomText} />
                                                                 <p class="char-count btn-count">
-                                                                    {button.Cbtntext.length}/{maxBtnTxt}</p>
+                                                                    {button.Cbtntext.length}/{LIMITS.maxBtnTxt}</p>
                                                             </div>
 
                                                             <template if:true={button.hasError}>
@@ -762,7 +762,7 @@
                                                         maxlength="224" 
                                                         data-index={index} 
                                                         oninput={handlePackagename} />
-                                                    <p class="char-count btn-count">{app.packagename.length}/{maxPackTxt}</p>
+                                                    <p class="char-count btn-count">{app.packagename.length}/{LIMITS.maxPackTxt}</p>
                                                     
                                                 </div>
                                                 <div class="btntxt" style="width: 50%;">   
@@ -773,7 +773,7 @@
                                                         maxlength="11" 
                                                         data-index={index}
                                                         oninput={handleSignaturehash} />
-                                                    <p class="char-count btn-count">{app.signature.length}/{maxHashTxt}</p>
+                                                    <p class="char-count btn-count">{app.signature.length}/{LIMITS.maxHashTxt}</p>
                                                 </div>
                                                 <template if:true={showRemoveButton}>
                                                     <div>
@@ -861,14 +861,14 @@
                                                 <label for="btn-text">Auto-fill</label>
                                                 <input class="text-btn" type="text" name="autofilLabel" value={autofilLabel}
                                                     maxlength="25" oninput={handleInputChange} />
-                                                <p class="char-count btn-count">{autofilLabel.length}/{maxBtnTxt}</p>
+                                                <p class="char-count btn-count">{autofilLabel.length}/{LIMITS.maxBtnTxt}</p>
                                             </div>
                                     </template>
                                         <div class="btntxt">
                                             <label for="btn-text">Copy Code</label>
                                             <input class="text-btn" type="text" name="autoCopyCode" value={autoCopyCode}
                                                 maxlength="25" oninput={handleInputChange} />
-                                            <p class="char-count btn-count">{autoCopyCode.length}/{maxBtnTxt}</p>
+                                            <p class="char-count btn-count">{autoCopyCode.length}/{LIMITS.maxBtnTxt}</p>
                                         </div>
                                     </div>
                                     

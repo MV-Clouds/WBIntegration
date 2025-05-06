@@ -39,20 +39,6 @@ export default class WbAllTemplatePage extends LightningElement {
     channelName = '/event/MVWB__Template_Update__e';
     @track showLicenseError = false;
 
-    @wire(getCategoryAndStatusPicklistValues)
-    wiredCategoryAndStatus({ error, data }) {
-        try {
-            if (data) {
-                this.categoryOptions = [{ label: 'All', value: '' }, ...data.categories.map(cat => ({ label: cat, value: cat }))];
-                this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(stat => ({ label: stat, value: stat }))];
-            } else if (error) {
-                console.error('Error fetching category and status picklist values: ', error);
-            }
-        } catch (err) {
-            console.error('Unexpected error in wiredCategoryAndStatus: ', err);
-        }
-    }
-
     get actionButtonClass(){
         return 'custom-button cus-btns' ;
     }
@@ -79,6 +65,7 @@ export default class WbAllTemplatePage extends LightningElement {
                 return; // Stops execution if license is expired
             }
             this.isTemplateVisible = true;
+            this.fetchCategoryAndStatusOptions();
             this.fetchAllTemplate();
             this.registerPlatformEventListener();
         } catch (e) {
@@ -137,6 +124,19 @@ export default class WbAllTemplatePage extends LightningElement {
             this.allRecords[recordIndex] = updatedRecord;
             this.filteredRecords = [...this.allRecords]; 
         }
+    }
+
+    fetchCategoryAndStatusOptions() {
+        getCategoryAndStatusPicklistValues()
+            .then(data => {
+                if (data) {
+                    this.categoryOptions = [{ label: 'All', value: '' }, ...data.categories.map(categoryData => ({ label: categoryData, value: categoryData }))];
+                    this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(statudData => ({ label: statudData, value: statudData }))];
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching category and status picklist values: ', error);
+            });
     }
 
     fetchAllTemplate(){
