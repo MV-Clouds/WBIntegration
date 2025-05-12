@@ -93,7 +93,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 ? (this.loadObjects(), this.loadRequiredFields(), this.setFlowId())
                 : (this.fetchTemplates(), this.loadEmailTemplates());
     
-            this.fetchAutomationName();
+            await this.fetchAutomationName();
             this.fetchAutomationPaths();
             
         } catch (error) {
@@ -373,7 +373,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     fetchAutomationName() {
-        getAutomationById({ recordId: this.recordId })
+        return getAutomationById({ recordId: this.recordId })
             .then(result => {
                 if (result) {
                     this.automation = {
