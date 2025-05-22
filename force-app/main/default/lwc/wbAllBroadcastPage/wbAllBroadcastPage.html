@@ -1,6 +1,5 @@
 <template>
     <template if:false={selectedRecordId}>
-
         <template if:true={showLicenseError}>
             <div class="license-error">
                 <div class="popup-container">
@@ -15,72 +14,135 @@
         <template if:false={showLicenseError}>
             <template if:true={isTemplateVisible}>
                 <div class="wrapper">
-
+            
                     <!-- Spinner -->
                     <template if:true={isLoading}>
                         <div class="spinner-container">
                             <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
                         </div>
                     </template>
-
-                    <h1 class="slds-text-align_center heading">Recent Broadcasts</h1>
-
+                    <template if:true={isBroadCastSelected}>
+                        <h1 class="slds-text-align_center heading">Recent Broadcasts</h1>
+                    </template>
+                    <template if:false={isBroadCastSelected}>
+                        <h1 class="slds-text-align_center heading">Recent Broadcasts Campaigns</h1>
+                    </template>
+            
                     <div class="filterparent">
                         <div class="filterdiv">
                             <lightning-input variant="label-hidden" class="filter search-div" name="searchInput" type="search"
                                 placeholder="Search by Name..." onchange={handleSearch}></lightning-input>
                         </div>
                         <div class="btns">
+                            <lightning-combobox 
+                            variant="label-hidden"
+                                name="type"
+                                value={selectedListValue}
+                                placeholder="Select an option"
+                                options={displayListOptions}
+                                onchange={handleListChange}>
+                            </lightning-combobox>
                             <button class="custom-button cus-btns" onclick={newBroadcast}>
                                 <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                                     class="left-icon"></lightning-icon>
-                                <span>New Broadcast</span>
+                                <span>New</span>
                             </button>
                         </div>
                     </div>
-
+            
                     <div class="slds-m-around_medium container">
                         <!-- Custom Table -->
                         <template if:true={paginatedData.length}>
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th class="sr-no">Sr. No</th>
-                                        <th>Name</th>
-                                        <th>Recipient Count</th>
-                                        <th>Status</th>
-                                        <th>Total Sent</th>
-                                        <th>Total Delivered</th>
-                                        <th>Total Read</th>
-                                        <th>Total Failed</th>
+                                        <template if:true={isBroadCastSelected}>
+                                            <th class="sr-no">Sr. No</th>
+                                            <th>Name</th>
+                                            <th>Recipient Count</th>
+                                            <th>Status</th>
+                                            <th>Total Sent</th>
+                                            <th>Total Delivered</th>
+                                            <th>Total Read</th>
+                                            <th>Total Failed</th>
+                                        </template>
+                                        <template if:false={isBroadCastSelected}>
+                                            <th class="sr-no">Sr. No</th>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </template>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <template for:each={paginatedData} for:item="row">
                                         <tr key={row.Id}>
-                                            <td class="sr-no">{row.index}</td>
-                                            <td>
-                                                <a href="javascript:void(0);" class="clickable-name" data-record-id={row.Id} onclick={handleNameClick}>{row.Name}</a>
-                                            </td>
-                                            <td>{row.MVWB__Recipient_Count__c}</td>
-                                            <td>{row.MVWB__Status__c}</td>
-                                            <td>{row.MVWB__Total_Sent__c}</td>
-                                            <td>{row.MVWB__Total_Delivered__c}</td>
-                                            <td>{row.MVWB__Total_Read__c}</td>
-                                            <td>{row.MVWB__Total_Failed__c}</td>
+                                            <template if:true={isBroadCastSelected}>
+                                                <td class="sr-no">{row.index}</td>
+                                                <td>
+                                                    <a href="javascript:void(0);" 
+                                                    class="clickable-name" 
+                                                    data-record-id={row.Id} 
+                                                    onclick={handleNameClick}>
+                                                    {row.Name}
+                                                    </a>
+                                                </td>
+                                                <td>{row.Recipient_Count__c}</td>
+                                                <td>{row.Status__c}</td>
+                                                <td>{row.Total_Sent__c}</td>
+                                                <td>{row.Total_Delivered__c}</td>
+                                                <td>{row.Total_Read__c}</td>
+                                                <td>{row.Total_Failed__c}</td>
+                                            </template>
+                                            <template if:false={isBroadCastSelected}>
+                                                <td class="sr-no">{row.index}</td>
+                                                <td data-id={row.Id} onclick={handleRowClick}>{row.Name}</td>
+                                                <td>{row.Description__c}</td>
+                                                <td>{row.startDate}</td>
+                                                <td>{row.endDate}</td>
+                                                <td>{row.Status__c}</td>
+                                                <!-- <td>
+                                                    <button class="action-buttons" disabled={row.isDisabled} data-value={row.Status__c}>
+                                                        <img src="/resource/editIcon"  class="action edit"  alt="edit" data-id={row.Id} onclick={editMarketingCampaign} >
+                                                    </button>
+                                                    <button class="action-buttons" disabled={row.isDisabled} data-value={row.Status__c}>
+                                                        <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={row.Id} onclick={deleteMarketingCampaign}>
+                                                    </button>
+                                                </td> -->
+                                                <td>
+                                                    <button class="action-buttons" disabled={row.isDisabled} data-value={row.Status__c} onclick={editMarketingCampaign}>
+                                                        <img src="/resource/editIcon" class="action edit" alt="edit" data-id={row.Id}>
+                                                    </button>
+                                                    <button class="action-buttons" data-value={row.Status__c} onclick={deleteMarketingCampaign}>
+                                                        <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={row.Id}>
+                                                    </button>
+                                                </td>
+                                                
+                                            </template>
+                                            <!-- <td class="sr-no">{row.index}</td>
+                                            <td data-id={row.Id}>{row.Name}</td>
+                                            <td>{row.Recipient_Count__c}</td>
+                                            <td>{row.Status__c}</td>
+                                            <td>{row.Total_Sent__c}</td>
+                                            <td>{row.Total_Delivered__c}</td>
+                                            <td>{row.Total_Read__c}</td>
+                                            <td>{row.Total_Failed__c}</td> -->
                                         </tr>
                                     </template>
                                 </tbody>
                             </table>
                         </template>
-
+            
                         <!-- No Records Message -->
                         <template if:true={showNoRecordsMessage}>
                             <div class="no-records-message">
                                 <div class="empty-state">
                                     <div class="empty-state__content">
                                         <div class="empty-state__icon">
-                                            <img src="/resource/MVWB__emptyState" alt="" draggable="false">
+                                            <img src="/resource/emptyState" alt="" draggable="false">
                                         </div>
                                         <div class="empty-state__message">No Data Available to Show.</div>
                                     </div>
@@ -88,7 +150,7 @@
                             </div>
                         </template>
                     </div>
-
+            
                     <template if:true={paginatedData.length}>
                         <div class="pagination-container">
                             <button class="pagination-button" disabled={isFirstPage} onclick={handlePrevious}>
@@ -98,7 +160,7 @@
                                 </svg>
                                 Previous
                             </button>
-
+            
                             <template for:each={pageNumbers} for:item="page">
                                 <template if:false={page.isEllipsis}>
                                     <button key={page.number} data-id={page.number} class={page.className}
@@ -110,7 +172,7 @@
                                     <span key={page.number} class="pagination-ellipsis">...</span>
                                 </template>
                             </template>
-
+            
                             <button class="pagination-button" disabled={isLastPage} onclick={handleNext}>
                                 Next
                                 <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520" fill="#fff">
@@ -120,19 +182,19 @@
                             </button>
                         </div>
                     </template>
-
+            
                     <template if:true={showPopup}>
                         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
                             aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
                             <div class="slds-modal__container">
-
+            
                                 <!-- Close Button -->
                                 <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
                                     title="Close" onclick={handleCloseOnPopup}>
                                     <lightning-icon icon-name="utility:close" alternative-text="Close"
                                         size="small"></lightning-icon>
                                 </button>
-
+            
                                 <div class="slds-modal__content slds-p-around_medium pop-up" id="modal-content-id-2">
                                     <div class="pop-heading">
                                         {popupHeader}
@@ -149,7 +211,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-
+            
                                             <!-- Groups List -->
                                             <div class="box-container">
                                                 <template if:true={filteredGroups.length}>
@@ -164,30 +226,32 @@
                                                                 </div>
                                                                 <div class="">
                                                                     <h3 class="slds-text-heading_small">{group.Name}</h3>
-                                                                    <p><strong>Members:</strong> {group.MVWB__Count_of_Members__c}</p>
+                                                                    <p><strong>Members:</strong> {group.Count_of_Members__c}</p>
                                                                     <p><strong>Object of Group Members: </strong>
-                                                                        {group.MVWB__Object_Name__c}</p>
-                                                                    <p><strong>Description:</strong> {group.MVWB__Description__c}</p>
+                                                                        {group.Object_Name__c}</p>
+                                                                    <p><strong>Description:</strong> {group.Description__c}</p>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </template>
                                                 </template>
                                             </div>
-
+            
                                             <template if:true={filteredGroups.length}>
                                                 <div class="popUpFooter slds-text-align--center">
                                                     <lightning-button variant="brand-outline" onclick={handleCloseOnPopup}
                                                         label="Close" class="slds-m-left_x-small"></lightning-button>
                                                     <lightning-button variant="brand" label="Next" onclick={handleNextOnPopup}
                                                         class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
+                                                    <lightning-button variant="brand" label="Create Broadcast campaign" onclick={handleNextbroadcastOnPopup}
+                                                        class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
                                                 </div>
                                             </template>
-
+            
                                             <template if:false={filteredGroups.length}>
                                                 <div class="empty-state__content">
                                                     <div class="empty-state__icon">
-                                                        <img src="/resource/MVWB__emptyState" alt="" draggable="false">
+                                                        <img src="/resource/emptyState" alt="" draggable="false">
                                                     </div>
                                                     <div class="empty-state__message">No Data Available to Show.</div>
                                                 </div>
@@ -213,27 +277,31 @@
                                         </div>
                                     </template>
                                     <template if:true={popUpLastPage}>
-                                        <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center slds-m-around_medium">
-                                            <lightning-input type="datetime-local" name="dateTime" value={selectedDateTime} onchange={handleInputChange} class="slds-align_absolute-center"></lightning-input>
+                                        <div
+                                            class="slds-grid slds-grid_vertical-align-center slds-grid_align-center slds-m-around_medium">
+                                            <lightning-input type="datetime-local" name="dateTime" value={selectedDateTime}
+                                                onchange={handleInputChange} class="slds-align_absolute-center"></lightning-input>
                                         </div>
-
+            
                                         <div class="popUpFooter slds-text-align_center slds-p-bottom_large">
-                                            <lightning-button variant="brand-outline" onclick={handlePreviousLastpage} label="Previous" class="slds-m-left_x-small"></lightning-button>
-                                            
-                                            <lightning-button variant="brand" label="Schedule and Send" onclick={handleSchedule} class="slds-m-left_x-small"></lightning-button>
+                                            <lightning-button variant="brand-outline" onclick={handlePreviousLastpage}
+                                                label="Previous" class="slds-m-left_x-small"></lightning-button>
+                                            <lightning-button variant="brand" label="Schedule and Send" onclick={handleSchedule}
+                                                class="slds-m-left_x-small"></lightning-button>
                                         </div>
                                     </template>
                                 </div>
-
+            
                             </div>
                         </section>
                         <div class="slds-backdrop slds-backdrop_open"></div>
                     </template>
+            
                 </div>
             </template>
+        
         </template>
     </template>
-    
     <template if:true={selectedRecordId}>
         <c-broadcast-report-comp record-id={selectedRecordId}></c-broadcast-report-comp>
     </template>
