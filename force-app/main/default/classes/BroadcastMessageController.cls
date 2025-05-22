@@ -513,6 +513,47 @@ public with sharing class BroadcastMessageController {
             throw new AuraHandledException('Error fetching broadcast groups: ' + e.getMessage());
         }
     }
+    @AuraEnabled(cacheable=true)
+    public static List<Map<String, String>> getDateFieldsForPicklist(String objectApiName) {
+        try {
+            List<Map<String, String>> options = new List<Map<String, String>>();
+
+            // Get the describe information for the specified object
+            Map<String, Schema.SObjectType> globalDescribe = Schema.getGlobalDescribe();
+            if (!globalDescribe.containsKey(objectApiName)) {
+                throw new AuraHandledException('Invalid object API name: ' + objectApiName);
+            }
+
+            Map<String, Schema.SObjectField> objectFields = globalDescribe.get(objectApiName).getDescribe().fields.getMap();
+
+            // Exclude audit fields
+            Set<String> auditFieldsToExclude = new Set<String>{
+                'LastModifiedDate', 'SystemModstamp', 'LastActivityDate', 'LastReferencedDate', 'LastViewedDate'
+            };
+
+            // Iterate through the fields and filter for Date fields
+            for (String fieldName : objectFields.keySet()) {
+                Schema.DescribeFieldResult fieldDescribe = objectFields.get(fieldName).getDescribe();
+                // if (fieldDescribe.getType() == Schema.DisplayType.Date && !auditFieldsToExclude.contains(fieldName)) {
+                if ((fieldDescribe.getType() == Schema.DisplayType.Date )
+                    && !auditFieldsToExclude.contains(fieldName)){
+
+                    System.debug('Field Name: ' + fieldName);
+                    System.debug('Field Label: ' + fieldDescribe.getLabel());
+                    options.add(new Map<String, String>{
+                        'label' => fieldDescribe.getLabel(),
+                        'value' => fieldName
+                    });
+                }
+            }
+
+            return options;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getDateFieldsForPicklist', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+            // throw new AuraHandledException('Error fetching broadcast groups: ' + e.getMessage());
+            return null;
+        }
+    }
 
         /*
     *********************************************************
