@@ -29,8 +29,7 @@ public without sharing class AutomationConfigTriggerHandler {
     }
     
     public void filterAndProcessValidChats() {
-try {
-            
+      try {
         List<Chat__c> validChats = new List<Chat__c>();
         Set<Id> replyToIds = new Set<Id>();
         
@@ -62,7 +61,6 @@ try {
         } else {
             System.debug('No valid messages found (Button/Interactive & Inbound Message). Exiting trigger.');
 }
-
         } catch (Exception e) {
 
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'filterAndProcessValidChats','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
@@ -71,7 +69,7 @@ try {
     
     private Boolean isValidAutomationChat(Chat__c newChat, Chat__c parentChat) {
 try {
-            
+
         if (newChat.Type_of_Message__c != 'Inbound Messages') {
             System.debug('Not an Inbound Message. Exiting. ' + newChat.Message__c + 'ID = ' + newChat.Id);
             return false;
@@ -87,6 +85,7 @@ try {
             } catch (Exception e) {
                 System.debug('Error parsing button JSON: ' + e.getMessage());
             }
+
         }
         
         return buttonType == 'QUICK_REPLY' || newChat.Message_Type__c == 'interactive';
@@ -95,6 +94,8 @@ try {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'isValidAutomationChat','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
+        
+        return buttonType == 'QUICK_REPLY' || newChat.Message_Type__c == 'interactive';
     }
     
     public static String getButtonTypeByText(String jsonInput, String buttonText) {
@@ -111,6 +112,7 @@ try {
                 }
             }
         } catch (Exception e) {
+
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'getButtonTypeByText','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
@@ -119,8 +121,7 @@ try {
     
     public static void processAutomationConfiguration(List<Chat__c> newChats) {
         System.debug('Handler method called');
-try {
-        
+try {   
         // Step 1: Collect context message IDs and filter relevant chats
         Set<String> contextMessageIds = new Set<String>();
         List<Chat__c> potentialPathReplies = new List<Chat__c>();
@@ -139,6 +140,7 @@ try {
                     potentialPathReplies.add(newChat);
                 }
             // }
+
         }
         
         if (contextMessageIds.isEmpty() || potentialPathReplies.isEmpty()) {
@@ -177,15 +179,47 @@ try {
         processMatchingChats(potentialPathReplies, originalChatsMap, templateIdToAutomationIdMap, automationPathsMap);
 
         } catch (Exception e) {
-            
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'processAutomationConfiguration','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
-
+        
+        if (contextMessageIds.isEmpty() || potentialPathReplies.isEmpty()) {
+            System.debug('No valid replies found, exiting.');
+            return;
+        }
+        System.debug('ContextMessageIds and PotentialPathReplies found');
+        
+        // Step 2: Get original messages and extract template IDs
+        Map<String, Chat__c> originalChatsMap = fetchOriginalChats(contextMessageIds);
+        Set<String> templateIdsToCheck = extractTemplateIds(originalChatsMap);
+        
+        if (templateIdsToCheck.isEmpty()) {
+            System.debug('No templates found, exiting.');
+            return;
+        }
+        System.debug('Template found on orginal messages.');
+        
+        // Step 3: Map Templates to Automation IDs
+        Map<String, List<Id>> templateIdToAutomationIdMap = fetchAutomationMappings(templateIdsToCheck);
+        if (templateIdToAutomationIdMap.isEmpty()) {
+            System.debug('No matching Automations found, exiting.');
+            return;
+        }
+        System.debug('Matching Automation records found.');
+        System.debug('TemplateIdToAutomationIdMap: ' + templateIdToAutomationIdMap);
+        
+        // Step 4: Fetch Automation Paths
+        Map<Id, Map<String, Automation_Path__c>> automationPathsMap = fetchAutomationPaths(templateIdToAutomationIdMap);
+        if (automationPathsMap.isEmpty()) {
+            System.debug('No Automation Paths found.');
+        }
+        System.debug('Automation Path records found.');
+        
+        // Step 5: Process matching chats and send responses
+        processMatchingChats(potentialPathReplies, originalChatsMap, templateIdToAutomationIdMap, automationPathsMap);
     }
     
     private static Map<String, Chat__c> fetchOriginalChats(Set<String> contextMessageIds) {
-        try {
-            
+        try {          
             System.debug('Fetching original chats for context message IDs: ' + contextMessageIds);
             Map<String, Chat__c> originalChatsMap = new Map<String, Chat__c>();
             
@@ -207,6 +241,7 @@ try {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'fetchOriginalChats','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
+        return originalChatsMap;
     }
     
     private static Set<String> extractTemplateIds(Map<String, Chat__c> originalChatsMap) {
@@ -235,6 +270,7 @@ try {
                     }
                     templateIdToAutomationIdMap.get(templateId).add(automation.Id);
                 }
+                templateIdToAutomationIdMap.get(templateId).add(automation.Id);
             }
             return templateIdToAutomationIdMap;
 
@@ -243,6 +279,7 @@ try {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'fetchAutomationMappings','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
+        return templateIdToAutomationIdMap;
     }
     
     private static Map<Id, Map<String, Automation_Path__c>> fetchAutomationPaths(Map<String, List<Id>> templateIdToAutomationIdMap) {
@@ -287,6 +324,7 @@ try {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'fetchAutomationPaths','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
+        return automationPathsMap;
     }
     
     private static void processMatchingChats(List<Chat__c> potentialPathReplies, Map<String, Chat__c> originalChatsMap, Map<String, List<Id>> templateIdToAutomationIdMap, Map<Id, Map<String, Automation_Path__c>> automationPathsMap) {
@@ -501,7 +539,8 @@ try {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'processMatchingChats','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     }
-    
+
+  
     public static Map<String, object> getTemplateData(String templateId, String recordId, String objectApiName){
         try {
             Map<String, Object> templateData = new Map<String, Object>();
@@ -520,14 +559,14 @@ try {
             // Fetch template details
             if (!matchingTemplateIds.isEmpty()) {
                 templates.addAll([
-                    SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
+                    SELECT Id, Template_Name__c, WBButton_Body__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
                         (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId AND Id IN :matchingTemplateIds
                 ]);
             }
             
             // Fetch templates without child variables
             List<Template__c> templatesWithoutVariables = [
-                SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
+                SELECT Id, Template_Name__c, WBButton_Body__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c,
                     (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId
             ];
             templates.addAll(templatesWithoutVariables);

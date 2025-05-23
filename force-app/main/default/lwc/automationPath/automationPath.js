@@ -77,6 +77,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
 
+
             // console.log('Automation Path Loaded with Record ID:', this.recordId);
             // console.log('Automation Path Loaded with Template Type:', this.templateType);
     
@@ -369,7 +370,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     fetchAutomationName() {
-        getAutomationById({ recordId: this.recordId })
+        return getAutomationById({ recordId: this.recordId })
             .then(result => {
                 if (result) {
                     this.automation = {
@@ -551,7 +552,6 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         try {
             // console.log('Fetching fields for object:', objectName);
             getObjectFields({ objectName: objectName })
-
             .then((result) => {
                 // console.log('fetchFieldsForObjects after apex:- ',JSON.stringify(result))
                 this.objectFields = result;
@@ -670,7 +670,6 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 templateType: this.selectedAction,
             };
         }
-    
         // console.log('Updated automationPaths:', JSON.stringify(this.automationPaths));
     }
 
@@ -701,7 +700,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         this[NavigationMixin.Navigate]({
             type: "standard__navItemPage",
             attributes: {
-                apiName: 'MVWB__Automation_Configuration'
+                apiName: 'Automation_Configuration'
             },
         });
     }
@@ -739,7 +738,6 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     MVWB__Action_Email_Template__c: actionEmailTemplate
                 };
             });
-
             // console.log('Saving Automation Paths:', JSON.stringify(automationPathRecords));
 
             saveAutomationPaths({ automationPaths: automationPathRecords })

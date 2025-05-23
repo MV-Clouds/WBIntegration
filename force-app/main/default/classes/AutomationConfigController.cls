@@ -36,12 +36,14 @@ public without sharing class AutomationConfigController {
             Set<String> validObjectNames = new Set<String>();
             
             MVWB__Object_Config__mdt config = [
+
                 SELECT MVWB__ChatWindowConfigInfo__c 
+
                 FROM MVWB__Object_Config__mdt 
                 WHERE DeveloperName = 'objectConfigInfo' 
                 LIMIT 1
             ];
-    
+
             if (String.isNotBlank(config.MVWB__ChatWindowConfigInfo__c)) {
                 Map<String, Object> chatConfig = (Map<String, Object>) JSON.deserializeUntyped(config.MVWB__ChatWindowConfigInfo__c);
                 validObjectNames.addAll(chatConfig.keySet());
