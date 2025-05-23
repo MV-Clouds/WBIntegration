@@ -16,10 +16,9 @@ public without sharing class AutomationConfigController {
     @AuraEnabled
     public static List<Automation__c> getAllAutomations() {
         try {
-            return [SELECT Id, Name, Description__c, WB_Template__r.MVWB__Template_Name__c, WB_Template__r.MVWB__Template_Type__c FROM Automation__c];
+            return [SELECT Id, Name, Description__c, WB_Template__r.Template_Name__c, WB_Template__r.Template_Type__c FROM Automation__c];
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAllAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAllAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             System.debug('Error in getAllAutomations: ' + e.getMessage());
             return null;
         }
@@ -37,14 +36,16 @@ public without sharing class AutomationConfigController {
             Set<String> validObjectNames = new Set<String>();
             
             MVWB__Object_Config__mdt config = [
-                SELECT ChatWindowConfigInfo__c 
+
+                SELECT MVWB__ChatWindowConfigInfo__c 
+
                 FROM MVWB__Object_Config__mdt 
                 WHERE DeveloperName = 'objectConfigInfo' 
                 LIMIT 1
             ];
-    
-            if (String.isNotBlank(config.ChatWindowConfigInfo__c)) {
-                Map<String, Object> chatConfig = (Map<String, Object>) JSON.deserializeUntyped(config.ChatWindowConfigInfo__c);
+
+            if (String.isNotBlank(config.MVWB__ChatWindowConfigInfo__c)) {
+                Map<String, Object> chatConfig = (Map<String, Object>) JSON.deserializeUntyped(config.MVWB__ChatWindowConfigInfo__c);
                 validObjectNames.addAll(chatConfig.keySet());
             }
     
@@ -76,8 +77,7 @@ public without sharing class AutomationConfigController {
             return finalTemplates;
     
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getTemplates','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getTemplates','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -101,8 +101,7 @@ public without sharing class AutomationConfigController {
             }
             return automations;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'saveAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'saveAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             System.debug('Error in saveAutomations: ' + e.getMessage());
             return null;
         }
@@ -149,8 +148,7 @@ public without sharing class AutomationConfigController {
             return recordsToUpdate;
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'updateAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'updateAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -183,8 +181,7 @@ public without sharing class AutomationConfigController {
             }
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'deleteAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'deleteAutomations','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     }
 
@@ -196,10 +193,9 @@ public without sharing class AutomationConfigController {
     @AuraEnabled
     public static Automation__c getAutomationById(Id recordId) {
         try {
-            return [SELECT Id, Name, Description__c, WB_Template__r.MVWB__Template_Name__c, WB_Template__r.MVWB__Template_Type__c, WB_Template__r.MVWB__WBButton_Body__c FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
+            return [SELECT Id, Name, Description__c, WB_Template__r.Template_Name__c, WB_Template__r.Template_Type__c, WB_Template__r.WBButton_Body__c FROM Automation__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAutomationById','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAutomationById','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -214,8 +210,7 @@ public without sharing class AutomationConfigController {
         try {
             return [SELECT Id, Name FROM EmailTemplate WITH SECURITY_ENFORCED];
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getTemplates','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getTemplates','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -282,8 +277,7 @@ public without sharing class AutomationConfigController {
         } catch (Exception e) {
             System.debug('Error in saveAutomationPaths: ' + e.getMessage());
             System.debug(e.getLineNumber());
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'saveAutomationPaths','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'saveAutomationPaths','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -312,8 +306,7 @@ public without sharing class AutomationConfigController {
             // Return an empty list if no records are found
             return automationPaths != null ? automationPaths : new List<Automation_Path__c>();
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAutomationPathsByAutomationId','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAutomationPathsByAutomationId','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -343,8 +336,7 @@ public without sharing class AutomationConfigController {
                 }
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAllObjects','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getAllObjects','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
         
@@ -361,39 +353,38 @@ public without sharing class AutomationConfigController {
     public static List<String> getUsedObjectNamesByTemplate(Id templateId) {
         try {
             
-        Set<String> usedObjectNames = new Set<String>();
-
-        // First get Automation records linked to the given Template ID
-        List<Automation__c> automations = [
-            SELECT Id
-            FROM Automation__c
-            WHERE WB_Template__c = :templateId
-        ];
-        
-        Set<Id> automationIds = new Set<Id>();
-        for (Automation__c automation : automations) {
-            automationIds.add(automation.Id);
-        }
-
-        if (!automationIds.isEmpty()) {
-            // Get Object Names used in related Automation_Path__c records
-            for (Automation_Path__c path : [
-                SELECT Object_Name__c
-                FROM Automation_Path__c
-                WHERE Automation__c IN :automationIds
-                AND Object_Name__c != null
-            ]) {
-                usedObjectNames.add(path.Object_Name__c.trim());
+            Set<String> usedObjectNames = new Set<String>();
+    
+            // First get Automation records linked to the given Template ID
+            List<Automation__c> automations = [
+                SELECT Id
+                FROM Automation__c
+                WHERE WB_Template__c = :templateId
+            ];
+            
+            Set<Id> automationIds = new Set<Id>();
+            for (Automation__c automation : automations) {
+                automationIds.add(automation.Id);
             }
-        }
-
-        // Convert Set to List before returning (for AuraEnabled compatibility)
-        return new List<String>(usedObjectNames);
+    
+            if (!automationIds.isEmpty()) {
+                // Get Object Names used in related Automation_Path__c records
+                for (Automation_Path__c path : [
+                    SELECT Object_Name__c
+                    FROM Automation_Path__c
+                    WHERE Automation__c IN :automationIds
+                    AND Object_Name__c != null
+                ]) {
+                    usedObjectNames.add(path.Object_Name__c.trim());
+                }
+            }
+    
+            // Convert Set to List before returning (for AuraEnabled compatibility)
+            return new List<String>(usedObjectNames);
 
         } catch (Exception e) {
             
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getUsedObjectNamesByTemplate','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getUsedObjectNamesByTemplate','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -472,8 +463,7 @@ public without sharing class AutomationConfigController {
             return finalResponse;
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getRequiredFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getRequiredFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -507,8 +497,7 @@ public without sharing class AutomationConfigController {
             
             return objectFields;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getObjectFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getObjectFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }
@@ -546,8 +535,7 @@ public without sharing class AutomationConfigController {
             }
 
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getFlowIdFromAutomation','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getFlowIdFromAutomation','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     
@@ -572,8 +560,7 @@ public without sharing class AutomationConfigController {
             return flow.Flow_JSON__c;
             
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getFlowFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'getFlowFields','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
     }

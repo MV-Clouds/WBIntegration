@@ -242,13 +242,17 @@ public class WBTemplateControllerTest {
 
     @isTest
     static void testCreateWhatsappTemplate_Success() {
+        String payload = '{ "name": "simple_template", "language": "en_US", "category": "UTILITY", "components": [ { "type": "BODY", "text": "Hello {{1}}, your order {{2}} is confirmed." } ] }';
+        Map<String, Object> payloadTW = (Map<String, Object>) JSON.deserializeUntyped(payload);
+            System.debug('payload :: '+payloadTW);
         CreateTemplateWrapper.TemplateWrapper mockTemplateWrapper = new CreateTemplateWrapper.TemplateWrapper();
         mockTemplateWrapper.templateName = 'Test Template';
         mockTemplateWrapper.tempLanguage = 'en';
         String serializedWrapper = JSON.serialize(mockTemplateWrapper);
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
         Test.startTest();
-        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper);
+
+        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload);
         Test.stopTest();
     }
 
@@ -263,9 +267,10 @@ public class WBTemplateControllerTest {
         // Mock HTTP callout to return an error response
         
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(500));
+        String payload = '{ "name": "simple_template", "language": "en_US", "category": "UTILITY", "components": [ { "type": "BODY", "text": "Hello {{1}}, your order {{2}} is confirmed." } ] }';
 
         Test.startTest();
-        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper);
+        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload);
         Test.stopTest();
 
         // Assert that the error is caught and logged correctly
@@ -281,12 +286,14 @@ public class WBTemplateControllerTest {
         mockTemplateWrapper.tempLanguage = 'en';
 
         String serializedWrapper = JSON.serialize(mockTemplateWrapper);
+        String payload = '{ "name": "simple_template", "language": "en_US", "category": "UTILITY", "components": [ { "type": "BODY", "text": "Hello {{1}}, your order {{2}} is confirmed." } ] }';
 
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(400));
         Test.startTest();
-        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper);
+        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload);
         Test.stopTest();
     }
+
 
      @isTest
     static void testStartUploadSession_Success() {
@@ -324,7 +331,7 @@ public class WBTemplateControllerTest {
         String serializedWrapper = JSON.serialize(fileWrapper);
 
         Test.startTest();
-        String result = WBTemplateController.uploadFileChunk(serializedWrapper);
+        String result = WBTemplateController.uploadFileChunk(serializedWrapper,false);
         Test.stopTest();
     }
     
@@ -343,7 +350,7 @@ public class WBTemplateControllerTest {
         String serializedWrapper = JSON.serialize(fileWrapper);
 
         Test.startTest();
-        String result = WBTemplateController.uploadFileChunk(serializedWrapper);
+        String result = WBTemplateController.uploadFileChunk(serializedWrapper,false);
         Test.stopTest();
 
         System.assertEquals(result, '', 'The result should be empty in case of failure');
@@ -397,7 +404,7 @@ public class WBTemplateControllerTest {
         }
     }
 
-    @isTest
+     @isTest
     public static void testEditWhatsappTemplate_Success() {
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
 
@@ -411,9 +418,9 @@ public class WBTemplateControllerTest {
         wrapper.templateBodyText = new List<String>{'Example Body Text'};
 
         String serializedWrapper = JSON.serialize(wrapper);
-
+        String payload = '{ "name": "simple_template", "language": "en_US", "category": "UTILITY", "components": [ { "type": "BODY", "text": "Hello {{1}}, your order {{2}} is confirmed." } ] }';
         Test.startTest();
-        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(serializedWrapper, templateId);
+        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(serializedWrapper,payload, templateId);
         Test.stopTest();
 
         // System.assertEquals(true, response.get('success'));
@@ -431,11 +438,11 @@ public class WBTemplateControllerTest {
         wrapper.tempLanguage = 'en';
         wrapper.templateBody = 'Invalid test message.';
         wrapper.templateBodyText = new List<String>{'Invalid Body Text'};
-
+        String payload = '{ "name": "simple_template", "language": "en_US", "category": "UTILITY", "components": [ { "type": "BODY", "text": "Hello {{1}}, your order {{2}} is confirmed." } ] }';
         String serializedWrapper = JSON.serialize(wrapper);
 
         Test.startTest();
-        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(serializedWrapper, templateId);
+        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(serializedWrapper,payload ,templateId);
         Test.stopTest();
         // System.assertEquals(false, response.get('success'));
         // System.assertNotEquals(null, response.get('errorMessage'));
@@ -447,9 +454,9 @@ public class WBTemplateControllerTest {
 
         String templateId = '12345';
         String invalidSerializedWrapper = '{"invalid":"data"}';
-
+        String payload = '{ "name": "simple_template", "language": "en_US", "category": "UTILITY", "components": [ { "type": "BODY", "text": "Hello {{1}}, your order {{2}} is confirmed." } ] }';
         Test.startTest();
-        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(invalidSerializedWrapper, templateId);
+        Map<String, Object> response = WBTemplateController.editWhatsappTemplate(invalidSerializedWrapper, payload,templateId);
         Test.stopTest();
         System.assertEquals('error', response.get('status'));
         System.assertNotEquals(null, response.get('message'));

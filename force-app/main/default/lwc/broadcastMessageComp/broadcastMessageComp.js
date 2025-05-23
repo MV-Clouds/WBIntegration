@@ -1,10 +1,10 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import getObjectConfigs from '@salesforce/apex/BroadcastMessageController.getObjectConfigs';
 import getListViewsForObject from '@salesforce/apex/BroadcastMessageController.getListViewsForObject';
-import { getListUi } from 'lightning/uiListApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import processBroadcastMessageWithObject from '@salesforce/apex/BroadcastMessageController.processBroadcastMessageWithObject';
 import getBroadcastGroupDetails from '@salesforce/apex/BroadcastMessageController.getBroadcastGroupDetails';
+import getSessionId from '@salesforce/apex/BroadcastMessageController.getSessionId';
 export default class BroadcastMessageComp extends LightningElement {
     @track objectOptions = [];
     @track listViewOptions = [];
@@ -27,11 +27,12 @@ export default class BroadcastMessageComp extends LightningElement {
     @track isAllBroadcastGroupPage = false;
     @track isIntialRender = true;
     @track groupMembers= [];
-    
+    @track maxLimit = 30000;
+    @track fetchedResults = [];
+    @track sessionId;
     @api broadcastGroupId;
-
-    broadcastHeading = 'New Broadcast Group';
-    createBtnLabel= 'Create Broadcast Group'
+    @track broadcastHeading = 'New Broadcast Group';
+    @track createBtnLabel= 'Create Broadcast Group'
 
 
     /**
@@ -177,6 +178,7 @@ export default class BroadcastMessageComp extends LightningElement {
     connectedCallback() {
         this.loadConfigs();
         this.fetchGroupDetails();
+        getSessionId().then(result => this.sessionId = result);
     }
 
 
@@ -219,6 +221,12 @@ export default class BroadcastMessageComp extends LightningElement {
                     this.messageText = groupData.MVWB__Description__c;
 
                     this.groupMembers = result.members || [];
+                    
+                    getSessionId()
+                    .then(result => {
+                        this.sessionId = result
+                        this.fetchAllListViewRecords(this.selectedListView, this.sessionId, this.maxLimit);        
+                    });
 
                 })
                 .catch(() => {
@@ -378,62 +386,169 @@ export default class BroadcastMessageComp extends LightningElement {
 
     handleListViewChange(event) {
         this.selectedListView = event.detail.value;
+        this.fetchAllListViewRecords(this.selectedListView, this.sessionId, this.maxLimit);        
     }
 
-    @wire(getListUi, {
-        objectApiName: '$selectedObject',
-        listViewId: '$selectedListView',
-        fields: '$dynamicFieldNames'
-    })
-    wiredListView({ error, data }) {
-        if (!this.selectedObject || !this.selectedListView) {
-            return;
-        }
+    /**
+    * Method Name : fetchListViewSOQL
+    * @description : fetch list view records using tooling api
+    * date: 24/04/2025
+    * Created By:Tirth Shah
+    */
+    async fetchListViewSOQL(listViewId, sessionId) {
+        const myHeaders = new Headers();
+        myHeaders.append("Authorization", "Bearer " + sessionId);
+        myHeaders.append("Content-Type", "application/json");
     
-        if (data) {
+        const requestOptions = {
+            method: "GET",
+            headers: myHeaders,
+            redirect: "follow"
+        };
+    
+        let domainURL = location.origin.replace('lightning.force.com', 'my.salesforce.com');
+        let queryURL = '/services/data/v58.0/sobjects/'+this.selectedObject+'/listviews/'+this.selectedListView+'/describe';
+
+        // const toolingQueryURL = '/services/data/v58.0/tooling/query?q=SELECT+Id,+Query+FROM+ListView+WHERE+Id='+{listViewId}+'/describe';
+    
+        const response = await fetch(domainURL + queryURL, requestOptions)
+        const result = await response.json();
+        
+        if (response.status == 200) {
             const fields = this.configMap[this.selectedObject];
-            
-            this.data = data.records.records.map((record, index) => ({
-                index : index + 1,
-                Id: record.id,
-                name: record.fields[fields.nameField] ? record.fields[fields.nameField].value : '',
-                phone: record.fields[fields.phoneField] ? record.fields[fields.phoneField].value : '',
-                isSelected: false
-            }));
 
-            this.filteredData = [...this.data];
-            this.currentPage = 1;
+            let originalQuery = result.query;
 
-            // Ensure this runs only on the first render and when group members exist
-            if (this.isIntialRender && this.broadcastGroupId && this.groupMembers.length > 0) {
-                this.isIntialRender = false; // Prevent future updates from modifying selection
+            let fieldsString = `Id, ${fields.nameField}, ${fields.phoneField}`;
 
-                const memberPhoneNumbers = new Set(this.groupMembers.map(member => member.MVWB__Phone_Number__c));
-
-                this.data.forEach(record => {
-                    if (memberPhoneNumbers.has(record.phone)) {
-                        record.isSelected = true;
-                        this.selectedRecords.add(record.Id);
-                    }
-                });
-                this.filteredData = [...this.data];
-            } else {
-                this.selectedRecords.clear();
-            }
-            this.updateShownData();
-
-        } else if (error) {
-            this.showToast('Error', 'Error loading records', 'error');
+            // Replace everything between SELECT and FROM
+            let modifiedQuery = originalQuery.replace(/SELECT(.*?)FROM/i, `SELECT ${fieldsString} FROM`);
+            return modifiedQuery;
+        } else {
+            throw new Error("No query found for the specified ListView ID.");
         }
     }
+
+    /**
+    * Method Name : fetchAllListViewRecords
+    * @description : Using tooling api to fetch records
+    * date: 24/04/2025
+    * Created By:Tirth Shah
+    */
+
+    fetchAllListViewRecords(listViewId, sessionId, maxLimit) {
+        
+        this.fetchListViewSOQL(listViewId, sessionId)
+            .then(query => {
+                if (!query) {
+                    return;
+                }
+                // Convert SOQL to REST Query URL
+                
+                const soqlQueryUrl = `/services/data/v59.0/query?q=${encodeURIComponent(query)}`;
+    
+                // Use your existing method
+                return this.fetchRecords(soqlQueryUrl, sessionId, maxLimit);
+            })
+            .then(success => {
+                if (success) {
+                    // console.log('All fetched results:', this.fetchedResults);
+                    // Do something with this.fetchedResults, e.g. render or pass to another method
+                }
+            });
+    }
+
+    /**
+    * Method Name: fetchRecords
+    * @description: Executes a SOQL query using REST API and returns records
+    * @date: 24/04/2025
+    * @Created By: Tirth Shah
+    */
+    fetchRecords(queryUrl, sessionId, maxLimit) {
+        const domainURL = location.origin.replace('lightning.force.com', 'my.salesforce.com');
+
+        const headers = new Headers();
+        headers.append("Authorization", "Bearer " + sessionId);
+        headers.append("Content-Type", "application/json");
+
+        const requestOptions = {
+            method: "GET",
+            headers: headers,
+            redirect: "follow"
+        };
+
+        return fetch(domainURL + queryUrl, requestOptions)
+            .then(response => response.json())
+            .then(result => {
+                if (!this.selectedObject || !this.selectedListView) {
+                            return;
+                }
+                
+                if (result) {
+                    const fields = this.configMap[this.selectedObject];                    
+                    
+                    this.data = result.records.map((record, index) => ({
+                        index : index + 1,
+                        Id: record.Id,
+                        name: record[fields.nameField] ? record[fields.nameField] : '',
+                        phone: record[fields.phoneField] ? record[fields.phoneField] : '',
+                        isSelected: false
+                    }));
+                            
+                    this.filteredData = [...this.data];
+                    this.currentPage = 1;
+        
+                    // Ensure this runs only on the first render and when group members exist
+                    if (this.isIntialRender && this.broadcastGroupId && this.groupMembers.length > 0) {
+                        this.isIntialRender = false; // Prevent future updates from modifying selection
+        
+                        const memberPhoneNumbers = new Set(this.groupMembers.map(member => member.MVWB__Phone_Number__c));
+        
+                        this.data.forEach(record => {
+                            if (memberPhoneNumbers.has(record.phone)) {
+                                record.isSelected = true;
+                                this.selectedRecords.add(record.Id);
+                            }
+                        });
+                        this.filteredData = [...this.data];
+                    } else {
+                        this.selectedRecords.clear();
+                    }
+                    this.updateShownData();                    
+                
+                
+                if (result.records && Array.isArray(result.records)) {
+                    this.fetchedResults = maxLimit
+                        ? result.records.slice(0, maxLimit)
+                        : result.records;
+
+                    return true;
+                } else {
+                    this.showToast('warning', 'No Records', 'No records were found.');
+                    return false;
+                }
+            }
+            })
+            .catch(error => {
+                console.error('Error fetching records:', error.message);
+                this.showToast('error', 'Error', 'Failed to retrieve records');
+                return false;
+            });
+    }
+
+
     /**
      * Handle individual record selection
      */
     handleRecordSelection(event) {
-        const recordId = event.target.dataset.recordId;
+        
+        const recordId = event.target.dataset.recordid;
+        const recordcurrentId = event.currentTarget.dataset.recordid;
+        
         const record = this.paginatedData.find(row => row.Id === recordId);
+        
         if (record) {
-            record.isSelected = event.target.checked;
+            record.isSelected = event.target.checked;            
             if (record.isSelected) {
                 this.selectedRecords.add(recordId);
             } else {

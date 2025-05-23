@@ -6,6 +6,18 @@
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
+    <template if:true={showLicenseError}>
+        <div class="license-error">
+            <div class="popup-container">
+                <div class="popup-content">
+                    <h2>⚠️ License Expired</h2>
+                    <p>WBConnect license has expired. Please renew to continue using.</p>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template if:false={showLicenseError}>
+
     <template if:true={iseditTemplatevisible}>
         <div class="main-container" style="overflow-x:hidden;">
 
@@ -15,904 +27,653 @@
                 </div>
             </template>
 
-            <!-- Template options screen -->
-            <template lwc:if={isStage1}>
-                <div class="slds-theme_default main">
-
+            <div class="slds-theme_default main">
+                <!-- <div class="slds-box slds-theme_default texttemp"> -->
+                <template if:true={isNewTemplate}>
                     <div class="texttemp">
-                        <p class="templatetxt2">Create Template</p>
+                        <p class="templatetxt2">New Template</p>
                     </div>
+                </template>
+                <template if:true={isEditTemplate}>
+                    <div class="texttemp">
+                        <p class="templatetxt2">Edit Template</p>
+                    </div>
+                </template>
 
-
-                    <div class="divcontainer2">
-                        <div class="createtempdiv2">
-                            <div class="parentSetupTemplate">
-                                <div class="slds-box slds-theme_default templateContent">
-                                    <div class="tempHead">
-                                        <p class="content">Set up your template</p>
-                                    </div>
-                                    <div class="descp">
-                                        <p>Choose the category that best describes your message template. Then, select the
-                                            type of message that you want to send. Learn more about categories.</p>
-                                    </div>
-                                    
-                                    <div class="tabs">
-                                        <ul class="ullabel">
-                                            <li class="lilabel"><a href="javascript:void(0)"
-                                                    class="section1 section-tab-li active-tab" data-tab="section1"
-                                                    onclick={handleTabClick}><svg data-tab="section1" fill="#000000"
-                                                        viewBox="0 0 1920 1920" height="25" width="25"
-                                                        xmlns="http://www.w3.org/2000/svg">
-                                                        <g data-tab="section1" stroke-linecap="round" stroke-linejoin="round"></g>
-                                                        <g data-tab="section1" id="SVGRepo_iconCarrier">
-                                                            <path data-tab="section1"
-                                                                d="M959.342 1355.283c4.287.007 20.897.18 45.834 4.517l-3.388 55.341c-1.13 29.365-25.976 53.083-55.34 53.083-65.507 0-110.683 19.2-141.177 57.6-68.895 88.094-45.177 263.153-30.495 324.14 4.518 16.942 0 35.013-10.164 48.566-11.294 13.553-27.106 21.458-44.047 21.458h-212.33c-31.623 0-56.47-24.847-56.47-56.47v-508.235Zm627.82-1324.044c11.633-23.492 37.61-35.576 63.473-29.816 25.525 6.099 43.483 28.8 43.483 55.002V570.42C1822.87 596.623 1920 710.693 1920 847.013c0 136.32-97.13 250.504-225.882 276.706v513.883c0 26.202-17.958 49.016-43.483 55.002a57.279 57.279 0 0 1-12.988 1.468c-21.12 0-40.772-11.746-50.485-31.172C1379.238 1247.164 964.18 1242.307 960 1242.307H395.294c-155.746 0-282.353-126.607-282.353-282.352v-56.471h-56.47C25.299 903.484 0 878.298 0 847.014c0-31.172 25.299-56.471 56.47-56.471h56.471v-56.47c0-155.634 126.607-282.354 282.353-282.354h564.593c16.941-.113 420.48-7.002 627.275-420.48Z"
-                                                                fill-rule="evenodd"></path>
-                                                        </g>
-                                                    </svg> Marketing</a></li>
-                                            <li class="lilabel"><a href="javascript:void(0)" class="section2 section-tab-li"
-                                                    data-tab="section2" onclick={handleTabClick}><svg data-tab="section2"
-                                                        fill="#000000" version="1.1" height="25" width="25" viewBox="0 0 512 512">
-                                                        <g stroke-width="0" data-tab="section2"></g>
-                                                        <g stroke-linecap="round" data-tab="section2" stroke-linejoin="round"></g>
-                                                        <g data-tab="section2">
-                                                            <g data-tab="section2">
-                                                                <path data-tab="section2" class="st0"
-                                                                    d="M494.382,302.749c-8.063-12.985-22.605-22.83-38.333-26.087l-78.643-54.472 c-2.533-33.106-27.337-39.278-32.727-40.229l-23.067-65.128c-21.733-61.413-82.3-104.301-147.289-104.301 c-7.585,0-15.235,0.574-22.754,1.716c-0.965-1.564-2.087-3.051-3.342-4.433c-3.954-4.317-9.038-7.376-14.701-8.851 C131.064,0.326,128.523,0,125.973,0c-3.436,0-6.819,0.582-10.05,1.735c-3.801,1.343-7.252,3.412-10.268,6.153 c-4.307,3.944-7.362,9.022-8.836,14.689c-0.962,3.727-1.199,7.547-0.702,11.378C33.151,71.068,4.218,151.052,28.801,220.505 l23.051,65.124c-3.591,4.134-18.979,24.538-0.12,51.868l-26.617,91.362c-19.556,27.978-18.653,57.283,2.246,72.931 c5.77,4.309,11.252,6.805,17.166,7.838C51.363,511.2,59.979,512,70.133,512c0.006,0,0.002,0,0.008,0 c48.626,0,127.147-17.527,210.037-46.879c101.099-35.784,185.95-81.479,211.083-113.63c4-4.55,6.693-9.938,8.473-16.949 C502.458,323.77,500.607,312.776,494.382,302.749z M120.73,22.244c0.644-0.423,1.345-0.769,2.1-1.04 c0.73-0.264,1.483-0.431,2.244-0.505C124.403,20.924,121.501,21.956,120.73,22.244z M243.749,362.233 c65.501-23.195,128.395-37.042,168.244-37.042c21.341,0,34.579,4.192,37.275,11.805c8.102,22.896-72.322,73.129-175.616,109.693 c-65.516,23.195-128.424,37.046-168.275,37.046c-21.332,0-34.561-4.189-37.256-11.794 C60.026,449.05,140.453,398.805,243.749,362.233z">
-                                                                </path>
-                                                                <path data-tab="section2" class="st0"
-                                                                    d="M272.716,377.097c0.173,0.691,0.349,1.304,0.6,1.964c6.625,18.742,24.464,31.335,44.391,31.335h0.002 c5.328,0,10.602-0.908,15.677-2.694c17.75-6.32,29.992-22.5,31.184-41.203c0.495-6.126-0.361-12.539-2.473-18.544l-0.448-1.27 l-1.326,0.233c-26.809,4.685-57.257,12.317-88.055,22.073l-1.3,0.412l0.208,1.343C271.532,373.067,272.049,375.187,272.716,377.097 z">
-                                                                </path>
-                                                            </g>
-                                                        </g>
-                                                    </svg> Utility</a></li>
-                                            <li class="lilabel"><a href="javascript:void(0)" class="section3 section-tab-li"
-                                                    data-tab="section3" onclick={handleTabClick}><svg data-tab="section3"
-                                                        height="25" width="25" version="1.1" id="_x32_" viewBox="0 0 512 512"
-                                                        xml:space="preserve" fill="#000000"
-                                                        transform="rotate(45)matrix(1, 0, 0, -1, 0, 0)">
-                                                        <g data-tab="section3" id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                                        <g data-tab="section3" stroke-linecap="round" stroke-linejoin="round"></g>
-                                                        <g data-tab="section3">
-                                                            <g data-tab="section3">
-                                                                <path class="st0" data-tab="section3"
-                                                                    d="M256.001,0c-76.388,0-138.316,61.922-138.316,138.316c0,62.193,41.052,114.792,97.528,132.192v216.898 c0,3.876,1.855,7.512,5.001,9.782l17.354,12.527c5.31,3.839,12.724,2.731,16.684-2.504l42.342-56.008 c3.258-4.306,3.258-10.25,0-14.557l-16.442-21.699v-0.022l16.427-21.684c3.273-4.306,3.265-10.265,0-14.571l-10.846-14.308 c-3.288-4.344-3.258-10.355,0.075-14.67l27.952-36.112c1.644-2.112,2.534-4.706,2.534-7.383V262.83 c46.181-22.4,78.023-69.735,78.023-124.514C394.316,61.922,332.395,0,256.001,0z M256.001,468.143h-14.541V275.87 c4.781,0.498,9.631,0.762,14.541,0.762V468.143z M256.906,97.634c-15.975,0-28.932-12.95-28.932-28.924 c0-15.982,12.957-28.932,28.932-28.932c15.974,0,28.931,12.949,28.931,28.932C285.837,84.683,272.879,97.634,256.906,97.634z">
-                                                                </path>
-                                                            </g>
-                                                        </g>
-                                                    </svg>
-                                                    Authentication</a></li>
-                                        </ul>
-                                        <section if:true={isSection1Active}>
-                                            <div class="radio-group radiogroup">
-                                                <div class="radio1">
-                                                    <label class="slds-radio radiobtn">
-                                                        <input type="radio" name="templateOptions" value="custom" checked
-                                                            onchange={handleRadioChange} />
-                                                        <span class="slds-radio_faux"></span>
-                                                        <div class="txtwithlabel">
-                                                            <p class="slds-form-element__label radiolabel">Custom</p>
-                                                            <p class="radio-description radiodescription">Send promotions or
-                                                                announcements to increase awareness and engagement.</p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                                <div class="radio2">
-                                                    <label class="slds-radio radiobtn">
-                                                        <input type="radio" name="templateOptions" value="flow"
-                                                            onchange={handleRadioChange} />
-                                                        <span class="slds-radio_faux"></span>
-                                                        <div class="txtwithlabel">
-                                                            <p class="slds-form-element__label radiolabel">Flows</p>
-                                                            <p class="radio-description radiodescription">Send a form to capture customer interests, appointment requests or run surveys.</p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-            
-                                                
-                                            </div>
-                                        </section>
-                                        <section if:true={isSection2Active}>
-                                            <div class="radio-group radiogroup">
-                                                <div class="radio1">
-                                                    <label class="slds-radio radiobtn">
-                                                        <input type="radio" name="templateOptions" value="Custom" checked
-                                                            onchange={handleRadioChange} />
-                                                        <span class="slds-radio_faux"></span>
-                                                        <div class="txtwithlabel">
-                                                            <p class="slds-form-element__label radiolabel">Custom</p>
-                                                            <p class="radio-description radiodescription">Send messages about an
-                                                                existing order or account.</p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-            
-                                                
-                                                <div class="radio2">
-                                                    <label class="slds-radio radiobtn">
-                                                        <input type="radio" name="templateOptions" value="ORDER_STATUS"
-                                                            onchange={handleRadioChange} />
-                                                        <span class="slds-radio_faux"></span>
-                                                        <div class="txtwithlabel">
-                                                            <p class="slds-form-element__label radiolabel">Order status</p>
-                                                            <p class="radio-description radiodescription">Send messages to tell
-                                                                customers about the progress of their orders.
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                                <div class="radio3">
-                                                    <label class="slds-radio radiobtn">
-                                                        <input type="radio" name="templateOptions" value="flowutility"
-                                                            onchange={handleRadioChange} />
-                                                        <span class="slds-radio_faux"></span>
-                                                        <div class="txtwithlabel">
-                                                            <p class="slds-form-element__label radiolabel">Flows</p>
-                                                            <p class="radio-description radiodescription">Send a form to collect feedback, send reminders or manage orders.</p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-            
-                                                
-                                            </div>
-                                        </section>
-                                        <section if:true={isSection3Active}>
-                                            <div class="radio-group radiogroup">
-                                             
-                                                <div class="radio2">
-                                                    <label class="slds-radio radiobtn">
-                                                        <input type="radio" name="templateOptions" value={selectedOption}
-                                                          checked  onchange={handleRadioChange} />
-                                                        <span class="slds-radio_faux"></span>
-                                                        <div class="txtwithlabel">
-                                                            <p class="slds-form-element__label radiolabel">One-time passcode</p>
-                                                            <p class="radio-description radiodescription">Send codes to verify a
-                                                                transaction or login.
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </section>
-                                    </div>
-                                </div>
-            
-                                <div class="slds-box slds-theme_default templatebtns">
-                                    <lightning-button variant="brand-outline" onclick={handlediscardclick} label="Discard"
-                                        class="slds-m-left_x-small"></lightning-button>
-                                    <lightning-button variant="brand" label="Next" onclick={handleNextclick}
-                                        class="slds-m-left_x-small"></lightning-button>
-                                </div>
+                <div class="divcontainer2">
+                    <div class="createtempdiv2">
+                        <div class="slds-box slds-theme_default templateContent3">
+                            <div class="tempHead">
+                                <p class="name-language">Template name and language</p>
                             </div>
-                            
-                        </div>
-                        <div class="creattempdiv3">
-                            <template if:true={isFlowMarketing}>
-                                <div class="slds-box slds-theme_default templatePreviewmain">
-                                    <div class="templatehead">
-                                        <p class="previewtext"><b>Template Preview</b></p>
-                                    </div>
-                                    <div class="templatePreview">
-                                        <div class="slds-box slds-theme_default previewchild chat-bubble">
-                                            <!-- <img class="image" src="/resource/marketingFlowPreivew" alt=""> -->
-                                            <div class="paratext">
-                                                <p class="hey">Make dinner with Jaspher Market</p>
-                                                <p class="code">Our free online course will be available soon! Sign up today to reserve a spot</p>
-                                                <p class="time">11:59</p>
-                                            </div>
-                                        </div>
-                                        <div class="codelink">
-                                            <p class="shoplink">Sign up</p>
-                                        </div>
-                                    </div>
-                                    <p class="templatefootertxt1 firsttxt">This template is good for</p>
-                                    <p class="templatefootertxt2 secondtxt">Sign-ups, promotions, surveys, appointments
+                            <div class="nameLan">
+                                <div class="namediv">
+                                    <label for="templateName">Name your template</label>
+                                    <input class="nameInput" type="text" id="templateName" name="templateName"
+                                        value={templateName} maxlength="512" placeholder="Enter template name"
+                                        disabled={isEditTemplate} oninput={handleInputChange} />
+                                    <p class="char-count tempname-count">{templateName.length}/{LIMITS.maxTempNamelength}
                                     </p>
-                                    <p class="templatefootertxt1">Template areas that you can customise</p>
-                                    <p class="templatefootertxt2">Form, body, button</p>
                                 </div>
-                            </template>
-                            <template if:true={isFlowUtility}>
-                                <div class="slds-box slds-theme_default templatePreviewmain">
-                                    <div class="templatehead">
-                                        <p class="previewtext"><b>Template Preview</b></p>
-                                    </div>
-                                    <div class="templatePreview">
-                                        <div class="slds-box slds-theme_default previewchild chat-bubble">
-                                            <!-- <img class="image" src="/resource/marketingFlowPreivew" alt=""> -->
-                                            <div class="paratext">
-                                                <p class="hey">We have delivered your order!</p>
-                                                <p class="code">Your feedback ensures we continually improve. Please share your thoughts on your recent order</p>
-                                                <p class="time">11:59</p>
-                                            </div>
-                                        </div>
-                                        <div class="codelink">
-                                            <p class="shoplink">Share feedback</p>
-                                        </div>
-                                    </div>
-                                    <p class="templatefootertxt1 firsttxt">This template is good for</p>
-                                    <p class="templatefootertxt2 secondtxt">Sign-ups, promotions, surveys, appointments
-                                    </p>
-                                    <p class="templatefootertxt1">Template areas that you can customise</p>
-                                    <p class="templatefootertxt2">Form, body, button</p>
+                                <div class="landiv">
+                                    <label for="languageSelect">Select Language</label>
+                                    <select name="language" class="lanInput" onchange={handleInputChange}>
+                                        <template for:each={languageOptions} for:item="option">
+                                            <option key={option.value} value={option.value}
+                                                selected={option.isSelected}>{option.label}</option>
+                                        </template>
+                                    </select>
                                 </div>
-                            </template>
-                            <template if:true={defaultPreview}>
-                                <div class="slds-box slds-theme_default templatePreviewmain">
-                                    <div class="templatehead">
-                                        <p class="previewtext"><b>Template Preview</b></p>
-                                    </div>
-                                    <div class="templatePreview">
-                                        <div class="slds-box slds-theme_default previewchild chat-bubble">
-                                            <img class="image" src="/resource/MVWB__previewImage" alt="">
-                                            <div class="paratext">
-                                                <p class="hey">Hey there! Check out our fresh groceries now!</p>
-                                                <p class="code">Use code <b>HEALTH</b> to get additional 10% off on your entire
-                                                    purchase.</p>
-                                                <p class="time">11:59</p>
-                                            </div>
-                                        </div>
-                                        <div class="codelink">
-                                            <p class="shoplink"> <img height="16px" width="16px" src="/resource/MVWB__redirect"
-                                                    alt=""> Shop now</p>
-                                            <p class="copycode"> <img height="16px" width="16px" src="/resource/MVWB__copy"
-                                                    alt=""> Copy code</p>
-                                        </div>
-                                    </div>
-                                    <p class="templatefootertxt1 firsttxt">This template is good for</p>
-                                    <p class="templatefootertxt2 secondtxt">Welcome messages, promotions, offers, coupons,
-                                        newsletters, announcements</p>
-                                    <p class="templatefootertxt1">Template areas that you can customise</p>
-                                    <p class="templatefootertxt2">Header, body, footer, button</p>
-                                </div>
-                            </template>
-                            <template if:true={utilityOrderStatusSelected}>
-                                <div class="slds-box slds-theme_default templatePreviewmain">
-                                    <div class="templatehead">
-                                        <p class="previewtext"><b>Template Preview</b></p>
-                                    </div>
-                                    <div class="templatePreview">
-                                        <div class="slds-box slds-theme_default previewchild chat-bubble">
-                                            <div class="paratext">
-                                                <p class="heytext"><b>Status: Order Processing</b></p>
-                                                <p class="heytext">We've received your payment of <b>$239.00</b> for order <b>23KFEJJ2312</b>. You'll recieve a notification when the order is shipped.</p>
-                                                <p class="time">11:59</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p class="templatefootertxt1 firsttxt">This template is good for</p>
-                                    <p class="templatefootertxt2 secondtxt">Order confirmation, order status, delivery status</p>
-                                    <p class="templatefootertxt1">Template areas that you can customise</p>
-                                    <p class="templatefootertxt2">body, footer</p>
-                                </div>
-                            </template>
-                            <template if:true={UtilityCustomSelected}>
-                                <div class="slds-box slds-theme_default templatePreviewmain">
-                                    <div class="templatehead">
-                                        <p class="previewtext"><b>Template Preview</b></p>
-                                    </div>
-                                    <div class="templatePreview">
-                                        <div class="slds-box slds-theme_default previewchild chat-bubble">
-                                            <div class="paratext">
-                                                <p class="heytext">Good news! Your order <b>23KFEJJ2312</b> has shipped!</p><br>
-                                                <p class="heytext">Here's your tracking information, please check link below</p>
-                                                <p class="time">11:59</p>
-                                            </div>
-                                        </div>
-                                        <div class="codelink">
-                                            <p class="shoplink"> Track Shipment </p>
-                                        </div>
-                                    </div>
-                                    <p class="templatefootertxt1 firsttxt">This template is good for</p>
-                                    <p class="templatefootertxt2 secondtxt">Order confirmations, account update, receipts, appointment reminders, billing</p>
-                                    <p class="templatefootertxt1">Template areas that you can customise</p>
-                                    <p class="templatefootertxt2">Header, body, footer, button</p>
-                                </div>
-                            </template>
-                            <template if:true={authenticationPasscodeSelected}>
-                                <div class="slds-box slds-theme_default templatePreviewmain">
-                                    <div class="templatehead">
-                                        <p class="previewtext"><b>Template Preview</b></p>
-                                    </div>
-                                    <div class="templatePreview">
-                                        <div class="slds-box slds-theme_default previewchild chat-bubble">
-                                            <div class="paratext">
-                                                <p class="heytext"><b>123456</b> is your verification code. For your security, do not share this code.</p>
-                                                <p class="time">11:59</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p class="templatefootertxt1 firsttxt">This template is good for</p>
-                                    <p class="templatefootertxt2 secondtxt">One-time password, account recovery code, account verification, integrity challenges</p>
-                                    <p class="templatefootertxt1">Template areas that you can customise</p>
-                                    <p class="templatefootertxt2">Code delivery method</p>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </template>
 
-            <!--  template screen -->
-            <template lwc:if={isStage2}>
-                <div class="slds-theme_default main">
-                    <!-- <div class="slds-box slds-theme_default texttemp"> -->
-                    <template if:true={isNewTemplate}>
-                        <div class="texttemp">
-                            <p class="templatetxt2">New Template</p>
+                            </div>
+                            <template if:true={templateExists}>
+                                <div style="color: #b3042b;">This name is reserved for sample templates, please
+                                    enter a different one.</div>
+                            </template>
                         </div>
-                    </template>
-                    <template if:true={isEditTemplate}>
-                        <div class="texttemp">
-                            <p class="templatetxt2">Edit Template</p>
-                        </div>
-                    </template>
 
-                    <div class="divcontainer2">
-                        <div class="createtempdiv2">
-                            <div class="slds-box slds-theme_default templateContent3">
+                        <template if:true={flowBooleanCheck}>
+                            <div class="slds-box slds-theme_default authContent4">
                                 <div class="tempHead">
-                                    <p class="name-language">Template name and language</p>
+                                    <p class="content">Flow setup</p>
                                 </div>
-                                <div class="nameLan">
-                                    <div class="namediv">
-                                        <label for="templateName">Name your template</label>
-                                        <input class="nameInput" type="text" id="templateName" name="templateName"
-                                            value={templateName} maxlength="512" placeholder="Enter template name"
-                                            disabled={isEditTemplate} oninput={handleInputChange} />
-                                        <p class="char-count tempname-count">{templateName.length}/{maxTempNamelength}
-                                        </p>
-                                    </div>
-                                    <div class="landiv">
-                                        <label for="languageSelect">Select Language</label>
-                                        <select name="language" class="lanInput" onchange={handleInputChange}>
-                                            <template for:each={languageOptions} for:item="option">
-                                                <option key={option.value} value={option.value}
-                                                    selected={option.isSelected}>{option.label}</option>
-                                            </template>
-                                        </select>
-                                    </div>
-
-                                </div>
-                                <template if:true={templateExists}>
-                                    <div style="color: #b3042b;">This name is reserved for sample templates, please
-                                        enter a different one.</div>
-                                </template>
-                            </div>
-
-                            <template if:true={flowBooleanCheck}>
-                                <div class="slds-box slds-theme_default authContent4">
-                                    <div class="tempHead">
-                                        <p class="content">Flow setup</p>
-                                    </div>
-                                    
-                                    <template if:false={isFlowSelected}>
-                                        <div class="chooseDoc">
-                                            <div class="custom-upload-button" onclick={openModal}>
-                                                <label class="upload-label">
-                                                    <img src="/resource/MVWB__uploadDocIcon" alt="Upload Icon" class="upload-icon" />
-                                                    <template if:true={NoFileSelected}>
-                                                        <span>Choose Flow</span>
-                                                    </template>
-                                                    
-                                                </label>
-                                            </div>
-                                        </div>
-                                    
-                                        <template if:true={isModalOpen}>
-                                            <c-flow-preview-model onclose={closeModal} onsubmit={handleFlowSelection}></c-flow-preview-model>
-                                        </template>
-                                        
-                                        
-                                    </template>
-                                    <template if:true={isFlowSelected}>
-                                        <div class="flow-details">
-                                            <p class='flow-name'>{selectedFlow.name}</p>
-                                            <lightning-button label="Preview" title="previewFlow" onclick={modalPreview} class="slds-m-left_x-small"></lightning-button>
-                                            <lightning-button label="Delete" title="deleteFlow" onclick={handleFlowDeleteClick} class="slds-m-left_x-small"></lightning-button>
-                                        </div>
-                                    </template>
-
                                 
+                                <template if:false={isFlowSelected}>
+                                    <div class="chooseDoc">
+                                        <div class="custom-upload-button" onclick={openModal}>
+                                            <label class="upload-label">
+                                                <img src="/resource/MVWB__uploadDocIcon" alt="Upload Icon" class="upload-icon" />
+                                                <template if:true={NoFileSelected}>
+                                                    <span>Choose Flow</span>
+                                                </template>
+                                                
+                                            </label>
+                                        </div>
+                                    </div>
+                                
+                                    <template if:true={isModalOpen}>
+                                        <c-flow-preview-model onclose={closeModal} onsubmit={handleFlowSelection}></c-flow-preview-model>
+                                    </template>
+                                    
+                                    
+                                </template>
+                                <template if:true={isFlowSelected}>
+                                    <div class="flow-details">
+                                        <p class='flow-name'>{selectedFlow.name}</p>
+                                        <lightning-button label="Preview" title="previewFlow" onclick={modalPreview} class="slds-m-left_x-small"></lightning-button>
+                                        <lightning-button label="Delete" title="deleteFlow" onclick={handleFlowDeleteClick} class="slds-m-left_x-small"></lightning-button>
+                                    </div>
+                                </template>
+
+                            
+                            </div>
+                        </template>
+                        <template if:true={isDefault}>
+                            <div class="slds-box slds-theme_default templateContent4">
+                                <div class="tempHead">
+                                    <p class="content">Content</p>
                                 </div>
-                            </template>
-                            <template if:true={isDefault}>
-                                <div class="slds-box slds-theme_default templateContent4">
-                                    <div class="tempHead">
-                                        <p class="content">Content</p>
+                                <div class="descp">
+                                    <p>Fill in the header, body and footer sections of your template.</p>
+                                </div>
+                                <template if:true={showDefaultBtn}>
+                                    <div class="formatted-text3">
+                                        <span class="seg-header">Header</span>
+                                        <span class="seg-opt">Optional</span>
                                     </div>
-                                    <div class="descp">
-                                        <p>Fill in the header, body and footer sections of your template.</p>
+                                    <div class="contentType">
+                                        <lightning-combobox 
+                                                class="conInput"
+                                                name="progress"
+                                                label="Status"
+                                                variant="label-hidden"
+                                                value={selectedContentType}
+                                                placeholder="Select Progress"
+                                                options={typeOptions}
+                                                onchange={handleContentType} ></lightning-combobox>
+
                                     </div>
-                                    <template if:true={showDefaultBtn}>
-                                        <div class="formatted-text3">
-                                            <span class="seg-header">Header</span>
-                                            <span class="seg-opt">Optional</span>
-                                        </div>
-                                        <div class="contentType">
-                                            <lightning-combobox 
-                                                    class="conInput"
-                                                    name="progress"
-                                                    label="Status"
-                                                    variant="label-hidden"
-                                                    value={selectedContentType}
-                                                    placeholder="Select Progress"
-                                                    options={typeOptions}
-                                                    onchange={handleContentType} ></lightning-combobox>
-
-                                        </div>
-                                        <template if:true={addMedia}>
-                                            <div class="add-variable">
-                                                <div class="body-title">
-                                                    <p>Samples for header content</p>
-                                                </div>
-                                                <div class="descp2">
-                                                    <p>To help us review your message template, please add an example
-                                                        for each variable
-                                                        in your body text. Do not use real customer information. Cloud
-                                                        API hosted by
-                                                        Meta reviews template and variable parameters to protect the
-                                                        security and
-                                                        integrity of our services.</p>
-                                                </div>
-                                                <template if:true={isImageFileUploader}>
-                                                    <div class="chooseImage">
-                                                        <p class="uploadlabel">Image</p>
-                                                        <div class="custom-upload-button">
-                                                            <label class="upload-label">
-                                                                <img src="/resource/MVWB__uploadImgIcon" alt="Upload Icon"
-                                                                    class="upload-icon" />
-                                                                <template if:true={NoFileSelected}>
-                                                                    <span>Choose JPG or PNG file</span>
-                                                                </template>
-            
-                                                                <template if:true={isfilename}>
-                                                                    <span>{fileName}</span>
-                                                                </template>
-                                                                <input type="file" accept="image/png, image/jpeg,image/jpg" class="file-input" onchange={handleFileChange} />
-                                                            </label>
-                                                        </div>
-                                                        <template if:true={isfilename}>
-                                                            <div>
-                                                                <lightning-button-icon icon-name="utility:close"
-                                                                    alternative-text="Remove" onclick={handleDelete} class="remove-File">
-                                                                </lightning-button-icon>
-                                                            </div>
-                                                        </template>
-                                                       
-                                                    </div>
-                                                </template>
-                                                <template if:true={isVideoFileUploader}>
-                                                    <div class="chooseVideo">
-                                                        <p class="uploadlabel">Video</p>
-                                                        <div class="custom-upload-button">
-                                                            <label class="upload-label">
-                                                                <img src="/resource/MVWB__uploadvideoIcon" alt="Upload Icon"
-                                                                    class="upload-icon" />
-                                                                <template if:true={NoFileSelected}>
-                                                                    <span>Choose MP4 file</span>
-                                                                </template>
-            
-                                                                <template if:true={isfilename}>
-                                                                    <span>{fileName}</span>
-                                                                </template>
-                                                                <input type="file" accept="video/mp4" class="file-input" onchange={handleFileChange} />
-                                                            </label>
-                                                        </div>
-                                                        <template if:true={isfilename}>
-                                                            <div>
-                                                                <lightning-button-icon icon-name="utility:close"
-                                                                    alternative-text="Remove" onclick={handleDelete} class="remove-File">
-                                                                </lightning-button-icon>
-                                                            </div>
-                                                        </template>
-                                                    </div>
-                                                </template>
-                                                <template if:true={isDocFileUploader}>
-                                                    <div class="chooseDoc">
-                                                        <p class="uploadlabel">Document</p>
-                                                        <div class="custom-upload-button">
-                                                            <label class="upload-label">
-                                                                <img src="/resource/MVWB__uploadDocIcon" alt="Upload Icon"
-                                                                    class="upload-icon" />
-                                                                <template if:true={NoFileSelected}>
-                                                                    <span>Choose PDF file</span>
-                                                                </template>
-                                                                <template if:true={isfilename}>
-                                                                    <span>{fileName}</span>
-                                                                </template>
-                                                                <input type="file" accept="application/pdf" class="file-input" onchange={handleFileChange} />
-                                                            </label>
-                                                        </div>
-                                                        <template if:true={isfilename}>
-                                                            <div>
-                                                                <lightning-button-icon icon-name="utility:close"
-                                                                    alternative-text="Remove" onclick={handleDelete} class="remove-File">
-                                                                </lightning-button-icon>
-                                                            </div>
-                                                        </template>
-                                                    </div>
-                                                </template>
+                                    <template if:true={addMedia}>
+                                        <div class="add-variable">
+                                            <div class="body-title">
+                                                <p>Samples for header content</p>
                                             </div>
-                                        </template>
-                                        
-                                        <template if:true={IsHeaderText}>
-                                            <div class="content-inputs">
-                                                <div class="header-composite">
-                                                    <input class="con" type="text" maxlength="60" name="header"
-                                                        value={header} oninput={handleInputChange}
-                                                        placeholder="Enter text in English" />
-
-                                                    <p class="char-count header-count">{header.length}/{maxShortlength}
-                                                    </p>
-                                                </div>
-                                                <button class="custom-add-button" onclick={addheadervariable}
-                                                    disabled={buttonDisabled}>
-                                                    <lightning-icon icon-name="utility:add" alternative-text="Add"
-                                                        size="x-small" class="left-icon"></lightning-icon>
-                                                    <span class="addvar-span">Add variable</span>
-                                                </button>
+                                            <div class="descp2">
+                                                <p>To help us review your message template, please add an example
+                                                    for each variable
+                                                    in your body text. Do not use real customer information. Cloud
+                                                    API hosted by
+                                                    Meta reviews template and variable parameters to protect the
+                                                    security and
+                                                    integrity of our services.</p>
                                             </div>
-                                            <template if:true={headerError}>
-                                                <div class="slds-text-color_error slds-m-top_small"
-                                                    style="margin-top: 0;">
-                                                    {headerError}
-                                                </div>
-                                            </template>
-
-                                            <template if:true={addHeaderVar}>
-                                                <div class="add-variable">
-                                                    <div class="body-title">
-                                                        <p>Samples for header content</p>
+                                            <template if:true={isImageFileUploader}>
+                                                <div class="chooseImage">
+                                                    <p class="uploadlabel">Image</p>
+                                                    <div class="custom-upload-button">
+                                                        <label class="upload-label">
+                                                            <img src="/resource/MVWB__uploadImgIcon" alt="Upload Icon"
+                                                                class="upload-icon" />
+                                                            <template if:true={NoFileSelected}>
+                                                                <span>Choose JPG or PNG file</span>
+                                                            </template>
+        
+                                                            <template if:true={isfilename}>
+                                                                <span>{fileName}</span>
+                                                            </template>
+                                                            <input type="file" accept="image/png, image/jpeg,image/jpg" class="file-input" onchange={handleFileChange} />
+                                                        </label>
                                                     </div>
-                                                    <div class="descp2">
-                                                        <p>To help us review your message template, please add an
-                                                            example for each
-                                                            variable in your body text. Do not use real customer
-                                                            information. Cloud API
-                                                            hosted by Meta reviews template and variable parameters to
-                                                            protect the
-                                                            security and integrity of our services.</p>
-                                                    </div>
-                                                    <template for:each={header_variables} for:item="varItem"
-                                                        for:index="index">
-                                                        <div key={varItem.id} class="true-div">
-                                                            <p class="var">{varItem.index}</p>
-
-                                                            <select class="slds-select" onchange={handleObjectChange} style="border:0;">
-                                                                <template for:each={availableObjectsWithSelection} for:item="obj">
-                                                                    <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">{obj.label}</option>
-                                                                </template>
-                                                            </select>
-
-                                                            <!-- Dynamic Field Selection -->
-                                                            <select class="field-dropdown field-header-dd dropdown" data-id={varItem.id} onchange={handleFieldChange} style="border:0;">
-                                                                <template for:each={fields} for:item="field">
-                                                                    <option key={field.value} class="header-field-option" value={field.value}>
-                                                                        {field.label}
-                                                                    </option>
-                                                                </template>
-                                                            </select>
-
-                                                            <input type="text" class="alternate-text dropdown" style="border:0;"
-                                                                placeholder="Alternate Text"
-                                                                value={varItem.alternateText} data-id={varItem.id}
-                                                                onchange={handleAlternateTextChange} />
-
-                                                            <div class="closeButton">
-                                                                <lightning-button-icon icon-name="utility:close"
-                                                                    alternative-text="Remove"
-                                                                    onclick={handleHeaderVarRemove} data-index={index}
-                                                                    class="remove-icon">
-                                                                </lightning-button-icon>
-                                                            </div>
-                                                            
+                                                    <template if:true={isfilename}>
+                                                        <div>
+                                                            <lightning-button-icon icon-name="utility:close"
+                                                                alternative-text="Remove" onclick={handleDelete} class="remove-File">
+                                                            </lightning-button-icon>
                                                         </div>
                                                     </template>
-                                                    
+                                                   
                                                 </div>
                                             </template>
-                                        </template>
-                                    </template>
-                                    <div class="body">
-                                        <label for="body" class="body-label">Body</label>
-                                        <textarea name="tempBody" class="body-area" oninput={handleInputChange}
-                                            onkeypress={handleKeyDown} maxlength="1024" rows="4"
-                                            cols="50">{tempBody}</textarea>
-                                        <p class="char-count body-count">{tempBody.length}/{maxTempBodyLength}</p>
-                                    </div>
-                                    <div class="rich-button">
-                                        <template if:true={showEmojis}>
-                                            <div class="emoji-picker-div">
-                                                <template for:each={emojiCategories} for:item="category">
-                                                    <div key={category.category} class="emoji-category-div">
-                                                        <h3 class="catagory-name">{category.category}</h3>
-                                                        <div class="emoji-tray">
-                                                            <template for:each={category.emojis} for:item="item">
-                                                                <div key={item} class="emoji" title={item.description}
-                                                                    onclick={handleEmojiSelection}>{item.emoji}</div>
+                                            <template if:true={isVideoFileUploader}>
+                                                <div class="chooseVideo">
+                                                    <p class="uploadlabel">Video</p>
+                                                    <div class="custom-upload-button">
+                                                        <label class="upload-label">
+                                                            <img src="/resource/MVWB__uploadvideoIcon" alt="Upload Icon"
+                                                                class="upload-icon" />
+                                                            <template if:true={NoFileSelected}>
+                                                                <span>Choose MP4 file</span>
                                                             </template>
-                                                        </div>
+        
+                                                            <template if:true={isfilename}>
+                                                                <span>{fileName}</span>
+                                                            </template>
+                                                            <input type="file" accept="video/mp4" class="file-input" onchange={handleFileChange} />
+                                                        </label>
                                                     </div>
-                                                </template>
-                                            </div>
-                                        </template>
+                                                    <template if:true={isfilename}>
+                                                        <div>
+                                                            <lightning-button-icon icon-name="utility:close"
+                                                                alternative-text="Remove" onclick={handleDelete} class="remove-File">
+                                                            </lightning-button-icon>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template if:true={isDocFileUploader}>
+                                                <div class="chooseDoc">
+                                                    <p class="uploadlabel">Document</p>
+                                                    <div class="custom-upload-button">
+                                                        <label class="upload-label">
+                                                            <img src="/resource/MVWB__uploadDocIcon" alt="Upload Icon"
+                                                                class="upload-icon" />
+                                                            <template if:true={NoFileSelected}>
+                                                                <span>Choose PDF file</span>
+                                                            </template>
+                                                            <template if:true={isfilename}>
+                                                                <span>{fileName}</span>
+                                                            </template>
+                                                            <input type="file" accept="application/pdf" class="file-input" onchange={handleFileChange} />
+                                                        </label>
+                                                    </div>
+                                                    <template if:true={isfilename}>
+                                                        <div>
+                                                            <lightning-button-icon icon-name="utility:close"
+                                                                alternative-text="Remove" onclick={handleDelete} class="remove-File">
+                                                            </lightning-button-icon>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    
+                                    <template if:true={IsHeaderText}>
+                                        <div class="content-inputs">
+                                            <div class="header-composite">
+                                                <input class="con" type="text" maxlength="60" name="header"
+                                                    value={header} oninput={handleInputChange}
+                                                    placeholder="Enter text in English" />
 
-                                        <div class="inner-rich">
-                                            <div class="rich-icon">
-                                                <button class="toolbar-button" onclick={handleEmoji}>
-                                                    <img src="/resource/MVWB__wbSmileIcon" class="custom-icon" />
-                                                </button>
-                                                <template for:each={toolbarButtonsWithClasses} for:item="button">
-                                                    <button key={button.title} class={button.classes}
-                                                        title={button.title} data-format={button.title}
-                                                        onclick={handleFormat}>
-                                                        <img src={button.iconUrl} alt={button.title}
-                                                            class={button.imgClasses} />
-                                                    </button>
-                                                </template>
+                                                <p class="char-count header-count">{header.length}/{LIMITS.maxShortlength}
+                                                </p>
                                             </div>
-
-                                            <button class="custom-button richtext" onclick={addvariable}>
+                                            <button class="custom-add-button" onclick={addheadervariable}
+                                                disabled={buttonDisabled}>
                                                 <lightning-icon icon-name="utility:add" alternative-text="Add"
                                                     size="x-small" class="left-icon"></lightning-icon>
                                                 <span class="addvar-span">Add variable</span>
                                             </button>
                                         </div>
-                                    </div>
-
-                                    <template if:true={addVar}>
-                                        <div class="add-variable">
-                                            <div class="body-title">
-                                                <p>Text for body content</p>
+                                        <template if:true={headerError}>
+                                            <div class="slds-text-color_error slds-m-top_small"
+                                                style="margin-top: 0;">
+                                                {headerError}
                                             </div>
-                                            <div class="descp2">
-                                                <p>To help us review your message template, please add an example for
-                                                    each variable
-                                                    in your body text. Do not use real customer information. Cloud API
-                                                    hosted by
-                                                    Meta reviews template and variable parameters to protect the
-                                                    security and
-                                                    integrity of our services.</p>
+                                        </template>
+
+                                        <template if:true={addHeaderVar}>
+                                            <div class="add-variable">
+                                                <div class="body-title">
+                                                    <p>Samples for header content</p>
+                                                </div>
+                                                <div class="descp2">
+                                                    <p>To help us review your message template, please add an
+                                                        example for each
+                                                        variable in your body text. Do not use real customer
+                                                        information. Cloud API
+                                                        hosted by Meta reviews template and variable parameters to
+                                                        protect the
+                                                        security and integrity of our services.</p>
+                                                </div>
+                                                <template for:each={header_variables} for:item="varItem"
+                                                    for:index="index">
+                                                    <div key={varItem.id} class="true-div">
+                                                        <p class="var">{varItem.index}</p>
+
+                                                        <select class="slds-select" onchange={handleObjectChange} style="border:0;">
+                                                            <template for:each={availableObjectsWithSelection} for:item="obj">
+                                                                <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">{obj.label}</option>
+                                                            </template>
+                                                        </select>
+
+                                                        <!-- Dynamic Field Selection -->
+                                                        <select class="field-dropdown field-header-dd dropdown" data-id={varItem.id} onchange={handleFieldChange} style="border:0;">
+                                                            <template for:each={fields} for:item="field">
+                                                                <option key={field.value} class="header-field-option" value={field.value}>
+                                                                    {field.label}
+                                                                </option>
+                                                            </template>
+                                                        </select>
+
+                                                        <input type="text" class="alternate-text dropdown" style="border:0;"
+                                                            placeholder="Alternate Text"
+                                                            value={varItem.alternateText} data-id={varItem.id}
+                                                            onchange={handleAlternateTextChange} />
+
+                                                        <div class="closeButton">
+                                                            <lightning-button-icon icon-name="utility:close"
+                                                                alternative-text="Remove"
+                                                                onclick={handleHeaderVarRemove} data-index={index}
+                                                                class="remove-icon">
+                                                            </lightning-button-icon>
+                                                        </div>
+                                                        
+                                                    </div>
+                                                </template>
+                                                
                                             </div>
-
-                                            <div class="body-label">
-                                                <p>Body</p>
-                                            </div>
-
-                                            <div class="true-div">
-                                                <p class="var">Select Object for merge fields :</p>
-                                              
-                                                <select class="object-dropdown dropdown" data-name="objectPicklist"
-                                                    onchange={handleObjectChange} value={selectedObject} style="border:0;">
-                                                    <template for:each={availableObjectsWithSelection} for:item="obj">
-                                                        <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">
-                                                            {obj.label}
-                                                        </option>
-                                                    </template>
-                                                </select>
-                                            </div>
-
-                                            <template for:each={computedVariables} for:item="varItem" for:index="index">
-                                                <div key={varItem.id} class="true-div">
-                                                    <p class="var">{varItem.index}</p>
-
-                                                    <select class="field-dropdown field-body-dd dropdown" style="border:0;"
-                                                        data-id={varItem.id} data-index={varItem.index}
-                                                        onchange={handleVarFieldChange}>
-                                                        <template for:each={varItem.options} for:item="option">
-                                                            <option key={option.value} class="body-field-option"
-                                                                value={option.value} selected={option.isSelected}>
-                                                                {option.label}
-                                                            </option>
+                                        </template>
+                                    </template>
+                                </template>
+                                <div class="body">
+                                    <label for="body" class="body-label">Body</label>
+                                    <textarea name="tempBody" class="body-area" oninput={handleInputChange}
+                                        onkeypress={handleKeyDown} maxlength="1024" rows="4"
+                                        cols="50">{tempBody}</textarea>
+                                    <p class="char-count body-count">{tempBody.length}/{LIMITS.maxTempBodyLength}</p>
+                                </div>
+                                <div class="rich-button">
+                                    <template if:true={showEmojis}>
+                                        <div class="emoji-picker-div">
+                                            <template for:each={emojiCategories} for:item="category">
+                                                <div key={category.category} class="emoji-category-div">
+                                                    <h3 class="catagory-name">{category.category}</h3>
+                                                    <div class="emoji-tray">
+                                                        <template for:each={category.emojis} for:item="item">
+                                                            <div key={item} class="emoji" title={item.description}
+                                                                onclick={handleEmojiSelection}>{item.emoji}</div>
                                                         </template>
-                                                    </select>
-
-                                                    <!-- Alternate Text Input -->
-                                                    <input type="text" class="alternate-text dropdown" style="border:0;"
-                                                        placeholder="Alternate Text" value={varItem.alternateText}
-                                                        data-id={varItem.id} data-index={varItem.index}
-                                                        onchange={handleAlternateVarChange} />
-
-                                                    <div>
-                                                        <lightning-button-icon icon-name="utility:close"
-                                                            alternative-text="Remove" onclick={handleVarRemove}
-                                                            data-index={index} class="remove-icon">
-                                                        </lightning-button-icon>
                                                     </div>
                                                 </div>
                                             </template>
-
                                         </div>
                                     </template>
 
-                                    <div class="footer-div">
-                                        <div class="formatted-text3">
-                                            <span class="seg-header">Footer</span>
-                                            <!-- <span class="dot2">•</span> -->
-                                            <span class="seg-opt">Optional</span>
+                                    <div class="inner-rich">
+                                        <div class="rich-icon">
+                                            <button class="toolbar-button" onclick={handleEmoji}>
+                                                <img src="/resource/MVWB__wbSmileIcon" class="custom-icon" />
+                                            </button>
+                                            <template for:each={toolbarButtonsWithClasses} for:item="button">
+                                                <button key={button.title} class={button.classes}
+                                                    title={button.title} data-format={button.title}
+                                                    onclick={handleFormat}>
+                                                    <img src={button.iconUrl} alt={button.title}
+                                                        class={button.imgClasses} />
+                                                </button>
+                                            </template>
                                         </div>
-                                        <div class="footer-input">
-                                            <input class="footerInput" type="text" name="footer" value={footer}
-                                                oninput={handleInputChange} maxlength="60" placeholder="Enter text" />
-                                            <p class="char-count footer-count">{footer.length}/{maxShortlength}</p>
 
-                                        </div>
+                                        <button class="custom-button richtext" onclick={addvariable}>
+                                            <lightning-icon icon-name="utility:add" alternative-text="Add"
+                                                size="x-small" class="left-icon"></lightning-icon>
+                                            <span class="addvar-span">Add variable</span>
+                                        </button>
                                     </div>
                                 </div>
 
-
-                                <template if:true={showDefaultBtn}>
-                                    <div class="slds-box slds-theme_default templateContent5">
-                                        <div class="formatted-text3">
-                                            <span class="seg-btn">Buttons</span>
-                                            <span class="btn-opt">Optional</span>
+                                <template if:true={addVar}>
+                                    <div class="add-variable">
+                                        <div class="body-title">
+                                            <p>Text for body content</p>
                                         </div>
-                                        <div class="descp3">
-                                            <p>Create buttons that let customers respond to your message or take action.
-                                                You can add up to ten buttons. If you add more than three buttons, they
-                                                will appear in a list.</p>
+                                        <div class="descp2">
+                                            <p>To help us review your message template, please add an example for
+                                                each variable
+                                                in your body text. Do not use real customer information. Cloud API
+                                                hosted by
+                                                Meta reviews template and variable parameters to protect the
+                                                security and
+                                                integrity of our services.</p>
                                         </div>
 
-                                        <button class={buttonClass} onclick={toggleDropdown}
-                                            disabled={isButtonDisabled}>
-                                            <lightning-icon icon-name="utility:add" size="x-small"
-                                                alternative-text="Add icon" class="dropdownIcon"></lightning-icon>
-                                            <span class="button-label">Add Button</span>
-                                            <lightning-icon icon-name="utility:down" size="x-small"
-                                                alternative-text="Arrow down icon"
-                                                class="dropdownIcon"></lightning-icon>
-                                        </button>
+                                        <div class="body-label">
+                                            <p>Body</p>
+                                        </div>
+
+                                        <div class="true-div">
+                                            <p class="var">Select Object for merge fields :</p>
+                                          
+                                            <select class="object-dropdown dropdown" data-name="objectPicklist"
+                                                onchange={handleObjectChange} value={selectedObject} style="border:0;">
+                                                <template for:each={availableObjectsWithSelection} for:item="obj">
+                                                    <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">
+                                                        {obj.label}
+                                                    </option>
+                                                </template>
+                                            </select>
+                                        </div>
+
+                                        <template for:each={computedVariables} for:item="varItem" for:index="index">
+                                            <div key={varItem.id} class="true-div">
+                                                <p class="var">{varItem.index}</p>
+
+                                                <select class="field-dropdown field-body-dd dropdown" style="border:0;"
+                                                    data-id={varItem.id} data-index={varItem.index}
+                                                    onchange={handleVarFieldChange}>
+                                                    <template for:each={varItem.options} for:item="option">
+                                                        <option key={option.value} class="body-field-option"
+                                                            value={option.value} selected={option.isSelected}>
+                                                            {option.label}
+                                                        </option>
+                                                    </template>
+                                                </select>
+
+                                                <!-- Alternate Text Input -->
+                                                <input type="text" class="alternate-text dropdown" style="border:0;"
+                                                    placeholder="Alternate Text" value={varItem.alternateText}
+                                                    data-id={varItem.id} data-index={varItem.index}
+                                                    onchange={handleAlternateVarChange} />
+
+                                                <div>
+                                                    <lightning-button-icon icon-name="utility:close"
+                                                        alternative-text="Remove" onclick={handleVarRemove}
+                                                        data-index={index} class="remove-icon">
+                                                    </lightning-button-icon>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                    </div>
+                                </template>
+
+                                <div class="footer-div">
+                                    <div class="formatted-text3">
+                                        <span class="seg-header">Footer</span>
+                                        <!-- <span class="dot2">•</span> -->
+                                        <span class="seg-opt">Optional</span>
+                                    </div>
+                                    <div class="footer-input">
+                                        <input class="footerInput" type="text" name="footer" value={footer}
+                                            oninput={handleInputChange} maxlength="60" placeholder="Enter text" />
+                                        <p class="char-count footer-count">{footer.length}/{LIMITS.maxShortlength}</p>
+
+                                    </div>
+                                </div>
+                            </div>
 
 
-                                        <!-- Dropdown menu -->
-                                        <div class="dropdown-container">
-                                            <template if:true={isDropdownOpen}>
-                                                <div class={dropdownClass} role="menu" aria-haspopup="true">
-                                                    <ul class="custom-dropdown">
-                                                        <!-- Quick Action Section -->
-                                                        <li class="quick-action-head">Quick Reply</li>
-                                                        <template for:each={quickReplyOptions} for:item="option">
-                                                            <li key={option.value} class="dropdown-item"
-                                                                onclick={handleMenuSelect} data-value={option.value}>
-                                                                <img src={option.iconUrl} alt={option.title}
-                                                                    class="dropdown-icon" />
-                                                                <div>
-                                                                    <span class="dropdown-title">{option.title}</span>
-                                                                    <p class="dropdown-description">{option.description}
-                                                                    </p>
-                                                                </div>
-                                                            </li>
+                            <template if:true={showDefaultBtn}>
+                                <div class="slds-box slds-theme_default templateContent5">
+                                    <div class="formatted-text3">
+                                        <span class="seg-btn">Buttons</span>
+                                        <span class="btn-opt">Optional</span>
+                                    </div>
+                                    <div class="descp3">
+                                        <p>Create buttons that let customers respond to your message or take action.
+                                            You can add up to ten buttons. If you add more than three buttons, they
+                                            will appear in a list.</p>
+                                    </div>
+
+                                    <button class={buttonClass} onclick={toggleDropdown}
+                                        disabled={isButtonDisabled}>
+                                        <lightning-icon icon-name="utility:add" size="x-small"
+                                            alternative-text="Add icon" class="dropdownIcon"></lightning-icon>
+                                        <span class="button-label">Add Button</span>
+                                        <lightning-icon icon-name="utility:down" size="x-small"
+                                            alternative-text="Arrow down icon"
+                                            class="dropdownIcon"></lightning-icon>
+                                    </button>
+
+
+                                    <!-- Dropdown menu -->
+                                    <div class="dropdown-container">
+                                        <template if:true={isDropdownOpen}>
+                                            <div class={dropdownClass} role="menu" aria-haspopup="true">
+                                                <ul class="custom-dropdown">
+                                                    <!-- Quick Action Section -->
+                                                    <li class="quick-action-head">Quick Reply</li>
+                                                    <template for:each={quickReplyOptions} for:item="option">
+                                                        <li key={option.value} class="dropdown-item"
+                                                            onclick={handleMenuSelect} data-value={option.value}>
+                                                            <img src={option.iconUrl} alt={option.title}
+                                                                class="dropdown-icon" />
+                                                            <div>
+                                                                <span class="dropdown-title">{option.title}</span>
+                                                                <p class="dropdown-description">{option.description}
+                                                                </p>
+                                                            </div>
+                                                        </li>
+                                                    </template>
+
+                                                    <!-- Call Action Section -->
+                                                    <li class="dropdown-section-header">Call to Action</li>
+                                                    <template for:each={callToActionOptions} for:item="option">
+                                                        <li key={option.value} class="dropdown-item"
+                                                            onclick={handleMenuSelect} data-value={option.value}>
+                                                            <img src={option.iconUrl} alt={option.title}
+                                                                class="dropdown-icon" />
+                                                            <div>
+                                                                <span class="dropdown-title">{option.title}</span>
+                                                                <p class="dropdown-description">{option.description}
+                                                                </p>
+                                                            </div>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <template if:true={createButton}>
+                                        <div class="true-btn">
+                                            <div class="formatted-text3">
+                                                <span class="seg-header">Call to action</span>
+                                                <!-- <span class="dot2">•</span> -->
+                                                <span class="seg-opt">Optional</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="parentCreateBtn">
+                                            <template for:each={buttonList} for:item="button" for:index="index">
+                                                <div key={button.id} class="createbtn">
+                                                    <!-- <template if:true={showCommonFields}> -->
+                                                    <div class="typeaction">
+                                                        <label for="action" class="label">Type of action</label>
+                                                        <lightning-combobox variant="label-hidden"
+                                                            class="actionInput" data-index={index}
+                                                            name="selectedActionType" disabled="true"
+                                                            value={button.selectedActionType}
+                                                            options={typeactionOption}
+                                                            onchange={handleInputChange}></lightning-combobox>
+
+                                                    </div>
+
+                                                    <!-- Button Text Input -->
+                                                    <div class="btntxt">
+                                                        <label for="btn-text">Button Text</label>
+                                                        <div class="count-input">
+                                                            <input class="text-btn" type="text" name="btntext"
+                                                                value={button.btntext} maxlength="25"
+                                                                data-index={index} oninput={handleInputChange}
+                                                                disabled={button.isDisabled} />
+                                                            <p class="char-count btn-count">
+                                                                {button.btntext.length}/{LIMITS.maxBtnTxt}</p>
+                                                        </div>
+                                                        <template if:true={button.hasError}>
+                                                            <p class="slds-text-color_error">{button.errorMessage}
+                                                            </p>
                                                         </template>
+                                                    </div>
+                                                    <!-- </template> -->
 
-                                                        <!-- Call Action Section -->
-                                                        <li class="dropdown-section-header">Call to Action</li>
-                                                        <template for:each={callToActionOptions} for:item="option">
-                                                            <li key={option.value} class="dropdown-item"
-                                                                onclick={handleMenuSelect} data-value={option.value}>
-                                                                <img src={option.iconUrl} alt={option.title}
-                                                                    class="dropdown-icon" />
-                                                                <div>
-                                                                    <span class="dropdown-title">{option.title}</span>
-                                                                    <p class="dropdown-description">{option.description}
-                                                                    </p>
-                                                                </div>
-                                                            </li>
-                                                        </template>
-                                                    </ul>
+                                                    <!-- 'Visit Website' specific fields -->
+                                                    <template if:true={button.isVisitSite}>
+                                                        <div class="urltype">
+                                                            <label for="urltype" class="label">URL type</label>
+                                                            <lightning-combobox variant="label-hidden"
+                                                                class="urlInput" name="selectedUrlType"
+                                                                data-index={index} value={button.selectedUrlType}
+                                                                options={urlType}
+                                                                onchange={handleInputChange}></lightning-combobox>
+
+                                                        </div>
+                                                        <div class="webUrl">
+                                                            <label for="web-title">Website URL</label>
+                                                            <input class="web-url" type="text" name="webURL"
+                                                                value={button.webURL} maxlength="2000"
+                                                                data-index={index} oninput={handleInputChange}
+                                                                required />
+                                                            <p class="char-count web-count">
+                                                                {button.webURL.length}/{LIMITS.maxWebsiteUrl}</p>
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- 'Call Phone Number' specific fields -->
+                                                    <template if:true={button.isCallPhone}>
+                                                        <div class="urltype">
+                                                            <label for="concode" class="label">Country</label>
+                                                            <lightning-combobox variant="label-hidden"
+                                                                class="urlInput" name="selectedCountryType"
+                                                                data-index={index}
+                                                                value={button.selectedCountryType}
+                                                                options={countryType} onchange={handleInputChange}
+                                                                required></lightning-combobox>
+
+                                                        </div>
+                                                        <div class="btntxt">
+                                                            <label for="phonenum">Phone Number</label>
+                                                            <div class="count-input">
+                                                                <input class="text-btn" type="text" name="phonenum"
+                                                                    value={button.phonenum} maxlength="20"
+                                                                    data-index={index} oninput={handleInputChange}
+                                                                    required />
+                                                                <p class="char-count btn-count">
+                                                                    {button.phonenum.length}/{LIMITS.maxPhonetxt}</p>
+                                                            </div>
+
+                                                        </div>
+
+                                                    </template>
+
+                                                    <!-- 'Copy Offer Code' specific fields -->
+                                                    <template if:true={button.isOfferCode}>
+                                                        <div class="btntxt">
+                                                            <label for="offercode">Offer Code</label>
+                                                            <div class="count-input">
+                                                                <input class="text-btn" type="text" name="offercode"
+                                                                    value={button.offercode} maxlength="15"
+                                                                    data-index={index} oninput={handleInputChange}
+                                                                    required />
+                                                                <p class="char-count btn-count">
+                                                                    {button.offercode.length}/{LIMITS.maxCodetxt}</p>
+                                                            </div>
+
+                                                        </div>
+                                                    </template>
+                                                    <div class="remove-btn">
+                                                        <button type="button" class="remove-button"
+                                                            onclick={handleRemove} data-index={index}>
+                                                            <lightning-icon icon-name="utility:delete"
+                                                                size="x-small" alternative-text="Delete icon"
+                                                                class="remove-icon"></lightning-icon>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </template>
                                         </div>
 
-                                        <template if:true={createButton}>
-                                            <div class="true-btn">
-                                                <div class="formatted-text3">
-                                                    <span class="seg-header">Call to action</span>
-                                                    <!-- <span class="dot2">•</span> -->
-                                                    <span class="seg-opt">Optional</span>
-                                                </div>
+                                        <template if:true={isVisitSite}>
+                                            <div class="consent">
+                                                <lightning-input type="checkbox" name="isCheckboxChecked"
+                                                    checked={isCheckboxChecked}
+                                                    onchange={handleInputChange}></lightning-input>
+                                                <p style="font-size: 15px;">You direct Meta to use link tracking to
+                                                    report website clicks. When this box is unticked, you will not
+                                                    see insights for website clicks.</p>
                                             </div>
+                                        </template>
+                                    </template>
 
-                                            <div class="parentCreateBtn">
-                                                <template for:each={buttonList} for:item="button" for:index="index">
-                                                    <div key={button.id} class="createbtn">
-                                                        <!-- <template if:true={showCommonFields}> -->
+                                    <template if:true={isCustom}>
+                                        <div class="true-btn">
+                                            <div class="formatted-text3">
+                                                <span class="seg-header">Quick reply</span>
+                                                <span class="seg-opt">Optional</span>
+                                            </div>
+                                            <div class="customtext">
+                                                <template for:each={customButtonList} for:item="button"
+                                                    for:index="index">
+                                                    <div key={button.id} class="quicktext">
                                                         <div class="typeaction">
-                                                            <label for="action" class="label">Type of action</label>
+                                                            <label for="action" class="label">Type</label>
                                                             <lightning-combobox variant="label-hidden"
                                                                 class="actionInput" data-index={index}
-                                                                name="selectedActionType" disabled="true"
-                                                                value={button.selectedActionType}
-                                                                options={typeactionOption}
-                                                                onchange={handleInputChange}></lightning-combobox>
-
+                                                                disabled="true" value={button.selectedCustomType}
+                                                                options={customOption}
+                                                                onchange={handleCustom}></lightning-combobox>
                                                         </div>
 
-                                                        <!-- Button Text Input -->
                                                         <div class="btntxt">
-                                                            <label for="btn-text">Button Text</label>
+                                                            <label for="btn-text">Button text</label>
                                                             <div class="count-input">
-                                                                <input class="text-btn" type="text" name="btntext"
-                                                                    value={button.btntext} maxlength="25"
-                                                                    data-index={index} oninput={handleInputChange}
-                                                                    disabled={button.isDisabled} />
+                                                                <input class="text-btn custom-btn" type="text"
+                                                                    name="Cbtntext" value={button.Cbtntext}
+                                                                    disabled={button.isDisabled} maxlength="25"
+                                                                    data-index={index} oninput={handleCustomText} />
                                                                 <p class="char-count btn-count">
-                                                                    {button.btntext.length}/{maxBtnTxt}</p>
+                                                                    {button.Cbtntext.length}/{LIMITS.maxBtnTxt}</p>
                                                             </div>
+
                                                             <template if:true={button.hasError}>
-                                                                <p class="slds-text-color_error">{button.errorMessage}
-                                                                </p>
+                                                                <p class="slds-text-color_error">
+                                                                    {button.errorMessage}</p>
                                                             </template>
                                                         </div>
-                                                        <!-- </template> -->
 
-                                                        <!-- 'Visit Website' specific fields -->
-                                                        <template if:true={button.isVisitSite}>
-                                                            <div class="urltype">
-                                                                <label for="urltype" class="label">URL type</label>
-                                                                <lightning-combobox variant="label-hidden"
-                                                                    class="urlInput" name="selectedUrlType"
-                                                                    data-index={index} value={button.selectedUrlType}
-                                                                    options={urlType}
-                                                                    onchange={handleInputChange}></lightning-combobox>
-
-                                                            </div>
-                                                            <div class="webUrl">
-                                                                <label for="web-title">Website URL</label>
-                                                                <input class="web-url" type="text" name="webURL"
-                                                                    value={button.webURL} maxlength="2000"
-                                                                    data-index={index} oninput={handleInputChange}
-                                                                    required />
-                                                                <p class="char-count web-count">
-                                                                    {button.webURL.length}/{maxWebsiteUrl}</p>
-                                                            </div>
-                                                        </template>
-
-                                                        <!-- 'Call Phone Number' specific fields -->
-                                                        <template if:true={button.isCallPhone}>
-                                                            <div class="urltype">
-                                                                <label for="concode" class="label">Country</label>
-                                                                <lightning-combobox variant="label-hidden"
-                                                                    class="urlInput" name="selectedCountryType"
-                                                                    data-index={index}
-                                                                    value={button.selectedCountryType}
-                                                                    options={countryType} onchange={handleInputChange}
-                                                                    required></lightning-combobox>
-
-                                                            </div>
+                                                        <template if:true={button.showFooterText}>
                                                             <div class="btntxt">
-                                                                <label for="phonenum">Phone Number</label>
-                                                                <div class="count-input">
-                                                                    <input class="text-btn" type="text" name="phonenum"
-                                                                        value={button.phonenum} maxlength="20"
-                                                                        data-index={index} oninput={handleInputChange}
-                                                                        required />
-                                                                    <p class="char-count btn-count">
-                                                                        {button.phonenum.length}/{maxPhonetxt}</p>
-                                                                </div>
-
-                                                            </div>
-
-                                                        </template>
-
-                                                        <!-- 'Copy Offer Code' specific fields -->
-                                                        <template if:true={button.isOfferCode}>
-                                                            <div class="btntxt">
-                                                                <label for="offercode">Offer Code</label>
-                                                                <div class="count-input">
-                                                                    <input class="text-btn" type="text" name="offercode"
-                                                                        value={button.offercode} maxlength="15"
-                                                                        data-index={index} oninput={handleInputChange}
-                                                                        required />
-                                                                    <p class="char-count btn-count">
-                                                                        {button.offercode.length}/{maxCodetxt}</p>
-                                                                </div>
-
+                                                                <label for="btn-text">Footer text</label>
+                                                                <input class="text-btn" type="text" disabled
+                                                                    name="footertext" data-index={index}
+                                                                    value='Not interested? Tap Stop promotion' />
                                                             </div>
                                                         </template>
+
                                                         <div class="remove-btn">
                                                             <button type="button" class="remove-button"
-                                                                onclick={handleRemove} data-index={index}>
+                                                                onclick={handleRemoveCustom} data-index={index}>
                                                                 <lightning-icon icon-name="utility:delete"
                                                                     size="x-small" alternative-text="Delete icon"
                                                                     class="remove-icon"></lightning-icon>
@@ -920,444 +681,376 @@
                                                         </div>
                                                     </div>
                                                 </template>
-                                            </div>
-
-                                            <template if:true={isVisitSite}>
-                                                <div class="consent">
-                                                    <lightning-input type="checkbox" name="isCheckboxChecked"
-                                                        checked={isCheckboxChecked}
-                                                        onchange={handleInputChange}></lightning-input>
-                                                    <p style="font-size: 15px;">You direct Meta to use link tracking to
-                                                        report website clicks. When this box is unticked, you will not
-                                                        see insights for website clicks.</p>
-                                                </div>
-                                            </template>
-                                        </template>
-
-                                        <template if:true={isCustom}>
-                                            <div class="true-btn">
-                                                <div class="formatted-text3">
-                                                    <span class="seg-header">Quick reply</span>
-                                                    <span class="seg-opt">Optional</span>
-                                                </div>
-                                                <div class="customtext">
-                                                    <template for:each={customButtonList} for:item="button"
-                                                        for:index="index">
-                                                        <div key={button.id} class="quicktext">
-                                                            <div class="typeaction">
-                                                                <label for="action" class="label">Type</label>
-                                                                <lightning-combobox variant="label-hidden"
-                                                                    class="actionInput" data-index={index}
-                                                                    disabled="true" value={button.selectedCustomType}
-                                                                    options={customOption}
-                                                                    onchange={handleCustom}></lightning-combobox>
-                                                            </div>
-
-                                                            <div class="btntxt">
-                                                                <label for="btn-text">Button text</label>
-                                                                <div class="count-input">
-                                                                    <input class="text-btn custom-btn" type="text"
-                                                                        name="Cbtntext" value={button.Cbtntext}
-                                                                        disabled={button.isDisabled} maxlength="25"
-                                                                        data-index={index} oninput={handleCustomText} />
-                                                                    <p class="char-count btn-count">
-                                                                        {button.Cbtntext.length}/{maxBtnTxt}</p>
-                                                                </div>
-
-                                                                <template if:true={button.hasError}>
-                                                                    <p class="slds-text-color_error">
-                                                                        {button.errorMessage}</p>
-                                                                </template>
-                                                            </div>
-
-                                                            <template if:true={button.showFooterText}>
-                                                                <div class="btntxt">
-                                                                    <label for="btn-text">Footer text</label>
-                                                                    <input class="text-btn" type="text" disabled
-                                                                        name="footertext" data-index={index}
-                                                                        value='Not interested? Tap Stop promotion' />
-                                                                </div>
-                                                            </template>
-
-                                                            <div class="remove-btn">
-                                                                <button type="button" class="remove-button"
-                                                                    onclick={handleRemoveCustom} data-index={index}>
-                                                                    <lightning-icon icon-name="utility:delete"
-                                                                        size="x-small" alternative-text="Delete icon"
-                                                                        class="remove-icon"></lightning-icon>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </template>
-                                                    <template if:true={isStopMarketing}>
-                                                        <div class="consent">
-                                                            <lightning-input type="checkbox"
-                                                                name="input2"></lightning-input>
-                                                            <p style="font-size: 15px;">I understand that it's {companyName}
-                                                                responsibility to stop sending marketing
-                                                                messages to customers who opt out.</p>
-                                                        </div>
-                                                    </template>
-                                                </div>
-                                            </div>
-                                        </template>
-
-                                    </div>
-                                </template>
-                            </template>
-                            
-                             <template if:true={ifAuthentication}>
-                                <div class="slds-box slds-theme_default authContent1">
-                                    <div class="tempHead">
-                                        <p class="content">Code delivery setup</p>
-                                    </div>
-                                    <div class="descp">
-                                        <p>Choose how customers send the code from WhatsApp to your app. Edits to this section won't require review or count towards edit limits. Learn how to send authentication message templates.</p>
-                                    </div>
-                                   <div>
-                                        <div class="radio-group">
-                                            <div class="radio-item">
-                                                <div class="radio">
-                                                    <lightning-input type="radio" class="radio-name" name="authMethod" value="zero_tap" onchange={handleChange} checked></lightning-input>
-                                                    <p class="radio-label">Zero-tap auto-fill</p>
-                                                </div>
-                                            
-                                                <p class="description">This is recommended as the easiest option for your customers. Zero-tap will automatically send code without requiring your customer to tap a button. An auto-fill or copy code message will be sent if zero-tap and auto-fill aren't possible.</p>
-                                            </div>
-                                            <template if:true={authZeroTab}>
-                                                <div class="consentZero">
-                                                    <lightning-input type="checkbox" class="checkbox" name="isautofillChecked" checked={isautofillChecked} onchange={handleInputChange}></lightning-input>
-                                                    <p style="font-size: 14px;">By selecting zero-tap, I understand that {companyName} use of zero-tap authentication is subject to the WhatsApp Business Terms of Service . It's {companyName} responsibility to ensure that its customers expect that the code will be automatically filled in on their behalf when they choose to receive the zero-tap code through WhatsApp.</p>
-                                                </div>
-                                            </template>
-                                            <div class="radio-item">
-                                                <div class="radio">
-                                                    <lightning-input type="radio" class="radio-name" name="authMethod" value="ONE_TAP" onchange={handleChange}></lightning-input>
-                                                    <p class="radio-label">One-tap auto-fill</p>
-                                                </div>
-                                            
-                                                <p class="description">The code sends to your app when customers tap the button. A copy code message will be sent if auto-fill isn't possible.
-                                                </p>
-                                            </div>
-                                            <div class="radio-item">
-                                                <div class="radio">
-                                                    <lightning-input type="radio" class="radio-name" name="authMethod" value="COPY_CODE" onchange={handleChange}></lightning-input>
-                                                    <p class="radio-label">Copy code</p>
-                                                </div>
-                                                <p class="description">Basic authentication with quick setup. Your customers copy and paste the code into your app.
-                                                </p>
+                                                <template if:true={isStopMarketing}>
+                                                    <div class="consent">
+                                                        <lightning-input type="checkbox"
+                                                            name="input2"></lightning-input>
+                                                        <p style="font-size: 15px;">I understand that it's {companyName}
+                                                            responsibility to stop sending marketing
+                                                            messages to customers who opt out.</p>
+                                                    </div>
+                                                </template>
                                             </div>
                                         </div>
-                                    
-                                   </div>
+                                    </template>
+
                                 </div>
-                                <template if:true={isAppSetup}>
-                                    <div class="slds-box slds-theme_default authContent5">
-                                        <div class="tempHead">
-                                            <p class="content">App setup</p>
-                                        </div>
-                                        <div class="descp">
-                                            <p>You can add up to 5 apps.</p>
-                                        </div>
-                                        <template for:each={packages} for:item="app" for:index="index">
-            
-                                            <div class="authButtons" key={app.id}>
-                                                    <div class="btntxt" style="margin-right: 1.5rem;">
-                                                        <label for="btn-text">Package name</label>
-                                                        <input class="text-btn" type="text" name="packname" if:true={app}
-                                                            value={app.packagename} 
-                                                            placeholder="Enter text (com.example.myapplication)"
-                                                            maxlength="224" 
-                                                            data-index={index} 
-                                                            oninput={handlePackagename} />
-                                                        <p class="char-count btn-count">{app.packagename.length}/{maxPackTxt}</p>
-                                                        
-                                                    </div>
-                                                    <div class="btntxt" style="width: 50%;">   
-                                                        <label for="btn-text">App signature hash</label>
-                                                        <input class="text-btn" type="text" name="signature" 
-                                                            value={app.signature} 
-                                                            placeholder="Enter text"
-                                                            maxlength="11" 
-                                                            data-index={index}
-                                                            oninput={handleSignaturehash} />
-                                                        <p class="char-count btn-count">{app.signature.length}/{maxHashTxt}</p>
-                                                    </div>
-                                                    <template if:true={showRemoveButton}>
-                                                        <div>
-                                                            <lightning-button-icon icon-name="utility:close"
-                                                                alternative-text="Remove" onclick={removePackageApp}
-                                                                data-index={index} class="remove-icon">
-                                                            </lightning-button-icon>
-                                                        </div>
-                                                    </template>
-                                                   
-                                            </div>  
-                                        </template>
-                                        <template if:true={appError}>
-                                            <div class="error">
-                                                <template for:each={uniqueErrorMessages.packageErrors} for:item="errorMessage" for:index="index">
-                                                    <div class="bullet-point" key={errorMessage}>
-                                                        <span class="bullet-circle"></span>
-                                                        <p class="errorMSG">{errorMessage}</p>
-                                                    </div>
-                                                </template>
-                                
-                                                <template for:each={uniqueErrorMessages.signatureErrors} for:item="errorMessage" for:index="index">
-                                                    <div class="bullet-point" key={errorMessage}>
-                                                        <span class="bullet-circle"></span>
-                                                        <p class="errorMSG">{errorMessage}</p>
-                                                    </div>
-                                                </template>
+                            </template>
+                        </template>
+                        
+                         <template if:true={ifAuthentication}>
+                            <div class="slds-box slds-theme_default authContent1">
+                                <div class="tempHead">
+                                    <p class="content">Code delivery setup</p>
+                                </div>
+                                <div class="descp">
+                                    <p>Choose how customers send the code from WhatsApp to your app. Edits to this section won't require review or count towards edit limits. Learn how to send authentication message templates.</p>
+                                </div>
+                               <div>
+                                    <div class="radio-group">
+                                        <div class="radio-item">
+                                            <div class="radio">
+                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="zero_tap" onchange={handleChange} checked={isZeroTapSelected}></lightning-input>
+                                                <p class="radio-label">Zero-tap auto-fill</p>
                                             </div>
-                                        </template> 
-            
-                                        <button class="custom-button appbtn" onclick={addPackageApp}>
-                                            <span class="appSpan">Add another app</span>
-                                        </button>
-                                    </div>
-                                </template>
-                                    <div class="slds-box slds-theme_default authContent2">
-                                        <div class="tempHead">
-                                            <p class="content">Content</p>
+                                        
+                                            <p class="description">This is recommended as the easiest option for your customers. Zero-tap will automatically send code without requiring your customer to tap a button. An auto-fill or copy code message will be sent if zero-tap and auto-fill aren't possible.</p>
                                         </div>
-                                        <div class="descp">
-                                            <p>Content for authentication message templates can't be edited. You can add additional content from the options below.
+                                        <template if:true={authZeroTab}>
+                                            <div class="consentZero">
+                                                <lightning-input type="checkbox" class="checkbox" name="isautofillChecked" checked={isautofillChecked} onchange={handleInputChange}></lightning-input>
+                                                <p style="font-size: 14px;">By selecting zero-tap, I understand that {companyName} use of zero-tap authentication is subject to the WhatsApp Business Terms of Service . It's {companyName} responsibility to ensure that its customers expect that the code will be automatically filled in on their behalf when they choose to receive the zero-tap code through WhatsApp.</p>
+                                            </div>
+                                        </template>
+                                        <div class="radio-item">
+                                            <div class="radio">
+                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="ONE_TAP" onchange={handleChange} checked={isOneTapSelected}></lightning-input>
+                                                <p class="radio-label">One-tap auto-fill</p>
+                                            </div>
+                                        
+                                            <p class="description">The code sends to your app when customers tap the button. A copy code message will be sent if auto-fill isn't possible.
                                             </p>
                                         </div>
-                                        <lightning-checkbox-group
-                                            options={contentOption}
-                                            name="selectContent"
-                                            value={selectContent}
-                                            onchange={handleInputChange}>
-                                        </lightning-checkbox-group>
-            
-                                        <template if:true={isExpiration}>
-                                            <div class="expiration">
-                                                <label style="font-weight: bold;">Expires in </label>
-                                                <input type="number" name="expirationTime" value={expirationTime} min="1" style=" width: min-content;padding: 0.5rem;border-radius: 4px;" class="expiretime" onchange={handleInputChange} />
+                                        <div class="radio-item">
+                                            <div class="radio">
+                                                <lightning-input type="radio" class="radio-name" name="authMethod" value="COPY_CODE" onchange={handleChange} checked={isCopyCodeSelected}></lightning-input>
+                                                <p class="radio-label">Copy code</p>
                                             </div>
-                                        </template>                            
+                                            <p class="description">Basic authentication with quick setup. Your customers copy and paste the code into your app.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div class="slds-box slds-theme_default authContent3">
-                                        <div class="tempHead">
-                                            <p class="content">Buttons</p>
-                                        </div>
-                                        <div class="descp">
-                                            <p>You can customise the button text for both auto-fill and copy code. Even when zero-tap is turned on, buttons are still needed for the backup code delivery method.</p>
-                                        </div>
-                                        <div class="authButtons">
-                                        <template if:true={showAutofill}>
-                                                <div class="btntxt" style="margin-right: 1.5rem;">
-                                                    <label for="btn-text">Auto-fill</label>
-                                                    <input class="text-btn" type="text" name="autofilLabel" value={autofilLabel}
-                                                        maxlength="25" oninput={handleInputChange} />
-                                                    <p class="char-count btn-count">{autofilLabel.length}/{maxBtnTxt}</p>
-                                                </div>
-                                        </template>
-                                            <div class="btntxt">
-                                                <label for="btn-text">Copy Code</label>
-                                                <input class="text-btn" type="text" name="autoCopyCode" value={autoCopyCode}
-                                                    maxlength="25" oninput={handleInputChange} />
-                                                <p class="char-count btn-count">{autoCopyCode.length}/{maxBtnTxt}</p>
-                                            </div>
-                                        </div>
-                                        
-                                    </div>
-                            </template>
-                            <template if:true={showMsgValidity}> 
-                                <div class="slds-box slds-theme_default authContent4">
+                                
+                               </div>
+                            </div>
+                            <template if:true={isAppSetup}>
+                                <div class="slds-box slds-theme_default authContent5">
                                     <div class="tempHead">
-                                        <p class="content">Message validity period
-                                        </p>
+                                        <p class="content">App setup</p>
                                     </div>
                                     <div class="descp">
-                                        <p>It's recommended to set a custom validity period that your authentication message must be delivered by before it expires. If a message is not delivered within this time frame, you will not be charged and your customer will not see the message.</p>
+                                        <p>You can add up to 5 apps.</p>
                                     </div>
-                                    <div class="tempHead">
-                                        <p class="content">Set custom validity period for your message
-                                        </p>
-                                    </div>
-                                    <div class="descp toggle">
-                                        <p>If you don't set a custom validity period, the standard 30 days WhatsApp message validity period will be applied.
-                                        </p>
-                                        <lightning-input type="toggle" name="toggle" onchange={handleInputChange}></lightning-input>
+                                    <template for:each={packages} for:item="app" for:index="index">
         
-                                    </div>
-                                    <template if:true={isFeatureEnabled}>   
-                                        <div class="tempHead" style="    font-size: 19px;margin-bottom:0.5rem;">
-                                            <p class="content">Validity period</p>
-                                        </div>
-                                        <!-- <lightning-combobox variant="label-hidden" class="urlInput" name="selectedTime" value={selectedTime}
-                                                                options={expireTime}
-                                                            onchange={handleInputChange}></lightning-combobox> -->
-                                        <lightning-combobox
-                                        variant="label-hidden"
-                                        class="urlInput"
-                                        name="selectedTime"
-                                        value={selectedTime}
-                                        options={expireTime}
-                                        onchange={handleInputChange}>
-                                    </lightning-combobox>
-
+                                        <div class="authButtons" key={app.id}>
+                                                <div class="btntxt" style="margin-right: 1.5rem;">
+                                                    <label for="btn-text">Package name</label>
+                                                    <input class="text-btn" type="text" name="packname" if:true={app}
+                                                        value={app.packagename} 
+                                                        placeholder="Enter text (com.example.myapplication)"
+                                                        maxlength="224" 
+                                                        data-index={index} 
+                                                        oninput={handlePackagename} />
+                                                    <p class="char-count btn-count">{app.packagename.length}/{LIMITS.maxPackTxt}</p>
+                                                    
+                                                </div>
+                                                <div class="btntxt" style="width: 50%;">   
+                                                    <label for="btn-text">App signature hash</label>
+                                                    <input class="text-btn" type="text" name="signature" 
+                                                        value={app.signature} 
+                                                        placeholder="Enter text"
+                                                        maxlength="11" 
+                                                        data-index={index}
+                                                        oninput={handleSignaturehash} />
+                                                    <p class="char-count btn-count">{app.signature.length}/{LIMITS.maxHashTxt}</p>
+                                                </div>
+                                                <template if:true={showRemoveButton}>
+                                                    <div>
+                                                        <lightning-button-icon icon-name="utility:close"
+                                                            alternative-text="Remove" onclick={removePackageApp}
+                                                            data-index={index} class="remove-icon">
+                                                        </lightning-button-icon>
+                                                    </div>
+                                                </template>
+                                               
+                                        </div>  
                                     </template>
-                                
-                                </div>
-                             </template>
-                            <div class="slds-box slds-theme_default templatebtn">
-                                <lightning-button variant="brand-outline" onclick={handlePrevclick} label="Previous"
-                                    class="slds-m-left_x-small"></lightning-button>
-                                <lightning-button variant="brand" label="Submit for Review" onclick={handleConfirm} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
-                            </div>
-                        </div>
-                        <div class="creattempdiv3">
-                                <div class="slds-box slds-theme_default templatePreviewmain1">
-                                    <div class="templateheadWP">
-                                        <p class="templatetextWP"><b>Template Preview</b></p>
-                                    </div>
-                                    <div class="PreviewtemplateWP">
-
-                                     
-                                        <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
-                                            <template if:true={IsHeaderText}>
-                                                <div class="TextHeadingWP">
-                                                    <p>{header}</p>
+                                    <template if:true={appError}>
+                                        <div class="error">
+                                            <template for:each={uniqueErrorMessages.packageErrors} for:item="errorMessage" for:index="index">
+                                                <div class="bullet-point" key={errorMessage}>
+                                                    <span class="bullet-circle"></span>
+                                                    <p class="errorMSG">{errorMessage}</p>
                                                 </div>
                                             </template>
-                                            <template if:true={isImageFile}>
-                                                <div class="imagedivWP">
-                                                    <img src={imageUploadPreview} alt="">
-                                                </div>
-                                            </template>
-                                            <template if:true={isImgSelected}>
-                                                <div>
-                                                    <img src={filePreview} alt="File Preview" style="max-width: 100%; height: auto;" />
-                                                </div>
-                                            </template>
-                                            <template if:true={isVideoFile}>
-                                                <div class="imagedivWP">
-                                                    <img src={tempVideoIcon} alt="">
-                                                </div>
-                                            </template>
-                                           
-                                            <template if:true={isVidSelected}>
-                                                 <video width="100%" height="150" controls>
-                                                    <source src={filePreview} type="video/mp4">
-                                                    Your browser does not support the video tag.
-                                                 </video>
-                                            </template>
-                                            <template if:true={isDocFile}>
-                                                <div class="imagedivWP">
-                                                    <img src={docUploadPreviewImg} alt="">
-                                                </div>
-                                             </template>
-                                             
-                                             <template if:true={isDocSelected}>
-                                                <div class="imagedivWP" style="position: relative;">
-                                                    <img src={NoPreviewAvailableImg} alt="no preview available">
-                                                </div>
-                                             </template>
-                                             <template if:true={isLocation}>
-                                                <div class="imagedivWP">
-                                                    <img src={tempLocationIcon} alt="">
-                                                </div>
-                                                <div class="locationMerge">
-                                                    <p class="nameMerge">{locationNameMerge}</p>
-                                                    <p class="addressMerge">{locationAddressMerge}</p>
-                                                </div>
-                                             </template>
-                                            <template if:true={ifUtilty}>
-                                                <div class="TextBodyWP">
-                                                    <p>{orderStatusBody}</p>
-                                                </div>
-                                            </template>
-                                            <template if:true={isDefault}>
-            
-                                                <div class="TextBodyWP">
-                                                    <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
-                                                </div>
-            
-                                                <div class="textfooterWP">
-                                                    <p class="pfooterWP">{footer}</p>
-                                                </div>
-                                            </template>
-            
-                                            <template if:true={ifAuthentication}>
-                                                <div class="TextBodyWP">
-                                                    <p><strong>{authPrevBody}</strong> is your verification code.</p>
-                                                    <template if:true={prevContent}>
-                                                        <p>For your security, do not share this code.</p>
-                                                    </template>
-                                                </div>
-                                                <template if:true={isExpiration}>
-                                                    <div class="textfooterWP">
-                                                        <p class="pfooterWP">This code expires in {expirationTime} seconds.</p>
-                                                    </div> 
-                                                </template>                                
-                                            </template>
-                                            <!-- <template if:true={isFlowMarketing}>
-                                                
-                                            </template>
-                                          
-                                            <template if:true={isFlowUtility}>
-                                                <iframe src={flowPreviewURL} width="430" height="800" ></iframe>
-                                            </template> -->
-            
-                                            <div class="TextTimeWP">
-                                                <p class="timefooterWP">11:59</p>
-                                            </div>
-                                            <!-- Remeber to change -->
-                                            
-            
-                                            
                             
+                                            <template for:each={uniqueErrorMessages.signatureErrors} for:item="errorMessage" for:index="index">
+                                                <div class="bullet-point" key={errorMessage}>
+                                                    <span class="bullet-circle"></span>
+                                                    <p class="errorMSG">{errorMessage}</p>
+                                                </div>
+                                            </template>
                                         </div>
+                                    </template> 
+        
+                                    <button class="custom-button appbtn" onclick={addPackageApp}>
+                                        <span class="appSpan">Add another app</span>
+                                    </button>
+                                </div>
+                            </template>
+                                <div class="slds-box slds-theme_default authContent2">
+                                    <div class="tempHead">
+                                        <p class="content">Content</p>
+                                    </div>
+                                    <div class="descp">
+                                        <p>Content for authentication message templates can't be edited. You can add additional content from the options below.
+                                        </p>
+                                    </div>
+                                    <!-- <lightning-checkbox-group
+                                        options={contentOption}
+                                        name="selectContent"
+                                        value={selectContent}
+                                        onchange={handleInputChange}>
+                                    </lightning-checkbox-group> -->
+                                    <lightning-input
+                                        type="checkbox"
+                                        name="prevContent"
+                                        label="Add security recommendation"
+                                        value="Add security recommendation"
+                                        checked={prevContent}
+                                        onchange={handleInputChange}>
+                                    </lightning-input>
 
-                                        
-                                        <div class="codelinktempprev">
-                                            <template for:each={buttonList} for:item="button" for:index="index">
-                                                <!-- <hr key={button.id} class="separator-line"/> -->
-            
-                                                <div key={button.id} class="button-label-preview button-tabs">
-                                                    <lightning-icon  icon-name={button.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-                                                    <p>{button.btntext}</p>
-                                                </div>
-                                            </template>
-                                            <template for:each={customButtonList} for:item="customButton" for:index="index">
-                                                <!-- <hr key={customButton.id} class="separator-line"/> -->
-            
-                                                <div key={customButton.id} class="button-label-preview button-tabs">
-                                                    <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-            
-                                                    <p>{customButton.Cbtntext}</p>
-                                                </div>
-                                            </template>
-                                            <template if:true={showAuthBtn}>
-
-                                                <!-- <hr class="separator-line"/> -->
-            
-                                                <div class="button-label-preview button-tabs">
-                                                    <lightning-icon  icon-name='utility:copy'  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-                                                    <p>{autoCopyCode}</p>
-                                                </div>
-                                            </template>
-                                            <template if:true={showOneTap}>
-                                                <!-- <hr class="separator-line"/> -->
-            
-                                                <div class="button-label-preview button-tabs">
-                                                    <lightning-icon  icon-name='utility:copy'  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
-                                                    <p>{autofilLabel}</p>
-                                                </div>
-                                            </template>
-                                            
+                                    <lightning-input
+                                        type="checkbox"
+                                        name="isExpiration"
+                                        label="Add expiry time for the code"
+                                        value="Add expiry time for the code"
+                                        checked={isExpiration}
+                                        onchange={handleInputChange}>
+                                    </lightning-input>
+        
+                                    <template if:true={isExpiration}>
+                                        <div class="expiration">
+                                            <label style="font-weight: bold;">Expires in </label>
+                                            <input type="number" name="expirationTime" value={expirationTime} min="1" style=" width: min-content;padding: 0.5rem;border-radius: 4px;" class="expiretime" onchange={handleInputChange} />
+                                        </div>
+                                    </template>                            
+                                </div>
+                                <div class="slds-box slds-theme_default authContent3">
+                                    <div class="tempHead">
+                                        <p class="content">Buttons</p>
+                                    </div>
+                                    <div class="descp">
+                                        <p>You can customise the button text for both auto-fill and copy code. Even when zero-tap is turned on, buttons are still needed for the backup code delivery method.</p>
+                                    </div>
+                                    <div class="authButtons">
+                                    <template if:true={showAutofill}>
+                                            <div class="btntxt" style="margin-right: 1.5rem;">
+                                                <label for="btn-text">Auto-fill</label>
+                                                <input class="text-btn" type="text" name="autofilLabel" value={autofilLabel}
+                                                    maxlength="25" oninput={handleInputChange} />
+                                                <p class="char-count btn-count">{autofilLabel.length}/{LIMITS.maxBtnTxt}</p>
+                                            </div>
+                                    </template>
+                                        <div class="btntxt">
+                                            <label for="btn-text">Copy Code</label>
+                                            <input class="text-btn" type="text" name="autoCopyCode" value={autoCopyCode}
+                                                maxlength="25" oninput={handleInputChange} />
+                                            <p class="char-count btn-count">{autoCopyCode.length}/{LIMITS.maxBtnTxt}</p>
                                         </div>
                                     </div>
+                                    
                                 </div>
+                        </template>
+                        <template if:true={showMsgValidity}> 
+                            <div class="slds-box slds-theme_default authContent4">
+                                <div class="tempHead">
+                                    <p class="content">Message validity period
+                                    </p>
+                                </div>
+                                <div class="descp">
+                                    <p>It's recommended to set a custom validity period that your authentication message must be delivered by before it expires. If a message is not delivered within this time frame, you will not be charged and your customer will not see the message.</p>
+                                </div>
+                                <div class="tempHead">
+                                    <p class="content">Set custom validity period for your message
+                                    </p>
+                                </div>
+                                <div class="descp toggle">
+                                    <p>If you don't set a custom validity period, the standard 30 days WhatsApp message validity period will be applied.
+                                    </p>
+                                    <lightning-input type="toggle" name="toggle" onchange={handleInputChange}></lightning-input>
+    
+                                </div>
+                                <template if:true={isFeatureEnabled}>   
+                                    <div class="tempHead" style="    font-size: 19px;margin-bottom:0.5rem;">
+                                        <p class="content">Validity period</p>
+                                    </div>
+                                    <!-- <lightning-combobox variant="label-hidden" class="urlInput" name="selectedTime" value={selectedTime}
+                                                            options={expireTime}
+                                                        onchange={handleInputChange}></lightning-combobox> -->
+                                    <lightning-combobox
+                                    variant="label-hidden"
+                                    class="urlInput"
+                                    name="selectedTime"
+                                    value={selectedTime}
+                                    options={expireTime}
+                                    onchange={handleInputChange}>
+                                </lightning-combobox>
+
+                                </template>
+                            
+                            </div>
+                         </template>
+                        <div class="slds-box slds-theme_default templatebtn">
+                            <lightning-button variant="brand-outline" onclick={handlePrevclick} label="Previous"
+                                class="slds-m-left_x-small"></lightning-button>
+                            <lightning-button variant="brand" label="Submit for Review" onclick={handleConfirm} class="slds-m-left_x-small"  disabled={isSubmitDisabled}></lightning-button>
                         </div>
                     </div>
-                    
+                    <div class="creattempdiv3">
+                            <div class="slds-box slds-theme_default templatePreviewmain1">
+                                <div class="templateheadWP">
+                                    <p class="templatetextWP"><b>Template Preview</b></p>
+                                </div>
+                                <div class="PreviewtemplateWP">
+
+                                 
+                                    <div class="slds-box slds-theme_default templatepreviewchildWP chatWP-bubble">
+                                        <template if:true={IsHeaderText}>
+                                            <div class="TextHeadingWP">
+                                                <p>{header}</p>
+                                            </div>
+                                        </template>
+                                        <template if:true={isImageFile}>
+                                            <div class="imagedivWP">
+                                                <img src={imageUploadPreview} alt="">
+                                            </div>
+                                        </template>
+                                        <template if:true={isImgSelected}>
+                                            <div>
+                                                <img src={filePreview} alt="File Preview" style="max-width: 100%; height: auto;" />
+                                            </div>
+                                        </template>
+                                        <template if:true={isVideoFile}>
+                                            <div class="imagedivWP">
+                                                <img src={tempVideoIcon} alt="">
+                                            </div>
+                                        </template>
+                                       
+                                        <template if:true={isVidSelected}>
+                                             <video width="100%" height="150" controls>
+                                                <source src={filePreview} type="video/mp4">
+                                                Your browser does not support the video tag.
+                                             </video>
+                                        </template>
+                                        <template if:true={isDocFile}>
+                                            <div class="imagedivWP">
+                                                <img src={docUploadPreviewImg} alt="">
+                                            </div>
+                                         </template>
+                                         
+                                         <template if:true={isDocSelected}>
+                                            <div class="imagedivWP" style="position: relative;">
+                                                <img src={NoPreviewAvailableImg} alt="no preview available">
+                                            </div>
+                                         </template>
+                                         <template if:true={isLocation}>
+                                            <div class="imagedivWP">
+                                                <img src={tempLocationIcon} alt="">
+                                            </div>
+                                            <div class="locationMerge">
+                                                <p class="nameMerge">{locationNameMerge}</p>
+                                                <p class="addressMerge">{locationAddressMerge}</p>
+                                            </div>
+                                         </template>
+                                        <template if:true={ifUtilty}>
+                                            <div class="TextBodyWP">
+                                                <p>{orderStatusBody}</p>
+                                            </div>
+                                        </template>
+                                        <template if:true={isDefault}>
+        
+                                            <div class="TextBodyWP">
+                                                <lightning-formatted-rich-text value={formatedTempBody}></lightning-formatted-rich-text>
+                                            </div>
+        
+                                            <div class="textfooterWP">
+                                                <p class="pfooterWP">{footer}</p>
+                                            </div>
+                                        </template>
+        
+                                        <template if:true={ifAuthentication}>
+                                            <div class="TextBodyWP">
+                                                <p><strong>{authPrevBody}</strong> is your verification code.</p>
+                                                <template if:true={prevContent}>
+                                                    <p>For your security, do not share this code.</p>
+                                                </template>
+                                            </div>
+                                            <template if:true={isExpiration}>
+                                                <div class="textfooterWP">
+                                                    <p class="pfooterWP">This code expires in {expirationTime} seconds.</p>
+                                                </div> 
+                                            </template>                                
+                                        </template>
+                                  
+        
+                                        <div class="TextTimeWP">
+                                            <p class="timefooterWP">11:59</p>
+                                        </div>
+                                    
+                                    </div>
+
+                                    
+                                    <div class="codelinktempprev">
+                                        <template for:each={buttonList} for:item="button" for:index="index">
+        
+                                            <div key={button.id} class="button-label-preview button-tabs">
+                                                <lightning-icon  icon-name={button.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+                                                <p>{button.btntext}</p>
+                                            </div>
+                                        </template>
+                                        <template for:each={customButtonList} for:item="customButton" for:index="index">
+        
+                                            <div key={customButton.id} class="button-label-preview button-tabs">
+                                                <lightning-icon icon-name={customButton.iconName}  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+        
+                                                <p>{customButton.Cbtntext}</p>
+                                            </div>
+                                        </template>
+                                        <template if:true={showAuthBtn}>
+        
+                                            <div class="button-label-preview button-tabs">
+                                                <lightning-icon  icon-name='utility:copy'  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+                                                <p>{autoCopyCode}</p>
+                                            </div>
+                                        </template>
+                                        <template if:true={showOneTap}>
+        
+                                            <div class="button-label-preview button-tabs">
+                                                <lightning-icon  icon-name='utility:copy'  class="custom-icon" alternative-text="Icon" size="x-small"></lightning-icon>
+                                                <p>{autofilLabel}</p>
+                                            </div>
+                                        </template>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
                 </div>
-            </template>
+                
+            </div>
         </div>
     </template>
     <template if:true={showReviewTemplate}>
@@ -1394,9 +1087,6 @@
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
-    <template if:true={isAllTemplate}>
-        <c-wb-all-template-page ontemplateupdate={handleTemplateUpdate}></c-wb-all-template-page>
-    </template>
     <template if:true={isModalPreview}>
         <section class="slds-modal slds-fade-in-open" role="dialog" aria-labelledby="modal-heading">
             <div class="slds-modal__container" style="width: 50%; max-width: 100%; height: auto;">
@@ -1423,4 +1113,5 @@
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
 
+    </template>
 </template>

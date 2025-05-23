@@ -14,7 +14,7 @@
  * Change Description : 
  ***********************************************************************/
 
- public without sharing class WBTemplateController {
+ public with sharing class WBTemplateController {
     
     // public static final MVWB__WBConnect_Configuration__mdt SETTINGS[0];
     public static List<MVWB__WBConnect_Configuration__mdt> SETTINGS = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
@@ -85,7 +85,7 @@
                return errorMessage;
            }
            String accessToken = config[0].MVWB__Access_Token__c;
-           String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
+           String endpoint = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__API_Version__c + '/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
            httpReq.setEndpoint(endpoint);
            httpReq.setMethod('POST');
            httpReq.setHeader('Content-Type', 'application/json');
@@ -417,7 +417,7 @@
    ********************************************************
    */
    @AuraEnabled
-   public static Map<String, Object> createWhatsappTemplate(String serializedWrapper) {
+    public static Map<String, Object> createWhatsappTemplate(String serializedWrapper,String payloadWrapper) {
        Map<String, Object> response = new Map<String, Object>();
 
        try {
@@ -429,8 +429,9 @@
 
            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
 
-           Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
-           endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
+            Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
+            System.debug('payload :: '+payload);
+           endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
            
            HttpRequest req = new HttpRequest();
            req.setEndpoint(endpoint);
@@ -493,7 +494,7 @@
            payload.put('file_name', fileName);
            payload.put('file_length', fileLength);
            payload.put('file_type', fileType);
-           uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS[0].MVWB__Application_Id__c+'/uploads';
+           uploadEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+SETTINGS[0].MVWB__Application_Id__c+'/uploads';
 
            HttpRequest req = new HttpRequest();
            Http http = new Http();
@@ -530,7 +531,7 @@
    ********************************************************
    */
    @AuraEnabled
-   public static String uploadFileChunk(String serializedWrapper) {
+   public static String uploadFileChunk(String serializedWrapper, Boolean isAWSEnabled) {
        try {
            
            FileChunkWrapper fileWrapper = (FileChunkWrapper) JSON.deserialize(serializedWrapper, FileChunkWrapper.class);
@@ -540,7 +541,7 @@
            HttpRequest req = new HttpRequest();
            Http http = new Http();
 
-           String endpoint = 'https://graph.facebook.com/v21.0/upload:' + fileWrapper.uploadSessionId;
+           String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + 'upload:' + fileWrapper.uploadSessionId;
            req.setEndpoint(endpoint);
            req.setMethod('POST');            
            req.setHeader('Authorization', 'OAuth ' + accessToken);
@@ -554,27 +555,26 @@
            if (res.getStatusCode() == 200) {
                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                String headerHandle = (String) responseMap.get('h');
-               Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
-               String imageurl = fileUrls.get('ContentDownloadUrl');
-               String contentDocumentId = fileUrls.get('ContentDocumentId');
-               
-               return JSON.serialize(new Map<String, String>{
-                   'headerHandle' => headerHandle,
-                   'imageurl' => imageurl,
-                   'contentDocumentId' => contentDocumentId
-               });
+
+               if(!isAWSEnabled){
+                    Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
+                    String imageurl = fileUrls.get('ContentDownloadUrl');
+                    String contentDocumentId = fileUrls.get('ContentDocumentId');
+                    
+                    return JSON.serialize(new Map<String, String>{
+                        'headerHandle' => headerHandle,
+                        'imageurl' => imageurl,
+                        'contentDocumentId' => contentDocumentId
+                    });
+                }
+                else{
+                    return JSON.serialize(new Map<String, String>{
+                        'headerHandle' => headerHandle
+                    });
+                }
                // return headerHandle; 
            } else {
-               ExceptionHandler.logException(new Map<String, Object>{
-                   'className' => 'WBTemplateController',
-                   'methodName' => 'uploadFileChunk',
-                   'exceptionObj' => null,
-                   'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
-                   'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
-               });
+               ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'uploadFileChunk','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
            }
        } catch (Exception e) {
            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'uploadFileChunk', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
@@ -649,7 +649,7 @@
 
            Template__c wbTempRec = [SELECT Id, Name,Template_Name__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
            
-           endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Template_Name__c;
+           endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Template_Name__c;
 
            HttpRequest req = new HttpRequest();         
            req.setEndpoint(endpoint);
@@ -690,13 +690,15 @@
    ********************************************************
    */
    @AuraEnabled
-   public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String templateId) {
+    public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String payloadWrapper,String templateId) {
        Map<String, Object> response = new Map<String, Object>();
 
        try {
            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
-           String editEndpoint = 'https://graph.facebook.com/v20.0/'+templateId;
-           Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
+           String editEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+templateId;
+        //    Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
+        
+            Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
            
            HttpRequest req = new HttpRequest();
            req.setEndpoint(editEndpoint);
@@ -757,7 +759,7 @@
            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
            String accessToken = wbConfig[0].MVWB__Access_Token__c;
-           String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '?fields=preview.invalidate(false)';
+           String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + flowId + '?fields=preview.invalidate(false)';
            HttpRequest request = new HttpRequest();
            request.setEndpoint(endpoint);
            request.setMethod('GET');

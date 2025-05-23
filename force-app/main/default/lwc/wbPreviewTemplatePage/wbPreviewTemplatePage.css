@@ -166,8 +166,15 @@ input{
     padding: 0.3rem;
 }
 .phone-input{
-    padding-left: 5rem;
+    padding-left: 0.5rem;
+    -moz-appearance: textfield;
 }
+
+.phone-input::-webkit-outer-spin-button, .phone-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .left{
     width: 100%;
     position: relative;
@@ -181,7 +188,7 @@ input{
 }
 .send-btn{
     border-radius: 4px;
-    width: 9rem;
+    width: 12rem;
     border: none;
     color: white;
     font-size: 14px;
@@ -452,7 +459,7 @@ input{
     border-radius: 3px;
     padding: 0.1rem;
     border: none;
-    width: 4rem;
+    width: 100%;
 }
 .phone-container {
     width: 600px;
@@ -502,11 +509,12 @@ input{
     gap: 0.4rem;
 }
 .urltype{
-    position: absolute;
-    top: 0.3rem;
-    left: 0.2rem;
+    width: 30%;
     padding-right: 0.4rem;
     border-right: 1px solid #d7d7d7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .variable-head{
@@ -519,4 +527,46 @@ input{
     font-size: larger;
     font-weight: 500;
 
+}
+
+
+/* Backdrop covers the entire component */
+.license-error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Dark overlay */
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Centered popup */
+.popup-container {
+    background: #b71c1c; /* Dark red for warning */
+    color: white;
+    padding: 24px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Styling for title */
+.popup-content h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+/* Styling for message */
+.popup-content p {
+    font-size: 16px;
+    margin: 0;
 }

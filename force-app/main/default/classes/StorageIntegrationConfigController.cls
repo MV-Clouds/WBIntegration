@@ -36,16 +36,7 @@ public without sharing class StorageIntegrationConfigController {
                 config.S3_Region_Name__c = '';
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'StorageIntegrationConfigController',
-                'methodName' => 'getConfiguration',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'StorageIntegrationConfigController','methodName' => 'getConfiguration','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
         return config;
     }
@@ -91,16 +82,7 @@ public without sharing class StorageIntegrationConfigController {
 
             return 'Success';
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'StorageIntegrationConfigController',
-                'methodName' => 'saveConfiguration',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'StorageIntegrationConfigController','methodName' => 'saveConfiguration','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return 'Error';
         }
     }
@@ -133,16 +115,7 @@ public without sharing class StorageIntegrationConfigController {
                 throw new IllegalArgumentException('Record not found');
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'StorageIntegrationConfigController',
-                'methodName' => 'deleteRecordByAccessKey',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'statusCode' => null,
-                'chatId' => null,
-                'moreDetails' => e.getMessage(),
-                'apiResponse' => null
-            });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'StorageIntegrationConfigController','methodName' => 'deleteRecordByAccessKey','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     }    
 }

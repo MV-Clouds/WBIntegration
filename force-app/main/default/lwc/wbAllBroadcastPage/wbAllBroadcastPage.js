@@ -5,6 +5,7 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
 import { subscribe, unsubscribe } from 'lightning/empApi';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbAllBroadcastPage extends LightningElement {
     @track data = [];
@@ -26,7 +27,14 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track popUpFirstPage = true;
     @track popUpSecondpage = false;
     @track popUpLastPage = false;
+    @track showLicenseError = false;
     @track popupHeader = 'Choose Broadcast Groups';
+
+    @track selectedListValue = 'Broadcast';
+    @track isBroadCastSelected = true;
+    @track isTemplateVisible = false;
+    @track showLicenseError = false;
+    @track selectedRecordId='';
 
 
 
@@ -112,10 +120,32 @@ export default class WbAllBroadcastPage extends LightningElement {
         return this.selectedGroupIds.length === 0;
     }
     
-    connectedCallback() {
-        this.loadBroadcastGroups();
-        this.subscribeToPlatformEvent();
-        this.loadAllTemplates(); // Load templates on component initialization
+    async connectedCallback(){
+        try {
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            this.isTemplateVisible = true;
+            this.loadBroadcastGroups();
+            this.subscribeToPlatformEvent();
+            this.loadAllTemplates(); // Load templates on component initialization
+            
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     disconnectedCallback(){
@@ -128,7 +158,7 @@ export default class WbAllBroadcastPage extends LightningElement {
         getTemplatesByObject()
             .then(result => {
                 // Convert the Apex Map to JavaScript Map
-                this.templateMap = new Map(Object.entries(result));
+                this.templateMap = new Map(Object.entries(result));                
                 this.updateTemplateOptions(); // Update options based on selected object
             })
             .catch(error => {
@@ -305,7 +335,7 @@ export default class WbAllBroadcastPage extends LightningElement {
                 if (!this.selectedGroupIds.some(group => group.Id === groupId)) {
                     this.selectedGroupIds = [
                         ...this.selectedGroupIds,
-                        { Id: groupId, ObjName: selectedGroup.MVWB__Object_Name__c } // Store both Id and Name
+                        { Id: groupId, ObjName: selectedGroup.MVWB__Object_Name__c,Name:selectedGroup.Name } // Store both Id and Name
                     ];
                 }
             } else {
@@ -466,7 +496,11 @@ export default class WbAllBroadcastPage extends LightningElement {
                 this.isLoading = false;
             });
     }
-
+    
+    handleNameClick(event) {
+        this.selectedRecordId = event.target.dataset.recordId;
+    }
+    
     showToast(title ,message, status){
         this.dispatchEvent(new ShowToastEvent({title: title, message: message, variant: status}));
     }

@@ -39,10 +39,9 @@ export default class WhatsAppConfiguration extends LightningElement {
                     this.isEditing = false;
                 }
                     
-                console.log('result values:- ',this.wBAccountIdValue, this.accessTokenValue, this.phoneNoIdValue, this.appIdValue);
             }
         }).catch(error => {
-            console.log(error);
+            console.error(error);
         })
     }
 
@@ -100,7 +99,6 @@ export default class WhatsAppConfiguration extends LightningElement {
         }
 
         // Handle saving logic (e.g., API calls, data storage)
-        console.log('Saved values:', this.wBAccountId, this.accessToken, this.phoneNoId, this.appId);
         saveWhatsAppConfiguration({WBAccountId : this.wBAccountId, AppId : this.appId , AccessToken : this.accessToken, PhoneNumberId : this.phoneNoId})
         .then(() => {
             this.dispatchEvent(
