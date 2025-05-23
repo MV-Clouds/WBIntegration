@@ -6,10 +6,9 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 23/12/2024
- * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : Beta 10
- * Change Description :Beta 10 bug resolved
+ * Last Update Date : 30/04/2025
+ * Updated By : Divij Modi
+ * Change Description :Code Rework
  ********************************************************************** */
 
 import { LightningElement,track,api } from 'lwc';
@@ -20,7 +19,7 @@ import fetchDynamicRecordData from '@salesforce/apex/WBTemplateController.fetchD
 import getTemplateDataWithReplacement from '@salesforce/apex/WBTemplateController.getTemplateDataWithReplacement';
 import CountryJson from '@salesforce/resourceUrl/CountryJson';
 import NoPreviewAvailable from '@salesforce/resourceUrl/NoPreviewAvailable';
-import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+// import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbPreviewTemplatePage extends LightningElement {
     @track ispreviewTemplate=false;
@@ -36,7 +35,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track buttonList=[];
     @track formatedTempBody;
     @track phoneNumber='';
-    @track objectNames = []; 
+    @track objectNamesList = []; 
     @track fieldNames = [];
     @track isImgSelected = false;
     @track isVidSelected = false;
@@ -47,7 +46,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track inputValues = {};
     @track groupedVariables=[];
     @track noContact=true;
-    @track selectedCountryType = '+971';  
+    @track selectedCountryType = '+44';  
     @track countryType=[];
     @track filteredTableData = []; 
     @track variableMapping = { header: {}, body: {} };
@@ -61,39 +60,17 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track isSecurityRecommedation = false;
     @track isCodeExpiration = false;
     @track showLicenseError = false;
+    @track isLoading = false;
+    @track objectName = '';
 
+    // get isDisabled(){
+    //     return false;
+    // }
 
-    get contactFields() {
-        return Object.entries(this.contactDetails)
-            .filter(([key, value]) => value !== null && value !== undefined)
-            .map(([key, value]) => ({ label: key, value }));
-    }
-
-    get isDisabled(){
-        // if(this.objectNames && this.fieldNames.length>0){
-        //     return false;
-        // }
-        // return !(this.objectNames && this.fieldNames);
-        return false;
-    }
-
-    formatText(inputText) {
-        try {
-            let formattedText = inputText.replaceAll('\n', '<br/>');
-            formattedText = formattedText.replace(/\*(.*?)\*/g, '<b>$1</b>');
-            formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
-            formattedText = formattedText.replace(/~(.*?)~/g, '<s>$1</s>');
-            formattedText = formattedText.replace(/```(.*?)```/g, '<code>$1</code>');
-            return formattedText;
-        } catch (error) {
-            console.error('Something went wrong in formatting text.',error);  
-        }
-    }
-
-    get getObjectName(){
+    // get getObjectName(){
         
-        return this.objectNames[0];
-    }
+    //     return this.objectName;
+    // }
 
     @api
     get templateid() {
@@ -107,17 +84,8 @@ export default class WbPreviewTemplatePage extends LightningElement {
         }
     }
 
-    get contactIcon() {
-        return this.selectedContactId ? 'standard:contact' : ''; 
-    }
-
-    async connectedCallback(){
+    connectedCallback(){
         try {
-            this.isLoading = true;
-            await this.checkLicenseStatus();
-            if (this.showLicenseError) {
-                return; // Stops execution if license is expired
-            }
             this.fetchCountries();
             this.fetchReplaceVariableTemplate(this.templateid,null);
             this.ispreviewTemplate = true;
@@ -125,14 +93,26 @@ export default class WbPreviewTemplatePage extends LightningElement {
             console.error('Error in connectedCallback:::', e.message);
         }
     }
-    async checkLicenseStatus() {
+
+    formatText(inputText) {
         try {
-            const isLicenseValid = await checkLicenseUsablility();
-            if (!isLicenseValid) {
-                this.showLicenseError = true;
-            }
+            const patterns = [
+                { regex: /\n/g, replacement: '<br/>' },
+                { regex: /\*(.*?)\*/g, replacement: '<b>$1</b>' },
+                { regex: /_(.*?)_/g, replacement: '<i>$1</i>' },
+                { regex: /~(.*?)~/g, replacement: '<s>$1</s>' },
+                { regex: /```(.*?)```/g, replacement: '<code>$1</code>' }
+            ];
+    
+            // Loop through all patterns, apply them to the input text one after the other
+            let formattedText = inputText;
+            patterns.forEach(({ regex, replacement }) => {
+                formattedText = formattedText.replace(regex, replacement);
+            });
+    
+            return formattedText;
         } catch (error) {
-            console.error('Error checking license:', error);
+            console.error('Something went wrong in formatting text.', error);
         }
     }
 
@@ -146,8 +126,12 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 return 'utility:new_window';
             case 'COPY_CODE':
                 return 'utility:copy';
-            case 'Flow':
+            case 'FLOW':
                 return 'utility:file';
+            case 'CATALOG' :
+                return 'utility:product_item'
+            case 'MPM' :
+                return 'utility:product_item'
             default:
                 return 'utility:question'; 
         }
@@ -211,7 +195,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     .filter(country => country.callingCode != null && country.name != null)
                     .map(country => {
                         return {
-                            label: ` (${country.callingCode}) ${country.name}`,
+                            label: `${country.name} (${country.callingCode})`,
                             value: country.callingCode
                         };
                     });
@@ -225,7 +209,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     fetchContactData() {
         try {
             fetchDynamicRecordData({
-                objectName: this.objectNames[0], 
+                objectName: this.objectName, 
                 fieldNames: this.fieldNames, 
                 recordId: this.selectedContactId
             })
@@ -322,122 +306,103 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
 
     fetchTemplateData() {
-        try {
-            this.isLoading = true;    
-            getDynamicObjectData({templateId:this.templateid})
+    try {
+        this.isLoading = true;
+
+        getDynamicObjectData({ templateId: this.templateid })
             .then((result) => {
-                if (result) {
+                if (!result) return;
 
-                    
-                    
-                    this.IsHeaderText = !result.isImgUrl;            
-                    this.originalHeader = result.template.MVWB__WBHeader_Body__c;
-                    this.originalBody = result.template.MVWB__WBTemplate_Body__c;
-                    const variableMappings = result.templateVariables;
-                    this.isSecurityRecommedation = JSON.parse(result.template.MVWB__Template_Miscellaneous_Data__c).isSecurityRecommedation;
-                    this.isCodeExpiration = JSON.parse(result.template.MVWB__Template_Miscellaneous_Data__c).isCodeExpiration;
-                    this.expireTime = JSON.parse(result.template.MVWB__Template_Miscellaneous_Data__c).expireTime;
-                    
-                    if(result.template.MVWB__Header_Type__c=='Image'){
-                        this.isImgSelected = result.isImgUrl;
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(this.originalHeader, "text/html");
-                        this.tempHeader = doc.documentElement.textContent || "";
-                        
-                    }
-                    else if(result.template.MVWB__Header_Type__c=='Video'){
-                        
-                        this.isVidSelected = result.isImgUrl;
-                        
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(this.originalHeader, "text/html");
-                        this.tempHeader = doc.documentElement.textContent || "";
-                    }
-                    else if(result.template.MVWB__Header_Type__c=='Document'){
-                        
-                        this.isDocSelected = result.isImgUrl;
-                        
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(this.originalHeader, "text/html");
-                        this.tempHeader = doc.documentElement.textContent || "";
-                    }
-                    else{
-                        this.tempHeader = this.originalHeader ||'';
-                    }
-                    this.tempBody = this.originalBody;
-                    this.formattedtempHeader = this.originalHeader;
-                    this.tempFooter = result.template.MVWB__WBFooter_Body__c;
+                const template = result.template;
+                const miscData = JSON.parse(template?.MVWB__Template_Miscellaneous_Data__c || '{}');
 
-                    this.isSendDisabled = result.template.MVWB__Status__c !== 'Active-Quality Pending';
-                    this.sendButtonClass = this.isSendDisabled 
-                    ? 'send-btn send-btn-active' 
-                    : 'send-btn';
-                  
-                    const buttonBody = result.template.MVWB__WBButton_Body__c
-                    ? JSON.parse(result.template.MVWB__WBButton_Body__c)
-                    : []
-                  
-                  this.buttonList = buttonBody.map((buttonLabel, index) => {
-                  
-                    const type = buttonLabel.type
-                    return {
-                      id: index,
-                      btntext: buttonLabel.text.trim(),
-                      btnType: type,
-                      iconName: this.getIconName(type)
-                    }
-                  })
-                  
+                this.IsHeaderText = !result.isImgUrl;
+                this.originalHeader = template.MVWB__WBHeader_Body__c;
+                this.originalBody = template.MVWB__WBTemplate_Body__c;
+                this.tempBody = this.originalBody;
+                this.tempFooter = template.MVWB__WBFooter_Body__c;
 
+                this.isSecurityRecommedation = miscData.isSecurityRecommedation;
+                this.isCodeExpiration = miscData.isCodeExpiration;
+                this.expireTime = miscData.expireTime;
 
-                    const grouped = variableMappings.reduce((acc, mapping) => {
-                        const mappingWithValue = { 
-                            ...mapping, 
-                            value: '' 
-                        };
-                        const typeGroup = acc.find(group => group.type === mappingWithValue.type);                
-                        if (typeGroup) {
-                            typeGroup.mappings.push(mappingWithValue);
-                        } else {
-                            acc.push({ 
-                                type: mappingWithValue.type, 
-                                mappings: [mappingWithValue] 
-                            });
-                        }
-                        return acc;
-                    }, []);                
-            
-                    this.groupedVariables = grouped;                    
-                    if(this.groupedVariables.length == 0){
-                        this.noContact=false;
-                    }
+                const headerType = template.Header_Type__c;
 
-                    this.objectNames = result.objectNames == undefined? ['Contact'] : result.objectNames;
-                    this.fieldNames = result.fieldNames;
+                if (['Image', 'Video', 'Document'].includes(headerType)) {
+                    this.isImgSelected = headerType === 'Image' && result.isImgUrl;
+                    this.isVidSelected = headerType === 'Video' && result.isImgUrl;
+                    this.isDocSelected = headerType === 'Document' && result.isImgUrl;
 
-                    this.options.push({ label: this.objectNames[0], value: this.objectNames[0], isSelected: true });
-                   
-                    this.formatedTempBody = this.formatText(this.tempBody);
-                    if(result.template.MVWB__Template_Category__c == 'Authentication'){
-                        this.formatedTempBody = '{{code}} ' + this.formatedTempBody;
-                        if(this.isSecurityRecommedation){
-                            this.formatedTempBody += '\n For your security, do not share this code.';
-                        }
-                        if(this.isCodeExpiration){
-                            this.tempFooter = 'This code expires in '+this.expireTime+' seconds.'
-                        }
-                    }
-                    this.isLoading = false;
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(this.originalHeader, "text/html");
+                    this.tempHeader = doc.documentElement.textContent || "";
+                } else {
+                    this.tempHeader = this.originalHeader || '';
                 }
+
+                this.formattedtempHeader = this.originalHeader;
+
+                this.isSendDisabled = template.MVWB__Status__c !== 'Active-Quality Pending';
+                this.sendButtonClass = this.isSendDisabled ? 'send-btn send-btn-active' : 'send-btn';
+
+                // Parse buttons
+                const buttonBody = template.MVWB__WBButton_Body__c ? JSON.parse(template.MVWB__WBButton_Body__c) : [];
+                this.buttonList = buttonBody.map((btn, index) => ({
+                    id: index,
+                    btntext: btn.text.trim(),
+                    btnType: btn.type,
+                    iconName: this.getIconName(btn.type)
+                }));
+
+                // Group template variables
+                const variableMappings = result.templateVariables || [];
+                const grouped = variableMappings.reduce((acc, mapping) => {
+                    const typeGroup = acc.find(group => group.type === mapping.type);
+                    const mappingWithValue = { ...mapping, value: '' };
+
+                    if (typeGroup) {
+                        typeGroup.mappings.push(mappingWithValue);
+                    } else {
+                        acc.push({ type: mapping.type, mappings: [mappingWithValue] });
+                    }
+
+                    return acc;
+                }, []);
+                this.groupedVariables = grouped;
+
+                if (this.groupedVariables.length === 0) {
+                    this.noContact = false;
+                }
+
+                this.objectName = result.objectNamesList?.[0] || 'Contact';
+                this.fieldNames = result.fieldNames;
+
+                this.options = [{ label: this.objectName, value: this.objectName, isSelected: true }];
+
+                // Format template body
+                this.formatedTempBody = this.formatText(this.tempBody);
+
+                if (template.Template_Category__c === 'Authentication') {
+                    this.formatedTempBody = '{{code}} ' + this.formatedTempBody;
+                    if (this.isSecurityRecommedation) {
+                        this.formatedTempBody += '\n For your security, do not share this code.';
+                    }
+                    if (this.isCodeExpiration) {
+                        this.tempFooter = 'This code expires in ' + this.expireTime + ' seconds.';
+                    }
+                }
+
+                this.isLoading = false;
             })
             .catch((error) => {
                 console.error('Error fetching template data:', error);
                 this.isLoading = false;
-            })  
-        } catch (error) {
-            console.error('Something wrong in fetching template.',error);
-        }     
+            });
+    } catch (error) {
+        console.error('Something went wrong in fetching template.', error);
+        this.isLoading = false;
     }
+}
 
     handlePhoneChange(event){
         this.phoneNumber=event.target.value;
@@ -727,7 +692,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
         this.tempBody='';
         this.tempFooter='';
         this.buttonList=[];
-        this.objectNames=[];
+        this.objectNamesList=[];
         this.fieldNames=[];
         this.contactDetails=[];
         this.formatedTempBody='';

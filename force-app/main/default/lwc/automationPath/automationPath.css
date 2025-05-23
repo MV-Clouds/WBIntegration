@@ -45,6 +45,10 @@
     height: auto;
 }
 
+.button-group {
+    gap: 10px;
+}
+
 /* Style the right-side content box */
 .content-box {
     border: 1px solid #dddbda;

@@ -417,7 +417,7 @@
    ********************************************************
    */
    @AuraEnabled
-   public static Map<String, Object> createWhatsappTemplate(String serializedWrapper) {
+    public static Map<String, Object> createWhatsappTemplate(String serializedWrapper,String payloadWrapper) {
        Map<String, Object> response = new Map<String, Object>();
 
        try {
@@ -429,7 +429,8 @@
 
            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
 
-           Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
+            Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
+            System.debug('payload :: '+payload);
            endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
            
            HttpRequest req = new HttpRequest();
@@ -530,7 +531,7 @@
    ********************************************************
    */
    @AuraEnabled
-   public static String uploadFileChunk(String serializedWrapper) {
+   public static String uploadFileChunk(String serializedWrapper, Boolean isAWSEnabled) {
        try {
            
            FileChunkWrapper fileWrapper = (FileChunkWrapper) JSON.deserialize(serializedWrapper, FileChunkWrapper.class);
@@ -554,27 +555,26 @@
            if (res.getStatusCode() == 200) {
                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                String headerHandle = (String) responseMap.get('h');
-               Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
-               String imageurl = fileUrls.get('ContentDownloadUrl');
-               String contentDocumentId = fileUrls.get('ContentDocumentId');
-               
-               return JSON.serialize(new Map<String, String>{
-                   'headerHandle' => headerHandle,
-                   'imageurl' => imageurl,
-                   'contentDocumentId' => contentDocumentId
-               });
+
+               if(!isAWSEnabled){
+                    Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
+                    String imageurl = fileUrls.get('ContentDownloadUrl');
+                    String contentDocumentId = fileUrls.get('ContentDocumentId');
+                    
+                    return JSON.serialize(new Map<String, String>{
+                        'headerHandle' => headerHandle,
+                        'imageurl' => imageurl,
+                        'contentDocumentId' => contentDocumentId
+                    });
+                }
+                else{
+                    return JSON.serialize(new Map<String, String>{
+                        'headerHandle' => headerHandle
+                    });
+                }
                // return headerHandle; 
            } else {
-               ExceptionHandler.logException(new Map<String, Object>{
-                   'className' => 'WBTemplateController',
-                   'methodName' => 'uploadFileChunk',
-                   'exceptionObj' => null,
-                   'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
-                   'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
-               });
+               ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'uploadFileChunk','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
            }
        } catch (Exception e) {
            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'uploadFileChunk', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
@@ -690,13 +690,15 @@
    ********************************************************
    */
    @AuraEnabled
-   public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String templateId) {
+    public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String payloadWrapper,String templateId) {
        Map<String, Object> response = new Map<String, Object>();
 
        try {
            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
            String editEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+templateId;
-           Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
+        //    Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
+        
+            Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
            
            HttpRequest req = new HttpRequest();
            req.setEndpoint(editEndpoint);

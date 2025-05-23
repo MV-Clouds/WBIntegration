@@ -101,6 +101,7 @@ public with sharing class AWSFilesController {
         }
     }
 
+    @AuraEnabled
     public static void deleteImagesFromS3(List<String> fileNames) {
         try {
             MVWB__AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;
