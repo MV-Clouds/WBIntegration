@@ -3,7 +3,7 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
- * @Last Modified On : 04-04-2025
+ * @Last Modified On : 04-21-2025
  * @Modification Log :
  *==============================================================================
  * Date Modified - Developer Name - Description
@@ -522,7 +522,7 @@ global without sharing class WhatsAppWebhook{
             String accessToken = '';
             List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values();
             accessToken = config[0].MVWB__Access_Token__c;
-            String mediaUrl = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__MVWB__API_Version__c + '/' + documentId;
+            String mediaUrl = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__API_Version__c + '/' + documentId;
             
             if (accessToken != ''){
                 HttpRequest req = new HttpRequest();

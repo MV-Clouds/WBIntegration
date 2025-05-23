@@ -416,57 +416,66 @@
    @return          : response Map<String, Object> - return response with the template id.
    ********************************************************
    */
-    @AuraEnabled
+   @AuraEnabled
     public static Map<String, Object> createWhatsappTemplate(String serializedWrapper,String payloadWrapper) {
-        Map<String, Object> response = new Map<String, Object>();
+       Map<String, Object> response = new Map<String, Object>();
 
-        try {
-            if (String.isBlank(SETTINGS[0].MVWB__Business_Account_Id__c)) {
-                response.put('success', false);
-                response.put('errorMessage', 'Business Account ID is not configured in the system.');
-                return response;
-            }
+       try {
+           if (String.isBlank(SETTINGS[0].MVWB__Business_Account_Id__c)) {
+               response.put('success', false);
+               response.put('errorMessage', 'Business Account ID is not configured in the system.');
+               return response;
+           }
 
-            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+           CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
 
             Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
             System.debug('payload :: '+payload);
-            endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
-            
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(endpoint);
-            req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/json');
-            req.setHeader('Authorization', 'Bearer ' + accessToken);
-            req.setBody(JSON.serialize(payload));
-    
-            Http http = new Http();
-            HttpResponse res = http.send(req);
+           endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
+           
+           HttpRequest req = new HttpRequest();
+           req.setEndpoint(endpoint);
+           req.setMethod('POST');
+           req.setHeader('Content-Type', 'application/json');
+           req.setHeader('Authorization', 'Bearer ' + accessToken);
+           req.setBody(JSON.serialize(payload));
+   
+           Http http = new Http();
+           HttpResponse res = http.send(req);
 
-            if (res.getStatusCode() == 200) {
-                Id templateId = CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
-                response.put('success', true);
-                response.put('templateId', templateId); 
-            } else {
-                response.put('success', false);
-                response.put('errorMessage', res.getBody());
-                if (String.isNotBlank(templateWrapper.tempImgId)) {
-                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
-                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
-                        delete contentDoc;
-                    }
-                }
+           if (res.getStatusCode() == 200) {
+               Id templateId = CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
+               response.put('success', true);
+               response.put('templateId', templateId); 
+           } else {
+               response.put('success', false);
+               response.put('errorMessage', res.getBody());
+               if (String.isNotBlank(templateWrapper.tempImgId)) {
+                   ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                   if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                       delete contentDoc;
+                   }
+               }
 
-                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'createWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
-            }
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-            response.put('status', 'error');
-            response.put('message', e.getMessage());
-        }
+               ExceptionHandler.logException(new Map<String, Object>{
+                   'className' => 'WBTemplateController',
+                   'methodName' => 'createWhatsappTemplate',
+                   'exceptionObj' => null,
+                   'isApiException' => true,
+                   'statusCode' => res.getStatusCode(),
+                   'chatId' => null,
+                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
+                   'apiResponse' => res.getBody()
+               });
+           }
+       } catch (Exception e) {
+           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+           response.put('status', 'error');
+           response.put('message', e.getMessage());
+       }
 
-        return response;
-    }
+       return response;
+   }
 
    /*
    *********************************************************

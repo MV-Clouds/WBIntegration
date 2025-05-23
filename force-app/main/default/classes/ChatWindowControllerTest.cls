@@ -27,7 +27,6 @@ public class ChatWindowControllerTest {
                 Contact__c = testContact.Id,
                 Type_of_Message__c = 'OutBound Messages',
                 Message_Status__c = 'Sent',
-                Time_of_Message__c = '12:00',
                 Date_of_Message__c = Date.today(),
                 Message_Type__c = 'Text',
                 Phone__c = '+911234567890'
