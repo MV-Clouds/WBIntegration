@@ -410,7 +410,11 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             this.audioURL = '';
             this.selectedFileName = null;
             this.selectedFilesToUpload = [];
-            this.template.querySelector('input[type="file"]').value = null;
+            // this.template.querySelector('input[type="file"]').value = null;
+            let fileInput = this.template.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.value = null;
+            }
         } catch (e) {
             console.error('Error in function handleBackDropClick:::', e.message);
         }

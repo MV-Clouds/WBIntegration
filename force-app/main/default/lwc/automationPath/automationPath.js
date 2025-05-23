@@ -73,6 +73,12 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             if (this.showLicenseError) {
                 return; // Stops execution if license is expired
             }
+            if(this.pageRef){
+                this.objectApiName = this.pageRef.attributes.objectApiName;
+            }
+
+            // console.log('Automation Path Loaded with Record ID:', this.recordId);
+            // console.log('Automation Path Loaded with Template Type:', this.templateType);
     
             if (!this.recordId) return;
     
@@ -83,7 +89,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 ? (this.loadObjects(), this.loadRequiredFields(), this.setFlowId())
                 : (this.fetchTemplates(), this.loadEmailTemplates());
     
-            this.fetchAutomationName();
+            await this.fetchAutomationName();
             this.fetchAutomationPaths();
             
         } catch (error) {
@@ -155,7 +161,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                             isReference: field.type === 'REFERENCE',
                             isTextArea: field.type === 'TEXTAREA'
                         }));
-                    // console.log('this.requiredFields:', JSON.stringify(this.requiredFields));
+                    // // console.log('this.requiredFields:', JSON.stringify(this.requiredFields));
 
                     this.chatWindowRows1 = this.requiredFields.map((field, index) => ({
                         id: `${field.apiName}-${index}`,
@@ -371,7 +377,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         name: result.Name,
                         description: result.MVWB__Description__c,
                         templateId: result.MVWB__WB_Template__c || '',
-                        templateName: result.MVWB__WB_Template__r?.MVWB__Template_Name__c || 'N/A',
+                        templateName: result.MVWB__WB_Template__r?.MVWB__Template_Name__c || '',
                         templateType: result.MVWB__WB_Template__r?.MVWB__Template_Type__c || ''
                     };
 
@@ -562,8 +568,8 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         return this.quickReplyButtons.map(btn => ({
             ...btn,
             computedClass: this.selectedTemplateButtonId === btn.id
-                ? 'slds-button slds-button_outline-brand slds-button_stretch selected-button btn'
-                : 'slds-button slds-button_outline-brand slds-button_stretch btn'
+                ? 'slds-button slds-button_outline-brand slds-button_stretch selected-button'
+                : 'slds-button slds-button_outline-brand slds-button_stretch'
         }));
     }
 
@@ -695,7 +701,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         this[NavigationMixin.Navigate]({
             type: "standard__navItemPage",
             attributes: {
-                apiName: 'Automation_Configuration'
+                apiName: 'MVWB__Automation_Configuration'
             },
         });
     }
