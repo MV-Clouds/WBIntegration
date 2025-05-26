@@ -128,7 +128,8 @@
                                         <button class="run-btn slds-m-horizontal--xx-small" onclick={onDeprecateClick}>Deprecate</button>
                                     </template>
                                 </div>
-                            </div>
+                            </div> 
+                           
                             <div class="flow-content">
                                 <div class="edit-content">
                                     <div class="editor-div slds-m-top--medium slds-p-around--x-small">
@@ -140,7 +141,9 @@
                                     </div>
                                 </div>
                                 <div class="previewFlow">
-                                    <c-whatsapp-flow-previewer jsondata={jsonString}></c-whatsapp-flow-previewer>
+                                    <!-- <c-whatsapp-flow-previewer jsondata={jsonString}></c-whatsapp-flow-previewer> -->
+                                    <c-wb-flow-preview flowname={flowName} jsonstringdata={jsonString}></c-wb-flow-preview>
+
                                 </div>
                             </div>
                         </div>
@@ -200,8 +203,7 @@
                         </div>
                     </div>
                 </template> 
-                
-             </div>
+            </div>
         </template>
         <template if:false={isFlowVisible}>
             <c-wb-all-flows-page></c-wb-all-flows-page>

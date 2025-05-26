@@ -1,5 +1,5 @@
 import { LightningElement, track, wire } from 'lwc';
-// import createWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.createWhatsAppFlow';
+import createWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.createWhatsAppFlow';
 import publishWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.publishWhatsAppFlow';
 import deleteWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deleteWhatsAppFlow';
 import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deprecateWhatsAppFlow';
@@ -12,11 +12,11 @@ import PublishPopupImage from '@salesforce/resourceUrl/PublishPopupImage';
 import getJSONData from '@salesforce/apex/WhatsAppFlowController.getJSONData';
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
-export default class WbCreateFlowPage extends LightningElement {
+export default class CreateFlowManagement extends LightningElement {
     @track selectedCategories = [];
     @track showLicenseError = false;
 
-    status = '';
+    status = 'Initialize';
     editor;
     templateType = 'Default';
     jsonString = '';
@@ -35,6 +35,7 @@ export default class WbCreateFlowPage extends LightningElement {
     maxFlowNamelength = 200;
     flowIconUrl = FlowIcon;
     isLoading = false;
+    flows = [];
 
     get TypeOptions() {
         return [
@@ -51,7 +52,7 @@ export default class WbCreateFlowPage extends LightningElement {
     }
 
     get isSaveEnabled(){
-        return false;
+        return this.status == 'Initialize' ? true : false;
     }
 
     get isPublishedEnabled(){
@@ -77,6 +78,7 @@ export default class WbCreateFlowPage extends LightningElement {
             console.error('Error in connectedCallback:::', e.message);
         }
     }
+
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
@@ -259,10 +261,13 @@ export default class WbCreateFlowPage extends LightningElement {
                 return;
             }
 
-            const previewer = this.template.querySelector('c-whatsapp-flow-previewer');
-            if (previewer) {
-                previewer.runPreview();
+            const previewComponent = this.template.querySelector('c-wb-flow-preview');
+            if (previewComponent) {
+                previewComponent.runPreview(); 
+            } else {
+                console.error('WbPreviewFlow component not found');
             }
+
             // If no errors, proceed with getting the flow preview
             console.log('No errors found in JSON');
             this.getFlowPreview();
@@ -291,6 +296,7 @@ export default class WbCreateFlowPage extends LightningElement {
                 .then((result) => {
                     if(!result.startsWith('Failed')){
                         this.showToast('Success', 'Flow published successfully', 'success');
+                        this.status='Published';
                         this.isFlowVisible = false;
                     } else {
                         console.error('Error in publishing WhatsApp Flow:', error);
@@ -377,6 +383,27 @@ export default class WbCreateFlowPage extends LightningElement {
             this.isLoading = false;
             this.closeDeletePopup();
         }
+    }
+
+    onSaveClick(){
+        createWhatsAppFlow({
+            flowName: this.flowName,
+            categories: this.selectedCategories,
+            flowJson: this.jsonString,
+            templateType: this.templateType
+        })
+        .then(result => {
+            this.flowId = result; 
+            this.status = 'Draft';
+            this.showToast('Success', 'Flow created successfully', 'success');
+        })
+        .catch(error => {
+            console.error('Error creating WhatsApp Flow:', error);
+            this.showToast('Error', 'Failed to create WhatsApp Flow', 'error');
+        })
+        .finally(() => {
+            this.isLoading = false;
+        });
     }
 
     closeDeprecatePopup(){

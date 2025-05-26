@@ -8,20 +8,23 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
 import FLOW_OBJECT from "@salesforce/schema/Flow__c";
 import STATUS_FIELD from "@salesforce/schema/Flow__c.Status__c";
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+
 
 export default class WbAllFlowsPage extends LightningElement {
     @track allRecords = [];
     @track filteredRecords = [];
     @track statusValues = [];
     @track statusOptions = [];
-    @track isFlowVisible = true;
-    @track iscreateflowvisible = false;
-    @track searchInput;
-    @track isLoading = false;
-    @track flowPreviewURL = '';
-    @track showPopup = false;
-    @track isFlowDraft = false;
-    @track selectedFlowId = '';
+    isFlowVisible = false;
+    iscreateflowvisible = false;
+    searchInput;
+    isLoading = false;
+    flowPreviewURL = '';
+    showPopup = false;
+    isFlowDraft = false;
+    selectedFlowId = '';
+    @track showLicenseError = false;
 
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
     flowMetadata;
@@ -37,7 +40,33 @@ export default class WbAllFlowsPage extends LightningElement {
     }
 
     connectedCallback(){
-        this.fetchWhatsAppFlows();
+    }
+    async connectedCallback(){
+        try {
+            this.showSpinner = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            
+            this.isFlowVisible = true;
+            this.fetchWhatsAppFlows();
+            
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            console.log('isLicenseValid => ', isLicenseValid);
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     fetchWhatsAppFlows(){
