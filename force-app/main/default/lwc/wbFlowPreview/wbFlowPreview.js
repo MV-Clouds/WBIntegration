@@ -1,6 +1,6 @@
 import { LightningElement,api } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
-import externalDocUrl from '@salesforce/label/c.MetaDocumentationUrl';
+// import externalDocUrl from '@salesforce/label/c.MetaDocumentationUrl';
 
 export default class WbFlowPreview extends NavigationMixin(LightningElement) {
     @api flowname;
@@ -9,7 +9,7 @@ export default class WbFlowPreview extends NavigationMixin(LightningElement) {
     detailsOptions = [];
     detailsValue;
     previewClass = 'preview';
-    documentationUrl = externalDocUrl;
+    // documentationUrl = externalDocUrl;
     theme = 'light';
 
     @api
@@ -62,13 +62,20 @@ export default class WbFlowPreview extends NavigationMixin(LightningElement) {
         this.detailsValue = event.detail.value;
     }
 
-    handleDocumentClick() {
-        this[NavigationMixin.Navigate]({
-            type: 'standard__webPage',
-            attributes: {
-                url: this.documentationUrl
-            }
-        });
+    // handleDocumentClick() {
+    //     this[NavigationMixin.Navigate]({
+    //         type: 'standard__webPage',
+    //         attributes: {
+    //             url: this.documentationUrl
+    //         }
+    //     });
+    // }
+
+    handleRefreshAll() {
+        const previewer = this.template.querySelector('c-whatsapp-flow-previewer');
+        if (previewer) {
+            previewer.runPreview(); 
+        }
     }
 
     handleClose() {

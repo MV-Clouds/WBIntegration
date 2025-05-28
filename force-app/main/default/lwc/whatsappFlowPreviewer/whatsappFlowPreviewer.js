@@ -22,10 +22,12 @@ export default class WhatsappFlowPreviewer extends LightningElement {
 
     connectedCallback() {
         window.addEventListener('click', this.handleOutsideClick.bind(this));
+        window.addEventListener('resize', this.adjustContentPadding.bind(this));
     }
 
     disconnectedCallback() {
         window.removeEventListener('click', this.handleOutsideClick.bind(this));
+        window.removeEventListener('resize', this.adjustContentPadding.bind(this));
     }
 
     handleOutsideClick(event) {
@@ -40,11 +42,24 @@ export default class WhatsappFlowPreviewer extends LightningElement {
 
     renderedCallback() {
         this.generatePreview();
+        this.adjustContentPadding();
     }
 
     @api
     runPreview() {
         this.generatePreview();
+        this.adjustContentPadding();
+    }
+
+    adjustContentPadding() {
+        const footer = this.template.querySelector('.footer2');
+        const content = this.template.querySelector('.content');
+
+        if (footer && content) {
+            const footerHeight = footer.offsetHeight;
+            console.log('Footer height:', footerHeight);
+            // content.style.marginBottom = `${footerHeight}px`;
+        }
     }
 
     generatePreview() {
@@ -69,13 +84,13 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                         .container {
                             background: ${this.selectedtheme === 'dark' ? '#2d2c2c' : 'white'};
                             border-radius: 10px;
-                            padding: 1rem;
                             display: flex;
                             flex-direction: column;
+                            justify-content: space-between;
                             font-family: system-ui, sans-serif;
                             overflow: scroll;
                             max-height: 500px;
-                            height: 500px;
+                            height: 100%;
                             width: 310px;
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                         }
@@ -83,6 +98,11 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             display: flex;
                             justify-content: space-between;
                             align-items: center;
+                            position: sticky;
+                            top: 0;
+                            left: 0;
+                            background: inherit;
+                            padding: 0.5rem 1rem;
                             border-bottom: 1px solid ${this.selectedtheme === 'dark' ? '#444' : '#eee'};
                         }
                         ::-webkit-scrollbar {
@@ -104,18 +124,17 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                         }
                         .content {
-                            padding: 1rem 0;
-                            flex-grow: Jimmy;
+                            padding: 1rem 1rem 8rem 1rem;
                             text-align: left;
                         }
                         .heading {
-                            font-size: 1.2rem;
+                            font-size: 1.3rem;
                             font-weight: bold;
                             margin-bottom: 0.5rem;
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                         }
                         .subheading {
-                            font-size: 1rem;
+                            font-size: 1.2rem;
                             font-weight: 500;
                             margin-bottom: 1rem;
                             color: ${this.selectedtheme === 'dark' ? '#ccc' : '#333'};
@@ -126,15 +145,16 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             margin-bottom: 1rem;
                         }
                         .footer2 {
-                            padding-top: 1rem;
+                            padding: 1rem 1rem 1rem 1rem;
                             text-align: center;
                             font-size: 0.8rem;
-                            /* margin-top: 2rem; */
-                            position: absolute;
-                            bottom: 2.5rem;
-                            width: -webkit-fill-available;
-                            margin-right: 1rem;
+                            width: 100%;
                             color: ${this.selectedtheme === 'dark' ? '#999' : '#5c5c5c'};
+                            border-top: 1px solid ${this.selectedtheme === 'dark' ? '#444' : '#eee'};
+                            position: fixed;
+                            bottom: 0;
+                            left: 0;
+                            background-color: ${this.selectedtheme === 'dark' ? '#2d2c2c' : 'white'};
                         }
                         .continue {
                             width: 100%;
@@ -161,6 +181,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             transition: border-color 0.3s;
                             background: ${this.selectedtheme === 'dark' ? '#2c2c2c' : 'white'};
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
+                            margin-bottom: 0.5rem;
                         }
                         .input.active {
                             border-color: ${this.selectedtheme === 'dark' ? '#66bb6a' : '#28a745'};
@@ -189,14 +210,23 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                         }
                         .checkbox-container {
                             margin: 1rem 0;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 15px;
                         }
                         .checkbox-label {
-                            font-size: 1rem;
+                            font-size: 0.8rem;
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                             display: flex;
                             align-items: center;
                             gap: 0.5rem;
                             cursor: pointer;
+                        }
+                        .radio-container {
+                            margin: 1rem 0;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 15px;
                         }
                         input[type="checkbox"] {
                             accent-color: ${this.selectedtheme === 'dark' ? '#4a90e2' : '#1a73e8'};
@@ -207,8 +237,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             font-size: 0.9rem;
                         }
                         .label {
-                            font-weight: bold;
-                            margin-bottom: 1rem;
+                            font-weight: 500;
                             font-size: 1rem;
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                         }
@@ -218,15 +247,16 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             align-items: center;
                             justify-content: space-between;
                         }
-                        .option-label {
-                            font-size: 1rem;
+                        .radio-label {
+                            font-size: 0.8rem;
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                             display: flex;
                             align-items: center;
-                            justify-content: space-between;
+                            gap: 0.5rem;
                             width: 100%;
                             cursor: pointer;
                             position: relative;
+                            justify-content: space-between;
                         }
                         input[type="radio"] {
                             accent-color: ${this.selectedtheme === 'dark' ? '#4a90e2' : '#1a73e8'};
@@ -263,7 +293,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                 html += `
                     <div class="header-preview">
                         <button class="icon-button" onclick={handleCloseClick} aria-label="Close">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
@@ -280,13 +310,13 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                         <div class="menu-section">
                             <ul>
                                 <li data-option="help">Help</li>
-                                <li data-option="report">Report</li>
                             </ul>
                         </div>
                     `;
                 }
 
-                html += `<div class="content">`;
+                html += `<div class="content">
+                            <div class="content-inner">`;
 
                 const form = screen.layout.children.find(child => child.type === 'Form') || screen.layout;
                 form.children.forEach(child => {
@@ -303,7 +333,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                                     type="${child['input-type']}" 
                                     name="${child.name}" 
                                     id="${child.name}" 
-                                    class="${this.getInputClass(child.name)}" 
+                                    class="input ${this.getInputClass(child.name)} ${this.inputValues[child.name] ? 'active' : ''}" 
                                     value="${this.inputValues[child.name] || ''}"
                                     oninput="this.dispatchEvent(new CustomEvent('inputchange', { detail: { name: '${child.name}', value: this.value, type: this.type } }))"
                                     onfocus="this.dispatchEvent(new CustomEvent('focus', { detail: { name: '${child.name}' } }))"
@@ -318,7 +348,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                                 <textarea 
                                     name="${child.name}" 
                                     id="${child.name}" 
-                                    class="${this.getInputClass(child.name)}"
+                                    class="input ${this.getInputClass(child.name)} ${this.inputValues[child.name] ? 'active' : ''}"
                                     oninput="this.dispatchEvent(new CustomEvent('inputchange', { detail: { name: '${child.name}', value: this.value, type: this.type } }))"
                                     onfocus="this.dispatchEvent(new CustomEvent('focus', { detail: { name: '${child.name}' } }))"
                                     onblur="this.dispatchEvent(new CustomEvent('blur', { detail: { name: '${child.name}' } }))"
@@ -333,7 +363,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                                 <label class="label">${child.label}</label>
                                 ${(child['data-source'] || []).map(option => `
                                     <div class="radio-row">
-                                        <label class="option-label">
+                                        <label class="radio-label">
                                             ${option.title}
                                             <input 
                                                 type="radio" 
@@ -350,7 +380,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                     } else if (child.type === 'CheckboxGroup') {
                         html += `
                             <div class="checkbox-container">
-                                <label class="subheading">${child.label}</label>
+                                <label class="label">${child.label}</label>
                                 ${(child['data-source'] || []).map(option => `
                                     <label class="checkbox-label">
                                         <input 
@@ -399,21 +429,26 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             </div>
                         `;
                     }
-                     else if (child.type === 'Footer') {
-                        html += `
-                            <div class="footer2">
-                                <button 
-                                    class="continue" 
-                                    data-action='${JSON.stringify(child["on-click-action"])}'>
-                                    ${child.label}
-                                </button>
-                                <p>Managed by the business. <a href="https://example.com/about" target="_blank">Learn more</a></p>
-                            </div>
-                        `;
-                    }
                 });
 
                 html += `</div>`;
+
+                
+                html += `</div>`;
+                
+                const footer = form.children.find(child => child.type === 'Footer');
+                if (footer) {
+                    html += `
+                        <div class="footer2">
+                            <button 
+                                class="continue" 
+                                data-action='${JSON.stringify(footer["on-click-action"])}'>
+                                ${footer.label}
+                            </button>
+                            <p>Managed by the business. <a href="https://example.com/about" target="_blank">Learn more</a></p>
+                        </div>
+                    `;
+                }
 
                 html += `</section>`;
 
@@ -460,6 +495,21 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                                 console.error('Invalid action JSON:', e);
                             }
                         });
+                    });
+
+                    document.querySelectorAll('.floating-label input, .floating-label textarea').forEach(input => {
+                        input.addEventListener('input', () => {
+                            if (input.value.trim()) {
+                                input.classList.add('active');
+                            } else {
+                                input.classList.remove('active');
+                            }
+                        });
+
+                        // Optional: On load
+                        if (input.value.trim()) {
+                            input.classList.add('active');
+                        }
                     });
                 }
             }

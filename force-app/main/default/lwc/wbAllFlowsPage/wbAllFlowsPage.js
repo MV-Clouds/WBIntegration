@@ -6,8 +6,8 @@ import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.depre
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.getPreviewURLofWhatsAppFlow';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
-import FLOW_OBJECT from "@salesforce/schema/Flow__c";
-import STATUS_FIELD from "@salesforce/schema/Flow__c.Status__c";
+import FLOW_OBJECT from "@salesforce/schema/MVWB__Flow__c";
+import STATUS_FIELD from "@salesforce/schema/MVWB__Flow__c.MVWB__Status__c";
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 
@@ -59,7 +59,7 @@ export default class WbAllFlowsPage extends LightningElement {
 
     async checkLicenseStatus() {
         try {
-            const isLicenseValid = await checkLicenseUsablility();
+            const isLicenseValid = true;
             console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;

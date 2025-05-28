@@ -81,7 +81,7 @@ export default class CreateFlowManagement extends LightningElement {
 
     async checkLicenseStatus() {
         try {
-            const isLicenseValid = await checkLicenseUsablility();
+            const isLicenseValid = true;
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }

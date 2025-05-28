@@ -2,7 +2,7 @@ public with sharing class WhatsAppFlowController {
     
     @AuraEnabled
     public static List<sObject> getWhatsAppFlows() {
-        List<Flow__c> flowRecs = [SELECT Id, Flow_Name__c, Status__c, Flow_Id__c, Category__c, Template_Type__c, LastModifiedDate, CreatedDate FROM Flow__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
+        List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Flow_Name__c, MVWB__Status__c, MVWB__Flow_Id__c, MVWB__Category__c, MVWB__Template_Type__c, LastModifiedDate, CreatedDate FROM MVWB__Flow__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
         return flowRecs;
     }
 
@@ -57,13 +57,13 @@ public with sharing class WhatsAppFlowController {
                 String flowId = (String) responseMap.get('id');
 
                 // Create a new Flow record
-                Flow__c flow = new Flow__c();
-                flow.Flow_Name__c = flowName;
-                flow.Status__c = 'Draft';
-                flow.Flow_Id__c = flowId;
-                flow.Flow_JSON__c = flowJson;
-                flow.Category__c = String.join(categories, ';');
-                flow.Template_Type__c = templateType;
+                MVWB__Flow__c flow = new MVWB__Flow__c();
+                flow.MVWB__Flow_Name__c = flowName;
+                flow.MVWB__Status__c = 'Draft';
+                flow.MVWB__Flow_Id__c = flowId;
+                flow.MVWB__Flow_JSON__c = flowJson;
+                flow.MVWB__Category__c = String.join(categories, ';');
+                flow.MVWB__Template_Type__c = templateType;
 
                 insert flow;
                 return flowId;
@@ -130,9 +130,9 @@ public with sharing class WhatsAppFlowController {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
                 Boolean successVal = (Boolean) responseMap.get('success');
                 if(successVal == true) {
-                    List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                    List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Status__c, MVWB__Flow_Id__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
                     if(flowRecs.size() > 0){
-                        flowRecs[0].Status__c = 'Published';
+                        flowRecs[0].MVWB__Status__c = 'Published';
                         update as user flowRecs;
                     }
                     return 'success';
@@ -163,7 +163,7 @@ public with sharing class WhatsAppFlowController {
             HttpResponse response = http.send(request);
             
             if (response.getStatusCode() == 200) {
-                List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Status__c, MVWB__Flow_Id__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
                 if(flowRecs.size() > 0){
                     delete as user flowRecs[0];
                 }
@@ -192,9 +192,9 @@ public with sharing class WhatsAppFlowController {
             HttpResponse response = http.send(request);
             
             if (response.getStatusCode() == 200) {
-                List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Status__c, MVWB__Flow_Id__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
                 if(flowRecs.size() > 0){
-                    flowRecs[0].Status__c = 'Deprecated';
+                    flowRecs[0].MVWB__Status__c = 'Deprecated';
                     update as user flowRecs[0];
                 }
                 return 'sucess';

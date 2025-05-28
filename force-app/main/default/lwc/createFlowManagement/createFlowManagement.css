@@ -11,7 +11,7 @@
     background-size: cover;
     border-radius: 5px;
     height: 100%;
-    overflow-x: scroll;
+    overflow: scroll;
     scrollbar-width: none;
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.5), 0 1px 8px 0 rgba(0, 0, 0, 0.29);
 }
@@ -54,12 +54,20 @@
 .flow-content{
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     margin-bottom: 1rem;
+    overflow-x: hidden;
 }
 
 .edit-content{
-    width: 70%;
+    width: 100%;
+    min-width: 30%;
+    margin-top: 1rem;
+    margin-right: 1rem;
+    box-shadow: 2px 2px 10px rgba(0,0,0, 0.1);
+    border-radius: 5px;
+    border: 1px solid #eee;
+    height: calc(100vh - 220px);
 }
 
 .previewFlow{
@@ -204,6 +212,7 @@ label{
     display: flex;
     justify-content: space-between;
     background-color: white;
+    border-radius: 5px 5px 0 0;
 }
 
 .editor-heading{
@@ -211,7 +220,7 @@ label{
 }
 
 .editor-container {
-    height: 742px;
+    height: calc(100vh - 290px);
     border: 1px solid #d8dde6;
     /* pointer-events: none; */
 }
