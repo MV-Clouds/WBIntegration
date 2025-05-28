@@ -100,6 +100,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             align-items: center;
                             position: sticky;
                             top: 0;
+                            height: 15%;
                             left: 0;
                             background: inherit;
                             padding: 0.5rem 1rem;
@@ -124,8 +125,12 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                         }
                         .content {
-                            padding: 1rem 1rem 8rem 1rem;
+                            padding: 1rem 1rem 1rem 1rem;
                             text-align: left;
+                            height: 65%;
+                            overflow-y: scroll;
+                            position: fixed;
+                            top: 15%;
                         }
                         .heading {
                             font-size: 1.3rem;
@@ -152,6 +157,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             color: ${this.selectedtheme === 'dark' ? '#999' : '#5c5c5c'};
                             border-top: 1px solid ${this.selectedtheme === 'dark' ? '#444' : '#eee'};
                             position: fixed;
+                            top: 80%;
                             bottom: 0;
                             left: 0;
                             background-color: ${this.selectedtheme === 'dark' ? '#2d2c2c' : 'white'};
