@@ -1,13 +1,14 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 
 export default class WhatsappFlowPreviewer extends LightningElement {
     @api jsondata;
     inputValues = {}; // Stores { name: value }
     inputFocus = {}; // Stores { name: boolean }
     @api selectedtheme = 'light';
-    showMenu=false;
-     _currentscreenid; 
+    showMenu = false;
+    _currentscreenid;
     parsedJson = null;
+    @track contentHeight = '86%';
 
     @api
     get currentscreenid() {
@@ -16,18 +17,18 @@ export default class WhatsappFlowPreviewer extends LightningElement {
     set currentscreenid(value) {
         if (value !== this._currentscreenid) {
             this._currentscreenid = value;
-            this.generatePreview(); 
+            this.generatePreview();
         }
     }
 
     connectedCallback() {
         window.addEventListener('click', this.handleOutsideClick.bind(this));
-        window.addEventListener('resize', this.adjustContentPadding.bind(this));
+        window.addEventListener('resize', this.adjustContentHeight.bind(this));
     }
 
     disconnectedCallback() {
         window.removeEventListener('click', this.handleOutsideClick.bind(this));
-        window.removeEventListener('resize', this.adjustContentPadding.bind(this));
+        window.removeEventListener('resize', this.adjustContentHeight.bind(this));
     }
 
     handleOutsideClick(event) {
@@ -42,23 +43,20 @@ export default class WhatsappFlowPreviewer extends LightningElement {
 
     renderedCallback() {
         this.generatePreview();
-        this.adjustContentPadding();
+        this.adjustContentHeight();
     }
 
     @api
     runPreview() {
         this.generatePreview();
-        this.adjustContentPadding();
+        this.adjustContentHeight();
     }
 
-    adjustContentPadding() {
-        const footer = this.template.querySelector('.footer2');
+    adjustContentHeight() {
         const content = this.template.querySelector('.content');
 
-        if (footer && content) {
-            const footerHeight = footer.offsetHeight;
-            console.log('Footer height:', footerHeight);
-            // content.style.marginBottom = `${footerHeight}px`;
+        if (content) {
+            content.style.height = `${this.contentHeight}`;
         }
     }
 
@@ -89,8 +87,6 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             justify-content: space-between;
                             font-family: system-ui, sans-serif;
                             overflow: scroll;
-                            max-height: 500px;
-                            height: 100%;
                             width: 310px;
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                         }
@@ -103,7 +99,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             height: 15%;
                             left: 0;
                             background: inherit;
-                            padding: 0.5rem 1rem;
+                            padding: 5% 1%;
                             border-bottom: 1px solid ${this.selectedtheme === 'dark' ? '#444' : '#eee'};
                         }
                         ::-webkit-scrollbar {
@@ -125,12 +121,13 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             color: ${this.selectedtheme === 'dark' ? '#ddd' : '#333'};
                         }
                         .content {
-                            padding: 1rem 1rem 1rem 1rem;
+                            padding: 5%;
                             text-align: left;
-                            height: 65%;
+                            height: ${this.contentHeight};
                             overflow-y: scroll;
                             position: fixed;
-                            top: 15%;
+                            top: 14%;
+                            background-color: ${this.selectedtheme === 'dark' ? '#2d2c2c' : 'white'};
                         }
                         .heading {
                             font-size: 1.3rem;
@@ -150,7 +147,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             margin-bottom: 1rem;
                         }
                         .footer2 {
-                            padding: 1rem 1rem 1rem 1rem;
+                            padding: 5%;
                             text-align: center;
                             font-size: 0.8rem;
                             width: 100%;
@@ -312,7 +309,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                     </div>
                 `;
                 if (this.showMenu) {
-                     html += `
+                    html += `
                         <div class="menu-section">
                             <ul>
                                 <li data-option="help">Help</li>
@@ -439,11 +436,12 @@ export default class WhatsappFlowPreviewer extends LightningElement {
 
                 html += `</div>`;
 
-                
+
                 html += `</div>`;
-                
+
                 const footer = form.children.find(child => child.type === 'Footer');
                 if (footer) {
+                    this.contentHeight = '66%';
                     html += `
                         <div class="footer2">
                             <button 
@@ -454,6 +452,9 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             <p>Managed by the business. <a href="https://example.com/about" target="_blank">Learn more</a></p>
                         </div>
                     `;
+                } else {
+                    console.log('No footer found, setting content height to 86%');
+                    this.contentHeight = '86%';
                 }
 
                 html += `</section>`;
@@ -494,7 +495,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                     });
 
                     mainContainer.querySelectorAll('button.menu').forEach(button => {
-                        button.addEventListener('click',(event) => {
+                        button.addEventListener('click', (event) => {
                             try {
                                 this.handleMenuClick(event);
                             } catch (e) {
@@ -517,6 +518,11 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             input.classList.add('active');
                         }
                     });
+                    const content = this.template.querySelector('.content');
+
+                    if (content) {
+                        content.style.height = `${this.contentHeight}`;
+                    }
                 }
             }
         }
@@ -532,7 +538,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
     handleMenuClick(event) {
         event.stopPropagation();
         this.showMenu = !this.showMenu;
-        this.generatePreview(); 
+        this.generatePreview();
     }
 
     // Dynamically get input class based on name
