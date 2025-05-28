@@ -266,7 +266,7 @@
                                                         protect the
                                                         security and integrity of our services.</p>
                                                 </div>
-                                                <template for:each={header_variables} for:item="varItem"
+                                                <template for:each={computedHeaderVariables} for:item="varItem"
                                                     for:index="index">
                                                     <div key={varItem.id} class="true-div">
                                                         <p class="var">{varItem.index}</p>
@@ -279,8 +279,8 @@
 
                                                         <!-- Dynamic Field Selection -->
                                                         <select class="field-dropdown field-header-dd dropdown" data-id={varItem.id} onchange={handleFieldChange} style="border:0;">
-                                                            <template for:each={fields} for:item="field">
-                                                                <option key={field.value} class="header-field-option" value={field.value}>
+                                                            <template for:each={varItem.options} for:item="field">
+                                                                <option key={field.value} class="header-field-option" value={field.value} selected={field.isSelected}>
                                                                     {field.label}
                                                                 </option>
                                                             </template>

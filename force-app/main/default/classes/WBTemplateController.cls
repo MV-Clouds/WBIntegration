@@ -19,7 +19,6 @@
     // public static final MVWB__WBConnect_Configuration__mdt SETTINGS[0];
     public static List<MVWB__WBConnect_Configuration__mdt> SETTINGS = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
     public static String accessToken = !SETTINGS.isEmpty() ? SETTINGS[0].MVWB__Access_Token__c : null;
-    public static String endpoint;
     public static String uploadEndpoint;
 
 
@@ -416,66 +415,117 @@
    @return          : response Map<String, Object> - return response with the template id.
    ********************************************************
    */
-   @AuraEnabled
-    public static Map<String, Object> createWhatsappTemplate(String serializedWrapper,String payloadWrapper) {
-       Map<String, Object> response = new Map<String, Object>();
+    @AuraEnabled
+    public static Map<String, Object> createWhatsappTemplate(String serializedWrapper,String payloadWrapper, String templateName) {
+        Map<String, Object> response = new Map<String, Object>();
 
-       try {
-           if (String.isBlank(SETTINGS[0].MVWB__Business_Account_Id__c)) {
-               response.put('success', false);
-               response.put('errorMessage', 'Business Account ID is not configured in the system.');
-               return response;
-           }
+        try {
+            if (String.isBlank(SETTINGS[0].MVWB__Business_Account_Id__c)) {
+                response.put('success', false);
+                response.put('errorMessage', 'Business Account ID is not configured in the system.');
+                return response;
+            }
 
-           CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
 
             Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
             System.debug('payload :: '+payload);
-           endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
-           
-           HttpRequest req = new HttpRequest();
-           req.setEndpoint(endpoint);
-           req.setMethod('POST');
-           req.setHeader('Content-Type', 'application/json');
-           req.setHeader('Authorization', 'Bearer ' + accessToken);
-           req.setBody(JSON.serialize(payload));
-   
-           Http http = new Http();
-           HttpResponse res = http.send(req);
+            String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
+            
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(endpoint);
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Authorization', 'Bearer ' + accessToken);
+            req.setBody(JSON.serialize(payload));
+    
+            Http http = new Http();
+            HttpResponse res = http.send(req);
 
-           if (res.getStatusCode() == 200) {
-               Id templateId = CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
-               response.put('success', true);
-               response.put('templateId', templateId); 
-           } else {
-               response.put('success', false);
-               response.put('errorMessage', res.getBody());
-               if (String.isNotBlank(templateWrapper.tempImgId)) {
-                   ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
-                   if (Schema.sObjectType.ContentDocument.isDeletable()) {
-                       delete contentDoc;
-                   }
-               }
+            if (res.getStatusCode() == 200) {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                Id templateId = CreateTemplateWrapper.handleSuccessResponse((String) responseMap.get('id'), (String) responseMap.get('status'), payload, templateWrapper);
+                response.put('success', true);
+                response.put('templateId', templateId); 
+            } else {
+                response.put('success', false);
+                response.put('errorMessage', res.getBody());
+                if (String.isNotBlank(templateWrapper.tempImgId)) {
+                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete contentDoc;
+                    }
+                }
 
-               ExceptionHandler.logException(new Map<String, Object>{
-                   'className' => 'WBTemplateController',
-                   'methodName' => 'createWhatsappTemplate',
-                   'exceptionObj' => null,
-                   'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
-                   'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
-               });
-           }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-           response.put('status', 'error');
-           response.put('message', e.getMessage());
-       }
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'createWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            if (e instanceof CalloutException && e.getMessage().containsIgnoreCase('Read timed out')) {
+                response.put('success', false);
+                response.put('status', 'warning');
+                response.put('message', 'Template is being created, you will be notified once it is ready.');
+                checkTemplateExistance(templateName, serializedWrapper, payloadWrapper);
+            }
+            else{
+                response.put('success', false);
+                response.put('status', 'error');
+                response.put('message', e.getMessage());
+            }
+        }
 
-       return response;
-   }
+        return response;
+    }
+
+    @future(callout=true)
+    public static void checkTemplateExistance(String templateName, String serializedWrapper, String payloadWrapper) {
+        try {
+            String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c + '/message_templates?name=' + EncodingUtil.urlEncode(templateName, 'UTF-8');
+            
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(endpoint);
+            req.setMethod('GET');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Authorization', 'Bearer ' + accessToken);
+
+            Http http = new Http();
+            HttpResponse res = http.send(req);
+
+            if (res.getStatusCode() == 200) {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                List<Object> dataList = (List<Object>) responseMap.get('data');
+
+                if (!dataList.isEmpty()) {
+                    // Get the first element from the list and cast it as a Map
+                    Map<String, Object> templateData = (Map<String, Object>) dataList[0];
+
+                    // Extract values
+                    String metaTemplateId = (String) templateData.get('id');
+                    String metaTempStatus = (String) templateData.get('status');
+
+                    System.debug('Template ID: ' + metaTemplateId);
+                    System.debug('Status: ' + metaTempStatus);
+
+                    CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+                    Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
+
+                    Id templateId = CreateTemplateWrapper.handleSuccessResponse(metaTemplateId, metaTempStatus, payload, templateWrapper);
+
+                    if(templateId != null) {
+                        MVWB__Template_Update__e fetchAllTemplatesEvent = new MVWB__Template_Update__e();
+                        fetchAllTemplatesEvent.MVWB__Fetch_All_Templates__c = true;
+                        EventBus.publish(fetchAllTemplatesEvent);
+                    } else {
+                        
+                    }
+                }
+            } else {
+                System.debug('API Call failed: ' + res.getStatusCode() + ' - ' + res.getBody());
+            }
+        } catch (Exception e) {
+            System.debug('Exception occurred while checking template existence: ' + e.getMessage());
+        }
+    }
 
    /*
    *********************************************************
@@ -581,7 +631,6 @@
        }
        return '';
    }
-
    /*
    *********************************************************
    @description     : Store the file in content version that can be used while sending template.
@@ -649,7 +698,7 @@
 
            Template__c wbTempRec = [SELECT Id, Name,Template_Name__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
            
-           endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Template_Name__c;
+           String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Template_Name__c;
 
            HttpRequest req = new HttpRequest();         
            req.setEndpoint(endpoint);
@@ -689,57 +738,45 @@
    @return          : response Map<String, Object> - return response with the template id.
    ********************************************************
    */
-   @AuraEnabled
+    @AuraEnabled
     public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String payloadWrapper,String templateId) {
-       Map<String, Object> response = new Map<String, Object>();
+        Map<String, Object> response = new Map<String, Object>();
 
-       try {
-           CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
-           String editEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+templateId;
-        //    Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
-        
+        try {
+            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+            String editEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+templateId;
             Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
-           
-           HttpRequest req = new HttpRequest();
-           req.setEndpoint(editEndpoint);
-           req.setMethod('POST');
-           req.setHeader('Content-Type', 'application/json');
-           req.setHeader('Authorization', 'Bearer ' + accessToken);
-           req.setBody(JSON.serialize(payload));
-   
+            
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(editEndpoint);
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Authorization', 'Bearer ' + accessToken);
+            req.setBody(JSON.serialize(payload));
+    
+            Http http = new Http();
+            HttpResponse res = http.send(req);
 
-           Http http = new Http();
-           HttpResponse res = http.send(req);
-
-           if (res.getStatusCode() == 200) {
-               CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
-               response.put('success', true);
-           } else {
-               response.put('success', false);
-               response.put('errorMessage', res.getBody());
-               if (String.isNotBlank(templateWrapper.tempImgId)) {
-                   ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
-                   if (Schema.sObjectType.ContentDocument.isDeletable()) {
-                       delete contentDoc;
-                   }
-               }
-               ExceptionHandler.logException(new Map<String, Object>{
-                   'className' => 'WBTemplateController',
-                   'methodName' => 'editWhatsappTemplate',
-                   'exceptionObj' => null,
-                   'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
-                   'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
-               });
-           }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-           response.put('status', 'error');
-           response.put('message', e.getMessage());
-       }
-
+            if (res.getStatusCode() == 200) {
+                    Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                    CreateTemplateWrapper.handleSuccessResponse((String) responseMap.get('id'), (String) responseMap.get('status'), payload, templateWrapper);
+                response.put('success', true);
+            } else {
+                response.put('success', false);
+                response.put('errorMessage', res.getBody());
+                if (String.isNotBlank(templateWrapper.tempImgId)) {
+                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete contentDoc;
+                    }
+                }
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'editWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            response.put('status', 'error');
+            response.put('message', e.getMessage());
+        }
        return response;
    }
 

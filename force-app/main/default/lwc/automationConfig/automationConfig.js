@@ -265,7 +265,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         // }
 
         let cmpDef = {
-            componentDef : 'c:automationPath',
+            componentDef : 'MVWB:automationPath',
             attributes: {
                 recordId: recordId,
                 templateType: templateType

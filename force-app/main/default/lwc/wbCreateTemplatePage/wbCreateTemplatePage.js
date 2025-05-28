@@ -378,6 +378,19 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 ...field,
                 isSelected: field.value === varItem.field
             })) : []
+
+        }));
+    }
+
+    get computedHeaderVariables() {
+        // Add selection state to fields for each variable
+        return this.header_variables.map(varItem => ({
+            ...varItem,
+            options: this.fields ? this.fields.map(field => ({
+                ...field,
+                isSelected: field.value === varItem.field
+            })) : []
+
         }));
     }
 
@@ -763,24 +776,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
-    // async checkLicenseStatus() {
-    //     try {
-    //         const isLicenseValid = await checkLicenseUsablility();
-    //         if (!isLicenseValid) {
-    //             this.showLicenseError = true;
-    //         }
-    //     } catch (error) {
-    //         console.error('Error checking license:', error);
-    //     }
-    // }
-
     getS3ConfigDataAsync() {
         try {
             getS3ConfigSettings()
                 .then(result => {
                     if (result != null) {
-                        console.log('Reuskt ::: ', result);
-
                         this.confData = result;
                         this.isAWSEnabled = true;
                     }
@@ -879,13 +879,13 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     fetchTemplateData() {
         try {
+            this.isLoading = true;
             getDynamicObjectData({ templateId: this.edittemplateid })
                 .then((data) => {
                     const { template, templateVariables } = data;
-                    console.log({template});
 
-                    this.selectedOption = template.MVWB__Template_Type__c;
-                    this.activeTab = template.MVWB__Template_Category__c;
+                    this.selectedOption = template.Template_Type__c;
+                    this.activeTab = template.Template_Category__c;
                     if (this.activeTab === 'Marketing') {
                         this.selectedTab = 'section1';
                     } else if (this.activeTab === 'Utility') {
@@ -896,7 +896,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                     this.handleTabClick(this.selectedTab);
                     this.handleRadioChange(this.selectedOption);
-
+                    setTimeout(()=>{
+                        this.handleObjectChange({ target: { value: templateVariables[0].objName } });
+                    },700);
                     setTimeout(() => {
 
                         this.templateName = template.MVWB__Template_Name__c || '';
@@ -945,8 +947,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.selectedFlow = templateMiscellaneousData.isFlowSelected
                             this.isFeatureEnabled = templateMiscellaneousData.isFeatureEnabled
                             this.awsFileName = templateMiscellaneousData.awsFileName
-
-                            console.log('FETCH ::: ', this.awsFileName);
 
                             if (this.awsFileName && !this.isAWSEnabled) {
                                 this.showToastError('AWS Configration missing')
@@ -997,9 +997,20 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             };
                             return temp;
                         })
-
+                        // this.fields = tvs.map(tv => tv.field);
+                        const tempfieldsBody = tvs.filter(tv => tv.type == 'Body').map(tv => tv.field);
                         this.variables = tvs.filter(tv => tv.type == 'Body') || [];
+                        this.variables = this.variables.map((variable, index) => ({
+                            ...variable,
+                            field: tempfieldsBody[index] || variable.field // fallback to original field if index is missing
+                        }));
+
+                        const tempfieldsHead = tvs.filter(tv => tv.type == 'Header').map(tv => tv.field);
                         this.header_variables = tvs.filter(tv => tv.type == 'Header') || [];
+                        this.header_variables = this.header_variables.map((variable, index) => ({
+                            ...variable,
+                            field: tempfieldsHead[index] || variable.field // fallback to original field if index is missing
+                        }));
                         this.updatePreviewContent(this.previewHeader, 'header');
                         this.updatePreviewContent(this.previewBody, 'body');
                         this.addHeaderVar = this.header_variables?.length > 0 ? true : false;
@@ -1092,14 +1103,16 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         else {
                             this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
                         }
-
-                    }, 1000);
+                        this.loading = false;
+                    }, 2000);
                 })
                 .catch((error) => {
                     console.error('Error fetching fields: ', error);
+                    this.isLoading = false;
                 });
         } catch (error) {
             console.error('Error fetching template data: ', error);
+            this.isLoading = false;
         }
     }
 
@@ -1122,15 +1135,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     async handleFileChange(event) {
         try {
             const file = event.target.files[0];
-            console.log('File');
-            console.log(file);
 
             if (file) {
                 this.file = file;
                 this.fileName = file.name;
                 this.fileType = file.type;
                 this.fileSize = file.size;
-                console.log('Is AWS ENnabled ::: ', this.isAWSEnabled);
 
                 if (this.isAWSEnabled) {
                     let isValid = false;
@@ -1147,20 +1157,19 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         isValid = fileSizeMB <= maxSize;
                     }
                     else {
-                        console.log('Else OUT');
+                        // console.log('Else OUT');
                     }
-                    console.log('Is Valid ::: ' + isValid);
 
                     if (isValid) {
                         this.selectedFilesToUpload.push(file);
                         // this.fileName = file.name;
+                        if (file) {
+                            this.isLoading = true;
+                            await this.uploadToAWS(this.selectedFilesToUpload);
+                        }
                     } else {
-                        this.showToast('Error', `${file.name} exceeds the ${maxSize}MB limit`, 'error');
-                    }
-                    if (file) {
-                        console.log('Handle File Change', this.selectedFilesToUpload)
-                        this.isLoading = true;
-                        await this.uploadToAWS(this.selectedFilesToUpload);
+                        // this.isLoading = false;
+                        this.showToastError( `${file.name} exceeds the ${maxSize}MB limit`);
                     }
                 }
                 else {
@@ -1178,7 +1187,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             console.error('Error in file upload:', error);
         }
     }
-
 
     initializeAwsSdk(confData) {
         try {
@@ -1256,14 +1264,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                 let upload = this.s3.upload(params);
 
-                console.log('Upload to aws ::: ');
-                console.log('Object Key ::: ', objKey);
-                console.log('Params ::: ', params);
-                console.log('Upload :: ', upload)
-
-
-
-
                 return await upload.promise();
             });
             // Wait for all uploads to complete
@@ -1273,7 +1273,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     let bucketName = this.confData.MVWB__S3_Bucket_Name__c;
                     let objKey = result.Key;
                     let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
-                    console.log('AWS Url :: ', awsFileUrl);
 
                     this.awsFileName = objKey;
                     this.generatePreview(awsFileUrl);
@@ -1352,11 +1351,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             this.isLoading = true;
             uploadFile({ base64Data: this.fileData, fileName: this.fileName })
                 .then((result) => {
-                    console.log(result);
-                    
                     this.contentVersionId = result.contentVersionId;
                     const publicUrl = result.publicUrl;
-                    console.log(publicUrl);
 
                     // Replace '/sfc/p/#' with '/sfc/p/' if needed
                     this.generatePreview(publicUrl.replace('/sfc/p/#', '/sfc/p/'));
@@ -1391,8 +1387,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 });
         }
         else if (this.isAWSEnabled) {
-            console.log('this.awsFileName ::: ', this.awsFileName);
-
             deleteImagesFromS3({ fileNames: [this.awsFileName] })
                 .then(() => {
                     this.showToastSuccess('File deleted successfully');
@@ -1496,7 +1490,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         isLastChunk: isLastChunk
                     };
                     const serializedWrapper = JSON.stringify(fileChunkWrapper);
-                    console.log('this.isAWSEnabled ::: ', this.isAWSEnabled);
 
                     uploadFileChunk({ serializedWrapper: serializedWrapper, isAWSEnabled: this.isAWSEnabled })
                         .then(result => {
@@ -1600,15 +1593,18 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
         this.clearEditTemplateData();
 
-
-        const previousEvent = new CustomEvent('previous', {
-            detail: {
-                selectedTab: this.selectedTab,
-                selectedOption: this.selectedOption,
-                activeTab: this.activeTab
-            }
-        });
-        this.dispatchEvent(previousEvent);
+        if(!this.isEditTemplate){
+            const previousEvent = new CustomEvent('previous', {
+                detail: {
+                    selectedTab: this.selectedTab,
+                    selectedOption: this.selectedOption,
+                    activeTab: this.activeTab
+                }
+            });
+            this.dispatchEvent(previousEvent);
+        } else {
+            this.navigateToAllTemplatePage();
+        }
 
     }
 
@@ -2870,12 +2866,18 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     });
 
             } else {
-                createWhatsappTemplate({ serializedWrapper: serializedWrapper,payloadWrapper :payload })
+                createWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateName: this.templateName })
                     .then(result => {
+                        console.log(result);
+                        
                         if (result && result.success) {
                             this.showToastSuccess('Template successfully created');
 
                             this.navigateToAllTemplatePage();
+                        } else if(result && result.success == false && result.status == 'warning'){
+                            this.showToastWarning('Template is being created, please wait for few minutes before creating another template.');
+                            this.navigateToAllTemplatePage();
+                            this.isLoading = false;
                         } else {
                             const errorResponse = JSON.parse(result.errorMessage);
                             const errorMsg = errorResponse.error.error_user_msg || errorResponse.error.message || 'Due to unknown error';
@@ -2936,6 +2938,15 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         this.dispatchEvent(toastEvent);
     }
 
+    showToastWarning(message) {
+        const toastEvent = new ShowToastEvent({
+            title: 'Information',
+            message,
+            variant: 'warning'
+        });
+        this.dispatchEvent(toastEvent);
+    }
+
     showToastSuccess(message) {
         const toastEvent = new ShowToastEvent({
             title: 'Success',
@@ -2966,7 +2977,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     navigateToAllTemplatePage() {
         let cmpDef = {
-            componentDef: 'c:wbAllTemplatePage',
+            componentDef: 'MVWB:wbAllTemplatePage',
 
         };
 

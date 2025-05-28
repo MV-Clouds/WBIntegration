@@ -14,7 +14,6 @@ function buildPayload(templateWrapper) {
         if (templateWrapper.templateCategory === 'Authentication' || templateWrapper.templateCategory === 'Utility') {
             payload.message_send_ttl_seconds = templateWrapper.expireTime || 300;
         }
-        console.log('Payload:', payload);
         
         return payload;
     } catch (e) {

@@ -395,7 +395,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     handleBackDropClick(){
         try {
-            this.closeAllPopups();
             this.reactToMessage = null;
             this.showReactEmojiPicker = false;
             this.showFileUploader = false;
@@ -410,9 +409,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             this.audioURL = '';
             this.selectedFileName = null;
             this.selectedFilesToUpload = [];
+            this.closeAllPopups();
             // this.template.querySelector('input[type="file"]').value = null;
-            let fileInput = this.template.querySelector('input[type="file"]');
-            if (fileInput) {
+            let fileInput = this.template?.querySelector('input[type="file"]');
+            if (fileInput && fileInput.value) {
                 fileInput.value = null;
             }
         } catch (e) {
@@ -440,9 +440,13 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
     closeAllPopups(){
-        this.template.host.style.setProperty("--max-height-for-attachment-options","0rem");
-        this.template.host.style.setProperty("--max-height-for-send-options","0rem");
-        this.template.host.style.setProperty("--height-for-emoji","0rem");
+        try {
+            this.template?.host?.style?.setProperty("--max-height-for-attachment-options","0rem");
+            this.template?.host?.style?.setProperty("--max-height-for-send-options","0rem");
+            this.template?.host?.style?.setProperty("--height-for-emoji","0rem");
+        } catch (error) {
+            console.error('Error in function closeAllPopups:::', error);
+        }
     }
 
     handleToggleActions(event){
