@@ -24,13 +24,23 @@ global class PostInstallClass implements InstallHandler {
     */
     global void onInstall(InstallContext context) {
         try {
-            MVWB__EmbeddedSignUpConfig__c embeddedConfig = MVWB__EmbeddedSignUpConfig__c.getInstance();
             List<Profile> systemAdminProfile = [SELECT Id, Name FROM Profile WHERE Name = 'System Administrator'];
-            embeddedConfig.MVWB__Client_Id__c = '514916280628381';
-            embeddedConfig.MVWB__Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
-            embeddedConfig.MVWB__Config_Id__c = '8971126402921271';
-            embeddedConfig.SetupOwnerId = systemAdminProfile[0].Id;
-            upsert embeddedConfig;
+            List<MVWB__EmbeddedSignUpConfig__c> embeddedConfigList = [SELECT Id, MVWB__Client_Id__c, MVWB__Client_Secret__c, MVWB__Config_Id__c, SetupOwnerId FROM MVWB__EmbeddedSignUpConfig__c LIMIT 1];
+            MVWB__EmbeddedSignUpConfig__c embeddedConfig = new MVWB__EmbeddedSignUpConfig__c();
+            if( embeddedConfigList != null || embeddedConfigList.size() > 0) {
+                embeddedConfig = embeddedConfigList[0];
+                embeddedConfig.MVWB__Client_Id__c = '514916280628381';
+                embeddedConfig.MVWB__Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
+                embeddedConfig.MVWB__Config_Id__c = '8971126402921271';
+                embeddedConfig.SetupOwnerId = systemAdminProfile[0].Id;
+                update embeddedConfig;
+            } else {
+                embeddedConfig.MVWB__Client_Id__c = '514916280628381';
+                embeddedConfig.MVWB__Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
+                embeddedConfig.MVWB__Config_Id__c = '8971126402921271';
+                embeddedConfig.SetupOwnerId = systemAdminProfile[0].Id;
+                insert embeddedConfig;
+            }
             
             List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Client_Id__c, MVWB__Client_Secret__c, MVWB__Is_License_Valid__c, MVWB__Expiration_Date__c, MVWB__Next_Callout_Date__c, MVWB__Password__c, MVWB__Username__c FROM MVWB__LicenseConfig__c LIMIT 1];
             MVWB__LicenseConfig__c licenseConfig = new MVWB__LicenseConfig__c();

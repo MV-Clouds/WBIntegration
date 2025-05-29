@@ -214,7 +214,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
                 if(combinedData.theme){
                     this.isLightMode = combinedData.theme == 'light';
-                    if(!this.isLightMode) this.template.host.setAttribute("data-theme", combinedData.theme);
+                    if(!this.isLightMode) {
+                        this.template.querySelector('.main-chat-window-div').classList.toggle('darkTheme');
+                        this.template.querySelector('.main-chat-window-div').classList.toggle('lightTheme');
+                    }
                 }
 
                 if(combinedData.record){
@@ -384,10 +387,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         try {
             if(!this.height || this.height<400) this.height = 400;
             if(this.height > 640) this.height = 640;
-            this.template.host.style.setProperty("--height-of-main-chat-container", this.height + "px");
+            this.template.querySelector('.main-chat-window-div').style.setProperty("--height-of-main-chat-container", this.height + "px");
 
             let randomIndex = Math.floor(Math.random() * this.replyBorderColors.length);
-            this.template.host.style.setProperty('--reply-to-received-border-color', this.replyBorderColors[randomIndex]);
+            this.template.querySelector('.main-chat-window-div').style.setProperty('--reply-to-received-border-color', this.replyBorderColors[randomIndex]);
         } catch (e) {
             console.error('Error in function configureHeight:::', e.message);
         }
@@ -395,7 +398,6 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     handleBackDropClick(){
         try {
-            this.closeAllPopups();
             this.reactToMessage = null;
             this.showReactEmojiPicker = false;
             this.showFileUploader = false;
@@ -410,9 +412,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             this.audioURL = '';
             this.selectedFileName = null;
             this.selectedFilesToUpload = [];
+            this.closeAllPopups();
             // this.template.querySelector('input[type="file"]').value = null;
-            let fileInput = this.template.querySelector('input[type="file"]');
-            if (fileInput) {
+            let fileInput = this.template?.querySelector('input[type="file"]');
+            if (fileInput && fileInput.value) {
                 fileInput.value = null;
             }
         } catch (e) {
@@ -424,7 +427,15 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         try{
             this.isLightMode = !this.isLightMode;
             let theme = this.isLightMode ? "light" : "dark";
-            this.template.host.setAttribute("data-theme", theme);
+            // if(this.isLightMode){
+            //     this.template.querySelector('.main-chat-window-div').classList.remove('darkTheme');
+            //     this.template.querySelector('.main-chat-window-div').classList.add('lightTheme');
+            // }else{
+            //     this.template.querySelector('.main-chat-window-div').classList.remove('lightTheme');
+            //     this.template.querySelector('.main-chat-window-div').classList.add('darkTheme');
+            // }
+            this.template.querySelector('.main-chat-window-div').classList.toggle('darkTheme');
+            this.template.querySelector('.main-chat-window-div').classList.toggle('lightTheme');
             updateThemePreference({theme: theme})
             .then((isSuccess) => {
                 if(!isSuccess){
@@ -440,9 +451,13 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     }
 
     closeAllPopups(){
-        this.template.host.style.setProperty("--max-height-for-attachment-options","0rem");
-        this.template.host.style.setProperty("--max-height-for-send-options","0rem");
-        this.template.host.style.setProperty("--height-for-emoji","0rem");
+        try {
+            this.template?.querySelector('.main-chat-window-div')?.style?.setProperty("--max-height-for-attachment-options","0rem");
+            this.template?.querySelector('.main-chat-window-div')?.style?.setProperty("--max-height-for-send-options","0rem");
+            this.template?.querySelector('.main-chat-window-div')?.style?.setProperty("--height-for-emoji","0rem");
+        } catch (error) {
+            console.error('Error in function closeAllPopups:::', error);
+        }
     }
 
     handleToggleActions(event){
@@ -619,7 +634,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         try {
             this.showEmojiPicker = !this.showEmojiPicker;
             this.closeAllPopups();
-            this.template.host.style.setProperty("--height-for-emoji",this.showEmojiPicker ? "20rem" : "0rem");
+            this.template.querySelector('.main-chat-window-div').style.setProperty("--height-for-emoji",this.showEmojiPicker ? "20rem" : "0rem");
             if(this.showEmojiPicker){
                 this.template.querySelector('.emoji-picker-div').scrollTop = 0;
             }
@@ -657,7 +672,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             textareaMessageElement.style.height = 'auto';
             textareaMessageElement.style.height = `${textareaMessageElement.scrollHeight}px`;
             this.showAttachmentOptions = false;
-            this.template.host.style.setProperty("--max-height-for-attachment-options","0rem");
+            this.template.querySelector('.main-chat-window-div').style.setProperty("--max-height-for-attachment-options","0rem");
         } catch (e) {
             console.error('Error in function handleMessageTextChange:::', e.message);
         }
@@ -667,7 +682,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         try {
             this.showAttachmentOptions = !this.showAttachmentOptions;
             this.closeAllPopups();
-            this.template.host.style.setProperty("--max-height-for-attachment-options",this.showAttachmentOptions ? "13rem" : "0rem");
+            this.template.querySelector('.main-chat-window-div').style.setProperty("--max-height-for-attachment-options",this.showAttachmentOptions ? "13rem" : "0rem");
         } catch (e) {
             console.error('Error in function handleAttachmentButtonClick:::', e.message);
         }

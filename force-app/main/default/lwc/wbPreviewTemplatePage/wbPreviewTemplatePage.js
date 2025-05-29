@@ -326,7 +326,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 this.isCodeExpiration = miscData.isCodeExpiration;
                 this.expireTime = miscData.expireTime;
 
-                const headerType = template.Header_Type__c;
+                const headerType = template.MVWB__Header_Type__c;
 
                 if (['Image', 'Video', 'Document'].includes(headerType)) {
                     this.isImgSelected = headerType === 'Image' && result.isImgUrl;

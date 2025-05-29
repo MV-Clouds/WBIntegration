@@ -268,11 +268,11 @@
     ********************************************************
     */
 
-    public static Id handleSuccessResponse(HttpResponse res, Map<String, Object> payload, Map<String, Object> response, TemplateWrapper templateWrapper) {
+    public static Id handleSuccessResponse(String metaTempId, String metaTemplateStatus, Map<String, Object> payload, TemplateWrapper templateWrapper) {
+        Map<String, Object> response = new Map<String, Object>();
         Id templateId = null;
         try {
-            // Deserialize the response and payload
-            Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            // Deserialize the payload
             Map<String, Object> payloadMap = (Map<String, Object>) JSON.deserializeUntyped(JSON.serialize(payload));
             
             // List<Map<String, String>> buttonDetails;
@@ -299,13 +299,13 @@
             } else {
                 whatsAppTemplate = whatsAppTemplateList[0];
                 if (whatsAppTemplate.Template_Id__c != null) {
-                    whatsAppTemplate.Template_Id__c = (String) responseMap.get('id') != null ? (String) responseMap.get('id') : whatsAppTemplate.Template_Id__c;
+                    whatsAppTemplate.Template_Id__c = metaTempId != null ? metaTempId : whatsAppTemplate.Template_Id__c;
                 }
             }
             
             // Populate Template__c fields dynamically
-            String status = (String) responseMap.get('status');
-            whatsAppTemplate.Template_Id__c = (String) responseMap.get('id') != null ? (String) responseMap.get('id') : whatsAppTemplate.Template_Id__c;
+            String status = metaTemplateStatus;
+            whatsAppTemplate.Template_Id__c = metaTempId != null ? metaTempId : whatsAppTemplate.Template_Id__c;
             whatsAppTemplate.Status__c = (status == null || status == '') ? 'In-Review' : (status == 'PENDING') ? 'In-Review' : 
                                          (status == 'REJECTED') ? 'Rejected' : 
                                          (status == 'APPROVED') ? 'Active-Quality Pending' : '';

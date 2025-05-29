@@ -252,7 +252,8 @@ public class WBTemplateControllerTest {
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
         Test.startTest();
 
-        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload);
+        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload,'simple_template');
+        WBTemplateController.checkTemplateExistance('simple_template',serializedWrapper,payload);
         Test.stopTest();
     }
 
@@ -270,7 +271,7 @@ public class WBTemplateControllerTest {
         String payload = '{ "name": "simple_template", "language": "en_US", "category": "UTILITY", "components": [ { "type": "BODY", "text": "Hello {{1}}, your order {{2}} is confirmed." } ] }';
 
         Test.startTest();
-        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload);
+        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload, 'simple_template');
         Test.stopTest();
 
         // Assert that the error is caught and logged correctly
@@ -290,7 +291,7 @@ public class WBTemplateControllerTest {
 
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(400));
         Test.startTest();
-        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload);
+        Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper,payload, 'simple_template');
         Test.stopTest();
     }
 
@@ -356,18 +357,6 @@ public class WBTemplateControllerTest {
         System.assertEquals(result, '', 'The result should be empty in case of failure');
     }
     
-      @isTest
-    static void testCreateContentVersionAndDocument() {
-        Blob fileBlob = Blob.valueOf('test content');
-
-        String fileName = 'testFile.txt';
-
-        Test.startTest();
-        Map<String,String> result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
-        WBTemplateController.createContentVersionAndDocument(null, fileBlob);
-        Test.stopTest();
-
-    }
     @isTest
     static void testDeleteTemplate_Success() {
 		 Template__c template = new Template__c(Template_Name__c = 'Test Template',Template_Category__c = 'Marketing', Template_Id__c = 'testId');
