@@ -54,7 +54,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         maxCodetxt: 15,
         maxPackTxt: 224,
         maxHashTxt: 11,
-        chunkSize: 5242880
+        chunkSize: 3145728
     };
     _edittemplateid;
     file;
@@ -70,7 +70,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         { title: 'Call Phone Number', value: 'PHONE_NUMBER', iconName: 'phone', description: 'Maximum 1 button can be added' },
         { title: 'Visit Website', value: 'URL', iconName: 'site', description: 'Maximum 2 buttons can be added' },
         { title: 'Copy Offer Code', value: 'COPY_CODE', iconName: 'copy', description: 'Maximum 1 button can be added' },
-        { title: 'Complete flow', value: 'FLOW', iconName: 'flow', description: 'Maximum 1 button can be added' }
+        // { title: 'Complete flow', value: 'FLOW', iconName: 'flow', description: 'Maximum 1 button can be added' }
     ];
 
     toolbarButtons = [
@@ -896,9 +896,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                     this.handleTabClick(this.selectedTab);
                     this.handleRadioChange(this.selectedOption);
-                    setTimeout(()=>{
+                    setTimeout(() => {
                         this.handleObjectChange({ target: { value: templateVariables[0].objName } });
-                    },700);
+                    }, 700);
                     setTimeout(() => {
 
                         this.templateName = template.MVWB__Template_Name__c || '';
@@ -1143,52 +1143,52 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.fileSize = file.size;
 
                 // if (this.isAWSEnabled) {
-                    let isValid = false;
-                    let maxSize = 4;
-                    let fileSizeMB = Math.floor(file.size / (1024 * 1024));
-                    isValid = fileSizeMB <= maxSize;
-                    // if (this.fileType.startsWith('image/')) {
-                    //     maxSize = 5;
-                    //     isValid = fileSizeMB <= maxSize;
-                    // } else if (this.fileType.startsWith('video/')) {
-                    //     maxSize = 16;
-                    //     isValid = fileSizeMB <= maxSize;
-                    // } else if (this.fileType.includes('application/') || this.fileType.includes('text/')) {
-                    //     maxSize = 100;
-                    //     isValid = fileSizeMB <= maxSize;
-                    // }
-                    // else {
-                    //     // console.log('Else OUT');
-                    // }
-
-                    if (isValid) {
-                        this.selectedFilesToUpload.push(file);
-                        // this.fileName = file.name;
-                        this.isLoading = true;
-                        if (this.isAWSEnabled) {
-                            await this.uploadToAWS(this.selectedFilesToUpload);
-                        } else {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                this.fileData = reader.result.split(',')[1];
-                                // this.generatePreview(file);
-                                this.handleUpload(); // Auto-upload
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    } else {
-                        // this.isLoading = false;
-                        this.showToastError( `${file.name} exceeds the ${maxSize}MB limit`);
-                    }
+                let isValid = false;
+                let maxSize = 4;
+                let fileSizeMB = Math.floor(file.size / (1024 * 1024));
+                isValid = fileSizeMB <= maxSize;
+                // if (this.fileType.startsWith('image/')) {
+                //     maxSize = 5;
+                //     isValid = fileSizeMB <= maxSize;
+                // } else if (this.fileType.startsWith('video/')) {
+                //     maxSize = 16;
+                //     isValid = fileSizeMB <= maxSize;
+                // } else if (this.fileType.includes('application/') || this.fileType.includes('text/')) {
+                //     maxSize = 100;
+                //     isValid = fileSizeMB <= maxSize;
                 // }
                 // else {
-                    // const reader = new FileReader();
-                    // reader.onload = () => {
-                    //     this.fileData = reader.result.split(',')[1];
-                    //     // this.generatePreview(file);
-                    //     this.handleUpload(); // Auto-upload
-                    // };
-                    // reader.readAsDataURL(file);
+                //     // console.log('Else OUT');
+                // }
+
+                if (isValid) {
+                    this.selectedFilesToUpload.push(file);
+                    // this.fileName = file.name;
+                    this.isLoading = true;
+                    if (this.isAWSEnabled) {
+                        await this.uploadToAWS(this.selectedFilesToUpload);
+                    } else {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            this.fileData = reader.result.split(',')[1];
+                            // this.generatePreview(file);
+                            this.handleUpload(); // Auto-upload
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                } else {
+                    // this.isLoading = false;
+                    this.showToastError(`${file.name} exceeds the ${maxSize}MB limit`);
+                }
+                // }
+                // else {
+                // const reader = new FileReader();
+                // reader.onload = () => {
+                //     this.fileData = reader.result.split(',')[1];
+                //     // this.generatePreview(file);
+                //     this.handleUpload(); // Auto-upload
+                // };
+                // reader.readAsDataURL(file);
                 // }
 
             }
@@ -1301,7 +1301,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     generatePreview(publicUrl) {
         try {
             let typeCategory = '';
-    
+
             if (this.fileType.startsWith('image/')) {
                 typeCategory = 'image';
             } else if (this.fileType.startsWith('video/')) {
@@ -1311,7 +1311,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             } else {
                 typeCategory = 'unsupported';
             }
-    
+
             switch (typeCategory) {
                 case 'image':
                     this.isImgSelected = true;
@@ -1320,7 +1320,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     this.isImageFile = false;
                     this.filePreview = publicUrl;
                     break;
-    
+
                 case 'video':
                     this.isImgSelected = false;
                     this.isDocSelected = false;
@@ -1328,7 +1328,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     this.isVideoFile = false;
                     this.filePreview = publicUrl;
                     break;
-    
+
                 case 'pdf':
                     this.isDocSelected = true;
                     this.isImgSelected = false;
@@ -1336,7 +1336,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     this.isDocFile = false;
                     this.filePreview = publicUrl;
                     break;
-    
+
                 case 'unsupported':
                 default:
                     this.isImgSelected = false;
@@ -1345,7 +1345,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     this.showToastError('Unsupported file type! Please select an image, PDF, or video.');
                     break;
             }
-    
+
             this.isfilename = true;
             this.NoFileSelected = false;
         } catch (error) {
@@ -1391,8 +1391,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 .catch((error) => {
                     console.error('Error deleting file: ', error);
                     this.showToastError('Error deleting file!');
-
-
                 });
         }
         else if (this.isAWSEnabled) {
@@ -1404,8 +1402,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 .catch((error) => {
                     console.error('Error deleting file: ', error);
                     this.showToastError('Error deleting file!');
-
-
                 });
         }
     }
@@ -1449,10 +1445,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             if (!this.file) {
                 this.isLoading = false;
                 this.showToastError('Please select a file to upload.');
-    
+
                 return;
             }
-    
+
             startUploadSession({
                 fileName: this.fileName,
                 fileLength: this.fileSize,
@@ -1597,12 +1593,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     }
 
     handlePrevclick() {
-        if (this.contentVersionId != null) {
+        if (this.contentVersionId != null && !this.isEditTemplate) {
             this.handleDelete();
         }
         this.clearEditTemplateData();
 
-        if(!this.isEditTemplate){
+        if (!this.isEditTemplate) {
             const previousEvent = new CustomEvent('previous', {
                 detail: {
                     selectedTab: this.selectedTab,
@@ -2809,7 +2805,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 tempHeaderHandle: this.headerHandle ? this.headerHandle : null,
                 tempHeaderFormat: this.selectedContentType ? this.selectedContentType : null,
                 tempImgUrl: this.filePreview ? this.filePreview : null,
-                tempImgId: this.contentDocumentId ? this.contentDocumentId : null,
+                tempImgId: this.contentVersionId ? this.contentVersionId : null,
                 tempImgName: this.fileName ? this.fileName : null,
                 tempLanguage: this.selectedLanguage ? this.selectedLanguage : null,
                 tempHeaderText: this.header ? this.header : '',
@@ -2837,7 +2833,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const serializedWrapper = JSON.stringify(template);
             const payload = JSON.stringify(buildPayload(template));
             if (this.metaTemplateId) {
-                editWhatsappTemplate({ serializedWrapper: serializedWrapper,payloadWrapper :payload, templateId: this.metaTemplateId })
+                editWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateId: this.metaTemplateId })
                     .then(result => {
                         if (result && result.success) {
                             this.showToastSuccess('Template successfully edited.');
@@ -2877,13 +2873,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             } else {
                 createWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateName: this.templateName })
                     .then(result => {
-                        console.log(result);
-                        
+
                         if (result && result.success) {
                             this.showToastSuccess('Template successfully created');
 
                             this.navigateToAllTemplatePage();
-                        } else if(result && result.success == false && result.status == 'warning'){
+                        } else if (result && result.success == false && result.status == 'warning') {
                             this.showToastWarning('Template creation taking too much time, please wait for few minutes and refresh the page to see the template.');
                             this.navigateToAllTemplatePage();
                             this.isLoading = false;

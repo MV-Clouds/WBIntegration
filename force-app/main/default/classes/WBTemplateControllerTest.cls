@@ -357,18 +357,6 @@ public class WBTemplateControllerTest {
         System.assertEquals(result, '', 'The result should be empty in case of failure');
     }
     
-      @isTest
-    static void testCreateContentVersionAndDocument() {
-        Blob fileBlob = Blob.valueOf('test content');
-
-        String fileName = 'testFile.txt';
-
-        Test.startTest();
-        Map<String,String> result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
-        WBTemplateController.createContentVersionAndDocument(null, fileBlob);
-        Test.stopTest();
-
-    }
     @isTest
     static void testDeleteTemplate_Success() {
 		 Template__c template = new Template__c(Template_Name__c = 'Test Template',Template_Category__c = 'Marketing', Template_Id__c = 'testId');

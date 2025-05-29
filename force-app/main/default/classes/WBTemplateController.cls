@@ -450,12 +450,27 @@
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
+                // if (String.isNotBlank(templateWrapper.tempImgId)) {
+                //     ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                //     if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                //         delete contentDoc;
+                //     }
+                // }
+
                 if (String.isNotBlank(templateWrapper.tempImgId)) {
-                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
-                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
-                        delete contentDoc;
+                    ContentVersion version = [
+                        SELECT ContentDocument.Id 
+                        FROM ContentVersion 
+                        WHERE Id = :templateWrapper.tempImgId 
+                        WITH SECURITY_ENFORCED 
+                        LIMIT 1
+                    ];
+
+                    if (version != null && Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete version.ContentDocument;
                     }
                 }
+
 
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'createWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
             }
@@ -605,23 +620,9 @@
            if (res.getStatusCode() == 200) {
                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                String headerHandle = (String) responseMap.get('h');
-
-               if(!isAWSEnabled){
-                    Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
-                    String imageurl = fileUrls.get('ContentDownloadUrl');
-                    String contentDocumentId = fileUrls.get('ContentDocumentId');
-                    
-                    return JSON.serialize(new Map<String, String>{
-                        'headerHandle' => headerHandle,
-                        'imageurl' => imageurl,
-                        'contentDocumentId' => contentDocumentId
-                    });
-                }
-                else{
-                    return JSON.serialize(new Map<String, String>{
-                        'headerHandle' => headerHandle
-                    });
-                }
+                return JSON.serialize(new Map<String, String>{
+                    'headerHandle' => headerHandle
+                });
                // return headerHandle; 
            } else {
                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'uploadFileChunk','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
@@ -631,57 +632,7 @@
        }
        return '';
    }
-   /*
-   *********************************************************
-   @description     : Store the file in content version that can be used while sending template.
-   @param           : headerHandle,fileName,fileBlob - Used to create content version of uploaded file for the history.
-   @return          : 
-   ********************************************************
-   */
      
-   public static Map<String, String> createContentVersionAndDocument(String fileName, Blob fileBlob) {
-       try {
-           ContentVersion contentVersion = new ContentVersion();
-           contentVersion.Title = fileName;
-           contentVersion.PathOnClient = fileName;
-           contentVersion.VersionData = fileBlob;
-           contentVersion.Origin = 'H';
-       
-           if (Schema.sObjectType.ContentVersion.isCreateable()) {
-               insert contentVersion;
-           }
-   
-           ContentDistribution contentDistribution = new ContentDistribution();
-           contentDistribution.ContentVersionId = contentVersion.Id;
-           contentDistribution.Name = fileName;
-           contentDistribution.PreferencesAllowOriginalDownload = true;
-           if (Schema.sObjectType.ContentDistribution.isCreateable()) {
-               insert contentDistribution;
-           }
-   
-           ContentDistribution createdContentDistribution = [
-               SELECT Id, ContentDocumentId, ContentDownloadUrl 
-               FROM ContentDistribution 
-               WHERE Id = :contentDistribution.Id 
-               WITH SECURITY_ENFORCED
-           ];
-   
-           String contentDownloadUrl = createdContentDistribution.ContentDownloadUrl;
-           String contentDocumentId = createdContentDistribution.ContentDocumentId;
-   
-           Map<String, String> result = new Map<String, String>();
-           result.put('ContentDownloadUrl', contentDownloadUrl);
-           result.put('ContentDocumentId', contentDocumentId);
-   
-           return result;
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'createContentVersionAndDocument','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-           });
-           return null;
-       }
-   }    
-  
-   
    /*
    *********************************************************
    @description     : Method used to delete template from meta as well as from record page.
@@ -764,10 +715,23 @@
             } else {
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
+                // if (String.isNotBlank(templateWrapper.tempImgId)) {
+                //     ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                //     if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                //         delete contentDoc;
+                //     }
+                // }
                 if (String.isNotBlank(templateWrapper.tempImgId)) {
-                    ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
-                    if (Schema.sObjectType.ContentDocument.isDeletable()) {
-                        delete contentDoc;
+                    ContentVersion version = [
+                        SELECT ContentDocument.Id 
+                        FROM ContentVersion 
+                        WHERE Id = :templateWrapper.tempImgId 
+                        WITH SECURITY_ENFORCED 
+                        LIMIT 1
+                    ];
+
+                    if (version != null && Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete version.ContentDocument;
                     }
                 }
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'editWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
@@ -862,6 +826,7 @@
        @AuraEnabled public Integer chunkStart;
        @AuraEnabled public Integer chunkSize;
        @AuraEnabled public String fileName;
+       @AuraEnabled public Boolean isLastChunk;
    }
    public class TemplateDataWrapper {
        @AuraEnabled public Template__c template;

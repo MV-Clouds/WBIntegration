@@ -55,14 +55,10 @@ public class CreateTemplateWrapperTest {
             }
         };
 
-        Map<String, Object> response = new Map<String, Object>{
-            'success' => 'true',
-            'id' => 'someMarketingId'
-        };
-
         // Call method
-        Id templateId = CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
-    
+        Test.startTest();
+        Id templateId = CreateTemplateWrapper.handleSuccessResponse('someMarketingId', 'APPROVED', payload, templateWrapper);
+        Test.stopTest();
     }
 
     @isTest
@@ -120,13 +116,8 @@ public class CreateTemplateWrapperTest {
             }
         };
 
-        Map<String, Object> response = new Map<String, Object>{
-            'success' => 'true',
-            'id' => 'auth_template_001'
-        };
-
         Test.startTest();
-        Id templateId = CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
+        Id templateId = CreateTemplateWrapper.handleSuccessResponse('auth_template_001', 'APPROVED', payload, templateWrapper);
         Test.stopTest();
     }
 }
