@@ -2,7 +2,7 @@ public with sharing class WhatsAppFlowController {
     
     @AuraEnabled
     public static List<sObject> getWhatsAppFlows() {
-        List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Flow_Name__c, MVWB__Status__c, MVWB__Flow_Id__c, MVWB__Category__c, MVWB__Template_Type__c, LastModifiedDate, CreatedDate FROM MVWB__Flow__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
+        List<Flow__c> flowRecs = [SELECT Id, Flow_Name__c, Status__c, Flow_Id__c, Category__c, Template_Type__c, LastModifiedDate, CreatedDate FROM Flow__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
         return flowRecs;
     }
 
@@ -10,18 +10,18 @@ public with sharing class WhatsAppFlowController {
     public static String getJSONData(String type) {
         String jsonString = '';
         try {
-            List<MVWB__WBC_Flows_JSON__mdt> FlowJSON = [SELECT Id, MVWB__Default_JSON__c, MVWB__Collect_purchase_interest_JSON__c, MVWB__Customer_support_JSON__c, MVWB__Get_feedback_JSON__c, MVWB__Send_a_survey_JSON__c FROM MVWB__WBC_Flows_JSON__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            List<MVWB__WBC_Flows_JSON__mdt> FlowJSON = [SELECT Id, Default_JSON__c, Collect_purchase_interest_JSON__c, Customer_support_JSON__c, Get_feedback_JSON__c, Send_a_survey_JSON__c FROM MVWB__WBC_Flows_JSON__mdt WITH SECURITY_ENFORCED LIMIT 1];
             
             if(type == 'Default') {
-                jsonString = FlowJSON[0].MVWB__Default_JSON__c;
+                jsonString = FlowJSON[0].Default_JSON__c;
             } else if(type == 'Collect purchase interest') {
-                jsonString = FlowJSON[0].MVWB__Collect_purchase_interest_JSON__c;
+                jsonString = FlowJSON[0].Collect_purchase_interest_JSON__c;
             } else if(type == 'Get feedback') {
-                jsonString = FlowJSON[0].MVWB__Get_feedback_JSON__c;
+                jsonString = FlowJSON[0].Get_feedback_JSON__c;
             } else if(type == 'Send a survey') {
-                jsonString = FlowJSON[0].MVWB__Send_a_survey_JSON__c;
+                jsonString = FlowJSON[0].Send_a_survey_JSON__c;
             } else if(type == 'Customer support') {
-                jsonString = FlowJSON[0].MVWB__Customer_support_JSON__c;
+                jsonString = FlowJSON[0].Customer_support_JSON__c;
             }
         } catch (Exception e) {
             System.debug('Error retrieving or parsing JSON: ' + e.getMessage());
@@ -35,8 +35,8 @@ public with sharing class WhatsAppFlowController {
         try {
             List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
-            String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Business_Account_Id__c + '/flows';
+            String accessToken = wbConfig[0].Access_Token__c;
+            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].Business_Account_Id__c + '/flows';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -57,13 +57,13 @@ public with sharing class WhatsAppFlowController {
                 String flowId = (String) responseMap.get('id');
 
                 // Create a new Flow record
-                MVWB__Flow__c flow = new MVWB__Flow__c();
-                flow.MVWB__Flow_Name__c = flowName;
-                flow.MVWB__Status__c = 'Draft';
-                flow.MVWB__Flow_Id__c = flowId;
-                flow.MVWB__Flow_JSON__c = flowJson;
-                flow.MVWB__Category__c = String.join(categories, ';');
-                flow.MVWB__Template_Type__c = templateType;
+                Flow__c flow = new Flow__c();
+                flow.Flow_Name__c = flowName;
+                flow.Status__c = 'Draft';
+                flow.Flow_Id__c = flowId;
+                flow.Flow_JSON__c = flowJson;
+                flow.Category__c = String.join(categories, ';');
+                flow.Template_Type__c = templateType;
 
                 insert flow;
                 return flowId;
@@ -84,7 +84,7 @@ public with sharing class WhatsAppFlowController {
         try {
             List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
-            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String accessToken = wbConfig[0].Access_Token__c;
             String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/assets';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
@@ -117,7 +117,7 @@ public with sharing class WhatsAppFlowController {
         try {
             List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
-            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String accessToken = wbConfig[0].Access_Token__c;
             String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/publish';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
@@ -130,9 +130,9 @@ public with sharing class WhatsAppFlowController {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
                 Boolean successVal = (Boolean) responseMap.get('success');
                 if(successVal == true) {
-                    List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Status__c, MVWB__Flow_Id__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                    List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
                     if(flowRecs.size() > 0){
-                        flowRecs[0].MVWB__Status__c = 'Published';
+                        flowRecs[0].Status__c = 'Published';
                         update as user flowRecs;
                     }
                     return 'success';
@@ -153,7 +153,7 @@ public with sharing class WhatsAppFlowController {
         try {
             List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
-            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String accessToken = wbConfig[0].Access_Token__c;
             String endpoint = 'https://graph.facebook.com/v21.0/' + flowId;
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
@@ -163,7 +163,7 @@ public with sharing class WhatsAppFlowController {
             HttpResponse response = http.send(request);
             
             if (response.getStatusCode() == 200) {
-                List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Status__c, MVWB__Flow_Id__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
                 if(flowRecs.size() > 0){
                     delete as user flowRecs[0];
                 }
@@ -182,7 +182,7 @@ public with sharing class WhatsAppFlowController {
         try {
             List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
-            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String accessToken = wbConfig[0].Access_Token__c;
             String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/deprecate';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
@@ -192,9 +192,9 @@ public with sharing class WhatsAppFlowController {
             HttpResponse response = http.send(request);
             
             if (response.getStatusCode() == 200) {
-                List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Status__c, MVWB__Flow_Id__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
                 if(flowRecs.size() > 0){
-                    flowRecs[0].MVWB__Status__c = 'Deprecated';
+                    flowRecs[0].Status__c = 'Deprecated';
                     update as user flowRecs[0];
                 }
                 return 'sucess';
@@ -212,7 +212,7 @@ public with sharing class WhatsAppFlowController {
         try {
             List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
-            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String accessToken = wbConfig[0].Access_Token__c;
             String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '?fields=preview.invalidate(false)';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
