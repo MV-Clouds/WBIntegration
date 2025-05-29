@@ -478,7 +478,6 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                         </div>
                     `;
                 } else {
-                    console.log('No footer found, setting content height to 86%');
                     this.contentHeight = '86%';
                 }
 

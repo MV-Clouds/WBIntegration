@@ -81,7 +81,7 @@ export default class CreateFlowManagement extends LightningElement {
 
     async checkLicenseStatus() {
         try {
-            const isLicenseValid = true;
+            const isLicenseValid = await checkLicenseUsablility();
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }
@@ -240,11 +240,11 @@ export default class CreateFlowManagement extends LightningElement {
 
     onRunClick() {
         try {
-            console.log('template type==> ',this.templateType);
+            // console.log('template type==> ',this.templateType);
             
             this.isLoading = true;
             this.jsonString = this.editor.getValue();
-            console.log('json string in on run click==> ',this.jsonString);
+            // console.log('json string in on run click==> ',this.jsonString);
             // updateJson({jsonPayload: this.jsonString});
             // Save the current JSON to the database
             // saveWhatsAppFlow({jsonPayload: this.jsonString});
@@ -255,7 +255,7 @@ export default class CreateFlowManagement extends LightningElement {
 
             const errorMarkers = markers.filter(marker => marker.severity === monaco.MarkerSeverity.Error);
             if (errorMarkers.length > 0) {
-                console.log('Errors found in JSON:', errorMarkers);
+                // console.log('Errors found in JSON:', errorMarkers);
                 this.showToast('Error', 'Invalid JSON: Please fix the syntax errors in the editor', 'error');
                 this.isLoading = false;
                 return;
@@ -269,7 +269,7 @@ export default class CreateFlowManagement extends LightningElement {
             }
 
             // If no errors, proceed with getting the flow preview
-            console.log('No errors found in JSON');
+            // console.log('No errors found in JSON');
             this.getFlowPreview();
         } catch (error) {
             console.error('Error validating JSON:', error);
@@ -386,24 +386,20 @@ export default class CreateFlowManagement extends LightningElement {
     }
 
     onSaveClick(){
-        createWhatsAppFlow({
-            flowName: this.flowName,
-            categories: this.selectedCategories,
-            flowJson: this.jsonString,
-            templateType: this.templateType
-        })
-        .then(result => {
-            this.flowId = result; 
-            this.status = 'Draft';
-            this.showToast('Success', 'Flow created successfully', 'success');
-        })
-        .catch(error => {
-            console.error('Error creating WhatsApp Flow:', error);
-            this.showToast('Error', 'Failed to create WhatsApp Flow', 'error');
-        })
-        .finally(() => {
-            this.isLoading = false;
-        });
+        this.isLoading = true;
+        createWhatsAppFlow({ flowName: this.flowName, categories: this.selectedCategories, flowJson: this.jsonString, templateType: this.templateType})
+            .then(result => {
+                this.flowId = result; 
+                this.status = 'Draft';
+                this.showToast('Success', 'Flow created successfully', 'success');
+            })
+            .catch(error => {
+                console.error('Error creating WhatsApp Flow:', error);
+                this.showToast('Error', 'Failed to create WhatsApp Flow', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
     }
 
     closeDeprecatePopup(){

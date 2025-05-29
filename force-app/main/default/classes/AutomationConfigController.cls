@@ -67,11 +67,11 @@ public without sharing class AutomationConfigController {
     
             // Step 3: Return templates with valid variables or no variables, and matching status
             List<Template__c> finalTemplates = [
-                SELECT Id, Template_Name__c, Template_Type__c 
+                SELECT Id, Template_Name__c, Template_Type__c, WBButton_Body__c 
                 FROM Template__c 
                 WHERE Status__c = 'Active-Quality Pending'
                   AND (Id IN :templatesWithValidObjects OR Id NOT IN :templatesWithAnyVariables)
-                WITH USER_MODE
+                WITH SECURITY_ENFORCED
             ];
     
             return finalTemplates;
