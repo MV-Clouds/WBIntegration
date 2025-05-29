@@ -1142,45 +1142,54 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 this.fileType = file.type;
                 this.fileSize = file.size;
 
-                if (this.isAWSEnabled) {
+                // if (this.isAWSEnabled) {
                     let isValid = false;
-                    let maxSize = 0;
+                    let maxSize = 4;
                     let fileSizeMB = Math.floor(file.size / (1024 * 1024));
-                    if (this.fileType.startsWith('image/')) {
-                        maxSize = 5;
-                        isValid = fileSizeMB <= maxSize;
-                    } else if (this.fileType.startsWith('video/')) {
-                        maxSize = 16;
-                        isValid = fileSizeMB <= maxSize;
-                    } else if (this.fileType.includes('application/') || this.fileType.includes('text/')) {
-                        maxSize = 100;
-                        isValid = fileSizeMB <= maxSize;
-                    }
-                    else {
-                        // console.log('Else OUT');
-                    }
+                    isValid = fileSizeMB <= maxSize;
+                    // if (this.fileType.startsWith('image/')) {
+                    //     maxSize = 5;
+                    //     isValid = fileSizeMB <= maxSize;
+                    // } else if (this.fileType.startsWith('video/')) {
+                    //     maxSize = 16;
+                    //     isValid = fileSizeMB <= maxSize;
+                    // } else if (this.fileType.includes('application/') || this.fileType.includes('text/')) {
+                    //     maxSize = 100;
+                    //     isValid = fileSizeMB <= maxSize;
+                    // }
+                    // else {
+                    //     // console.log('Else OUT');
+                    // }
 
                     if (isValid) {
                         this.selectedFilesToUpload.push(file);
                         // this.fileName = file.name;
-                        if (file) {
-                            this.isLoading = true;
+                        this.isLoading = true;
+                        if (this.isAWSEnabled) {
                             await this.uploadToAWS(this.selectedFilesToUpload);
+                        } else {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                this.fileData = reader.result.split(',')[1];
+                                // this.generatePreview(file);
+                                this.handleUpload(); // Auto-upload
+                            };
+                            reader.readAsDataURL(file);
                         }
                     } else {
                         // this.isLoading = false;
                         this.showToastError( `${file.name} exceeds the ${maxSize}MB limit`);
                     }
-                }
-                else {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        this.fileData = reader.result.split(',')[1];
-                        // this.generatePreview(file);
-                        this.handleUpload(); // Auto-upload
-                    };
-                    reader.readAsDataURL(file);
-                }
+                // }
+                // else {
+                    // const reader = new FileReader();
+                    // reader.onload = () => {
+                    //     this.fileData = reader.result.split(',')[1];
+                    //     // this.generatePreview(file);
+                    //     this.handleUpload(); // Auto-upload
+                    // };
+                    // reader.readAsDataURL(file);
+                // }
 
             }
         } catch (error) {
@@ -2875,7 +2884,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                             this.navigateToAllTemplatePage();
                         } else if(result && result.success == false && result.status == 'warning'){
-                            this.showToastWarning('Template is being created, please wait for few minutes before creating another template.');
+                            this.showToastWarning('Template creation taking too much time, please wait for few minutes and refresh the page to see the template.');
                             this.navigateToAllTemplatePage();
                             this.isLoading = false;
                         } else {
