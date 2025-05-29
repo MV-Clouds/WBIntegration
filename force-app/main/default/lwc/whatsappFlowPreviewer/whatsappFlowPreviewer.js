@@ -100,7 +100,6 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             left: 0;
                             background: inherit;
                             padding: 5% 1%;
-                            border-bottom: 1px solid ${this.selectedtheme === 'dark' ? '#444' : '#eee'};
                         }
                         ::-webkit-scrollbar {
                             display: none;
@@ -128,6 +127,8 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             position: fixed;
                             top: 14%;
                             background-color: ${this.selectedtheme === 'dark' ? '#2d2c2c' : 'white'};
+                            width: 100%;
+                            border-top: 1px solid ${this.selectedtheme === 'dark' ? '#444' : '#eee'};
                         }
                         .heading {
                             font-size: 1.3rem;
@@ -174,6 +175,9 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             position: relative;
                             margin-top: 10px;
                         }
+                        .floating-label select + label {
+                            top: 1.1rem;
+                        }
                        .input {
                             width: 100%;
                             padding: 1.2rem 0.5rem 0.5rem 0.5rem;
@@ -201,6 +205,12 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                         }
                         .input.active + label,
                         .input:focus + label {
+                            top: -0.6rem;
+                            font-size: 0.75rem;
+                            color: ${this.selectedtheme === 'dark' ? '#66bb6a' : '#28a745'};
+                        }
+                        .floating-label select.input.active + label,
+                        .floating-label select.input:focus + label {
                             top: -0.6rem;
                             font-size: 0.75rem;
                             color: ${this.selectedtheme === 'dark' ? '#66bb6a' : '#28a745'};
@@ -233,6 +243,15 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                         }
                         input[type="checkbox"] {
                             accent-color: ${this.selectedtheme === 'dark' ? '#4a90e2' : '#1a73e8'};
+                        }
+                        input[type="number"]::-webkit-outer-spin-button,
+                        input[type="number"]::-webkit-inner-spin-button {
+                        -webkit-appearance: none;
+                        margin: 0;
+                        }
+                        /* Hide spinners in Firefox */
+                        input[type="number"] {
+                        -moz-appearance: textfield;
                         }
                         .read-more {
                             color: ${this.selectedtheme === 'dark' ? '#81c784' : 'green'};
@@ -413,17 +432,25 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                             </div>
                         `;
                     } else if (child.type === 'Dropdown') {
+                        const hasValue = !!this.inputValues[child.name];
                         html += `
                             <div class="floating-label">
                                 <select 
                                     name="${child.name}" 
                                     id="${child.name}" 
-                                    class="input ${this.getInputClass(child.name)}"
-                                    onchange="this.dispatchEvent(new CustomEvent('inputchange', { detail: { name: '${child.name}', value: this.value, type: 'select' } }))"
-                                    onfocus="this.dispatchEvent(new CustomEvent('focus', { detail: { name: '${child.name}' } }))"
-                                    onblur="this.dispatchEvent(new CustomEvent('blur', { detail: { name: '${child.name}' } }))"
+                                    class="input ${hasValue ? 'active' : ''} ${this.getInputClass(child.name)}"
+                                    onchange="
+                                        if (this.value) {
+                                            this.classList.add('active');
+                                        } else {
+                                            this.classList.remove('active');
+                                        }
+                                        this.dispatchEvent(new CustomEvent('inputchange', { detail: { name: '${child.name}', value: this.value, type: 'select' } }))
+                                    "
+                                    onfocus="this.classList.add('active')"
+                                    onblur="if (!this.value) this.classList.remove('active')"
                                 >
-                                    <option value="" disabled ${!this.inputValues[child.name] ? 'selected' : ''}>Select an option</option>
+                                    <option value="" disabled ${hasValue ? '' : 'selected'}></option>
                                     ${(child['data-source'] || []).map(option => `
                                         <option value="${option.id}" ${this.inputValues[child.name] === option.id ? 'selected' : ''}>${option.title}</option>
                                     `).join('')}
@@ -435,8 +462,6 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                 });
 
                 html += `</div>`;
-
-
                 html += `</div>`;
 
                 const footer = form.children.find(child => child.type === 'Footer');
@@ -504,7 +529,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                         });
                     });
 
-                    document.querySelectorAll('.floating-label input, .floating-label textarea').forEach(input => {
+                    document.querySelectorAll('.floating-label input, .floating-label textarea, .floating-label select').forEach(input => {
                         input.addEventListener('input', () => {
                             if (input.value.trim()) {
                                 input.classList.add('active');
