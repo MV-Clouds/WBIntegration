@@ -56,6 +56,7 @@ export default class WbAllFlowsPage extends LightningElement {
 
     async checkLicenseStatus() {
         try {
+
             const isLicenseValid = await checkLicenseUsablility();
             if (!isLicenseValid) {
                 this.showLicenseError = true;
