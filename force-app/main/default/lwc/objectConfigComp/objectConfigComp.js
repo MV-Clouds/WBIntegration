@@ -6,6 +6,7 @@ import saveUserConfig from '@salesforce/apex/ObjectConfigController.saveUserConf
 import getObjectsWithPhoneField from '@salesforce/apex/ObjectConfigController.getObjectsWithPhoneField';
 import getRecordName from '@salesforce/apex/ObjectConfigController.getRecordName';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class ObjectConfigComp extends LightningElement {
     @track selectedObject = 'Contact';
@@ -17,16 +18,38 @@ export default class ObjectConfigComp extends LightningElement {
     @track availableObjectOptions = [];
     @track chatWindowRows = [];
     @track chatConfigCounter = 0;
-    selectedPhoneFieldVal = '';
-    selectedPhoneFieldLabel = '';
-    activeSectionName = 'webhookConfig'; // Default open section
-    isWebhookConfigEdit = false;
-    isChatWindowConfigEdit = false;
-    isLoading = false;
+    @track selectedPhoneFieldVal = '';
+    @track selectedPhoneFieldLabel = '';
+    @track activeSectionName = 'webhookConfig'; // Default open section
+    @track isWebhookConfigEdit = false;
+    @track isChatWindowConfigEdit = false;
+    @track isLoading = false;
+    @track showLicenseError = false;
 
     // Fetch saved metadata on load
-    connectedCallback() {
+    async connectedCallback(){
+        try {
+            this.showSpinner = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            
         this.loadSavedValues();
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
+    }
+
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     // Load previously saved configuration
@@ -40,10 +63,10 @@ export default class ObjectConfigComp extends LightningElement {
                         this.selectedObject = this.capitalizeFirstLetter(config.objectApiName) || 'Contact';
                         
                         // Store field values in an object
-                        let savedFieldValues = config.requiredFieds?.reduce((acc, field) => {
+                        let savedFieldValues = config.requiredFields?.reduce((acc, field) => {
                             acc[field.name] = field.value;
                             return acc;
-                        }, {}) || {};
+                        }, {});
         
                         this.loadRequiredFields(savedFieldValues);
                     } else {
@@ -341,7 +364,7 @@ export default class ObjectConfigComp extends LightningElement {
             const jsonData = JSON.stringify({
                 objectApiName: this.selectedObject,
                 phoneField: this.selectedPhoneFieldVal,
-                requiredFieds: this.requiredFields.map(field => ({
+                requiredFields: this.requiredFields.map(field => ({
                     name: field.apiName,
                     value: field.value.toString(),
                     type: field.type
@@ -350,7 +373,7 @@ export default class ObjectConfigComp extends LightningElement {
     
             saveUserConfig({ jsonData : jsonData })
                 .then(response => {
-                    if(response == 'sucess'){
+                    if(response == 'Success'){
                         this.showToast('Success', 'Configuration saved successfully', 'success');
                         this.populateReferenceNames();
                         this.isWebhookConfigEdit = false;
@@ -571,7 +594,7 @@ export default class ObjectConfigComp extends LightningElement {
     
             saveUserConfig({ jsonDataForChat : configJson })
                 .then(response => {
-                    if(response == 'sucess'){
+                    if(response == 'Success'){
                         this.showToast('Success', 'Configuration saved successfully', 'success');
                         this.isChatWindowConfigEdit = false;
                     } else {

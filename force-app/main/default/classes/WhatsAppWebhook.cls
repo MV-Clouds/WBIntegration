@@ -3,7 +3,7 @@
  * @Description :
  * @Author :
  * @Last Modified By : ChangeMeIn@UserSettingsUnder.SFDoc
- * @Last Modified On : 04-04-2025
+ * @Last Modified On : 04-21-2025
  * @Modification Log :
  *==============================================================================
  * Date Modified - Developer Name - Description
@@ -15,8 +15,8 @@ global without sharing class WhatsAppWebhook{
     public static String currentTime = System.now().format('yyyy-MM-dd HH:mm:ss');
     public static String phoneNumberId = '';
     public static List<Object> messages = new List<Object>();
-    public static List<AWS_Config__c> configList = [SELECT Id, AWS_Access_Key__c, AWS_Secret_Access_Key__c, S3_Bucket_Name__c, S3_Region_Name__c, CreatedDate, LastModifiedDate FROM AWS_Config__c LIMIT 1];
-    public static AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;
+    public static List<MVWB__AWS_Config__c> configList = [SELECT Id, MVWB__AWS_Access_Key__c, MVWB__AWS_Secret_Access_Key__c, MVWB__S3_Bucket_Name__c, MVWB__S3_Region_Name__c, CreatedDate, LastModifiedDate FROM MVWB__AWS_Config__c LIMIT 1];
+    public static MVWB__AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;
 
     @HttpGet // GET
     global static void doGet(){
@@ -109,6 +109,12 @@ global without sharing class WhatsAppWebhook{
     private static void processSingleMessage(Map<String, Object> message, Map<String, Object> sender){
 
         try{
+            Boolean isLicenseValid = PLMSController.checkLicenseUsablility();
+            if(isLicenseValid == false){
+                System.debug('License is not valid');
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processSingleMessage', 'exceptionObj' => null, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'License Expired.', 'apiResponse' => null});
+                return;
+            }
             String senderId = (String) message.get('from');
             String messageType = (String) message.get('type');
             String whatsAppMessageID = (String) message.get('id');
@@ -127,6 +133,17 @@ global without sharing class WhatsAppWebhook{
                 System.debug('Context ID ==> ' + reactToMessageId);
             }
             Integer timestampValue = Integer.valueOf(message.get('timestamp'));
+            DateTime messageTime = DateTime.newInstanceGmt(1970, 1, 1, 0, 0, 0).addSeconds(timestampValue);
+            // Check if it's within the last 10 minutes
+            DateTime tenMinutesAgo = DateTime.now().addMinutes(-10);
+
+            if (messageTime >= tenMinutesAgo) {
+                System.debug('✅ Timestamp is within the last 10 minutes.');
+            } else {
+                System.debug('❌ Timestamp is older than 10 minutes.');
+                return;
+            }
+
             DateTime currentUTCDateTime = System.now();
             Timezone tzIST = Timezone.getTimeZone('Asia/Kolkata');
             Integer offsetMillis = tzIST.getOffset(currentUTCDateTime);
@@ -188,9 +205,9 @@ global without sharing class WhatsAppWebhook{
                 String nameField = (String) chatConfig.get('nameField'); // e.g., 'Name'
                 System.debug('nameField'+ nameField);
                 
-                System.debug('requiredFieds'+ configData.get('requiredFieds'));
+                System.debug('requiredFields'+ configData.get('requiredFields'));
 
-                List<Object> requiredFieldsList = (List<Object>) configData.get('requiredFieds'); 
+                List<Object> requiredFieldsList = (List<Object>) configData.get('requiredFields'); 
 
                 Map<String, Object> requiredFieldsMap = new Map<String, Object>();
                 for (Object obj : requiredFieldsList) {
@@ -243,9 +260,9 @@ global without sharing class WhatsAppWebhook{
                     }
 
                     if(nameField != '' && nameField != null){
-                        newRecord.put(nameField, senderName);
+                        newRecord.put(nameField, senderName.length() > 80 ? senderName.substring(0, 80) : senderName);
                     } else {
-                        newRecord.put('Name', senderName);
+                        newRecord.put('Name', senderName.length() > 80 ? senderName.substring(0, 80) : senderName);
                     }
                     if(phoneField != '' && phoneField != null){
                         newRecord.put(phoneField, senderPhone);
@@ -502,10 +519,10 @@ global without sharing class WhatsAppWebhook{
     // @future(callout=true)
     public static Blob handleMediaAttachment(String documentId){
         try{
-            String mediaUrl = 'https://graph.facebook.com/v20.0/' + documentId;
             String accessToken = '';
             List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values();
             accessToken = config[0].MVWB__Access_Token__c;
+            String mediaUrl = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__API_Version__c + '/' + documentId;
             
             if (accessToken != ''){
                 HttpRequest req = new HttpRequest();

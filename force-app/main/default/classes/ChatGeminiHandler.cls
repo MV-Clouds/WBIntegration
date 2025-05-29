@@ -7,21 +7,19 @@
  **/
 public with sharing class ChatGeminiHandler{
 
-    public static List<User_Theme_Preference__c> userPreferences = [SELECT Auto_Response__c FROM User_Theme_Preference__c WITH SECURITY_ENFORCED];
+    public static List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Auto_Response__c FROM MVWB__User_Theme_Preference__c WITH SECURITY_ENFORCED];
     
     @InvocableMethod(label = 'Generate AI Response and Send WhatsApp'description = 'Calls Gemini API, sends WhatsApp message, and creates a new Chat record.')
     public static void processChat(List<InvocableInput> chats){
 
-        User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
+        MVWB__User_Theme_Preference__c userPreference = !userPreferences.isEmpty() ? userPreferences[0] : null;
 
-        if(userPreference.Auto_Response__c){
+        if(userPreference.MVWB__Auto_Response__c){
             
             InvocableInput input = chats.get(0); // Assuming the flow only passes one record at a time.
             String chatId = input.chatId;
             System.debug('chatId:- ' + chatId);
-            Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c
-            From Chat__c
-            Where id = :chatId];
+            Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c FROM Chat__c WHERE id = :chatId];
             if (chat == null){
                 System.debug('No record Found');
                 return;
@@ -106,10 +104,7 @@ public with sharing class ChatGeminiHandler{
     public static String generateRequestBody(String message, String phone){
 
         Datetime twentyFourHoursAgo = System.now().addHours(-24);
-        List<Chat__c> chatHistory = [SELECT Id, Message__c, Type_of_Message__c
-                                     FROM Chat__c
-                                     WHERE Phone__c = :phone AND CreatedDate >= :twentyFourHoursAgo
-                                     ORDER BY CreatedDate ASC LIMIT 20];
+        List<Chat__c> chatHistory = [SELECT Id, Message__c, Type_of_Message__c FROM Chat__c WHERE Phone__c = :phone AND CreatedDate >= :twentyFourHoursAgo ORDER BY CreatedDate ASC LIMIT 20];
                                      
         String formattedConversation = '';
         boolean isUserTurn = true; // Start with User prompt
@@ -147,9 +142,7 @@ public with sharing class ChatGeminiHandler{
     private static void sendWhatsAppMessage(String chatId, String message){
 
         List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
-        Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c
-                        From Chat__c
-                        Where id = :chatId];
+        Chat__c chat = [SELECT Id, Message_Status__c, Message__c, Phone__c FROM Chat__c WHERE id = :chatId];
         String phoneNumber = chat.Phone__c;
         if (phoneNumber != null && (wbConfig != null || !wbConfig.isEmpty())){
 
@@ -174,7 +167,7 @@ public with sharing class ChatGeminiHandler{
             jsonData = JSON.serialize(messageMap);
 
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');

@@ -1,6 +1,7 @@
 public with sharing class FileUploaderController {
     @AuraEnabled
-    public static String uploadFile(String base64Data, String fileName) {
+    public static Map<String, String> uploadFile(String base64Data, String fileName) {
+        Map<String, String> resultMap = new Map<String, String>();
         try {
             ContentVersion cv = new ContentVersion();
             cv.Title = fileName;
@@ -8,9 +9,13 @@ public with sharing class FileUploaderController {
             cv.VersionData = EncodingUtil.base64Decode(base64Data);
             insert cv;
 
-            // Return the Id of the inserted ContentVersion
-            return cv.Id;
+            String publicUrl = getPublicLink(cv.Id);
+
+            resultMap.put('contentVersionId', cv.Id);
+            resultMap.put('publicUrl', publicUrl);
+            return resultMap;
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'FileUploaderController', 'methodName' => 'uploadFile', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -36,6 +41,7 @@ public with sharing class FileUploaderController {
                 return 'No file found to delete.';
             }
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'FileUploaderController', 'methodName' => 'deleteFile', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             throw new AuraHandledException('Error deleting file: ' + e.getMessage());
         }
     }
@@ -50,20 +56,19 @@ public with sharing class FileUploaderController {
             distribution.Name = 'Public Link';
             distribution.ContentVersionId = contentVersion.Id;
             distribution.PreferencesAllowViewInBrowser= true;
-                distribution.PreferencesLinkLatestVersion=true;
-                distribution.PreferencesNotifyOnVisit=false;
-                distribution.PreferencesPasswordRequired=false;
-                distribution.PreferencesAllowOriginalDownload= true;
+            distribution.PreferencesLinkLatestVersion=true;
+            distribution.PreferencesNotifyOnVisit=false;
+            distribution.PreferencesPasswordRequired=false;
+            distribution.PreferencesAllowOriginalDownload= true;
 
             insert distribution;
             
             // Query the created ContentDistribution to get the public URL
             distribution = [SELECT DistributionPublicUrl,ContentDownloadUrl FROM ContentDistribution WHERE Id = :distribution.Id LIMIT 1];
         
-         // Return the public URL
+            // Return the public URL
             return distribution.ContentDownloadUrl;
         } catch (Exception e) {
-
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'FileUploaderController', 'methodName' => 'getPublicLink', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return 'Error: ' + e.getMessage();
         }

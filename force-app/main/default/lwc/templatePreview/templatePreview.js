@@ -34,7 +34,7 @@ export default class TemplatePreview extends LightningElement {
         try{
             this.fetchInitialData();
             if(!this.showButtons){
-                this.template.host.style.setProperty('--max-height-of-the-preview-div', 'fit-content');
+                this.template.querySelector('.main-template-preview-div').style.setProperty('--max-height-of-the-preview-div', 'fit-content');
             }
         }catch(e){
             console.error('Error in connectedCallback:::', e.message);

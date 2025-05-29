@@ -1,4 +1,6 @@
 public with sharing class WhatsAppFlowController {
+
+    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
     
     @AuraEnabled
     public static List<sObject> getWhatsAppFlows() {
@@ -33,10 +35,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String createWhatsAppFlow(String flowName, List<String> categories, String flowJson, String templateType) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Business_Account_Id__c + '/flows';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Business_Account_Id__c + '/flows';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -82,10 +82,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String updateWhatsAppFlow(String flowId, String flowJson) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/assets';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/assets';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -115,10 +113,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String publishWhatsAppFlow(String flowId) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/publish';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/publish';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -151,10 +147,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String deleteWhatsAppFlow(String flowId) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId;
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('DELETE');
@@ -180,10 +174,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String deprecateWhatsAppFlow(String flowId) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/deprecate';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/deprecate';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -210,10 +202,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String getPreviewURLofWhatsAppFlow(String flowId) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '?fields=preview.invalidate(false)';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '?fields=preview.invalidate(false)';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('GET');

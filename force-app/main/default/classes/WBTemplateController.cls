@@ -14,12 +14,11 @@
  * Change Description : 
  ***********************************************************************/
 
- public without sharing class WBTemplateController {
+ public with sharing class WBTemplateController {
     
     // public static final MVWB__WBConnect_Configuration__mdt SETTINGS[0];
     public static List<MVWB__WBConnect_Configuration__mdt> SETTINGS = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
     public static String accessToken = !SETTINGS.isEmpty() ? SETTINGS[0].MVWB__Access_Token__c : null;
-    public static String endpoint;
     public static String uploadEndpoint;
 
 
@@ -85,7 +84,7 @@
                return errorMessage;
            }
            String accessToken = config[0].MVWB__Access_Token__c;
-           String endpoint = 'https://graph.facebook.com/v21.0/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
+           String endpoint = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__API_Version__c + '/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
            httpReq.setEndpoint(endpoint);
            httpReq.setMethod('POST');
            httpReq.setHeader('Content-Type', 'application/json');
@@ -416,65 +415,132 @@
    @return          : response Map<String, Object> - return response with the template id.
    ********************************************************
    */
-   @AuraEnabled
-   public static Map<String, Object> createWhatsappTemplate(String serializedWrapper) {
-       Map<String, Object> response = new Map<String, Object>();
+    @AuraEnabled
+    public static Map<String, Object> createWhatsappTemplate(String serializedWrapper,String payloadWrapper, String templateName) {
+        Map<String, Object> response = new Map<String, Object>();
 
-       try {
-           if (String.isBlank(SETTINGS[0].MVWB__Business_Account_Id__c)) {
-               response.put('success', false);
-               response.put('errorMessage', 'Business Account ID is not configured in the system.');
-               return response;
-           }
+        try {
+            if (String.isBlank(SETTINGS[0].MVWB__Business_Account_Id__c)) {
+                response.put('success', false);
+                response.put('errorMessage', 'Business Account ID is not configured in the system.');
+                return response;
+            }
 
-           CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
 
-           Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
-           endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
-           
-           HttpRequest req = new HttpRequest();
-           req.setEndpoint(endpoint);
-           req.setMethod('POST');
-           req.setHeader('Content-Type', 'application/json');
-           req.setHeader('Authorization', 'Bearer ' + accessToken);
-           req.setBody(JSON.serialize(payload));
-   
-           Http http = new Http();
-           HttpResponse res = http.send(req);
+            Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
+            System.debug('payload :: '+payload);
+            String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates';
+            
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(endpoint);
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Authorization', 'Bearer ' + accessToken);
+            req.setBody(JSON.serialize(payload));
+    
+            Http http = new Http();
+            HttpResponse res = http.send(req);
 
-           if (res.getStatusCode() == 200) {
-               Id templateId = CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
-               response.put('success', true);
-               response.put('templateId', templateId); 
-           } else {
-               response.put('success', false);
-               response.put('errorMessage', res.getBody());
-               if (String.isNotBlank(templateWrapper.tempImgId)) {
-                   ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
-                   if (Schema.sObjectType.ContentDocument.isDeletable()) {
-                       delete contentDoc;
-                   }
-               }
+            if (res.getStatusCode() == 200) {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                Id templateId = CreateTemplateWrapper.handleSuccessResponse((String) responseMap.get('id'), (String) responseMap.get('status'), payload, templateWrapper);
+                response.put('success', true);
+                response.put('templateId', templateId); 
+            } else {
+                response.put('success', false);
+                response.put('errorMessage', res.getBody());
+                // if (String.isNotBlank(templateWrapper.tempImgId)) {
+                //     ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                //     if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                //         delete contentDoc;
+                //     }
+                // }
 
-               ExceptionHandler.logException(new Map<String, Object>{
-                   'className' => 'WBTemplateController',
-                   'methodName' => 'createWhatsappTemplate',
-                   'exceptionObj' => null,
-                   'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
-                   'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
-               });
-           }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-           response.put('status', 'error');
-           response.put('message', e.getMessage());
-       }
+                if (String.isNotBlank(templateWrapper.tempImgId)) {
+                    ContentVersion version = [
+                        SELECT ContentDocument.Id 
+                        FROM ContentVersion 
+                        WHERE Id = :templateWrapper.tempImgId 
+                        WITH SECURITY_ENFORCED 
+                        LIMIT 1
+                    ];
 
-       return response;
-   }
+                    if (version != null && Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete version.ContentDocument;
+                    }
+                }
+
+
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'createWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            if (e instanceof CalloutException && e.getMessage().containsIgnoreCase('Read timed out')) {
+                response.put('success', false);
+                response.put('status', 'warning');
+                response.put('message', 'Template is being created, you will be notified once it is ready.');
+                checkTemplateExistance(templateName, serializedWrapper, payloadWrapper);
+            }
+            else{
+                response.put('success', false);
+                response.put('status', 'error');
+                response.put('message', e.getMessage());
+            }
+        }
+
+        return response;
+    }
+
+    @future(callout=true)
+    public static void checkTemplateExistance(String templateName, String serializedWrapper, String payloadWrapper) {
+        try {
+            String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c + '/message_templates?name=' + EncodingUtil.urlEncode(templateName, 'UTF-8');
+            
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(endpoint);
+            req.setMethod('GET');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Authorization', 'Bearer ' + accessToken);
+
+            Http http = new Http();
+            HttpResponse res = http.send(req);
+
+            if (res.getStatusCode() == 200) {
+                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                List<Object> dataList = (List<Object>) responseMap.get('data');
+
+                if (!dataList.isEmpty()) {
+                    // Get the first element from the list and cast it as a Map
+                    Map<String, Object> templateData = (Map<String, Object>) dataList[0];
+
+                    // Extract values
+                    String metaTemplateId = (String) templateData.get('id');
+                    String metaTempStatus = (String) templateData.get('status');
+
+                    System.debug('Template ID: ' + metaTemplateId);
+                    System.debug('Status: ' + metaTempStatus);
+
+                    CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+                    Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
+
+                    Id templateId = CreateTemplateWrapper.handleSuccessResponse(metaTemplateId, metaTempStatus, payload, templateWrapper);
+
+                    if(templateId != null) {
+                        MVWB__Template_Update__e fetchAllTemplatesEvent = new MVWB__Template_Update__e();
+                        fetchAllTemplatesEvent.MVWB__Fetch_All_Templates__c = true;
+                        EventBus.publish(fetchAllTemplatesEvent);
+                    } else {
+                        
+                    }
+                }
+            } else {
+                System.debug('API Call failed: ' + res.getStatusCode() + ' - ' + res.getBody());
+            }
+        } catch (Exception e) {
+            System.debug('Exception occurred while checking template existence: ' + e.getMessage());
+        }
+    }
 
    /*
    *********************************************************
@@ -493,7 +559,7 @@
            payload.put('file_name', fileName);
            payload.put('file_length', fileLength);
            payload.put('file_type', fileType);
-           uploadEndpoint = 'https://graph.facebook.com/v21.0/'+SETTINGS[0].MVWB__Application_Id__c+'/uploads';
+           uploadEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+SETTINGS[0].MVWB__Application_Id__c+'/uploads';
 
            HttpRequest req = new HttpRequest();
            Http http = new Http();
@@ -530,7 +596,7 @@
    ********************************************************
    */
    @AuraEnabled
-   public static String uploadFileChunk(String serializedWrapper) {
+   public static String uploadFileChunk(String serializedWrapper, Boolean isAWSEnabled) {
        try {
            
            FileChunkWrapper fileWrapper = (FileChunkWrapper) JSON.deserialize(serializedWrapper, FileChunkWrapper.class);
@@ -540,7 +606,7 @@
            HttpRequest req = new HttpRequest();
            Http http = new Http();
 
-           String endpoint = 'https://graph.facebook.com/v21.0/upload:' + fileWrapper.uploadSessionId;
+           String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + 'upload:' + fileWrapper.uploadSessionId;
            req.setEndpoint(endpoint);
            req.setMethod('POST');            
            req.setHeader('Authorization', 'OAuth ' + accessToken);
@@ -554,85 +620,19 @@
            if (res.getStatusCode() == 200) {
                Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                String headerHandle = (String) responseMap.get('h');
-               Map<String, String> fileUrls = createContentVersionAndDocument(fileWrapper.fileName, fileBlob);
-               String imageurl = fileUrls.get('ContentDownloadUrl');
-               String contentDocumentId = fileUrls.get('ContentDocumentId');
-               
-               return JSON.serialize(new Map<String, String>{
-                   'headerHandle' => headerHandle,
-                   'imageurl' => imageurl,
-                   'contentDocumentId' => contentDocumentId
-               });
+                return JSON.serialize(new Map<String, String>{
+                    'headerHandle' => headerHandle
+                });
                // return headerHandle; 
            } else {
-               ExceptionHandler.logException(new Map<String, Object>{
-                   'className' => 'WBTemplateController',
-                   'methodName' => 'uploadFileChunk',
-                   'exceptionObj' => null,
-                   'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
-                   'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
-               });
+               ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'uploadFileChunk','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
            }
        } catch (Exception e) {
            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'uploadFileChunk', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
        }
        return '';
    }
-
-   /*
-   *********************************************************
-   @description     : Store the file in content version that can be used while sending template.
-   @param           : headerHandle,fileName,fileBlob - Used to create content version of uploaded file for the history.
-   @return          : 
-   ********************************************************
-   */
      
-   public static Map<String, String> createContentVersionAndDocument(String fileName, Blob fileBlob) {
-       try {
-           ContentVersion contentVersion = new ContentVersion();
-           contentVersion.Title = fileName;
-           contentVersion.PathOnClient = fileName;
-           contentVersion.VersionData = fileBlob;
-           contentVersion.Origin = 'H';
-       
-           if (Schema.sObjectType.ContentVersion.isCreateable()) {
-               insert contentVersion;
-           }
-   
-           ContentDistribution contentDistribution = new ContentDistribution();
-           contentDistribution.ContentVersionId = contentVersion.Id;
-           contentDistribution.Name = fileName;
-           contentDistribution.PreferencesAllowOriginalDownload = true;
-           if (Schema.sObjectType.ContentDistribution.isCreateable()) {
-               insert contentDistribution;
-           }
-   
-           ContentDistribution createdContentDistribution = [
-               SELECT Id, ContentDocumentId, ContentDownloadUrl 
-               FROM ContentDistribution 
-               WHERE Id = :contentDistribution.Id 
-               WITH SECURITY_ENFORCED
-           ];
-   
-           String contentDownloadUrl = createdContentDistribution.ContentDownloadUrl;
-           String contentDocumentId = createdContentDistribution.ContentDocumentId;
-   
-           Map<String, String> result = new Map<String, String>();
-           result.put('ContentDownloadUrl', contentDownloadUrl);
-           result.put('ContentDocumentId', contentDocumentId);
-   
-           return result;
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'createContentVersionAndDocument','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-           });
-           return null;
-       }
-   }    
-  
-   
    /*
    *********************************************************
    @description     : Method used to delete template from meta as well as from record page.
@@ -649,7 +649,7 @@
 
            Template__c wbTempRec = [SELECT Id, Name,Template_Name__c FROM Template__c WHERE Id =: templateId WITH SECURITY_ENFORCED LIMIT 1];
            
-           endpoint = 'https://graph.facebook.com/v20.0/'+SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Template_Name__c;
+           String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c+'/message_templates?name=' + wbTempRec.Template_Name__c;
 
            HttpRequest req = new HttpRequest();         
            req.setEndpoint(endpoint);
@@ -689,55 +689,58 @@
    @return          : response Map<String, Object> - return response with the template id.
    ********************************************************
    */
-   @AuraEnabled
-   public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String templateId) {
-       Map<String, Object> response = new Map<String, Object>();
+    @AuraEnabled
+    public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String payloadWrapper,String templateId) {
+        Map<String, Object> response = new Map<String, Object>();
 
-       try {
-           CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
-           String editEndpoint = 'https://graph.facebook.com/v20.0/'+templateId;
-           Map<String, Object> payload = CreateTemplateWrapper.buildPayload(templateWrapper);
-           
-           HttpRequest req = new HttpRequest();
-           req.setEndpoint(editEndpoint);
-           req.setMethod('POST');
-           req.setHeader('Content-Type', 'application/json');
-           req.setHeader('Authorization', 'Bearer ' + accessToken);
-           req.setBody(JSON.serialize(payload));
-   
+        try {
+            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+            String editEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+templateId;
+            Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
+            
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(editEndpoint);
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Authorization', 'Bearer ' + accessToken);
+            req.setBody(JSON.serialize(payload));
+    
+            Http http = new Http();
+            HttpResponse res = http.send(req);
 
-           Http http = new Http();
-           HttpResponse res = http.send(req);
+            if (res.getStatusCode() == 200) {
+                    Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                    CreateTemplateWrapper.handleSuccessResponse((String) responseMap.get('id'), (String) responseMap.get('status'), payload, templateWrapper);
+                response.put('success', true);
+            } else {
+                response.put('success', false);
+                response.put('errorMessage', res.getBody());
+                // if (String.isNotBlank(templateWrapper.tempImgId)) {
+                //     ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
+                //     if (Schema.sObjectType.ContentDocument.isDeletable()) {
+                //         delete contentDoc;
+                //     }
+                // }
+                if (String.isNotBlank(templateWrapper.tempImgId)) {
+                    ContentVersion version = [
+                        SELECT ContentDocument.Id 
+                        FROM ContentVersion 
+                        WHERE Id = :templateWrapper.tempImgId 
+                        WITH SECURITY_ENFORCED 
+                        LIMIT 1
+                    ];
 
-           if (res.getStatusCode() == 200) {
-               CreateTemplateWrapper.handleSuccessResponse(res, payload, response, templateWrapper);
-               response.put('success', true);
-           } else {
-               response.put('success', false);
-               response.put('errorMessage', res.getBody());
-               if (String.isNotBlank(templateWrapper.tempImgId)) {
-                   ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
-                   if (Schema.sObjectType.ContentDocument.isDeletable()) {
-                       delete contentDoc;
-                   }
-               }
-               ExceptionHandler.logException(new Map<String, Object>{
-                   'className' => 'WBTemplateController',
-                   'methodName' => 'editWhatsappTemplate',
-                   'exceptionObj' => null,
-                   'isApiException' => true,
-                   'statusCode' => res.getStatusCode(),
-                   'chatId' => null,
-                   'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),
-                   'apiResponse' => res.getBody()
-               });
-           }
-       } catch (Exception e) {
-           ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-           response.put('status', 'error');
-           response.put('message', e.getMessage());
-       }
-
+                    if (version != null && Schema.sObjectType.ContentDocument.isDeletable()) {
+                        delete version.ContentDocument;
+                    }
+                }
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'editWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            response.put('status', 'error');
+            response.put('message', e.getMessage());
+        }
        return response;
    }
 
@@ -757,7 +760,7 @@
            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
 
            String accessToken = wbConfig[0].MVWB__Access_Token__c;
-           String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '?fields=preview.invalidate(false)';
+           String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + flowId + '?fields=preview.invalidate(false)';
            HttpRequest request = new HttpRequest();
            request.setEndpoint(endpoint);
            request.setMethod('GET');
@@ -823,6 +826,7 @@
        @AuraEnabled public Integer chunkStart;
        @AuraEnabled public Integer chunkSize;
        @AuraEnabled public String fileName;
+       @AuraEnabled public Boolean isLastChunk;
    }
    public class TemplateDataWrapper {
        @AuraEnabled public Template__c template;

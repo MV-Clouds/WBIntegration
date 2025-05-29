@@ -43,6 +43,12 @@ private class WhatsAppWebhookTest {
             WhatsAppMessageId__c = 'wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSNjMxRUI5Mzg0RTlBRTUwNEM5AA=='
         );
         insert dummyChatReact;
+
+        LicenseConfig__c config = new LicenseConfig__c(
+            Is_License_Valid__c = true,
+            Expiration_Date__c = Date.newInstance(4000, 12, 31)
+        );
+        insert config;
     }
     
     @IsTest
@@ -70,7 +76,7 @@ private class WhatsAppWebhookTest {
         req.requestURI = '/WBI/webhooks/v1/';
         req.httpMethod = 'POST';
         req.addHeader('hub.verify_token', '7fa1634d4f849b8ced3a249ec4ce8bb7db4d8046');
-        req.requestBody = Blob.valueOf('{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"context":{"from":"919558019600","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAERgSRjAwQzUxODZDQTcwQTIxREQwAA=="},"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggQkYwODA3RkY0RDJGMDg1REFENzU0OEM5MUEzMUFDMTUA","timestamp":"1734343632","type":"button","button":{"payload":"OPT-OUT","text":"OPT-OUT"}}]},"field":"messages"}]}]}');
+        req.requestBody = Blob.valueOf('{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"context":{"from":"919558019600","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAERgSRjAwQzUxODZDQTcwQTIxREQwAA=="},"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggQkYwODA3RkY0RDJGMDg1REFENzU0OEM5MUEzMUFDMTUA","timestamp":"2147483647","type":"button","button":{"payload":"OPT-OUT","text":"OPT-OUT"}}]},"field":"messages"}]}]}');
         RestContext.request = req;
         RestContext.response = new RestResponse();
 
@@ -86,7 +92,7 @@ private class WhatsAppWebhookTest {
         req.requestURI = '/WBI/webhooks/v1/';
         req.httpMethod = 'POST';
         req.addHeader('hub.verify_token', 'INVALIDTOKEN');
-        req.requestBody = Blob.valueOf('{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggRDNCQzM4RjNDMkEwNzJDMUVBQkFGREZGOUFDRkZGN0EA","timestamp":"1734009524","text":{"body":"Reply to first one"},"type":"text"}]},"field":"messages"}]}]}');
+        req.requestBody = Blob.valueOf('{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggRDNCQzM4RjNDMkEwNzJDMUVBQkFGREZGOUFDRkZGN0EA","timestamp":"2147483647","text":{"body":"Reply to first one"},"type":"text"}]},"field":"messages"}]}]}');
         RestContext.request = req;
         RestContext.response = new RestResponse();
 
@@ -104,7 +110,7 @@ private class WhatsAppWebhookTest {
         mockResponse.setStatusCode(200);
         mockResponse.setBodyAsBlob(Blob.valueOf('mock-binary-data'));
 
-        String jsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggRDNCQzM4RjNDMkEwNzJDMUVBQkFGREZGOUFDRkZGN0EA","timestamp":"1734009524","text":{"body":"Reply to first one"},"type":"text"}]},"field":"messages"}]}]}';
+        String jsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggRDNCQzM4RjNDMkEwNzJDMUVBQkFGREZGOUFDRkZGN0EA","timestamp":"2147483647","text":{"body":"Reply to first one"},"type":"text"}]},"field":"messages"}]}]}';
         Test.startTest();
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(mockResponse));
         WhatsAppWebhook.processWhatsAppPayload(jsonPayload);
@@ -119,7 +125,7 @@ private class WhatsAppWebhookTest {
         mockResponse.setStatusCode(200);
         mockResponse.setBodyAsBlob(Blob.valueOf('mock-binary-data'));
 
-        String videojsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggNDE0MjFDQjJDOUZGNEIzMjI5RDc1NDlEODU5RUE5QzEA","timestamp":"1734343457","type":"video","video":{"mime_type":"video/mp4","sha256":"T1dLSnJNE3t4mnzLZWSjBWCe61sptppyhF/K//Brx4U=","id":"3827582537491666"}}]},"field":"messages"}]}]}';
+        String videojsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggNDE0MjFDQjJDOUZGNEIzMjI5RDc1NDlEODU5RUE5QzEA","timestamp":"2147483647","type":"video","video":{"mime_type":"video/mp4","sha256":"T1dLSnJNE3t4mnzLZWSjBWCe61sptppyhF/K//Brx4U=","id":"3827582537491666"}}]},"field":"messages"}]}]}';
         Test.startTest();
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(mockResponse));
         WhatsAppWebhook.processWhatsAppPayload(videojsonPayload);
@@ -134,7 +140,7 @@ private class WhatsAppWebhookTest {
         mockResponse.setStatusCode(200);
         mockResponse.setBodyAsBlob(Blob.valueOf('mock-binary-data'));
 
-        String audiojsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggNDE0MjFDQjJDOUZGNEIzMjI5RDc1NDlEODU5RUE5QzEA","timestamp":"1734343457","type":"audio","audio":{"mime_type":"audio/mp3","sha256":"T1dLSnJNE3t4mnzLZWSjBWCe61sptppyhF/K//Brx4U=","id":"3827582537491666"}}]},"field":"messages"}]}]}';
+        String audiojsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggNDE0MjFDQjJDOUZGNEIzMjI5RDc1NDlEODU5RUE5QzEA","timestamp":"2147483647","type":"audio","audio":{"mime_type":"audio/mp3","sha256":"T1dLSnJNE3t4mnzLZWSjBWCe61sptppyhF/K//Brx4U=","id":"3827582537491666"}}]},"field":"messages"}]}]}';
         Test.startTest();
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(mockResponse));
         WhatsAppWebhook.processWhatsAppPayload(audiojsonPayload);
@@ -149,7 +155,7 @@ private class WhatsAppWebhookTest {
         mockResponse.setStatusCode(200);
         mockResponse.setBodyAsBlob(Blob.valueOf('mock-binary-data'));
 
-        String imagejsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"499269473267232","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919328195415","phone_number_id":"544633438726755"},"contacts":[{"profile":{"name":"Harsh Gandhi"},"wa_id":"919664599641"}],"messages":[{"from":"919664599641","id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAEhggNTA0QTg1REVFMUVFNTNDODc2MDY0Q0Y2NEI5OTE3RTYA","timestamp":"1743488066","type":"image","image":{"mime_type":"image\\/jpeg","sha256":"5S\\/A4mJNraAT\\/AXCeuFFs5UWrLyr+4HIKu3Ub+UsYpw=","id":"1373448587344141"}}]},"field":"messages"}]}]}';
+        String imagejsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"499269473267232","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919328195415","phone_number_id":"544633438726755"},"contacts":[{"profile":{"name":"Harsh Gandhi"},"wa_id":"919664599641"}],"messages":[{"from":"919664599641","id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAEhggNTA0QTg1REVFMUVFNTNDODc2MDY0Q0Y2NEI5OTE3RTYA","timestamp":"2147483647","type":"image","image":{"mime_type":"image\\/jpeg","sha256":"5S\\/A4mJNraAT\\/AXCeuFFs5UWrLyr+4HIKu3Ub+UsYpw=","id":"1373448587344141"}}]},"field":"messages"}]}]}';
         Test.startTest();
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(mockResponse));
         WhatsAppWebhook.processWhatsAppPayload(imagejsonPayload);
@@ -164,7 +170,7 @@ private class WhatsAppWebhookTest {
         mockResponse.setStatusCode(200);
         mockResponse.setBodyAsBlob(Blob.valueOf('mock-binary-data'));
 
-        String documentjsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggNDE0MjFDQjJDOUZGNEIzMjI5RDc1NDlEODU5RUE5QzEA","timestamp":"1734343457","type":"document","document":{"mime_type":"document/pdf","sha256":"T1dLSnJNE3t4mnzLZWSjBWCe61sptppyhF/K//Brx4U=","id":"3827582537491666"}}]},"field":"messages"}]}]}';
+        String documentjsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"319254377948692","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Kevin Suvagiya"},"wa_id":"919428234735"}],"messages":[{"from":"919428234735","id":"wamid.HBgMOTE5NDI4MjM0NzM1FQIAEhggNDE0MjFDQjJDOUZGNEIzMjI5RDc1NDlEODU5RUE5QzEA","timestamp":"2147483647","type":"document","document":{"mime_type":"document/pdf","sha256":"T1dLSnJNE3t4mnzLZWSjBWCe61sptppyhF/K//Brx4U=","id":"3827582537491666"}}]},"field":"messages"}]}]}';
         Test.startTest();
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(mockResponse));
         WhatsAppWebhook.processWhatsAppPayload(documentjsonPayload);
@@ -179,7 +185,7 @@ private class WhatsAppWebhookTest {
         mockResponse.setStatusCode(200);
         mockResponse.setBodyAsBlob(Blob.valueOf('mock-binary-data'));
 
-        String documentjsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"499269473267232","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Harsh Gandhi"},"wa_id":"919664599641"}],"messages":[{"from":"919664599641","id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAEhggQjdDNEQ0OTk1ODQyNkEwQjExNDdBRDNEQjFCNkRBN0UA","timestamp":"1743487801","type":"reaction","reaction":{"message_id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSNjMxRUI5Mzg0RTlBRTUwNEM5AA==","emoji":"\ud83d\udc4d"}}]},"field":"messages"}]}]}';
+        String documentjsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"499269473267232","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Harsh Gandhi"},"wa_id":"919664599641"}],"messages":[{"from":"919664599641","id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAEhggQjdDNEQ0OTk1ODQyNkEwQjExNDdBRDNEQjFCNkRBN0UA","timestamp":"2147483647","type":"reaction","reaction":{"message_id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSNjMxRUI5Mzg0RTlBRTUwNEM5AA==","emoji":"\ud83d\udc4d"}}]},"field":"messages"}]}]}';
         Test.startTest();
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(mockResponse));
         WhatsAppWebhook.processWhatsAppPayload(documentjsonPayload);

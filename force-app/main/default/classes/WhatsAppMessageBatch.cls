@@ -289,6 +289,13 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                 });
             }
 
+            Integer randomCode;
+            String randomCodeStr;
+            if((String)data.get('templateType') == 'Authentication'){
+                randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
+                randomCodeStr = String.valueOf(randomCode);
+            }
+
             // Body Parameters
             List<Object> bodyParameters = (List<Object>)data.get('bodyParameters');
             if (bodyParameters != null && !bodyParameters.isEmpty()) {
@@ -300,8 +307,6 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                 
                 components.add(new Map<String, Object>{ 'type' => 'body', 'parameters' => bodyParams });
             } else if((String)data.get('templateType') == 'Authentication'){
-                Integer randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
-                String randomCodeStr = String.valueOf(randomCode);
                 components.add(new Map<String, Object>{
                     'type' => 'body',
                     'parameters' => new List<Map<String, Object>>{
@@ -338,8 +343,6 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
                             });
                         }
                         when 'OTP' {
-                            Integer randomCode = Math.abs(Math.mod(Crypto.getRandomInteger(), 900000)) + 100000;
-                            String randomCodeStr = String.valueOf(randomCode);
                             components.add(new Map<String, Object>{
                                 'type' => 'button',
                                 'sub_type' => 'url',
@@ -372,7 +375,7 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             payload.put('template', template);
             return JSON.serialize(payload);
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'createJSONBody', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => '', 'chatId' => null, 'moreDetails' => '', 'apiResponse' => '' });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'createJSONBody', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return null;
         }
     }
@@ -391,7 +394,7 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
     
             HttpRequest httpReq = new HttpRequest();
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
             httpReq.setEndpoint(endpoint);
             httpReq.setMethod('POST');
             httpReq.setHeader('Content-Type', 'application/json');
