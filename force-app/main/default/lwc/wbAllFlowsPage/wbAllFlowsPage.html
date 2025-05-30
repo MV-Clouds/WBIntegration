@@ -11,23 +11,6 @@
         </div>
     </template>
     <template if:false={showLicenseError}>
-
-    <template if:true={isFlowVisible}>
-        <div class="slds-theme_default main">
-            <template if:true={isLoading}>
-                <div class="spinner-overlay">
-                    <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
-                </div>
-            </template>
-            <div class="slds-grid slds-grid_vertical">
-                <div class="heading">
-                    <p class="txt">WhatsApp Flows</p>
-                </div>
-            </div>
-        </div>
-    </template>
-    <template if:false={showLicenseError}>
-
         <template if:true={isFlowVisible}>
             <div class="slds-theme_default main">
                 <template if:true={isLoading}>
@@ -161,11 +144,7 @@
             </div>
         </template>
         <template if:true={iscreateflowvisible}>
-            <!-- <c-wb-create-flow-page></c-wb-create-flow-page> -->
             <c-create-flow-management></c-create-flow-management>
         </template>
-
-    </template>
-
     </template>
 </template>

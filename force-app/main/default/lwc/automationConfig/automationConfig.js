@@ -90,7 +90,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         getTemplates()
             .then(data => {
                 const filteredTemplates = data.filter(template => {
-                    const buttons = JSON.parse(template.MVWB__Button_Body__c || '[]');
+                    const buttons = JSON.parse(template.MVWB__WBButton_Body__c || '[]');
                     return buttons.some(button => button.type === "QUICK_REPLY" || button.type === "FLOW");
                 });
                 this.templateOptions = filteredTemplates
@@ -171,7 +171,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
 
                 if (savedAutomation) {
                     let cmpDef = {
-                        componentDef : 'c:automationPath',
+                        componentDef : 'MVWB:automationPath',
                         attributes: {
                             recordId: savedAutomation.id,
                             templateType: savedAutomation.templateType
