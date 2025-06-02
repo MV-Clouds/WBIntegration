@@ -261,6 +261,10 @@ public static void createMarketingCampaign(String campaignData) {
             Database.insert(campaignGroups, false, AccessLevel.USER_MODE);
         }
 
+        List<Broadcast_Group__c> brGroupRecs = [SELECT Id, Name, Object_Name__c FROM Broadcast_Group__c WHERE Id IN :groupId];
+        List<Broadcast_Group_Member__c> groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupId WITH SECURITY_ENFORCED];
+
+
         List<Chat__c> chatRecords = new List<Chat__c>();
         List<WB_Marketing_campaign_member__c> campaignMembers = new List<WB_Marketing_campaign_member__c>();
 
@@ -281,7 +285,9 @@ public static void createMarketingCampaign(String campaignData) {
                 timeToSendValue,
                 campaignGroup.Is_Send_immediately__c,
                 chatRecords,
-                campaignMembers
+                campaignMembers,
+                brGroupRecs,
+                groupMembers
             );
         }
 
@@ -314,13 +320,15 @@ public static void createChatRecodsMarketing(
     Time timeToSend,
     Boolean isSendImmediate,
     List<Chat__c> chatRecords,
-    List<WB_Marketing_campaign_member__c> campaignMembers
+    List<WB_Marketing_campaign_member__c> campaignMembers,
+    List<Broadcast_Group__c> brGroupRecs1,
+    List<Broadcast_Group_Member__c> groupMembers1    
+
 ) {
     try {
         if (groupIds.size() > 0) {
-            List<Broadcast_Group__c> brGroupRecs = [SELECT Id, Name, Object_Name__c FROM Broadcast_Group__c WHERE Id IN :groupIds];
-            List<Broadcast_Group_Member__c> groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupIds WITH SECURITY_ENFORCED];
-
+            List<Broadcast_Group__c> brGroupRecs = brGroupRecs1;
+            List<Broadcast_Group_Member__c> groupMembers = groupMembers1;
             for (Broadcast_Group_Member__c member : groupMembers) {
                 DateTime dateValue;
                 if (selectedOption == 'related' && phoneToObjectMapList.containsKey(member.Phone_Number__c)) {
@@ -374,39 +382,214 @@ public static void createChatRecodsMarketing(
     }
 }
 
+// @AuraEnabled
+// public static void updateMarketingCampaign(String campaignData) {
+//     try {
+//         // Deserialize the JSON string into a Map
+//         Map<String, Object> dataMap = (Map<String, Object>) JSON.deserializeUntyped(campaignData);
+//         System.debug('dataMap: ' + dataMap);
+
+//         // Extract basic fields
+//         String campaignId = (String) dataMap.get('id');
+//         String name = (String) dataMap.get('name');
+//         String description = (String) dataMap.get('description');
+//         String objectName = (String) dataMap.get('objectName');
+//         Boolean isMarketingCampaign = (Boolean) dataMap.get('isMarketingCampaign');
+//         String selectedOption = (String) dataMap.get('selectedOption');
+//         String selectedDate = (String) dataMap.get('selectedDate');
+//         String selectedDateFields = (String) dataMap.get('selectedDateFields');
+
+//         // Extract and process groupIdList
+//         List<Object> rawGroupList = (List<Object>) dataMap.get('groupIdList');
+//         List<String> groupId = new List<String>();
+//         for (Object obj : rawGroupList) {
+//             groupId.add((String) obj);
+//         }
+//         String groupIdCommaSeparated = String.join(groupId, ',');
+
+//         // Extract email configurations
+//         List<Object> rawEmailConfigs = (List<Object>) dataMap.get('emailConfigs');
+//         List<Map<String, Object>> emailConfigs = new List<Map<String, Object>>();
+//         for (Object rawItem : rawEmailConfigs) {
+//             emailConfigs.add((Map<String, Object>) rawItem);
+//         }
+
+//         // Fetch the existing campaign record
+//         WB_Marketing_campaign__c campaign = [
+//             SELECT Id, Name, Marketing_Campaign_Description__c, Object_Name__c, 
+//                    hasExistingMarketingCampaign__c, Group_Id_List__c
+//             FROM WB_Marketing_campaign__c
+//             WHERE Id = :campaignId
+//             LIMIT 1
+//         ];
+
+//         // Update the campaign fields
+//         campaign.Name = name;
+//         campaign.Marketing_Campaign_Description__c = description;
+//         campaign.Object_Name__c = objectName;
+//         campaign.hasExistingMarketingCampaign__c = isMarketingCampaign;
+//         campaign.Group_Id_List__c = groupIdCommaSeparated;
+
+//         // Update the campaign record
+//         update campaign;
+
+//         // Fetch existing campaign groups
+//         Map<Id, WB_Marketing_campaign_group__c> existingGroupsMap = new Map<Id, WB_Marketing_campaign_group__c>(
+//             [SELECT Id, WB_Template__c, Days_After__c, Time_To_Send__c, Is_Send_Immediately__c, 
+//                     Specific_Date__c, Relate_Date_Field__c 
+//              FROM WB_Marketing_campaign_group__c 
+//              WHERE WB_Marketing_campaign__c = :campaignId]
+//         );
+
+//         // Prepare lists for insert, update, and delete
+//         List<WB_Marketing_campaign_group__c> groupsToInsert = new List<WB_Marketing_campaign_group__c>();
+//         List<WB_Marketing_campaign_group__c> groupsToUpdate = new List<WB_Marketing_campaign_group__c>();
+//         Set<Id> updatedGroupIds = new Set<Id>();
+
+//         // Process email configurations
+//         for (Map<String, Object> emailConfig : emailConfigs) {
+//             String groupIdValue = String.valueOf(emailConfig.get('groupId'));
+//             String templateId = String.valueOf(emailConfig.get('template'));
+//             String daysAfter = String.valueOf(emailConfig.get('daysAfter'));
+//             String timeToSend = String.valueOf(emailConfig.get('timeToSend'));
+//             String isSendImmediately = String.valueOf(emailConfig.get('isImmediateSelected'));
+
+//             Integer daysAfterValue = (daysAfter != null) ? Integer.valueOf(daysAfter) : null;
+//             Time timeToSendValue = (timeToSend != null && String.valueOf(timeToSend).trim() != '') 
+//                 ? Time.newInstance(Integer.valueOf(timeToSend.split(':')[0]), Integer.valueOf(timeToSend.split(':')[1]), Integer.valueOf(timeToSend.split(':')[2]), 0) 
+//                 : null;
+
+//             if (groupIdValue != null && existingGroupsMap.containsKey(groupIdValue)) {
+//                 WB_Marketing_campaign_group__c existingGroup = existingGroupsMap.get(groupIdValue);
+//                 existingGroup.WB_Template__c = templateId;
+//                 existingGroup.Days_After__c = daysAfterValue;
+//                 existingGroup.Time_To_Send__c = timeToSendValue;
+//                 existingGroup.Is_Send_immediately__c = isSendImmediately == 'true';
+//                 existingGroup.Specific_Date__c = (selectedOption == 'specific' && selectedDate != null) ? Date.valueOf(selectedDate) : null;
+//                 existingGroup.Relate_Date_Field__c = (selectedOption == 'related' && selectedDateFields != null) ? selectedDateFields : null;
+//                 groupsToUpdate.add(existingGroup);
+//                 updatedGroupIds.add(existingGroup.Id);
+//             } else {
+//                 WB_Marketing_campaign_group__c newGroup = new WB_Marketing_campaign_group__c(
+//                     WB_Marketing_campaign__c = campaign.Id,
+//                     WB_Template__c = templateId,
+//                     Status__c = 'Pending',
+//                     Days_After__c = daysAfterValue,
+//                     Time_To_Send__c = timeToSendValue,
+//                     Is_Send_immediately__c = isSendImmediately == 'true',
+//                     Specific_Date__c = (selectedOption == 'specific' && selectedDate != null) ? Date.valueOf(selectedDate) : null,
+//                     Relate_Date_Field__c = (selectedOption == 'related' && selectedDateFields != null) ? selectedDateFields : null
+//                 );
+//                 groupsToInsert.add(newGroup);
+//             }
+//         }
+
+//         // Identify groups to delete
+//         List<WB_Marketing_campaign_group__c> groupsToDelete = new List<WB_Marketing_campaign_group__c>();
+//         for (Id existingGroupId : existingGroupsMap.keySet()) {
+//             if (!updatedGroupIds.contains(existingGroupId)) {
+//                 groupsToDelete.add(existingGroupsMap.get(existingGroupId));
+//             }
+//         }
+
+//         // Perform DML operations
+//         if (!groupsToInsert.isEmpty()) {
+//             insert groupsToInsert;
+//         }
+//         if (!groupsToUpdate.isEmpty()) {
+//             update groupsToUpdate;
+//         }
+//         if (!groupsToDelete.isEmpty()) {
+//             delete groupsToDelete;
+//         }
+
+//     } catch (Exception e) {
+//         throw new AuraHandledException('Error updating Marketing Campaign: ' + e.getMessage());
+//     }
+// }
+
+
+// @AuraEnabled
+// public static void updateChatRecordsMarketing(String templateId, List<String> groupIds, String dateFieldValue, String campaignId, String campaignGroupId, Map<String, SObject> phoneToObjectMapList, String selectedDateFields, String selectedOption, Integer dayAfter, Time timeToSend, Boolean isSendImmediate) {
+//     try {
+//         List<Chat__c> chatRecsToUpdate = new List<Chat__c>();
+//         List<WB_Marketing_campaign_member__c> marketingMembersToUpdate = new List<WB_Marketing_campaign_member__c>();
+
+//         if (groupIds.size() > 0) {
+//             List<Broadcast_Group_Member__c> groupMembers = [
+//                 SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c 
+//                 FROM Broadcast_Group_Member__c 
+//                 WHERE Broadcast_Group_ID__c IN :groupIds WITH SECURITY_ENFORCED
+//             ];
+
+//             for (Broadcast_Group_Member__c member : groupMembers) {
+//                 DateTime dateValue;
+//                 if (selectedOption == 'related' && phoneToObjectMapList.containsKey(member.Phone_Number__c)) {
+//                     dateValue = (DateTime) phoneToObjectMapList.get(member.Phone_Number__c).get(selectedDateFields);
+//                 } else {
+//                     Date dateFieldValueStr = Date.valueOf(dateFieldValue);
+//                     dateValue = DateTime.newInstance(dateFieldValueStr, Time.newInstance(0, 0, 0, 0));
+//                 }
+
+//                 if (dateValue != null) {
+//                     dateValue = dateValue.addDays(dayAfter != null ? dayAfter : 0);
+
+//                     if (timeToSend != null || isSendImmediate == true) {
+//                         dateValue = (isSendImmediate == true) 
+//                             ? DateTime.now().addMinutes(1) 
+//                             : DateTime.newInstance(dateValue.date(), timeToSend);
+//                     }
+//                 }
+
+//                 if (member.Phone_Number__c != null && member.Phone_Number__c != '') {
+//                     List<Chat__c> existingChats = [
+//                         SELECT Id, Whatsapp_Template__c, Phone__c 
+//                         FROM Chat__c 
+//                         WHERE Phone__c = :member.Phone_Number__c AND Whatsapp_Template__c = :templateId 
+//                         LIMIT 1
+//                     ];
+//                     if (!existingChats.isEmpty()) {
+//                         Chat__c existingChat = existingChats[0];
+//                         existingChat.Whatsapp_Template__c = templateId;
+//                         chatRecsToUpdate.add(existingChat);
+//                     }
+
+//                     List<WB_Marketing_campaign_member__c> existingMembers = [
+//                         SELECT Id, Member_Phone__c, Schedule_Date__c 
+//                         FROM WB_Marketing_campaign_member__c 
+//                         WHERE Member_Phone__c = :member.Phone_Number__c AND WB_Marketing_campaign_group__c = :campaignGroupId 
+//                         LIMIT 1
+//                     ];
+//                     if (!existingMembers.isEmpty()) {
+//                         WB_Marketing_campaign_member__c existingMember = existingMembers[0];
+//                         existingMember.Schedule_Date__c = dateValue;
+//                         existingMember.Status__c = 'Pending';
+//                         marketingMembersToUpdate.add(existingMember);
+//                     }
+//                 }
+//             }
+//         }
+
+//         // Perform DML operations
+//         if (!chatRecsToUpdate.isEmpty()) {
+//             update chatRecsToUpdate;
+//         }
+//         if (!marketingMembersToUpdate.isEmpty()) {
+//             update marketingMembersToUpdate;
+//         }
+
+//     } catch (Exception e) {
+//         throw new AuraHandledException('Error in updateChatRecordsMarketing: ' + e.getMessage());
+//     }
+// }
+
 @AuraEnabled
 public static void updateMarketingCampaign(String campaignData) {
     try {
-        // Deserialize the JSON string into a Map
         Map<String, Object> dataMap = (Map<String, Object>) JSON.deserializeUntyped(campaignData);
-        System.debug('dataMap: ' + dataMap);
-
-        // Extract basic fields
         String campaignId = (String) dataMap.get('id');
-        String name = (String) dataMap.get('name');
-        String description = (String) dataMap.get('description');
-        String objectName = (String) dataMap.get('objectName');
-        Boolean isMarketingCampaign = (Boolean) dataMap.get('isMarketingCampaign');
-        String selectedOption = (String) dataMap.get('selectedOption');
-        String selectedDate = (String) dataMap.get('selectedDate');
-        String selectedDateFields = (String) dataMap.get('selectedDateFields');
 
-        // Extract and process groupIdList
-        List<Object> rawGroupList = (List<Object>) dataMap.get('groupIdList');
-        List<String> groupId = new List<String>();
-        for (Object obj : rawGroupList) {
-            groupId.add((String) obj);
-        }
-        String groupIdCommaSeparated = String.join(groupId, ',');
-
-        // Extract email configurations
-        List<Object> rawEmailConfigs = (List<Object>) dataMap.get('emailConfigs');
-        List<Map<String, Object>> emailConfigs = new List<Map<String, Object>>();
-        for (Object rawItem : rawEmailConfigs) {
-            emailConfigs.add((Map<String, Object>) rawItem);
-        }
-
-        // Fetch the existing campaign record
+        // Query campaign record
         WB_Marketing_campaign__c campaign = [
             SELECT Id, Name, Marketing_Campaign_Description__c, Object_Name__c, 
                    hasExistingMarketingCampaign__c, Group_Id_List__c
@@ -415,60 +598,79 @@ public static void updateMarketingCampaign(String campaignData) {
             LIMIT 1
         ];
 
-        // Update the campaign fields
-        campaign.Name = name;
-        campaign.Marketing_Campaign_Description__c = description;
-        campaign.Object_Name__c = objectName;
-        campaign.hasExistingMarketingCampaign__c = isMarketingCampaign;
-        campaign.Group_Id_List__c = groupIdCommaSeparated;
+        // Update campaign fields
+        campaign.Name = (String) dataMap.get('name');
+        campaign.Marketing_Campaign_Description__c = (String) dataMap.get('description');
+        campaign.Object_Name__c = (String) dataMap.get('objectName');
+        campaign.hasExistingMarketingCampaign__c = (Boolean) dataMap.get('isMarketingCampaign');
 
-        // Update the campaign record
+        // Build Group Id list string
+        List<String> groupIdList = new List<String>();
+        for (Object obj : (List<Object>) dataMap.get('groupIdList')) {
+            groupIdList.add((String) obj);
+        }
+        campaign.Group_Id_List__c = String.join(groupIdList, ',');
+
+        // Update campaign record
         update campaign;
 
-        // Fetch existing campaign groups
+        // Query existing groups for campaign
         Map<Id, WB_Marketing_campaign_group__c> existingGroupsMap = new Map<Id, WB_Marketing_campaign_group__c>(
-            [SELECT Id, WB_Template__c, Days_After__c, Time_To_Send__c, Is_Send_Immediately__c, 
+            [SELECT Id, WB_Template__c, Days_After__c, Time_To_Send__c, Is_Send_immediately__c, 
                     Specific_Date__c, Relate_Date_Field__c 
              FROM WB_Marketing_campaign_group__c 
              WHERE WB_Marketing_campaign__c = :campaignId]
         );
 
-        // Prepare lists for insert, update, and delete
         List<WB_Marketing_campaign_group__c> groupsToInsert = new List<WB_Marketing_campaign_group__c>();
         List<WB_Marketing_campaign_group__c> groupsToUpdate = new List<WB_Marketing_campaign_group__c>();
         Set<Id> updatedGroupIds = new Set<Id>();
 
-        // Process email configurations
-        for (Map<String, Object> emailConfig : emailConfigs) {
+        String selectedOption = (String) dataMap.get('selectedOption');
+        String selectedDate = (String) dataMap.get('selectedDate');
+        String selectedDateFields = (String) dataMap.get('selectedDateFields');
+
+        List<Object> emailConfigs = (List<Object>) dataMap.get('emailConfigs');
+
+        // Process each email config (campaign group data)
+        for (Object rawItem : emailConfigs) {
+            Map<String, Object> emailConfig = (Map<String, Object>) rawItem;
+
             String groupIdValue = String.valueOf(emailConfig.get('groupId'));
             String templateId = String.valueOf(emailConfig.get('template'));
             String daysAfter = String.valueOf(emailConfig.get('daysAfter'));
-            String timeToSend = String.valueOf(emailConfig.get('timeToSend'));
-            String isSendImmediately = String.valueOf(emailConfig.get('isImmediateSelected'));
+            String timeToSendStr = String.valueOf(emailConfig.get('timeToSend'));
+            String isSendImmediatelyStr = String.valueOf(emailConfig.get('isImmediateSelected'));
 
-            Integer daysAfterValue = (daysAfter != null) ? Integer.valueOf(daysAfter) : null;
-            Time timeToSendValue = (timeToSend != null && String.valueOf(timeToSend).trim() != '') 
-                ? Time.newInstance(Integer.valueOf(timeToSend.split(':')[0]), Integer.valueOf(timeToSend.split(':')[1]), Integer.valueOf(timeToSend.split(':')[2]), 0) 
-                : null;
+            Integer daysAfterValue = String.isNotBlank(daysAfter) ? Integer.valueOf(daysAfter) : null;
+            Time timeToSend = (String.isNotBlank(timeToSendStr) && timeToSendStr.contains(':')) ?
+                Time.newInstance(
+                    Integer.valueOf(timeToSendStr.split(':')[0]),
+                    Integer.valueOf(timeToSendStr.split(':')[1]),
+                    Integer.valueOf(timeToSendStr.split(':')[2]),
+                    0
+                ) : null;
 
-            if (groupIdValue != null && existingGroupsMap.containsKey(groupIdValue)) {
-                WB_Marketing_campaign_group__c existingGroup = existingGroupsMap.get(groupIdValue);
-                existingGroup.WB_Template__c = templateId;
-                existingGroup.Days_After__c = daysAfterValue;
-                existingGroup.Time_To_Send__c = timeToSendValue;
-                existingGroup.Is_Send_immediately__c = isSendImmediately == 'true';
-                existingGroup.Specific_Date__c = (selectedOption == 'specific' && selectedDate != null) ? Date.valueOf(selectedDate) : null;
-                existingGroup.Relate_Date_Field__c = (selectedOption == 'related' && selectedDateFields != null) ? selectedDateFields : null;
-                groupsToUpdate.add(existingGroup);
-                updatedGroupIds.add(existingGroup.Id);
+            Boolean isSendImmediately = isSendImmediatelyStr == 'true';
+
+            if (String.isNotBlank(groupIdValue) && existingGroupsMap.containsKey(groupIdValue)) {
+                WB_Marketing_campaign_group__c campaignGroup = existingGroupsMap.get(groupIdValue);
+                campaignGroup.WB_Template__c = templateId;
+                campaignGroup.Days_After__c = daysAfterValue;
+                campaignGroup.Time_To_Send__c = timeToSend;
+                campaignGroup.Is_Send_immediately__c = isSendImmediately;
+                campaignGroup.Specific_Date__c = (selectedOption == 'specific' && selectedDate != null) ? Date.valueOf(selectedDate) : null;
+                campaignGroup.Relate_Date_Field__c = (selectedOption == 'related' && selectedDateFields != null) ? selectedDateFields : null;
+                groupsToUpdate.add(campaignGroup);
+                updatedGroupIds.add(campaignGroup.Id);
             } else {
                 WB_Marketing_campaign_group__c newGroup = new WB_Marketing_campaign_group__c(
                     WB_Marketing_campaign__c = campaign.Id,
                     WB_Template__c = templateId,
                     Status__c = 'Pending',
                     Days_After__c = daysAfterValue,
-                    Time_To_Send__c = timeToSendValue,
-                    Is_Send_immediately__c = isSendImmediately == 'true',
+                    Time_To_Send__c = timeToSend,
+                    Is_Send_immediately__c = isSendImmediately,
                     Specific_Date__c = (selectedOption == 'specific' && selectedDate != null) ? Date.valueOf(selectedDate) : null,
                     Relate_Date_Field__c = (selectedOption == 'related' && selectedDateFields != null) ? selectedDateFields : null
                 );
@@ -476,7 +678,7 @@ public static void updateMarketingCampaign(String campaignData) {
             }
         }
 
-        // Identify groups to delete
+        // Groups to delete: existing groups not in updatedGroupIds
         List<WB_Marketing_campaign_group__c> groupsToDelete = new List<WB_Marketing_campaign_group__c>();
         for (Id existingGroupId : existingGroupsMap.keySet()) {
             if (!updatedGroupIds.contains(existingGroupId)) {
@@ -484,16 +686,19 @@ public static void updateMarketingCampaign(String campaignData) {
             }
         }
 
-        // Perform DML operations
-        if (!groupsToInsert.isEmpty()) {
-            insert groupsToInsert;
-        }
-        if (!groupsToUpdate.isEmpty()) {
-            update groupsToUpdate;
-        }
-        if (!groupsToDelete.isEmpty()) {
-            delete groupsToDelete;
-        }
+        // Bulk DML on groups
+        if (!groupsToInsert.isEmpty()) insert groupsToInsert;
+        if (!groupsToUpdate.isEmpty()) update groupsToUpdate;
+        if (!groupsToDelete.isEmpty()) delete groupsToDelete;
+
+        // Call updateChatRecordsMarketing to sync chat & campaign member records
+        updateChatRecordsMarketing(
+            campaign.Id,
+            emailConfigs,
+            selectedOption,
+            selectedDate,
+            selectedDateFields
+        );
 
     } catch (Exception e) {
         throw new AuraHandledException('Error updating Marketing Campaign: ' + e.getMessage());
@@ -502,513 +707,218 @@ public static void updateMarketingCampaign(String campaignData) {
 
 
 @AuraEnabled
-public static void updateChatRecordsMarketing(String templateId, List<String> groupIds, String dateFieldValue, String campaignId, String campaignGroupId, Map<String, SObject> phoneToObjectMapList, String selectedDateFields, String selectedOption, Integer dayAfter, Time timeToSend, Boolean isSendImmediate) {
+public static void updateChatRecordsMarketing(
+    Id campaignId,
+    List<Object> emailConfigs,
+    String selectedOption,
+    String selectedDate,
+    String selectedDateFields
+) {
     try {
-        List<Chat__c> chatRecsToUpdate = new List<Chat__c>();
-        List<WB_Marketing_campaign_member__c> marketingMembersToUpdate = new List<WB_Marketing_campaign_member__c>();
+        // Get all group IDs from emailConfigs
+        Set<Id> groupIds = new Set<Id>();
+        for (Object rawItem : emailConfigs) {
+            Map<String, Object> emailConfig = (Map<String, Object>) rawItem;
+            String groupIdStr = String.valueOf(emailConfig.get('groupId'));
+            if (String.isNotBlank(groupIdStr)) {
+                groupIds.add(Id.valueOf(groupIdStr));
+            }
+        }
 
-        if (groupIds.size() > 0) {
-            List<Broadcast_Group_Member__c> groupMembers = [
-                SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c 
-                FROM Broadcast_Group_Member__c 
-                WHERE Broadcast_Group_ID__c IN :groupIds WITH SECURITY_ENFORCED
-            ];
+        if (groupIds.isEmpty()) {
+            return; // Nothing to update
+        }
 
-            for (Broadcast_Group_Member__c member : groupMembers) {
-                DateTime dateValue;
-                if (selectedOption == 'related' && phoneToObjectMapList.containsKey(member.Phone_Number__c)) {
-                    dateValue = (DateTime) phoneToObjectMapList.get(member.Phone_Number__c).get(selectedDateFields);
+        // Query all group members for these groups
+        List<WB_Marketing_campaign_member__c> groupMembers = [
+            SELECT Id, Member_Phone__c, WB_Marketing_campaign_group__c
+            FROM WB_Marketing_campaign_member__c
+            WHERE WB_Marketing_campaign_group__c IN :groupIds
+        ];
+        System.debug('Group members: ' + groupMembers);
+        // Query existing Chat records for these members and templates
+        Set<String> phoneNumbers = new Set<String>();
+        for (WB_Marketing_campaign_member__c m : groupMembers) {
+            if (String.isNotBlank(m.Member_Phone__c)) phoneNumbers.add(m.Member_Phone__c);
+        }
+
+        System.debug('Phone numbers: ' + phoneNumbers);
+
+        // Collect all template IDs from emailConfigs
+        Set<String> templateIds = new Set<String>();
+        for (Object rawItem : emailConfigs) {
+            Map<String, Object> emailConfig = (Map<String, Object>) rawItem;
+            String templateId = String.valueOf(emailConfig.get('template'));
+            if (String.isNotBlank(templateId)) templateIds.add(templateId);
+        }
+
+        // Query existing chat records for these phones and templates
+        List<Chat__c> existingChats = [
+            SELECT Id, Whatsapp_Template__c, Phone__c
+            FROM Chat__c
+            WHERE Phone__c IN :phoneNumbers AND Whatsapp_Template__c IN :templateIds
+        ];
+
+        // Map for quick lookup: Phone + Template -> Chat__c
+        Map<String, Chat__c> phoneTemplateToChatMap = new Map<String, Chat__c>();
+        for (Chat__c chat : existingChats) {
+            phoneTemplateToChatMap.put(chat.Phone__c + '-' + chat.Whatsapp_Template__c, chat);
+        }
+
+        System.debug('Phone numbe :: '+phoneNumbers);
+        System.debug('Group Id :: '+groupIds);
+        // Query existing marketing campaign members for these phones and groups
+        List<WB_Marketing_campaign_member__c> existingMembers = [
+            SELECT Id, Member_Phone__c, WB_Marketing_campaign_group__c, Schedule_Date__c, Status__c
+            FROM WB_Marketing_campaign_member__c
+            WHERE Member_Phone__c IN :phoneNumbers AND WB_Marketing_campaign_group__c IN :groupIds
+        ];
+
+        // Map for quick lookup: Phone + Group -> Member
+        Map<String, WB_Marketing_campaign_member__c> phoneGroupToMemberMap = new Map<String, WB_Marketing_campaign_member__c>();
+        for (WB_Marketing_campaign_member__c member : existingMembers) {
+            phoneGroupToMemberMap.put(member.Member_Phone__c + '-' + String.valueOf(member.WB_Marketing_campaign_group__c), member);
+        }
+        System.debug('778 Existing member :: '+existingMembers);
+        // Prepare lists for DML
+        List<Chat__c> chatsToInsert = new List<Chat__c>();
+        List<Chat__c> chatsToUpdate = new List<Chat__c>();
+
+        List<WB_Marketing_campaign_member__c> membersToInsert = new List<WB_Marketing_campaign_member__c>();
+        List<WB_Marketing_campaign_member__c> membersToUpdate = new List<WB_Marketing_campaign_member__c>();
+
+        // Track processed members for deletion logic
+        Set<String> processedPhoneGroupKeys = new Set<String>();
+
+        // For converting selectedDate string to Date
+        Date baseDate = selectedDate != null ? Date.valueOf(selectedDate) : null;
+
+        for (Object rawItem : emailConfigs) {
+            Map<String, Object> emailConfig = (Map<String, Object>) rawItem;
+
+            String groupIdStr = String.valueOf(emailConfig.get('groupId'));
+            Id groupId = (String.isNotBlank(groupIdStr)) ? Id.valueOf(groupIdStr) : null;
+
+            String templateId = String.valueOf(emailConfig.get('template'));
+            String daysAfterStr = String.valueOf(emailConfig.get('daysAfter'));
+            String timeToSendStr = String.valueOf(emailConfig.get('timeToSend'));
+            String isSendImmediatelyStr = String.valueOf(emailConfig.get('isImmediateSelected'));
+
+            Integer daysAfter = String.isNotBlank(daysAfterStr) ? Integer.valueOf(daysAfterStr) : 0;
+            Boolean isSendImmediate = isSendImmediatelyStr == 'true';
+
+            Time timeToSend = (String.isNotBlank(timeToSendStr) && timeToSendStr.contains(':')) ?
+                Time.newInstance(
+                    Integer.valueOf(timeToSendStr.split(':')[0]),
+                    Integer.valueOf(timeToSendStr.split(':')[1]),
+                    Integer.valueOf(timeToSendStr.split(':')[2]),
+                    0
+                ) : null;
+
+            for (WB_Marketing_campaign_member__c member : groupMembers) {
+                if (member.WB_Marketing_campaign_group__c != groupId) continue;
+
+                String phone = member.Member_Phone__c;
+                if (String.isBlank(phone)) continue;
+
+                // Calculate schedule date/time
+                DateTime scheduleDateTime;
+
+                if (isSendImmediate) {
+                    scheduleDateTime = DateTime.now();
+                } else if (selectedOption == 'specific' && baseDate != null) {
+                    // Use specific date plus time
+                    scheduleDateTime = DateTime.newInstance(baseDate, timeToSend != null ? timeToSend : Time.newInstance(0,0,0,0));
+                } else if (selectedOption == 'related' && selectedDateFields != null) {
+                    // Here, add logic if you have related date fields to calculate from
+                    // For now, just use current datetime
+                    scheduleDateTime = DateTime.now().addDays(daysAfter);
                 } else {
-                    Date dateFieldValueStr = Date.valueOf(dateFieldValue);
-                    dateValue = DateTime.newInstance(dateFieldValueStr, Time.newInstance(0, 0, 0, 0));
+                    // Default fallback
+                    scheduleDateTime = DateTime.now().addDays(daysAfter);
                 }
 
-                if (dateValue != null) {
-                    dateValue = dateValue.addDays(dayAfter != null ? dayAfter : 0);
-
-                    if (timeToSend != null || isSendImmediate == true) {
-                        dateValue = (isSendImmediate == true) 
-                            ? DateTime.now().addMinutes(1) 
-                            : DateTime.newInstance(dateValue.date(), timeToSend);
-                    }
+                // Upsert WB_Marketing_campaign_member__c
+                String phoneGroupKey = phone + '-' + groupId;
+                processedPhoneGroupKeys.add(phoneGroupKey);
+                System.debug('840 Member to update ::: '+membersToUpdate);
+                WB_Marketing_campaign_member__c memberRecord;
+                if (phoneGroupToMemberMap.containsKey(phoneGroupKey)) {
+                    memberRecord = phoneGroupToMemberMap.get(phoneGroupKey);
+                    memberRecord.Schedule_Date__c = scheduleDateTime;
+                    memberRecord.Status__c = 'Pending';
+                    membersToUpdate.add(memberRecord);
+                } else {
+                    memberRecord = new WB_Marketing_campaign_member__c(
+                        Member_Phone__c = phone,
+                        WB_Marketing_campaign_group__c = groupId,
+                        WB_Marketing_campaign__c = campaignId,
+                        Schedule_Date__c = scheduleDateTime,
+                        Status__c = 'Pending'
+                    );
+                    membersToInsert.add(memberRecord);
                 }
 
-                if (member.Phone_Number__c != null && member.Phone_Number__c != '') {
-                    List<Chat__c> existingChats = [
-                        SELECT Id, Whatsapp_Template__c, Phone__c 
-                        FROM Chat__c 
-                        WHERE Phone__c = :member.Phone_Number__c AND Whatsapp_Template__c = :templateId 
-                        LIMIT 1
-                    ];
-                    if (!existingChats.isEmpty()) {
-                        Chat__c existingChat = existingChats[0];
-                        existingChat.Whatsapp_Template__c = templateId;
-                        chatRecsToUpdate.add(existingChat);
-                    }
-
-                    List<WB_Marketing_campaign_member__c> existingMembers = [
-                        SELECT Id, Member_Phone__c, Schedule_Date__c 
-                        FROM WB_Marketing_campaign_member__c 
-                        WHERE Member_Phone__c = :member.Phone_Number__c AND WB_Marketing_campaign_group__c = :campaignGroupId 
-                        LIMIT 1
-                    ];
-                    if (!existingMembers.isEmpty()) {
-                        WB_Marketing_campaign_member__c existingMember = existingMembers[0];
-                        existingMember.Schedule_Date__c = dateValue;
-                        existingMember.Status__c = 'Pending';
-                        marketingMembersToUpdate.add(existingMember);
-                    }
+                // Upsert Chat__c
+                String phoneTemplateKey = phone + '-' + templateId;
+                if (phoneTemplateToChatMap.containsKey(phoneTemplateKey)) {
+                    Chat__c chat = phoneTemplateToChatMap.get(phoneTemplateKey);
+                    // If you want to update fields, do it here
+                    chatsToUpdate.add(chat);
+                } else {
+                    Chat__c newChat = new Chat__c(
+                        Phone__c = phone,
+                        Whatsapp_Template__c = templateId
+                    );
+                    chatsToInsert.add(newChat);
                 }
             }
         }
 
-        // Perform DML operations
-        if (!chatRecsToUpdate.isEmpty()) {
-            update chatRecsToUpdate;
-        }
-        if (!marketingMembersToUpdate.isEmpty()) {
-            update marketingMembersToUpdate;
+        // Delete campaign members and chats that are no longer valid
+        List<WB_Marketing_campaign_member__c> membersToDelete = new List<WB_Marketing_campaign_member__c>();
+        for (WB_Marketing_campaign_member__c existingMember : existingMembers) {
+            String key = existingMember.Member_Phone__c + '-' + String.valueOf(existingMember.WB_Marketing_campaign_group__c);
+            if (!processedPhoneGroupKeys.contains(key)) {
+                membersToDelete.add(existingMember);
+            }
         }
 
+        List<Chat__c> chatsToDelete = new List<Chat__c>();
+        Set<String> validPhoneTemplateKeys = new Set<String>();
+        for (Object rawItem : emailConfigs) {
+            Map<String, Object> emailConfig = (Map<String, Object>) rawItem;
+            String templateId = String.valueOf(emailConfig.get('template'));
+            for (WB_Marketing_campaign_member__c member : groupMembers) {
+                if (String.isNotBlank(member.Member_Phone__c)) {
+                    validPhoneTemplateKeys.add(member.Member_Phone__c + '-' + templateId);
+                }
+            }
+        }
+        for (Chat__c chat : existingChats) {
+            String key = chat.Phone__c + '-' + chat.Whatsapp_Template__c;
+            if (!validPhoneTemplateKeys.contains(key)) {
+                chatsToDelete.add(chat);
+            }
+        }
+
+        // Perform bulk DML operations
+        if (!membersToInsert.isEmpty()) insert membersToInsert;
+        if (!membersToUpdate.isEmpty()) update membersToUpdate;
+        if (!membersToDelete.isEmpty()) delete membersToDelete;
+
+        if (!chatsToInsert.isEmpty()) insert chatsToInsert;
+        if (!chatsToUpdate.isEmpty()) update chatsToUpdate;
+        if (!chatsToDelete.isEmpty()) delete chatsToDelete;
+
     } catch (Exception e) {
-        throw new AuraHandledException('Error in updateChatRecordsMarketing: ' + e.getMessage());
+        throw new AuraHandledException('Error updating Chat Records: ' + e.getMessage());
     }
 }
 
 
-    // @AuraEnabled
-    // public static void updateMarketingCampaign(String campaignData) {
-    //     try {
-    //         // Deserialize the JSON string into a Map
-    //         Map<String, Object> dataMap = (Map<String, Object>) JSON.deserializeUntyped(campaignData);
-    //         System.debug('dataMap: ' + dataMap);
+
     
-    //         // Extract basic fields
-    //         String campaignId = (String) dataMap.get('id'); // Campaign ID for update
-    //         String name = (String) dataMap.get('name');
-    //         String description = (String) dataMap.get('description');
-    //         String objectName = (String) dataMap.get('objectName');
-    //         Boolean isMarketingCampaign = (Boolean) dataMap.get('isMarketingCampaign');
-    //         String selectedOption = (String) dataMap.get('selectedOption');
-    //         String selectedDate = (String) dataMap.get('selectedDate');
-    //         String selectedDateFields = (String) dataMap.get('selectedDateFields');
-    //         System.debug('selectedDateFields: ' + selectedDateFields);
-    //         System.debug('selectedDate : '+ selectedDate);
-    //         System.debug('selectedoption : '+selectedOption);
-    //         System.debug('objectName : '+objectName);
-    
-    //         // Extract and process groupIdList
-    //         List<Object> rawGroupList = (List<Object>) dataMap.get('groupIdList');
-    //         List<String> groupId = new List<String>();
-    //         for (Object obj : rawGroupList) {
-    //             groupId.add((String) obj); // Each obj is just a string ID
-    //         }
-    //         String groupIdCommaSeparated = String.join(groupId, ',');
-    //         System.debug('Comma-separated Group IDs: ' + groupIdCommaSeparated);
-    
-    //         // Extract email configurations
-    //         List<Object> rawEmailConfigs = (List<Object>) dataMap.get('emailConfigs');
-    //         List<Map<String, Object>> emailConfigs = new List<Map<String, Object>>();
-    //         for (Object rawItem : rawEmailConfigs) {
-    //             emailConfigs.add((Map<String, Object>) rawItem);
-    //         }
-    //         System.debug('Campaign Idd :: '+campaignId);
-    //         // Fetch the existing campaign record
-    //         WB_Marketing_campaign__c campaign = [
-    //             SELECT Id, Name, Marketing_Campaign_Description__c, Object_Name__c, 
-    //                    hasExistingMarketingCampaign__c, Group_Id_List__c
-    //             FROM WB_Marketing_campaign__c
-    //             WHERE Id = :campaignId
-    //             LIMIT 1
-    //         ];
-    
-    //         // Update the campaign fields
-    //         campaign.Name = name;
-    //         campaign.Marketing_Campaign_Description__c = description;
-    //         campaign.Object_Name__c = objectName;
-    //         campaign.hasExistingMarketingCampaign__c = isMarketingCampaign;
-    //         campaign.Group_Id_List__c = groupIdCommaSeparated;
-    
-    //         // Update the campaign record
-    //         update campaign;
-    //         System.debug('Updated Campaign: ' + campaign);
-    
-    //         // Fetch existing campaign groups
-    //         Map<Id, WB_Marketing_campaign_group__c> existingGroupsMap = new Map<Id, WB_Marketing_campaign_group__c>(
-    //             [SELECT Id, WB_Template__c, Days_After__c, Time_To_Send__c, Is_Send_Immediately__c, 
-    //                     Specific_Date__c, Relate_Date_Field__c 
-    //              FROM WB_Marketing_campaign_group__c 
-    //              WHERE WB_Marketing_campaign__c =:campaignId]
-    //         );
-                        
-            
-    //         Map<String, SObject> phoneToObjectMapList;
-    //         if(selectedOption == 'related') {
-    //             phoneToObjectMapList  = getObjectDetails(objectName, selectedDateFields);
-    //         }else {
-    //             phoneToObjectMapList = new Map<String, SObject>();
-    //         }
-
-    //         System.debug('phoneToObjectMapList11: ' + phoneToObjectMapList);
-    
-    //         // Prepare lists for insert, update, and delete
-    //         List<WB_Marketing_campaign_group__c> groupsToInsert = new List<WB_Marketing_campaign_group__c>();
-    //         List<WB_Marketing_campaign_group__c> groupsToUpdate = new List<WB_Marketing_campaign_group__c>();
-    //         Set<Id> updatedGroupIds = new Set<Id>();
-    
-    //         // Process email configurations
-    //         for (Map<String, Object> emailConfig : emailConfigs) {
-    //             String groupIdValue = String.valueOf(emailConfig.get('groupId')); // Check if group exists
-    //             String templateId = String.valueOf(emailConfig.get('template'));
-    //             String daysAfter = String.valueOf(emailConfig.get('daysAfter'));
-    //             String timeToSend = String.valueOf(emailConfig.get('timeToSend'));
-    //             String isSendImmediately = String.valueOf(emailConfig.get('isImmediateSelected'));
-    
-    //             // Validate Days_After__c
-    //             Integer daysAfterValue = null;
-    //             if (daysAfter != null) {
-    //                 try {
-    //                     daysAfterValue = Integer.valueOf(daysAfter);
-    //                 } catch (Exception e) {
-    //                     throw new AuraHandledException('Invalid value for Days_After__c: ' + daysAfter);
-    //                 }
-    //             }
-    
-    //             // Validate Time_To_Send__c
-    //             Time timeToSendValue = null;
-    //             if (timeToSend != null && String.valueOf(timeToSend).trim() != '') {
-    //                     System.debug('timeToSend: ' + timeToSend);
-    //                     List<String> timeParts = timeToSend.split(':');
-    //                     System.debug('timeParts: ' + timeParts);
-    //                     Integer hours = Integer.valueOf(timeParts[0]);
-    //                     Integer minutes = Integer.valueOf(timeParts[1]);
-    //                     Integer seconds = Integer.valueOf(timeParts[2]);
-    //                     System.debug('Second ::: '+seconds);
-    //                     timeToSendValue = Time.newInstance(hours, minutes, seconds, 0);
-    //                     System.debug('Time to send1 ::: ' + timeToSendValue);
-                    
-    //             }
-    //             System.debug('Time to send ::: ' + timeToSendValue);
-    
-    //             // Check if the group exists
-    //             if (groupIdValue != null && existingGroupsMap.containsKey(groupIdValue)) {
-    //                 WB_Marketing_campaign_group__c existingGroup = existingGroupsMap.get(groupIdValue);
-    //                 existingGroup.WB_Template__c = templateId;
-    //                 existingGroup.Days_After__c = daysAfterValue;
-    //                 existingGroup.Time_To_Send__c = timeToSendValue;
-    //                 existingGroup.Is_Send_immediately__c = isSendImmediately == 'true';
-    //                 existingGroup.Specific_Date__c = (selectedOption == 'specific' && selectedDate != null) ? Date.valueOf(selectedDate) : null;
-    //                 existingGroup.Relate_Date_Field__c = (selectedOption == 'related' && selectedDateFields != null) ? selectedDateFields : null;
-    //                 groupsToUpdate.add(existingGroup);
-    //                 updatedGroupIds.add(existingGroup.Id);
-    //             } else {
-    //                 // Create a new group
-    //                 WB_Marketing_campaign_group__c newGroup = new WB_Marketing_campaign_group__c(
-    //                     WB_Marketing_campaign__c = campaign.Id,
-    //                     WB_Template__c = templateId,
-    //                     Status__c = 'Pending',
-    //                     Days_After__c = daysAfterValue,
-    //                     Time_To_Send__c = timeToSendValue,
-    //                     Is_Send_immediately__c = isSendImmediately == 'true',
-    //                     Specific_Date__c = (selectedOption == 'specific' && selectedDate != null) ? Date.valueOf(selectedDate) : null,
-    //                     Relate_Date_Field__c = (selectedOption == 'related' && selectedDateFields != null) ? selectedDateFields : null
-    //                 );
-    //                 groupsToInsert.add(newGroup);
-    //             }
-    //         }
-    
-    //         // Identify groups to delete
-    //         List<WB_Marketing_campaign_group__c> groupsToDelete = new List<WB_Marketing_campaign_group__c>();
-    //         for (Id existingGroupId : existingGroupsMap.keySet()) {
-    //             if (!updatedGroupIds.contains(existingGroupId)) {
-    //                 groupsToDelete.add(existingGroupsMap.get(existingGroupId));
-    //             }
-    //         }
-    //         // Perform DML operations
-    //         if (!groupsToInsert.isEmpty()) {
-    //             insert groupsToInsert;
-    //             System.debug('Inserted Campaign Groups: ' + groupsToInsert);
-                
-    //             for (WB_Marketing_campaign_group__c groupRecord : groupsToInsert) {
-    //                 String selectedOption1 = groupRecord.Relate_Date_Field__c != null ? 'related' :'specific';
-    //                 createChatRecodsMarketing(
-    //                     groupRecord.WB_Template__c,
-    //                     groupId,
-    //                     selectedDate,
-    //                     campaign.Id,
-    //                     groupRecord.Id,
-    //                     phoneToObjectMapList, // Pass phoneToObjectMapList if needed
-    //                     selectedDateFields,
-    //                     selectedOption1,
-    //                     Integer.valueOf(groupRecord.Days_After__c),
-    //                     groupRecord.Time_To_Send__c,
-    //                     groupRecord.Is_Send_immediately__c
-    //                 );
-    //             }
-
-    //         }
-    //         if (!groupsToUpdate.isEmpty()) {
-    //             update groupsToUpdate;
-    //             System.debug('Updated Campaign Groups: ' + groupsToUpdate);
-                
-    //         for (WB_Marketing_campaign_group__c groupRecord : groupsToUpdate) {
-    //             System.debug(groupRecord);
-    //             String selectedOption1 = groupRecord.Relate_Date_Field__c != null ? 'related' :'specific';
-
-    //             updateChatRecordsMarketing(
-    //                 groupRecord.WB_Template__c,
-    //                 groupId,
-    //                 selectedDate,
-    //                 campaignId,
-    //                 groupRecord.Id,
-    //                 phoneToObjectMapList, // Pass phoneToObjectMapList if needed
-    //                 selectedDateFields,
-    //                 selectedOption1,
-    //                 Integer.valueOf(groupRecord.Days_After__c),
-    //                 groupRecord.Time_To_Send__c,
-    //                 groupRecord.Is_Send_immediately__c
-    //             );
-            
-    //         }
-    //         }
-    //         if (!groupsToDelete.isEmpty()) {
-    //             delete groupsToDelete;
-    //             System.debug('Deleted Campaign Groups: ' + groupsToDelete);
-    //         }
-
-    //     } catch (Exception e) {
-    //         // Handle any exceptions and throw a user-friendly error
-    //         System.debug(e.getLineNumber());
-    //         System.debug('Error in updateMarketingCampaign: ' + e.getMessage());    
-    //         throw new AuraHandledException('Error updating Marketing Campaign: ' + e.getMessage());
-    //     }
-    // }
-        /*
-    *********************************************************
-    @description     : Create chat records and run batch class to send it at that time or schedule batch job if needed
-    @param           : groupId - Id of the Broadcast_Group__c record
-    @return          : String indicating success or failure
-    ********************************************************
-    */
-    // @AuraEnabled
-    // public static String createChatRecodsMarketing(String templateId, List<String> groupIds, String dateFieldValue,String campaignId, String campaignGroupId,Map<String, SObject> phoneToObjectMapList,String selectedDateFields,String selectedOption,Integer dayAfter , Time timeToSend,Boolean isSendImmediate) {
-    //     try {
-           
-    //         String objectApiName = '';
-    //         String phoneField = '';
-    //         List<Chat__c> chatRecs = new List<Chat__c>();
-    //         List<WB_Marketing_campaign_member__c> marketingCampaignMembers = new List<WB_Marketing_campaign_member__c>();
-
-    //         if (groupIds.size() > 0) {
-    //             List<Broadcast_Group__c> brGroupRecs = [SELECT Id, Name, Object_Name__c FROM Broadcast_Group__c WHERE Id IN :groupIds];
-    //             if (brGroupRecs.size() > 0) {
-    //                 objectApiName = brGroupRecs[0].Object_Name__c;
-    //             }
-
-    //             List<Broadcast_Group_Member__c> groupMembers = new List<Broadcast_Group_Member__c>();
-    //             groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupIds WITH SECURITY_ENFORCED];
-    //             System.debug('groupMembers: ' + groupMembers);
-    //             // broadcast.Recipient_Count__c = groupMembers.size();
-    //             // Database.insert(broadcast, false, AccessLevel.USER_MODE);
-
-    //             // List<String> phoneList = new List<String>();
-    //             if (groupMembers.size() > 0) {
-    //                 for (Broadcast_Group_Member__c member : groupMembers) {
-    //                     DateTime dateValue;
-    //                     if (selectedOption == 'related' && phoneToObjectMapList.containsKey(member.Phone_Number__c)) {
-    //                         dateValue = (DateTime) phoneToObjectMapList.get(member.Phone_Number__c).get(selectedDateFields);
-    //                         System.debug('Date Value :::  '+dateValue);
-    //                     } else {
-    //                         // Date dateFieldValue = ;
-    //                         // dateValue = (DateTime) DateTime.newInstance(dateFieldValue, Time.newInstance(0, 0, 0, 0));
-    //                         Date dateFieldValueStr = Date.valueOf(dateFieldValue); // convert to Date
-    //                         dateValue = DateTime.newInstance(dateFieldValueStr, Time.newInstance(0, 0, 0, 0));
-    //                         // dateValue = DateTime.valueOf(dateFieldValue);
-    //                     }
-
-    //                     if (dateValue != null) {
-    //                         // Step 1: Add days
-    //                         dateValue = dateValue.addDays(dayAfter != null ? dayAfter : 0);
-                        
-    //                         if (timeToSend != null || isSendImmediate == true) {
-    //                             // Step 2: Apply user timezone
-    //                             // TimeZone userTimeZone = UserInfo.getTimeZone();
-    //                             System.debug(timeToSend);
-    //                             // Combine date (after adding days) with the new time
-    //                             // DateTime combinedDateTime = DateTime.newInstance(dateValue.date(), timeToSend);
-    //                             DateTime combinedDateTime;
-    //                             System.debug('isSendImmediate: ' + isSendImmediate);
-    //                             if (isSendImmediate == true) {
-    //                                     // Add 1 minute to the current date and time
-    //                                     combinedDateTime = DateTime.now().addMinutes(1);
-    //                                     System.debug('Combined DateTime for immediate send: ' + combinedDateTime);
-    //                                 } else {
-    //                                     // Combine date (after adding days) with the new time
-    //                                     combinedDateTime = DateTime.newInstance(dateValue.date(), timeToSend);
-    //                                 }
-    //                             // Step 3: Adjust to user's timezone offset
-    //                             // Integer offsetInSeconds = userTimeZone.getOffset(combinedDateTime) / 1000;
-    //                             // System.debug('Offset in seconds: ' + offsetInSeconds);
-    //                             // dateValue = combinedDateTime.addSeconds(offsetInSeconds);
-    //                             dateValue = combinedDateTime;
-    //                         }
-    //                     }
-
-    //                     System.debug('Updated DateTime: ' + dateValue);
-
-    //                     if (member.Phone_Number__c != null || member.Phone_Number__c != '') {
-    //                         // phoneList.add(member.Phone_Number__c);
-    //                         Chat__c newChat = new Chat__c();
-    //                         newChat.Whatsapp_Template__c = templateId;
-    //                         newChat.Phone__c = member.Phone_Number__c;
-    //                         newChat.Type_of_Message__c = 'OutBound Messages';
-    //                         newChat.Message_Status__c = null;
-    //                         newChat.Message_Type__c = 'Template';
-    //                         chatRecs.add(newChat);
-
-    //                         WB_Marketing_campaign_member__c campaignMember = new WB_Marketing_campaign_member__c();
-    //                         campaignMember.Member_Phone__c = member.Phone_Number__c;
-    //                         campaignMember.Name = member.Name;
-    //                         campaignMember.Member_Name__c = member.Name;
-    //                         campaignMember.Schedule_Date__c = dateValue;
-    //                         campaignMember.WB_Marketing_campaign__c = campaignId;
-    //                         campaignMember.WB_Marketing_campaign_group__c = campaignGroupId;
-    //                         campaignMember.Chat_Record_Id__c = null;
-    //                         campaignMember.Status__c = 'Pending';
-    //                         marketingCampaignMembers.add(campaignMember);
-
-    //                     }
-    //                 }
-    //             }
-    //             System.debug('Marketing Campaign Member ::: '+ marketingCampaignMembers);
-    //             System.debug('Chat Records ::: '+ chatRecs);
-    //             if (chatRecs.size() > 0) {
-    //                 Database.SaveResult[] results = Database.insert(chatRecs, false, AccessLevel.USER_MODE);
-    //                 System.debug('results: ' + results);
-    //                 // Database.insert(marketingCampaignMembers, false, AccessLevel.USER_MODE);
-                    
-    //             }
-    //              // Map Chat__c records to Campaign Members
-    //             for (Integer i = 0; i < chatRecs.size(); i++) {
-    //                 System.debug(chatRecs[i].Id);
-    //                 marketingCampaignMembers[i].Chat_Record_Id__c = chatRecs[i].Id; // Assuming Chat_Record_Id__c is the field to store Chat__c ID
-    //             }
-    //             System.debug('Marketing Campaign Member ::: '+ marketingCampaignMembers);
-
-    //             // Insert Campaign Members
-    //             if (marketingCampaignMembers.size() > 0) {
-    //                 Database.insert(marketingCampaignMembers, false, AccessLevel.USER_MODE);
-    //             }
-    //         }
-
-    //         return 'Success';
-    //     } catch (Exception e) {
-    //         System.debug(e.getLineNumber());
-    //         System.debug(e.getMessage());
-    //         ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'createChatRecods', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
-    //         throw new AuraHandledException('Error in sendTemplateMessage: ' + e.getMessage());
-    //     }
-    // }  
-
-    // @AuraEnabled
-    // public static void updateChatRecordsMarketing(String templateId, List<String> groupIds, String dateFieldValue, String campaignId, String campaignGroupId, Map<String, SObject> phoneToObjectMapList, String selectedDateFields, String selectedOption, Integer dayAfter, Time timeToSend, Boolean isSendImmediate) {
-    //     try {
-    //         System.debug('In Update REcod');
-    //         String objectApiName = '';
-    //         String phoneField = '';
-    //         Set<Chat__c> chatRecsToUpdate = new Set<Chat__c>();
-    //         Set<WB_Marketing_campaign_member__c> marketingMembersToUpdate = new Set<WB_Marketing_campaign_member__c>();
-
-    //         System.debug('group Id ::: '+groupIds);
-    //         if (groupIds.size() > 0) {
-    //             // Fetch broadcast group details
-    //             List<Broadcast_Group__c> brGroupRecs = [SELECT Id, Name, Object_Name__c FROM Broadcast_Group__c WHERE Id IN :groupIds];
-    //             if (brGroupRecs.size() > 0) {
-    //                 objectApiName = brGroupRecs[0].Object_Name__c;
-    //             }
-    //         System.debug('Brodcast re ::: '+brGroupRecs);
-
-
-    //             // Fetch group members
-    //             List<Broadcast_Group_Member__c> groupMembers = [SELECT Id, Name, Phone_Number__c, Broadcast_Group_ID__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c IN :groupIds WITH SECURITY_ENFORCED];
-    //             System.debug('groupMembers: ' + groupMembers);
-
-    //             if (groupMembers.size() > 0) {
-    //                 for (Broadcast_Group_Member__c member : groupMembers) {
-    //                     DateTime dateValue;
-    //                     // System.debug()
-
-    //                     System.debug('Phone Object ::: '+phoneToObjectMapList.containsKey(member.Phone_Number__c));
-    //                     if (selectedOption == 'related' && member.Phone_Number__c !=null) {
-    //                         dateValue = (DateTime) phoneToObjectMapList.get(member.Phone_Number__c).get(selectedDateFields);
-    //                         System.debug('Date Value ::: ' + dateValue);
-    //                     } else {
-    //                         Date dateFieldValueStr = Date.valueOf(dateFieldValue); // Convert to Date
-    //                         dateValue = DateTime.newInstance(dateFieldValueStr, Time.newInstance(0, 0, 0, 0));
-    //                     }
-
-    //                     // Add dayAfter and timeToSend to the DateTime
-    //                     if (dateValue != null) {
-    //                         dateValue = dateValue.addDays(dayAfter != null ? dayAfter : 0);
-
-    //                         if (timeToSend != null || isSendImmediate == true) {
-    //                             DateTime combinedDateTime;
-    //                             if (isSendImmediate == true) {
-    //                                 combinedDateTime = DateTime.now().addMinutes(1);
-    //                                 System.debug('Combined DateTime for immediate send: ' + combinedDateTime);
-    //                             } else {
-    //                                 combinedDateTime = DateTime.newInstance(dateValue.date(), timeToSend);
-    //                             }
-    //                             dateValue = combinedDateTime;
-    //                         }
-    //                     }
-
-    //                     System.debug('Updated DateTime: ' + dateValue);
-
-    //                     if (member.Phone_Number__c != null && member.Phone_Number__c != '') {
-    //                         // Fetch existing chat record
-    //                         List<Chat__c> existingChats = [SELECT Id, Whatsapp_Template__c, Phone__c FROM Chat__c WHERE Phone__c = :member.Phone_Number__c AND Whatsapp_Template__c = :templateId LIMIT 1];
-    //                         if (!existingChats.isEmpty()) {
-    //                             Chat__c existingChat = existingChats[0];
-    //                             existingChat.Whatsapp_Template__c = templateId;
-    //                             chatRecsToUpdate.add(existingChat);
-    //                         }
-
-    //                         // Fetch existing marketing campaign member
-    //                         List<WB_Marketing_campaign_member__c> existingMembers = [SELECT Id, Member_Phone__c, Schedule_Date__c FROM WB_Marketing_campaign_member__c WHERE Member_Phone__c = :member.Phone_Number__c AND WB_Marketing_campaign_group__c = :campaignGroupId LIMIT 1];
-    //                         if (!existingMembers.isEmpty()) {
-    //                             WB_Marketing_campaign_member__c existingMember = existingMembers[0];
-    //                             existingMember.Schedule_Date__c = dateValue;
-    //                             existingMember.Status__c = 'Pending';
-    //                             marketingMembersToUpdate.add(existingMember);
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         // Perform DML operations
-    //         if (!chatRecsToUpdate.isEmpty()) {
-    //             List<Chat__c> chatRecsToUpdateList = new List<Chat__c>(chatRecsToUpdate);
-    //             update chatRecsToUpdateList;
-    //             System.debug('Updated Chat Records: ' + chatRecsToUpdateList);
-    //         }
-
-    //         if (!marketingMembersToUpdate.isEmpty()) {
-    //             List<WB_Marketing_campaign_member__c> marketingMembersToUpdateList = new List<WB_Marketing_campaign_member__c>(marketingMembersToUpdate);
-    //             update marketingMembersToUpdateList;
-    //             System.debug('Updated Marketing Campaign Members: ' + marketingMembersToUpdateList);
-    //         }
-
-    //         // return 'Success';
-    //     } catch (Exception e) {
-    //         System.debug(e.getLineNumber());
-    //         System.debug(e.getMessage());
-    //         ExceptionHandler.logException(new Map<String, Object>{'className' => 'MarketingMessageController','methodName' => 'updateChatRecordsMarketing','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
-    //         throw new AuraHandledException('Error in updateChatRecordsMarketing: ' + e.getMessage());
-    //     }
-    // }
-
     /*
     *********************************************************
     @description     : Generate a cron expression based on the provided DateTime
@@ -1057,125 +967,7 @@ public static void updateChatRecordsMarketing(String templateId, List<String> gr
         }
     }
 
-    // @InvocableMethod(callout=true)
-    // public static List<InvocableResult> getScheduleMessage(List<InvocableInput> inputMemberIdList) {
-    //     List<InvocableResult> results = new List<InvocableResult>();
-
-    //     try {
-    //         System.debug('In Invocable Method');
-    //         System.debug('memberIds: ' + inputMemberIdList);
-
-    //         // Ensure the input list is not empty
-    //         if (inputMemberIdList == null || inputMemberIdList.isEmpty()) {
-    //             throw new AuraHandledException('No memberId provided.');
-    //         }
-
-    //         // Process each input memberId
-    //         for (InvocableInput input : inputMemberIdList) {
-    //             // Query the Marketing Campaign Member record
-    //             WB_Marketing_campaign_member__c member = [
-    //                 SELECT Id, Member_Name__c, Member_Phone__c, Schedule_Date__c, 
-    //                        WB_Marketing_Campaign_Group__r.WB_Template__c, 
-    //                        WB_Marketing_Campaign_Group__r.Days_After__c, 
-    //                        WB_Marketing_Campaign_Group__r.Time_To_Send__c, 
-    //                        WB_Marketing_Campaign_Group__r.Is_Send_immediately__c, 
-    //                        WB_Marketing_Campaign__r.Name, 
-    //                        WB_Marketing_Campaign__r.Marketing_Campaign_Description__c,
-    //                        WB_Marketing_Campaign__r.Object_Name__c,
-    //                        Status__c
-    //                 FROM WB_Marketing_campaign_member__c
-    //                 WHERE Id = :input.memberId
-    //                 LIMIT 1 
-    //             ];
-
-    //             System.debug('member: ' + member);
-    //             // Validate if the member has a phone number
-    //             if (String.isBlank(member.Member_Phone__c)) {
-    //                 throw new AuraHandledException('Member does not have a phone number.');
-    //             }
-
-    //             // Query the Chat__c record associated with the member's phone number
-    //             List<Chat__c> chatList = [
-    //                 SELECT Id, Phone__c
-    //                 FROM Chat__c
-    //                 WHERE Phone__c = :member.Member_Phone__c
-    //                 LIMIT 1
-    //             ];
-
-    //             if (!chatList.isEmpty()) {
-    //                 Chat__c chat = chatList[0];
-    //                 String phone = chat.Phone__c;
-
-    //                 // Build the dynamic query for the related object
-    //                 List<MVWB__Object_Config__mdt> objectConfigList = [
-    //                     SELECT Id, MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c 
-    //                     FROM MVWB__Object_Config__mdt 
-    //                     LIMIT 1
-    //                 ];
-
-    //                 Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].MVWB__ChatWindowConfigInfo__c);
-    //                 Map<String, Object> chatConfig = (Map<String, Object>) chatConfigData.get(member.WB_Marketing_Campaign__r.Object_Name__c);
-    //                 String phoneField = (String) chatConfig.get('phoneField');
-
-    //                 String query = 'SELECT Id, ' + phoneField + ' FROM ' + member.WB_Marketing_Campaign__r.Object_Name__c + 
-    //                                ' WHERE ' + phoneField + ' = :phone LIMIT 1';
-
-    //                 // Execute the query
-    //                 List<SObject> records = Database.query(query);
-
-    //                 if (!records.isEmpty()) {
-    //                     // Call getTemplateData with the required parameters
-    //                     Map<String, Object> tempData = WhatsAppMessageBatch.getTemplateData(
-    //                         member.WB_Marketing_Campaign_Group__r.WB_Template__c,
-    //                         phone,
-    //                         member.WB_Marketing_Campaign__r.Object_Name__c
-    //                     );
-
-    //                     System.debug('tempData: ' + tempData);
-
-    //                     // Generate the payload and send the WhatsApp message
-    //                     String jsonData = WhatsAppMessageBatch.generatePayloadFromTemplateData(tempData, chat.Phone__c);
-    //                     List<Chat__c> sentChats = WhatsAppMessageBatch.sendWhatsAppMessage(chat.Id, jsonData);
-
-    //                     System.debug('sentChats: ' + sentChats);
-    //                     System.debug('Chat ID: ' + chat.Id);
-    //                     System.debug('jsonData: ' + jsonData);
-
-    //                     if (!sentChats.isEmpty()) {
-    //                         System.debug('Sent Chat');
-    //                         // Update the chat record if the message was sent successfully
-    //                         List<Chat__c> chatsToUpdate = new List<Chat__c>();
-    //                         chatsToUpdate.add(sentChats[0]);
-    //                         update chatsToUpdate;
-    //                         member.Status__c = 'Completed';
-    //                         update member;
-    //                         // System.debug(Database.update(member, false, AccessLevel.USER_MODE));
-    //                         // Add success result
-    //                         InvocableResult result = new InvocableResult();
-    //                         result.res = 'Success';
-    //                         results.add(result);
-    //                     }
-    //                 }
-    //             } else {
-    //                 System.debug('Fail el1');
-    //                 throw new AuraHandledException('No Chat__c record found for the given phone number.');
-    //             }
-    //         }
-    //     } catch (Exception e) {
-    //         System.debug('Error in getScheduleMessage: ' + e.getMessage());
-    //         ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch','methodName' => 'getScheduleMessage','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null
-    //         });
-
-    //         // Add failure result
-    //         InvocableResult result = new InvocableResult();
-    //         result.res = 'Error: ' + e.getMessage();
-    //         results.add(result);
-
-    //         throw new AuraHandledException('Error in getScheduleMessage: ' + e.getMessage());
-    //     }
-
-    //     return results;
-    // }
+ 
     @InvocableMethod(callout=true)
 public static List<InvocableResult> getScheduleMessage(List<InvocableInput> inputMemberIdList) {
     List<InvocableResult> results = new List<InvocableResult>();
@@ -1211,50 +1003,14 @@ public static List<InvocableResult> getScheduleMessage(List<InvocableInput> inpu
 
             // Validate if the member has a phone number
             if (String.isBlank(member[0].Member_Phone__c)) {
-                throw new AuraHandledException('Member does not have a phone number.');
+                System.debug('Member does not have a phone number.');
+                // throw new AuraHandledException('Member does not have a phone number.');
             }
 
             MarketingMessageBatch batchJob = new MarketingMessageBatch(member);
             Database.executeBatch(batchJob, 1);
 
 
-            // // Perform the callout first
-            // Map<String, Object> tempData = WhatsAppMessageBatch.getTemplateData(
-            //     member.WB_Marketing_Campaign_Group__r.WB_Template__c,
-            //     member.Member_Phone__c,
-            //     member.WB_Marketing_Campaign__r.Object_Name__c
-            // );
-
-            // System.debug('tempData: ' + tempData);
-
-            // // Generate the payload and send the WhatsApp message
-            // String jsonData = WhatsAppMessageBatch.generatePayloadFromTemplateData(tempData, member.Member_Phone__c);
-            // List<Chat__c> sentChats = WhatsAppMessageBatch.sendWhatsAppMessage(member.Chat_Record_Id__c, jsonData);
-
-            // // List<Chat__c> sentChats = chatsToUpdate;
-            // System.debug('sentChats: ' + sentChats);
-
-            // if (!sentChats.isEmpty()) {
-            //     // Perform DML operations after the callout
-            //     Chat__c chat = sentChats[0];
-            //     chat.Phone__c = member.Member_Phone__c;
-
-            //     // Update the chat record
-            //     Database.SaveResult[] chatResults = Database.update(new List<Chat__c>{chat}, false);
-            //     if (chatResults[0].isSuccess()) {
-            //         member.Status__c = 'Completed';
-            //         Database.update(member);
-
-            //         // Add success result
-            //         InvocableResult result = new InvocableResult();
-            //         result.res = 'Success';
-            //         results.add(result);
-            //     } else {
-            //         throw new AuraHandledException('Failed to update Chat record: ' + chatResults[0].getErrors()[0].getMessage());
-            //     }
-            // } else {
-            //     throw new AuraHandledException('Failed to send WhatsApp message.');
-            // }
         }
     } catch (Exception e) {
         System.debug('Error in getScheduleMessage: ' + e.getMessage());
@@ -1274,7 +1030,8 @@ public static List<InvocableResult> getScheduleMessage(List<InvocableInput> inpu
         result.res = 'Error: ' + e.getMessage();
         results.add(result);
 
-        throw new AuraHandledException('Error in getScheduleMessage: ' + e.getMessage());
+        // throw new AuraHandledException('Error in getScheduleMessage: ' + e.getMessage());
+        System.debug('Error in getScheduleMessage: ' + e.getMessage());
     }
 
     return results;
@@ -1291,17 +1048,48 @@ public static List<InvocableResult> getScheduleMessage(List<InvocableInput> inpu
     }
 
     @AuraEnabled
-    public static String deleteMarketingCampaign(Id campaignId) {
-        try {
-            // Query the campaign to ensure it exists
-            WB_Marketing_campaign__c campaign = [SELECT Id FROM WB_Marketing_campaign__c WHERE Id = :campaignId LIMIT 1];
-            
-            delete campaign;
-            return 'Success';
-        } catch (Exception e) {
-            return 'Error: ' + e.getMessage();
+public static String deleteMarketingCampaign(Id campaignId) {
+    try {
+        // Confirm campaign exists
+        WB_Marketing_campaign__c campaign = [
+            SELECT Id FROM WB_Marketing_campaign__c WHERE Id = :campaignId LIMIT 1
+        ];
+
+        // Query related members of this campaign along with Chat_Record_Id__c
+        List<WB_Marketing_campaign_member__c> relatedMembers = [
+            SELECT Id, Chat_Record_Id__c FROM WB_Marketing_campaign_member__c WHERE WB_Marketing_campaign__c = :campaignId
+        ];
+
+        Set<Id> chatIdsToDelete = new Set<Id>();
+        List<Id> memberIdsToDelete = new List<Id>();
+
+        for (WB_Marketing_campaign_member__c member : relatedMembers) {
+            if (member.Chat_Record_Id__c != null) {
+                chatIdsToDelete.add(member.Chat_Record_Id__c);
+            }
+            memberIdsToDelete.add(member.Id);
         }
+
+        // Delete related chat records first
+        if (!chatIdsToDelete.isEmpty()) {
+            List<Chat__c> chatsToDelete = [SELECT Id FROM Chat__c WHERE Id IN :chatIdsToDelete];
+            delete chatsToDelete;
+        }
+
+        // Delete campaign members
+        if (!memberIdsToDelete.isEmpty()) {
+            delete relatedMembers;
+        }
+
+        // Finally delete the campaign itself
+        delete campaign;
+
+        return 'Success';
+
+    } catch (Exception e) {
+        return 'Error: ' + e.getMessage();
     }
+}
 
 
     @AuraEnabled

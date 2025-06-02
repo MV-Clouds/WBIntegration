@@ -24,9 +24,9 @@
                     <template if:true={isBroadCastSelected}>
                         <h1 class="slds-text-align_center heading">Recent Broadcasts</h1>
                     </template>
-                    <template if:false={isBroadCastSelected}>
+                    <!-- <template if:false={isBroadCastSelected}>
                         <h1 class="slds-text-align_center heading">Recent Broadcasts Campaigns</h1>
-                    </template>
+                    </template> -->
             
                     <div class="filterparent">
                         <div class="filterdiv">
@@ -34,14 +34,14 @@
                                 placeholder="Search by Name..." onchange={handleSearch}></lightning-input>
                         </div>
                         <div class="btns">
-                            <lightning-combobox 
+                            <!-- <lightning-combobox 
                             variant="label-hidden"
                                 name="type"
                                 value={selectedListValue}
                                 placeholder="Select an option"
                                 options={displayListOptions}
                                 onchange={handleListChange}>
-                            </lightning-combobox>
+                            </lightning-combobox> -->
                             <button class="custom-button cus-btns" onclick={newBroadcast}>
                                 <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                                     class="left-icon"></lightning-icon>
@@ -66,7 +66,7 @@
                                             <th>Total Read</th>
                                             <th>Total Failed</th>
                                         </template>
-                                        <template if:false={isBroadCastSelected}>
+                                        <!-- <template if:false={isBroadCastSelected}>
                                             <th class="sr-no">Sr. No</th>
                                             <th>Name</th>
                                             <th>Description</th>
@@ -74,7 +74,7 @@
                                             <th>End Date</th>
                                             <th>Status</th>
                                             <th>Actions</th>
-                                        </template>
+                                        </template> -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -97,21 +97,13 @@
                                                 <td>{row.Total_Read__c}</td>
                                                 <td>{row.Total_Failed__c}</td>
                                             </template>
-                                            <template if:false={isBroadCastSelected}>
+                                            <!-- <template if:false={isBroadCastSelected}>
                                                 <td class="sr-no">{row.index}</td>
                                                 <td data-id={row.Id} onclick={handleRowClick}>{row.Name}</td>
                                                 <td>{row.Description__c}</td>
                                                 <td>{row.startDate}</td>
                                                 <td>{row.endDate}</td>
                                                 <td>{row.Status__c}</td>
-                                                <!-- <td>
-                                                    <button class="action-buttons" disabled={row.isDisabled} data-value={row.Status__c}>
-                                                        <img src="/resource/editIcon"  class="action edit"  alt="edit" data-id={row.Id} onclick={editMarketingCampaign} >
-                                                    </button>
-                                                    <button class="action-buttons" disabled={row.isDisabled} data-value={row.Status__c}>
-                                                        <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={row.Id} onclick={deleteMarketingCampaign}>
-                                                    </button>
-                                                </td> -->
                                                 <td>
                                                     <button class="action-buttons" disabled={row.isDisabled} data-value={row.Status__c} onclick={editMarketingCampaign}>
                                                         <img src="/resource/editIcon" class="action edit" alt="edit" data-id={row.Id}>
@@ -121,15 +113,7 @@
                                                     </button>
                                                 </td>
                                                 
-                                            </template>
-                                            <!-- <td class="sr-no">{row.index}</td>
-                                            <td data-id={row.Id}>{row.Name}</td>
-                                            <td>{row.Recipient_Count__c}</td>
-                                            <td>{row.Status__c}</td>
-                                            <td>{row.Total_Sent__c}</td>
-                                            <td>{row.Total_Delivered__c}</td>
-                                            <td>{row.Total_Read__c}</td>
-                                            <td>{row.Total_Failed__c}</td> -->
+                                            </template> -->
                                         </tr>
                                     </template>
                                 </tbody>
@@ -243,8 +227,8 @@
                                                         label="Close" class="slds-m-left_x-small"></lightning-button>
                                                     <lightning-button variant="brand" label="Next" onclick={handleNextOnPopup}
                                                         class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
-                                                    <lightning-button variant="brand" label="Create Broadcast campaign" onclick={handleNextbroadcastOnPopup}
-                                                        class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button>
+                                                    <!-- <lightning-button variant="brand" label="Create Broadcast campaign" onclick={handleNextbroadcastOnPopup}
+                                                        class="slds-m-left_x-small" disabled={isNextDisabled}></lightning-button> -->
                                                 </div>
                                             </template>
             

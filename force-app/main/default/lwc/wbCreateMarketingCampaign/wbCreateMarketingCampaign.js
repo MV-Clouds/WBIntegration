@@ -655,7 +655,7 @@ loadCampaignDetails() {
             this[NavigationMixin.Navigate]({
                 type: 'standard__navItemPage',
                 attributes: {
-                    apiName: 'Broadcast' // Replace with the API name of your Lightning Tab
+                    apiName: 'All_Marketing_Campaign' // Replace with the API name of your Lightning Tab
                 }
             });
     }
@@ -725,7 +725,7 @@ loadCampaignDetails() {
         this[NavigationMixin.Navigate]({
                     type: 'standard__navItemPage',
                     attributes: {
-                        apiName: 'Broadcast' // Replace with the API name of your Lightning Tab
+                        apiName: 'All_Marketing_Campaign' // Replace with the API name of your Lightning Tab
                     }
                 });
     }
