@@ -83,24 +83,31 @@
                                         </td>
                                         <td class="tableData tablebtns" data-label="Actions">
                                             <template if:false={record.isDeprecated}>
-                                                <button class="action-buttons slds-m-right--x-small">
-                                                    <img src="/resource/previewIcon" class="action" title="preview"
+                                                <button class="action-buttons">
+                                                    <img src="/resource/MVWB__previewIcon" class="action" title="preview"
                                                         alt="preview" data-id={record.MVWB__Flow_Id__c}
                                                         onclick={previewTemplate}>
                                                 </button>
                                             </template>
                                             <!-- <button disabled={record.isButtonDisabled} class="action-buttons slds-m-horizontal--x-small">
-                                            <img src="/resource/editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
-                                        </button> -->
-                                            <button class="action-buttons slds-m-horizontal--x-small">
+                                                <img src="/resource/editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
+                                            </button> -->
+                                            <button class="action-buttons">
+                                                <template if:true={record.isEditable}>
+                                                    <img src="/resource/MVWB__editIcon" class="action"
+                                                        title="Edit" alt="Edit" data-id={record.MVWB__Flow_Id__c}
+                                                        data-status={record.MVWB__Status__c} onclick={editFlow}>
+                                                </template>
+                                            </button>
+                                            <button class="action-buttons">
                                                 <template if:true={record.isPublished}>
-                                                    <img src="/resource/trashIcon" class="action trash"
+                                                    <img src="/resource/MVWB__trashIcon" class="action"
                                                         title="Deprecate" alt="Deprecate" data-id={record.MVWB__Flow_Id__c}
                                                         data-status={record.MVWB__Status__c} onclick={deprecateFlow}>
                                                 </template>
                                                 <template if:true={record.isDraft}>
-                                                    <img src="/resource/trashIcon" class="action trash" title="Delete"
-                                                        alt="deDeletelete" data-id={record.MVWB__Flow_Id__c}
+                                                    <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete"
+                                                        alt="Delete" data-id={record.MVWB__Flow_Id__c}
                                                         data-status={record.MVWB__Status__c} onclick={deleteFlow}>
                                                 </template>
                                             </button>
@@ -144,7 +151,7 @@
             </div>
         </template>
         <template if:true={iscreateflowvisible}>
-            <c-create-flow-management></c-create-flow-management>
+            <c-create-flow-management is-edit-mode={isEditMode} selected-flow-id={selectedFlowId}></c-create-flow-management>
         </template>
     </template>
 </template>
