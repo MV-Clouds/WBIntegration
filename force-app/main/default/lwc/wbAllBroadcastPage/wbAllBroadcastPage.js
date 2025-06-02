@@ -1,6 +1,7 @@
 import { LightningElement, track } from 'lwc';
 import getBroadcastRecs from '@salesforce/apex/BroadcastMessageController.getBroadcastRecs';
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
+import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
@@ -36,7 +37,21 @@ export default class WbAllBroadcastPage extends LightningElement {
     @track showLicenseError = false;
     @track selectedRecordId='';
 
-
+    @track isImgSelected = false;
+    @track isVidSelected = false;
+    @track isDocSelected = false;
+    @track IsHeaderText = true;
+    @track isSecurityRecommedation = false;
+    @track isCodeExpiration = false;
+    @track originalHeader;
+    @track originalBody;
+    @track template;
+    @track tempHeader ;
+    @track tempBody;
+    @track tempFooter;
+    @track formatedTempBody;
+    @track expireTime = 0;
+    @track buttonList=[];
 
     subscription = {};
     channelName = '/event/MVWB__BroadcastUpdateEvent__e';
@@ -380,10 +395,119 @@ export default class WbAllBroadcastPage extends LightningElement {
         switch(name) {
             case 'template':
                 this.selectedTemplate = value;
+                this.fetchTemplateData();
             break;
             case 'dateTime':
                 this.selectedDateTime = value;                
             break;
+        }
+    }
+
+    fetchTemplateData() {
+        try {
+
+            getDynamicObjectData({ templateId: this.selectedTemplate })
+                .then((result) => {
+                    if (!result) return;
+                    
+                    const template = result.template;
+                    const miscData = JSON.parse(template?.MVWB__Template_Miscellaneous_Data__c || '{}');
+
+                    this.IsHeaderText = !result.isImgUrl;
+                    this.originalHeader = template?.MVWB__WBHeader_Body__c;
+                    this.originalBody = template?.MVWB__WBTemplate_Body__c;
+                    this.tempBody = this.originalBody;
+                    this.tempFooter = template?.MVWB__WBFooter_Body__c;
+
+                    this.isSecurityRecommedation = miscData?.isSecurityRecommedation;
+                    this.isCodeExpiration = miscData?.isCodeExpiration;
+                    this.expireTime = miscData?.expireTime;
+
+                    const headerType = template?.MVWB__Header_Type__c;
+
+                    if (['Image', 'Video', 'Document'].includes(headerType)) {
+                        this.isImgSelected = headerType === 'Image' && result?.isImgUrl;
+                        this.isVidSelected = headerType === 'Video' && result?.isImgUrl;
+                        this.isDocSelected = headerType === 'Document' && result?.isImgUrl;
+
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(this.originalHeader, "text/html");
+                        this.tempHeader = doc.documentElement.textContent || "";
+                    } else {
+                        this.tempHeader = this.originalHeader || '';
+                    }
+
+                    // Parse buttons
+                    const buttonBody = template?.MVWB__WBButton_Body__c ? JSON.parse(template?.MVWB__WBButton_Body__c) : [];
+                    this.buttonList = buttonBody.map((btn, index) => ({
+                        id: index,
+                        btntext: btn.text.trim(),
+                        btnType: btn.type,
+                        iconName: this.getIconName(btn.type)
+                    }));
+
+                    // Format template body
+                    this.formatedTempBody = this.formatText(this.tempBody);
+
+                    if (template.MVWB__Template_Category__c === 'Authentication') {
+                        this.formatedTempBody = '{{code}} ' + this.formatedTempBody;
+                        if (this.isSecurityRecommedation) {
+                            this.formatedTempBody += '\n For your security, do not share this code.';
+                        }
+                        if (this.isCodeExpiration) {
+                            this.tempFooter = 'This code expires in ' + this.expireTime + ' seconds.';
+                        }
+                    }
+
+                })
+                .catch((error) => {
+                    console.error('Error fetching template data:', error);
+                });
+        } catch (error) {
+            console.error('Something went wrong in fetching template.', error);
+        }
+    }
+
+    formatText(inputText) {
+        try {
+            const patterns = [
+                { regex: /\n/g, replacement: '<br/>' },
+                { regex: /\*(.*?)\*/g, replacement: '<b>$1</b>' },
+                { regex: /_(.*?)_/g, replacement: '<i>$1</i>' },
+                { regex: /~(.*?)~/g, replacement: '<s>$1</s>' },
+                { regex: /```(.*?)```/g, replacement: '<code>$1</code>' }
+            ];
+    
+            // Loop through all patterns, apply them to the input text one after the other
+            let formattedText = inputText;
+            patterns.forEach(({ regex, replacement }) => {
+                formattedText = formattedText.replace(regex, replacement);
+            });
+    
+            return formattedText;
+        } catch (error) {
+            console.error('Something went wrong in formatting text.', error);
+        }
+    }
+
+    getIconName(btntype) {
+        switch (btntype) {
+            case 'QUICK_REPLY':
+                return 'utility:reply';
+            case 'PHONE_NUMBER':
+                return 'utility:call';
+            case 'URL':
+                return 'utility:new_window';
+            case 'COPY_CODE':
+                return 'utility:copy';
+            case 'FLOW':
+                return 'utility:file';
+            case 'CATALOG' :
+                return 'utility:product_item'
+            case 'MPM' :
+                return 'utility:product_item'
+            default:
+                return 'utility:question'; 
         }
     }
 

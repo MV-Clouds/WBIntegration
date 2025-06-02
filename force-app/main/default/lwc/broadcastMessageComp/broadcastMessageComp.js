@@ -602,8 +602,8 @@ export default class BroadcastMessageComp extends LightningElement {
     }
 
     handleSave(){
-        if(this.messageText.trim() === '' || this.broadcastGroupName.trim() === ''){            
-            this.showToast('Error', 'Please fill in all required fields', 'error');
+        if(this.broadcastGroupName.trim() === ''){            
+            this.showToast('Error', 'Please enter the Broadcast Group Name', 'error');
             return;
         }
 
