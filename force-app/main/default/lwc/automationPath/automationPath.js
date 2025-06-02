@@ -704,7 +704,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         this[NavigationMixin.Navigate]({
             type: "standard__navItemPage",
             attributes: {
-                apiName: 'Automation_Configuration'
+                apiName: 'MVWB__Automation_Configuration'
             },
         });
     }

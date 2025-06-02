@@ -52,29 +52,16 @@
                                         <input type="text" id="s3regionname" name="S3RegionName" placeholder="Your S3 Region Name.." value={s3RegionName} disabled={isDisabled} autocomplete="off" onchange={handleInput}>
                                     </div>
                                 </div>
-            
-                                <template if:true={hasDates}>
-                                    <div class="row">
-                                        <div class="col-25">
-                                            <label for="lname">Created Date</label>
-                                        </div>
-                                        <div class="col-75">
-                                            <input type="text" id="createddate" name="CreatedDate" placeholder="Your Created Date.." autocomplete="off" value={createdDate} disabled onchange={handleInput}>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-25">
-                                            <label for="lname">Last Modified Date</label>
-                                        </div>
-                                        <div class="col-75">
-                                            <input type="text" id="lastmodifieddate" name="LastModifiedDate" placeholder="Your Last Modified Date.." autocomplete="off" value={lastModifiedDate} disabled onchange={handleInput}>
-                                        </div>
-                                    </div>
+
+                                <template if:false={isEditing}>
+                                    <div class="note-text">
+                                        <strong>Note:</strong> To enable AWS as the primary storage in Salesforce for WBConnect:<br>
+                                        Go to <b>Setup</b> → Search <b>Remote Site Settings</b> → Click <b>New Remote Site</b> → Set <b>Remote Site Name</b> as <code>"AWS_Bucket_URL"</code> and <b>Remote Site URL</b> as <code>"<u>https://{s3BucketName}.s3.amazonaws.com</u>"</code>. Ensure the <b>Active</b> checkbox is ticked and click Save.
+                                    </div>                                      
                                 </template>
                             </form>
                         </div>
-        
+            
                         <template if:true={isEditing}>
                             <div class="button-container">
                                 <lightning-button variant="brand-outline" class="slds-m-left_x-small" onclick={handleCancel} label="Cancel"></lightning-button>
@@ -105,6 +92,6 @@
                     <p>WBConnect license has expired. Please renew to continue using.</p>
                 </div>
             </div>
-        </div>
+        </div>    
     </template>
 </template>

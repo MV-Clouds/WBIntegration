@@ -164,6 +164,15 @@ lightning-button{
   gap: 10px;
 }
 
+.note-text{
+  background-color: #cae6f2;
+  border-left: 4px solid #1890ff;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  margin-top: 15px;
+}
+
 /* Backdrop covers the entire component */
 .license-error {
   position: absolute;
@@ -176,6 +185,7 @@ lightning-button{
   display: flex;
   align-items: center;
   justify-content: center;
+  /* z-index: 100000; Ensures it stays on top */
 }
 
 /* Centered popup */

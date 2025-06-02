@@ -6,10 +6,9 @@
  */
  /***********************************************************************
 MODIFICATION LOG*
- * Last Update Date : 05/03/2025
- * Updated By : Mitrajsinh Gohil
- * Removed the limitation for only 5 templates : Beta 12 changes
- * Change Description :Beta 10 bug resolved
+ * Last Update Date : 30/04/2025
+ * Updated By : Divij Modi
+ * Change Description :Code Rework
  ********************************************************************** */
 
 import { LightningElement, track, wire,api } from 'lwc';
@@ -17,12 +16,11 @@ import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhats
 import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import {loadStyle} from 'lightning/platformResourceLoader';
-import wbPreviewTemplateStyle from '@salesforce/resourceUrl/wbPreviewTemplateStyle';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
+import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbAllTemplatePage extends LightningElement {
-    @track isTemplateVisible = true;
+    @track isTemplateVisible = false;
     @track isCreateTemplate = false;
     @track categoryValue='';
     @track timePeriodValue='';
@@ -39,24 +37,8 @@ export default class WbAllTemplatePage extends LightningElement {
     @track editTemplateId='';
     @track subscription = null;
     channelName = '/event/MVWB__Template_Update__e';
+    @track showLicenseError = false;
 
-    @wire(getCategoryAndStatusPicklistValues)
-    wiredCategoryAndStatus({ error, data }) {
-        try {
-            if (data) {
-                this.categoryOptions = [{ label: 'All', value: '' }, ...data.categories.map(cat => ({ label: cat, value: cat }))];
-                this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(stat => ({ label: stat, value: stat }))];
-            } else if (error) {
-                console.error('Error fetching category and status picklist values: ', error);
-            }
-        } catch (err) {
-            console.error('Unexpected error in wiredCategoryAndStatus: ', err);
-        }
-    }
-
-    // get actionButtonClass(){
-    //     return this.allRecords?.length >= 5 ? 'custom-button create-disabled' : 'custom-button cus-btns' ;
-    // }
     get actionButtonClass(){
         return 'custom-button cus-btns' ;
     }
@@ -75,16 +57,31 @@ export default class WbAllTemplatePage extends LightningElement {
         return this.isFilterVisible ? 'combobox-container visible' : 'combobox-container hidden';
     }
 
-    connectedCallback(){
-        this.fetchAllTemplate();
-        this.registerPlatformEventListener();
+    async connectedCallback(){
+        try {
+            this.isLoading = true;
+            await this.checkLicenseStatus();
+            if (this.showLicenseError) {
+                return; // Stops execution if license is expired
+            }
+            this.isTemplateVisible = true;
+            this.fetchCategoryAndStatusOptions();
+            this.fetchAllTemplate();
+            this.registerPlatformEventListener();
+        } catch (e) {
+            console.error('Error in connectedCallback:::', e.message);
+        }
     }
 
-    renderedCallback() {
-        loadStyle(this, wbPreviewTemplateStyle).then(() => {
-        }).catch(error => {
-            console.error("Error in loading the colors",error)
-        })
+    async checkLicenseStatus() {
+        try {
+            const isLicenseValid = await checkLicenseUsablility();
+            if (!isLicenseValid) {
+                this.showLicenseError = true;
+            }
+        } catch (error) {
+            console.error('Error checking license:', error);
+        }
     }
 
     disconnectedCallback() {
@@ -127,6 +124,19 @@ export default class WbAllTemplatePage extends LightningElement {
             this.allRecords[recordIndex] = updatedRecord;
             this.filteredRecords = [...this.allRecords]; 
         }
+    }
+
+    fetchCategoryAndStatusOptions() {
+        getCategoryAndStatusPicklistValues()
+            .then(data => {
+                if (data) {
+                    this.categoryOptions = [{ label: 'All', value: '' }, ...data.categories.map(categoryData => ({ label: categoryData, value: categoryData }))];
+                    this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(statudData => ({ label: statudData, value: statudData }))];
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching category and status picklist values: ', error);
+            });
     }
 
     fetchAllTemplate(){

@@ -100,7 +100,7 @@ export default class CreateFlowManagement extends LightningElement {
 
     async checkLicenseStatus() {
         try {
-            const isLicenseValid = true;
+            const isLicenseValid = await checkLicenseUsablility();
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }
@@ -307,8 +307,6 @@ export default class CreateFlowManagement extends LightningElement {
             } else {
                 console.error('WbPreviewFlow component not found');
             }
-
-            // If no errors, proceed with getting the flow preview
             this.getFlowPreview();
         } catch (error) {
             console.error('Error validating JSON:', error);

@@ -1,3 +1,10 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 04-13-2025
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
 <template>
     <template if:false={showLicenseError}>
         <div class="wrapper">
@@ -5,7 +12,7 @@
             <template if:true={isLoading}>
                 <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
             </template>
-    
+
             <template if:false={isLoading}>
                 <div class="search-button-container">
                     <div class="search-container">
@@ -14,7 +21,7 @@
                         </div>
                         <input type="search" class="slds-input" placeholder="Search Name" onkeyup={handleSearch} />
                     </div>
-    
+
                     <div class="btns">
                         <button class="custom-button" onclick={handleNew}>
                             <span class="icon-container">
@@ -53,10 +60,10 @@
                                 <td class="tableData">{auto.template}</td>
                                 <td class="tableData tablebtns" data-label="Actions">
                                     <button class="action-buttons slds-m-horizontal--x-small">
-                                    <img src="/resource/MVWB__Edit_button" alt="edit" class="action edit" onclick={handleEdit} data-id={auto.id} data-template-type={auto.templateType} />
+                                        <img src="/resource/MVWB__Edit_button" alt="edit" class="action edit" onclick={handleEdit} data-id={auto.id} data-template-type={auto.templateType} />
                                     </button>
                                     <button class="action-buttons">
-                                    <img src="/resource/MVWB__Delete_Button" alt="delete" class="action trash" onclick={handleDelete} data-id={auto.id} />
+                                        <img src="/resource/MVWB__Delete_Button" alt="delete" class="action trash" onclick={handleDelete} data-id={auto.id} />
                                     </button>
                                 </td>
                             </tr>
@@ -64,7 +71,7 @@
                     </tbody>
                 </table>
             </template>
-    
+
             <template if:true={isModalOpen}>
                 <section role="dialog" class="slds-modal slds-fade-in-open">
                     <div class="slds-modal__container">
@@ -76,34 +83,17 @@
                         </header>
                         
                         <div class="slds-modal__content slds-p-around_medium">
-                            <lightning-input 
-                                class="input-field"
-                                label="Name" 
-                                value={name} 
-                                placeholder="Enter Automation Name" 
-                                onchange={handleChange}>
-                            </lightning-input>
-                            <lightning-combobox 
-                                class="input-field"
-                                label="Template"
-                                value={selectedTemplateId}
-                                placeholder="Select Template"
-                                options={templateOptions}
-                                onchange={handleChange}>
-                            </lightning-combobox>
-                            <lightning-textarea 
-                                class="input-field"
-                                label="Description" 
-                                value={description}
-                                placeholder="Write a description..." 
-                                onchange={handleChange}>
-                            </lightning-textarea>
+                            <lightning-input class="input-field" label="Name" value={name} placeholder="Enter Automation Name" onchange={handleChange}></lightning-input>
+
+                            <lightning-combobox class="input-field" label="Template" value={selectedTemplateId} placeholder="Select Template" options={templateOptions} onchange={handleChange}></lightning-combobox>
+
+                            <lightning-textarea class="input-field" label="Description" value={description} placeholder="Write a description..." onchange={handleChange}></lightning-textarea>
+
                             <footer class="slds-modal__footer">
                                 <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
                                 <button class="save-button" onclick={handleSave}>Save</button>
                             </footer>
                         </div>
-                        
                     </div>
                 </section>
                 <div class="slds-backdrop slds-backdrop_open"></div>

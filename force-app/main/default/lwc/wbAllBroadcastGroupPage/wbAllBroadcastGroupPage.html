@@ -1,4 +1,17 @@
 <template>
+    <template if:true={showLicenseError}>
+        <div class="license-error">
+            <div class="popup-container">
+                <div class="popup-content">
+                    <h2>⚠️ License Expired</h2>
+                    <p>WBConnect license has expired. Please renew to continue using.</p>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <template if:false={showLicenseError}>
+
     <template if:true={isAllGroupPage}>
         <div class="wrapper">
 
@@ -113,6 +126,8 @@
 
     <template if:true={isNewBroadcast}>
         <c-broadcast-message-comp broadcast-group-id={broadcastGroupId} ></c-broadcast-message-comp>
+    </template>
+
     </template>
 
 </template>

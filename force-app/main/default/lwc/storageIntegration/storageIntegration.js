@@ -9,8 +9,8 @@ import saveConfiguration from '@salesforce/apex/StorageIntegrationConfigControll
 import getConfiguration from '@salesforce/apex/StorageIntegrationConfigController.getConfiguration';
 import deleteRecordByAccessKey from '@salesforce/apex/StorageIntegrationConfigController.deleteRecordByAccessKey';
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
-import AWS_logo from '@salesforce/resourceUrl/MVWB__AWS_logo';
-import NoData from '@salesforce/resourceUrl/MVWB__NoData';
+import AWS_logo from '@salesforce/resourceUrl/AWS_logo';
+import NoData from '@salesforce/resourceUrl/NoData';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class StorageIntegration extends LightningElement {
@@ -92,7 +92,6 @@ export default class StorageIntegration extends LightningElement {
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
-            console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }

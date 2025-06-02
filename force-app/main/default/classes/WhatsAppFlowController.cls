@@ -1,6 +1,6 @@
 public with sharing class WhatsAppFlowController {
-    
-    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
+
+    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
     
     @AuraEnabled
     public static List<sObject> getWhatsAppFlows() {
@@ -114,7 +114,7 @@ public with sharing class WhatsAppFlowController {
 
             // Convert the body to a Blob
             Blob bodyBlob = Blob.valueOf(bodyString);
-
+          
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
             String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/assets';
             HttpRequest request = new HttpRequest();

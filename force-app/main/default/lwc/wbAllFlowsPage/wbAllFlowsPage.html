@@ -11,7 +11,6 @@
         </div>
     </template>
     <template if:false={showLicenseError}>
-
         <template if:true={isFlowVisible}>
             <div class="slds-theme_default main">
                 <template if:true={isLoading}>
@@ -152,9 +151,7 @@
             </div>
         </template>
         <template if:true={iscreateflowvisible}>
-            <!-- <c-wb-create-flow-page></c-wb-create-flow-page> -->
             <c-create-flow-management is-edit-mode={isEditMode} selected-flow-id={selectedFlowId}></c-create-flow-management>
         </template>
-
     </template>
 </template>
