@@ -21,7 +21,8 @@
 
         <template if:true={isFlowVisible}>
             <div class="slds-theme_default main">
-                <template if:true={iscreateflowvisible}>   
+                <!-- <template if:true={iscreateflowvisible}>    -->
+                <template if:false={isEdit}>   
                     <div class="heading">
                         <p class="txt">Create Flow</p>
                     </div>  
@@ -94,7 +95,8 @@
                         <lightning-button variant="brand" label="Create" onclick={handleCreate} class="slds-m-left_x-small" disabled={isCreateDisabled}></lightning-button>
                     </div>
                 </template>
-                <template if:true={isJsonVisible}>
+                <!-- <template if:true={isJsonVisible}> -->
+                <template if:true={isEdit}>
                     <div class="divcontainer2">
                         <div class="createFlowDiv">
                             <div class="name-header">
@@ -119,7 +121,7 @@
                                         <button class="run-btn slds-m-horizontal--xx-small" onclick={onSaveClick}>Save</button>
                                     </template>
                                     <template if:true={isPublishedEnabled}>
-                                        <button class="run-btn slds-m-horizontal--xx-small" onclick={onPublishClick}>Publish</button>
+                                        <button class="run-btn slds-m-horizontal--xx-small" onclick={onPublishClick} disabled={disablePublish}>Publish</button>
                                     </template>
                                     <template if:true={isDeleteEnabled}>
                                         <button class="run-btn slds-m-horizontal--xx-small" onclick={onDeleteClick}>Delete</button>

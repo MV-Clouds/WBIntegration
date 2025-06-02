@@ -17,7 +17,6 @@ export default class WhatsappFlowPreviewer extends LightningElement {
     set currentscreenid(value) {
         if (value !== this._currentscreenid) {
             this._currentscreenid = value;
-            this.generatePreview();
         }
     }
 
@@ -478,7 +477,6 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                         </div>
                     `;
                 } else {
-                    console.log('No footer found, setting content height to 86%');
                     this.contentHeight = '86%';
                 }
 

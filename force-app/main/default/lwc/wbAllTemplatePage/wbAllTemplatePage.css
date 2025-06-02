@@ -53,7 +53,8 @@
 .action-buttons{
     padding: 0;
     border: none;
-    background: white;
+    background: transparent;
+    cursor: pointer;
 }
 
 .close-btn{
@@ -222,6 +223,7 @@ tr{
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    border-bottom: 1px solid #ddd;
 }
 
 .truncate-name{
@@ -433,21 +435,4 @@ img {
 .table-body table {
     width: 100%;
     table-layout: fixed;
-}
-
-/* Optional: Add border collapse */
-.slds-table {
-    border-collapse: collapse;
-}
-
-/* Optional: Styling for action buttons */
-.action-buttons {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-}
-
-.tableData {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
 }

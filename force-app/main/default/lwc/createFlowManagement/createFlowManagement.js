@@ -1,6 +1,7 @@
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, track, api } from 'lwc';
 import createWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.createWhatsAppFlow';
 import publishWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.publishWhatsAppFlow';
+import updateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.updateWhatsAppFlow';
 import deleteWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deleteWhatsAppFlow';
 import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.deprecateWhatsAppFlow';
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.getPreviewURLofWhatsAppFlow';
@@ -10,13 +11,18 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import MonacoEditor from '@salesforce/resourceUrl/MonacoEditor';
 import PublishPopupImage from '@salesforce/resourceUrl/PublishPopupImage';
 import getJSONData from '@salesforce/apex/WhatsAppFlowController.getJSONData';
+import getWhatsAppFlowById from '@salesforce/apex/WhatsAppFlowController.getWhatsAppFlowById';
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class CreateFlowManagement extends LightningElement {
     @track selectedCategories = [];
     @track showLicenseError = false;
 
-    status = 'Initialize';
+    @api isEditMode;
+    @api selectedFlowId;
+
+    @track status = 'Initialize';
+    @track isUnsavedChanges = false;
     editor;
     templateType = 'Default';
     jsonString = '';
@@ -36,6 +42,7 @@ export default class CreateFlowManagement extends LightningElement {
     flowIconUrl = FlowIcon;
     isLoading = false;
     flows = [];
+    LastUpdatedDate = '';
 
     get TypeOptions() {
         return [
@@ -51,12 +58,20 @@ export default class CreateFlowManagement extends LightningElement {
         ];
     }
 
+    get isEdit(){
+        return (this.isEditMode || this.isJsonVisible);
+    }
+
     get isSaveEnabled(){
-        return this.status == 'Initialize' ? true : false;
+        return (this.status == 'Initialize' || this.isEditMode);
     }
 
     get isPublishedEnabled(){
-        return this.status == 'Draft' ? true : false;
+        return (this.status == 'Draft');
+    }
+
+    get disablePublish(){
+        return (this.isUnsavedChanges ? true : false);
     }
 
     get isDeleteEnabled(){
@@ -64,7 +79,7 @@ export default class CreateFlowManagement extends LightningElement {
     }
 
     get isDeprecateEnabled(){
-        return this.status == 'Published' ? true : false;
+        return (this.status == 'Published' ? true : false);
     }
 
     async connectedCallback(){
@@ -72,7 +87,11 @@ export default class CreateFlowManagement extends LightningElement {
             this.showSpinner = true;
             await this.checkLicenseStatus();
             if (this.showLicenseError) {
-                return; // Stops execution if license is expired
+                return;
+            }
+            if (this.isEdit && this.selectedFlowId) {
+                this.flowId = this.selectedFlowId;
+                this.getJSONDataFromApexForEdit();
             }
         } catch (e) {
             console.error('Error in connectedCallback:::', e.message);
@@ -132,7 +151,7 @@ export default class CreateFlowManagement extends LightningElement {
 
     get formatDate(){
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const today = new Date();
+        const today = this.LastUpdatedDate ? new Date(this.LastUpdatedDate) : new Date();
         const day = today.getDate();
         const month = months[today.getMonth()];
         const year = today.getFullYear();
@@ -164,6 +183,29 @@ export default class CreateFlowManagement extends LightningElement {
             this.showToast('Error', 'Failed to load Flow JSON data', 'error');
             this.isLoading = false;
         }
+    }
+
+    getJSONDataFromApexForEdit() {
+        this.isLoading = true;
+        getWhatsAppFlowById({ flowId: this.flowId })
+            .then((data) => {
+                if (data) {
+                    this.jsonString = data[0].MVWB__Flow_JSON__c;
+                    this.status = data[0].MVWB__Status__c;
+                    this.flowName = data[0].MVWB__Flow_Name__c;
+                    this.LastUpdatedDate = data[0].LastModifiedDate;
+                    this.formatJSONDataonUI();
+                } else {
+                    console.error('Error loading JSON data for edit:', error);
+                    this.showToast('Error', 'Failed to load Flow JSON data for edit', 'error');
+                    this.isLoading = false;
+                }
+            })
+            .catch((error) => {
+                console.error('Error in fetching WhatsApp Flow by ID:', error);
+                this.showToast('Error', 'Failed to load Flow JSON data for edit', 'error');
+                this.isLoading = false;
+            });
     }
 
     formatJSONDataonUI(){
@@ -202,6 +244,7 @@ export default class CreateFlowManagement extends LightningElement {
     
             this.editor.onDidChangeModelContent(() => {
                 this.jsonString = this.editor.getValue();
+                this.isUnsavedChanges = true;
             });
             this.isLoading = false;
         } catch (error) {
@@ -240,11 +283,9 @@ export default class CreateFlowManagement extends LightningElement {
 
     onRunClick() {
         try {
-            console.log('template type==> ',this.templateType);
-            
             this.isLoading = true;
             this.jsonString = this.editor.getValue();
-            console.log('json string in on run click==> ',this.jsonString);
+            // console.log('json string in on run click==> ',this.jsonString);
             // updateJson({jsonPayload: this.jsonString});
             // Save the current JSON to the database
             // saveWhatsAppFlow({jsonPayload: this.jsonString});
@@ -255,7 +296,6 @@ export default class CreateFlowManagement extends LightningElement {
 
             const errorMarkers = markers.filter(marker => marker.severity === monaco.MarkerSeverity.Error);
             if (errorMarkers.length > 0) {
-                console.log('Errors found in JSON:', errorMarkers);
                 this.showToast('Error', 'Invalid JSON: Please fix the syntax errors in the editor', 'error');
                 this.isLoading = false;
                 return;
@@ -269,7 +309,6 @@ export default class CreateFlowManagement extends LightningElement {
             }
 
             // If no errors, proceed with getting the flow preview
-            console.log('No errors found in JSON');
             this.getFlowPreview();
         } catch (error) {
             console.error('Error validating JSON:', error);
@@ -298,6 +337,7 @@ export default class CreateFlowManagement extends LightningElement {
                         this.showToast('Success', 'Flow published successfully', 'success');
                         this.status='Published';
                         this.isFlowVisible = false;
+                        this.isUnsavedChanges = false;
                     } else {
                         console.error('Error in publishing WhatsApp Flow:', error);
                     }
@@ -386,24 +426,44 @@ export default class CreateFlowManagement extends LightningElement {
     }
 
     onSaveClick(){
-        createWhatsAppFlow({
-            flowName: this.flowName,
-            categories: this.selectedCategories,
-            flowJson: this.jsonString,
-            templateType: this.templateType
-        })
-        .then(result => {
-            this.flowId = result; 
-            this.status = 'Draft';
-            this.showToast('Success', 'Flow created successfully', 'success');
-        })
-        .catch(error => {
-            console.error('Error creating WhatsApp Flow:', error);
-            this.showToast('Error', 'Failed to create WhatsApp Flow', 'error');
-        })
-        .finally(() => {
-            this.isLoading = false;
-        });
+        this.isLoading = true;
+        if (this.isEditMode) {
+            updateWhatsAppFlow({
+                flowId: this.flowId,
+                flowJson: this.jsonString
+            })
+            .then(result => {
+                this.status = 'Draft';
+                this.showToast('Success', 'Flow updated successfully', 'success');
+                this.isUnsavedChanges = false;
+            })
+            .catch(error => {
+                console.error('Error updating WhatsApp Flow:', error);
+                this.showToast('Error', 'Failed to update WhatsApp Flow', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+        } else {
+            createWhatsAppFlow({
+                flowName: this.flowName,
+                categories: this.selectedCategories,
+                flowJson: this.jsonString,
+                templateType: this.templateType
+            })
+            .then(result => {
+                this.flowId = result; 
+                this.status = 'Draft';
+                this.showToast('Success', 'Flow created successfully', 'success');
+            })
+            .catch(error => {
+                console.error('Error creating WhatsApp Flow:', error);
+                this.showToast('Error', 'Failed to create WhatsApp Flow', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+        }
     }
 
     closeDeprecatePopup(){

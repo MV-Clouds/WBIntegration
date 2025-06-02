@@ -25,6 +25,7 @@ export default class WbAllFlowsPage extends LightningElement {
     isFlowDraft = false;
     selectedFlowId = '';
     @track showLicenseError = false;
+    @track isEditMode = false;
 
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
     flowMetadata;
@@ -39,8 +40,10 @@ export default class WbAllFlowsPage extends LightningElement {
         }
     }
 
-    connectedCallback(){
+    get isEditEnabled() {
+        return 
     }
+
     async connectedCallback(){
         try {
             this.showSpinner = true;
@@ -59,7 +62,7 @@ export default class WbAllFlowsPage extends LightningElement {
 
     async checkLicenseStatus() {
         try {
-            const isLicenseValid = true;
+            const isLicenseValid = await checkLicenseUsablility();
             console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
@@ -76,6 +79,7 @@ export default class WbAllFlowsPage extends LightningElement {
                     this.allRecords = data.map(record => {
                         return {
                             ...record,
+                            isEditable: record.MVWB__Status__c === 'Published' || record.MVWB__Status__c === 'Draft',
                             isDraft: record.MVWB__Status__c === 'Draft',
                             isPublished: record.MVWB__Status__c === 'Published',
                             isDeprecated: record.MVWB__Status__c === 'Deprecated',
@@ -93,6 +97,7 @@ export default class WbAllFlowsPage extends LightningElement {
     }
 
     showCreateFlow(){
+        this.isEditMode = false;
         this.isFlowVisible = false;
         this.iscreateflowvisible = true;
     }
@@ -136,7 +141,14 @@ export default class WbAllFlowsPage extends LightningElement {
                 year: 'numeric'
             });
         }
-    }   
+    }
+
+    editFlow(event){
+        this.selectedFlowId = event.currentTarget.dataset.id;
+        this.isEditMode = true;
+        this.isFlowVisible = false;
+        this.iscreateflowvisible = true;
+    }
     
     deleteFlow(event){
         try {

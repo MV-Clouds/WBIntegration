@@ -1,9 +1,17 @@
 public with sharing class WhatsAppFlowController {
     
+    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
+    
     @AuraEnabled
     public static List<sObject> getWhatsAppFlows() {
         List<Flow__c> flowRecs = [SELECT Id, Flow_Name__c, Status__c, Flow_Id__c, Category__c, Template_Type__c, LastModifiedDate, CreatedDate FROM Flow__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
         return flowRecs;
+    }
+
+    @AuraEnabled
+    public static List<MVWB__Flow__c> getWhatsAppFlowById(String flowId) {
+        List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Flow_Name__c, MVWB__Status__c, MVWB__Category__c, MVWB__Template_Type__c, MVWB__Flow_JSON__c, LastModifiedDate FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+        return flowRecs.size() > 0 ? flowRecs : new List<MVWB__Flow__c>();
     }
 
     @AuraEnabled
@@ -25,7 +33,7 @@ public with sharing class WhatsAppFlowController {
             }
         } catch (Exception e) {
             System.debug('Error retrieving or parsing JSON: ' + e.getMessage());
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getJSONData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getJSONData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
         return jsonString;
     }
@@ -33,10 +41,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String createWhatsAppFlow(String flowName, List<String> categories, String flowJson, String templateType) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + wbConfig[0].MVWB__Business_Account_Id__c + '/flows';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Business_Account_Id__c + '/flows';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -74,7 +80,7 @@ public with sharing class WhatsAppFlowController {
                 return 'Failed to create flow : ' + errorMessage;
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'createWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'createWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return 'Failed to create flow : ' + e.getMessage();
         }
     }
@@ -82,32 +88,64 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String updateWhatsAppFlow(String flowId, String flowJson) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+            String fileName = 'flow.json';
+            String assetType = 'FLOW_JSON';
+            // Create the multipart form-data boundary
+            String boundary = '----WebKitFormBoundary7MA4YWxkTrZu0gW';
+
+            // Build each form part with explicit line breaks
+            String filePart = '--' + boundary + '\r\n' +
+                            'Content-Disposition: form-data; name="file"; filename="' + fileName + '"\r\n' +
+                            'Content-Type: application/json\r\n' +
+                            '\r\n' +
+                            flowJson + '\r\n';
+            String namePart = '--' + boundary + '\r\n' +
+                            'Content-Disposition: form-data; name="name"\r\n' +
+                            '\r\n' +
+                            fileName + '\r\n';
+            String assetTypePart = '--' + boundary + '\r\n' +
+                                'Content-Disposition: form-data; name="asset_type"\r\n' +
+                                '\r\n' +
+                                assetType + '\r\n';
+            String footer = '--' + boundary + '--\r\n';
+
+            // Combine the body as a single string
+            String bodyString = filePart + namePart + assetTypePart + footer;
+
+            // Convert the body to a Blob
+            Blob bodyBlob = Blob.valueOf(bodyString);
 
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/assets';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/assets';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
             request.setHeader('Authorization', 'Bearer ' + accessToken);
-            request.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+            request.setHeader('Content-Type', 'multipart/form-data; boundary=' + boundary);
+            request.setBodyAsBlob(bodyBlob);
             
-            String payload = JSON.serialize(new Map<String, Object>{
-                'file' => flowJson,
-                'name' => 'flow.json',
-                'asset_type' => 'FLOW_JSON'
-            });
-            request.setBody(payload);
             Http http = new Http();
             HttpResponse response = http.send(request);
             
             if (response.getStatusCode() == 200) {
+                System.debug('Status Code: ' + response.getStatusCode());
+                System.debug('Response Body: ' + response.getBody());
+
+                List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Status__c, MVWB__Flow_Id__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                if(flowRecs.size() > 0){
+                    flowRecs[0].MVWB__Flow_JSON__c = flowJson;
+                    flowRecs[0].MVWB__Status__c = 'Draft';
+                    update as user flowRecs;
+                }
+                
                 return 'sucess';
             } else {
+                System.debug('Status Code: ' + response.getStatusCode());
+                System.debug('Response Body: ' + response.getBody());
                 return 'failed';
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'updateWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'updateWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return 'failed';
         }
     }
@@ -115,10 +153,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String publishWhatsAppFlow(String flowId) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/publish';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/publish';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -143,7 +179,7 @@ public with sharing class WhatsAppFlowController {
                 return 'Failed to publish flow : ' + response.getBody();
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'publishWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'publishWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return 'Failed to publish flow : ' + e.getMessage();
         }
     }
@@ -151,10 +187,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String deleteWhatsAppFlow(String flowId) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId;
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('DELETE');
@@ -172,7 +206,7 @@ public with sharing class WhatsAppFlowController {
                 return 'failed';
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'deleteWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'deleteWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return 'failed';
         }
     }
@@ -180,10 +214,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String deprecateWhatsAppFlow(String flowId) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '/deprecate';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/deprecate';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -202,7 +234,7 @@ public with sharing class WhatsAppFlowController {
                 return 'failed';
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'deprecateWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'deprecateWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return 'failed';
         }
     }
@@ -210,10 +242,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String getPreviewURLofWhatsAppFlow(String flowId) {
         try {
-            List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
-            String endpoint = 'https://graph.facebook.com/v21.0/' + flowId + '?fields=preview.invalidate(false)';
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '?fields=preview.invalidate(false)';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('GET');
@@ -230,7 +260,7 @@ public with sharing class WhatsAppFlowController {
                 return 'failed';
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getPreviewURLofWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'Could not save the embedded sign up details in the metadata!', 'apiResponse' => null });
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppFlowController', 'methodName' => 'getPreviewURLofWhatsAppFlow', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return 'failed';
         }
     }
