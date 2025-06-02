@@ -24,6 +24,85 @@ export default class WbAllFlowsPage extends LightningElement {
     @track isFlowDraft = false;
     @track showLicenseError = false;
     @track selectedFlowId = '';
+    @track currentPage = 1;
+    @track pageSize = 10;
+    @track visiblePages = 5;
+    @track paginatedData = [];
+    get showNoRecordsMessage() {
+        return this.filteredRecords.length === 0;
+    }
+
+    get totalItems() {
+        return this.filteredRecords.length;
+    }
+    
+    get totalPages() {
+        return Math.ceil(this.totalItems / this.pageSize);
+    }
+    
+    get pageNumbers() {
+        try {
+            const totalPages = this.totalPages;
+            const currentPage = this.currentPage;
+            const visiblePages = this.visiblePages;
+
+            let pages = [];
+
+            if (totalPages <= visiblePages) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push({
+                        number: i,
+                        isEllipsis: false,
+                        className: `pagination-button ${i === currentPage ? 'active' : ''}`
+                    });
+                }
+            } else {
+                pages.push({
+                    number: 1,
+                    isEllipsis: false,
+                    className: `pagination-button ${currentPage === 1 ? 'active' : ''}`
+                });
+
+                if (currentPage > 3) {
+                    pages.push({ isEllipsis: true });
+                }
+
+                let start = Math.max(2, currentPage - 1);
+                let end = Math.min(currentPage + 1, totalPages - 1);
+
+                for (let i = start; i <= end; i++) {
+                    pages.push({
+                        number: i,
+                        isEllipsis: false,
+                        className: `pagination-button ${i === currentPage ? 'active' : ''}`
+                    });
+                }
+
+                if (currentPage < totalPages - 2) {
+                    pages.push({ isEllipsis: true });
+                }
+
+                pages.push({
+                    number: totalPages,
+                    isEllipsis: false,
+                    className: `pagination-button ${currentPage === totalPages ? 'active' : ''}`
+                });
+            }
+            return pages;
+        } catch (error) {
+            this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
+            return null;
+        }
+    }
+    
+    get isFirstPage() {
+        return this.currentPage === 1;
+    }
+    
+    get isLastPage() {
+        return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
+    }
+
 
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
     flowMetadata;
@@ -69,12 +148,13 @@ export default class WbAllFlowsPage extends LightningElement {
         try {
             getWhatsAppFlows()
                 .then((data) => {
-                    this.allRecords = data.map(record => {
+                    this.allRecords = data.map((record, index) => {
                         return {
                             ...record,
-                            isDraft: record.MVWB__Status__c === 'Draft',
-                            isPublished: record.MVWB__Status__c === 'Published',
-                            isDeprecated: record.MVWB__Status__c === 'Deprecated',
+                            serialNumber: index + 1,
+                            isDraft: record.Status__c === 'Draft',
+                            isPublished: record.Status__c === 'Published',
+                            isDeprecated: record.Status__c === 'Deprecated',
                             LastModifiedDate: this.formatDate(record.LastModifiedDate)
                         };
                     });
@@ -108,20 +188,57 @@ export default class WbAllFlowsPage extends LightningElement {
             let filtered = [...this.allRecords];
     
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
             }
     
             if (this.searchInput) {
-                filtered = filtered.filter(record => record.MVWB__Flow_Name__c.toLowerCase().includes(this.searchInput));
+                filtered = filtered.filter(record => record.Flow_Name__c.toLowerCase().includes(this.searchInput));
             }
     
             this.filteredRecords = filtered;
+            console.log('Filter Data ::: '+this.filteredRecords);
+            
             this.isLoading = false;
+            this.updateShownData();
         } catch (error) {
             console.error('Error in filtering records:', error);
             this.isLoading = false;
         }
     }
+
+    updateShownData() {
+        try {
+            const startIndex = (this.currentPage - 1) * this.pageSize;
+            const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
+            this.paginatedData = this.filteredRecords.slice(startIndex, endIndex);
+        } catch (error) {
+            this.showToast('Error', 'Error updating shown data', 'error');
+        }
+    }
+
+    handleNext() {
+    try{
+        if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+            this.updateShownData();
+        }
+    }catch(error){
+        this.showToast('Error', 'Error navigating pages', 'error');
+    }
+}
+
+handlePageChange(event) {
+    try{
+        const selectedPage = parseInt(event.target.getAttribute('data-id'), 10);
+        if (selectedPage !== this.currentPage) {
+            this.currentPage = selectedPage;
+            this.updateShownData();
+        }
+    }catch(error){
+        this.showToast('Error', 'Error navigating pages', 'error');
+    }
+} 
+
 
     formatDate(dateString) {
         if(dateString){
@@ -196,8 +313,8 @@ export default class WbAllFlowsPage extends LightningElement {
             var flowId = event.currentTarget.dataset.id;
             this.showPopup = true;
 
-            let matchingRecord = this.filteredRecords.find(record => record.MVWB__Flow_Id__c === flowId);
-            if (matchingRecord && matchingRecord.MVWB__Status__c === 'Draft') {
+            let matchingRecord = this.filteredRecords.find(record => record.Flow_Id__c === flowId);
+            if (matchingRecord && matchingRecord.Status__c === 'Draft') {
                 this.isFlowDraft = true;
             }
 

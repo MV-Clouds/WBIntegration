@@ -22,17 +22,30 @@
                         </div>
                     </template>
                     <template if:true={isMarketingCampaignSelected}>
-                        <h1 class="slds-text-align_center heading">Recent Broadcasts Campaigns</h1>
+                        <h1 class="slds-text-align_center heading">Marketing Campaigns</h1>
                     </template>
                     <div class="filterparent">
-                        <div class="filterdiv">
-                            <lightning-input variant="label-hidden" class="filter search-div" name="searchInput" type="search"
-                                placeholder="Search by Name..." onchange={handleSearch}></lightning-input>
+                        
+                        <div class="search-container">
+                            <div class="search-icon">
+                                <lightning-icon icon-name="utility:search" size="x-small"></lightning-icon>
+                            </div>
+                            <input type="search" class="slds-input" name="searchInput" placeholder="Search Name"
+                                onkeyup={handleSearch} />
                         </div>
                         <div class="btns">
-                            <button class="custom-button cus-btns" onclick={newBroadcast}>
-                                <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
-                                    class="left-icon"></lightning-icon>
+                            <button class="custom-button" onclick={newBroadcast}>
+                                <span class="icon-container">
+                                    <svg focusable="false" aria-hidden="true" viewBox="0 0 520 520" part="icon"
+                                        lwc-3220386utb1 data-key="add"
+                                        class="slds-icon slds-icon-text-default slds-icon_x-small">
+                                        <g lwc-3220386utb1>
+                                            <path
+                                                d="M300 290h165c8 0 15-7 15-15v-30c0-8-7-15-15-15H300c-6 0-10-4-10-10V55c0-8-7-15-15-15h-30c-8 0-15 7-15 15v165c0 6-4 10-10 10H55c-8 0-15 7-15 15v30c0 8 7 15 15 15h165c6 0 10 4 10 10v165c0 8 7 15 15 15h30c8 0 15-7 15-15V300c0-6 4-10 10-10z"
+                                                lwc-3220386utb1></path>
+                                        </g>
+                                    </svg>
+                                </span>
                                 <span>New</span>
                             </button>
                         </div>
@@ -45,7 +58,7 @@
                                 <thead>
                                     <tr>
                                         <template if:true={isMarketingCampaignSelected}>
-                                            <th class="sr-no">Sr. No</th>
+                                            <th class="sr-no">No</th>
                                             <th>Name</th>
                                             <th>Description</th>
                                             <th>Start Date</th>

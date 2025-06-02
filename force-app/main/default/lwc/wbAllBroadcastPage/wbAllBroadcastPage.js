@@ -289,31 +289,31 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             });
     }
 
-    // loadCampaigns() {
-    //     this.isLoading = true;
-    //     getCampaignRecs() // Replace with the actual Apex method to fetch campaigns
-    //         .then(result => {
-    //             this.data = result.map((item, index) => {
-    //                 return {
-    //                     ...item,
-    //                     index: index + 1,
-    //                     startDate: this.formatDate(item.Start_Date__c),
-    //                     endDate: this.formatDate(item.End_Date__c),
-    //                     isDisabled : item.Status__c == 'Completed' ? true : false
-    //                 };
-    //             });
-    //             console.log('Campaigns ::: ',this.data);
+    loadCampaigns() {
+        this.isLoading = true;
+        getCampaignRecs() // Replace with the actual Apex method to fetch campaigns
+            .then(result => {
+                this.data = result.map((item, index) => {
+                    return {
+                        ...item,
+                        index: index + 1,
+                        startDate: this.formatDate(item.Start_Date__c),
+                        endDate: this.formatDate(item.End_Date__c),
+                        isDisabled : item.Status__c == 'Completed' ? true : false
+                    };
+                });
+                console.log('Campaigns ::: ',this.data);
                 
-    //             this.filteredData = [...this.data];
-    //             this.updateShownData();
-    //         })
-    //         .catch(() => {
-    //             this.showToast('Error', 'Failed to load campaigns', 'error');
-    //         })
-    //         .finally(() => {
-    //             this.isLoading = false;
-    //         });
-    // }
+                this.filteredData = [...this.data];
+                this.updateShownData();
+            })
+            .catch(() => {
+                this.showToast('Error', 'Failed to load campaigns', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+    }
 
     formatDate(dateStr) {
         if (!dateStr) return '';

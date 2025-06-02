@@ -19,6 +19,8 @@
 }
 
 .container {
+    
+    border-radius: 0.4rem;
     overflow: scroll;
     scrollbar-width: none !important;
     flex-grow: 1;
@@ -27,53 +29,55 @@
 .filterparent {
     display: flex;
     justify-content: space-between;
-    margin: 1rem;
-}
+    margin: 1rem 1rem 0 1rem;
 
-.filterdiv {
-    display: flex;
-    gap: 2%;
-    width: -webkit-fill-available;
 }
 
 .custom-button {
     display: inline-flex;
-    width: max-content;
-    justify-content: center;
-    height: -webkit-fill-available;
     align-items: center;
+    background-color: white;
+    color: rgb(70 164 245);
+    height: 35px;
+    padding: 10px 20px;
+    border: none;
     border-radius: 0.25rem;
     cursor: pointer;
-    padding: 0.23rem;
-    padding-right: 0.5rem;
-    border: none;
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.18);
-}
-
-.cus-btns{
-    background-color: white;
+    transition: all 0.2s ease-in-out;
 }
 
 .custom-button:hover {
     background-color: #F5F5F5;
 }
 
+.custom-button:active {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Circle around the icon */
+.icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1.5px solid rgb(70 164 245);
+    margin-right: 8px;
+}
+
+.slds-icon {
+    transform: scale(0.8);
+    fill: rgb(70 164 245);
+}
+
+
 .left-icon {
     border: 1px solid;
     border-radius: 50%;
     padding: 0.2rem;
     transform: scale(0.6);
-}
-
-.btns{
-    /* background-color: white; */
-    color: #4194f9;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
-
-    --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }
 
 .search-div {
@@ -225,10 +229,10 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
-
+/* 
 span {
     margin: 0 5px;
-}
+} */
 
 .pagination-button:first-child,
 .pagination-button:last-child {
@@ -363,4 +367,31 @@ lightning-button.slds-button_brand:hover {
 .popup-content p {
     font-size: 16px;
     margin: 0;
+}
+
+
+.search-container {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 5px;
+    padding: 4px;
+    width: 320px;
+    height: 35px;
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.18);
+}
+
+.search-container input.slds-input {
+    border: none;
+    box-shadow: none;
+    width: 100%;
+    outline: none;
+}
+
+.search-icon {
+    padding: 5px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
