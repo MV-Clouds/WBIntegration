@@ -1,4 +1,4 @@
-import { LightningElement,api } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 // import externalDocUrl from '@salesforce/label/c.MetaDocumentationUrl';
 
@@ -7,7 +7,7 @@ export default class WbFlowPreview extends NavigationMixin(LightningElement) {
     showPreview=false;
     screens = [];
     detailsOptions = [];
-    detailsValue;
+    @track detailsValue;
     previewClass = 'preview';
     // documentationUrl = externalDocUrl;
     theme = 'light';

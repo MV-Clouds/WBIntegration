@@ -36,8 +36,13 @@ export default class WbAllTemplatePage extends LightningElement {
     @track isFilterVisible = false;
     @track editTemplateId='';
     @track subscription = null;
-    channelName = '/event/MVWB__Template_Update__e';
+    channelName = '/event/Template_Update__e';
     @track showLicenseError = false;
+    @track currentPage = 1;
+    @track pageSize = 10;
+    @track visiblePages = 5;
+    @track data = [];
+    @track paginatedData = [];
 
     get actionButtonClass(){
         return 'custom-button cus-btns' ;
@@ -51,6 +56,82 @@ export default class WbAllTemplatePage extends LightningElement {
             { label: 'Last 90 Days', value: 'last90days' }
         ];
     }
+
+    get showNoRecordsMessage() {
+        return this.filteredRecords.length === 0;
+    }
+
+    get totalItems() {
+        return this.filteredRecords.length;
+    }
+    
+    get totalPages() {
+        return Math.ceil(this.totalItems / this.pageSize);
+    }
+    
+    get pageNumbers() {
+        try {
+            const totalPages = this.totalPages;
+            const currentPage = this.currentPage;
+            const visiblePages = this.visiblePages;
+
+            let pages = [];
+
+            if (totalPages <= visiblePages) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push({
+                        number: i,
+                        isEllipsis: false,
+                        className: `pagination-button ${i === currentPage ? 'active' : ''}`
+                    });
+                }
+            } else {
+                pages.push({
+                    number: 1,
+                    isEllipsis: false,
+                    className: `pagination-button ${currentPage === 1 ? 'active' : ''}`
+                });
+
+                if (currentPage > 3) {
+                    pages.push({ isEllipsis: true });
+                }
+
+                let start = Math.max(2, currentPage - 1);
+                let end = Math.min(currentPage + 1, totalPages - 1);
+
+                for (let i = start; i <= end; i++) {
+                    pages.push({
+                        number: i,
+                        isEllipsis: false,
+                        className: `pagination-button ${i === currentPage ? 'active' : ''}`
+                    });
+                }
+
+                if (currentPage < totalPages - 2) {
+                    pages.push({ isEllipsis: true });
+                }
+
+                pages.push({
+                    number: totalPages,
+                    isEllipsis: false,
+                    className: `pagination-button ${currentPage === totalPages ? 'active' : ''}`
+                });
+            }
+            return pages;
+        } catch (error) {
+            this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
+            return null;
+        }
+    }
+    
+    get isFirstPage() {
+        return this.currentPage === 1;
+    }
+    
+    get isLastPage() {
+        return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
+    }
+
 
 
     get filterClass() {
@@ -66,7 +147,8 @@ export default class WbAllTemplatePage extends LightningElement {
             }
             this.isTemplateVisible = true;
             this.fetchCategoryAndStatusOptions();
-            this.fetchAllTemplate();
+            this.fetchAllTemplate(true);
+
             this.registerPlatformEventListener();
         } catch (e) {
             console.error('Error in connectedCallback:::', e.message);
@@ -91,7 +173,17 @@ export default class WbAllTemplatePage extends LightningElement {
     registerPlatformEventListener() {
         const messageCallback = (event) => {
             const payload = event.data.payload;
-            this.updateRecord(payload.MVWB__Template_Id__c, payload.MVWB__Template_Status__c);
+            // this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
+
+            // Call updateRecord only if Template_Id__c and Template_Status__c are present
+            if (payload.Template_Id__c && payload.Template_Status__c) {
+                this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
+            }
+
+            // Call a different method if Fetch_All_Templates__c is present
+            if (payload.Fetch_All_Templates__c) {
+                this.fetchAllTemplate(false); // Replace with your actual method name
+            }
         };
 
         subscribe(this.channelName, -1, messageCallback)
@@ -117,7 +209,7 @@ export default class WbAllTemplatePage extends LightningElement {
     updateRecord(templateId, newStatus) {
         const recordIndex = this.allRecords.findIndex((record) => record.Id === templateId);
         if (recordIndex !== -1) {
-            const updatedRecord = { ...this.allRecords[recordIndex], MVWB__Status__c: newStatus };
+            const updatedRecord = { ...this.allRecords[recordIndex], Status__c: newStatus };
             updatedRecord.isButtonDisabled = newStatus === 'In-Review';
             updatedRecord.cssClass = updatedRecord.isButtonDisabled ? 'action edit disabled' : 'action edit';
 
@@ -139,14 +231,18 @@ export default class WbAllTemplatePage extends LightningElement {
             });
     }
 
-    fetchAllTemplate(){
-        this.isLoading=true;
+    fetchAllTemplate(showSpinner){
+        if(showSpinner){
+            this.isLoading=true;
+        }
+        // this.isLoading=true;
+
         getWhatsAppTemplates()
         .then(data => {
             try {
                 if (data) {
-                    this.allRecords = data.map((record, index) => {
-                        const isButtonDisabled = record.MVWB__Status__c === 'In-Review';
+                    this.data = data.map((record, index) => {
+                        const isButtonDisabled = record.Status__c === 'In-Review';
                         
                         return {
                             ...record,
@@ -157,7 +253,8 @@ export default class WbAllTemplatePage extends LightningElement {
                             cssClass: isButtonDisabled ? 'action edit disabled' : 'action edit'
                         };
                     });                    
-                    this.filteredRecords = [...this.allRecords];
+                    this.filteredRecords = [...this.data];
+                    this.updateShownData();
                     this.isLoading=false;
                 } else if (error) {
                     console.error('Error fetching WhatsApp templates: ', error);
@@ -173,6 +270,39 @@ export default class WbAllTemplatePage extends LightningElement {
             this.isLoading=false;
         });
     }
+
+    updateShownData() {
+        try {
+            const startIndex = (this.currentPage - 1) * this.pageSize;
+            const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
+            this.paginatedData = this.filteredRecords.slice(startIndex, endIndex);
+        } catch (error) {
+            this.showToast('Error', 'Error updating shown data', 'error');
+        }
+    }
+
+    handleNext() {
+        try{
+            if (this.currentPage < this.totalPages) {
+                this.currentPage++;
+                this.updateShownData();
+            }
+        }catch(error){
+            this.showToast('Error', 'Error navigating pages', 'error');
+        }
+    }
+    
+    handlePageChange(event) {
+        try{
+            const selectedPage = parseInt(event.target.getAttribute('data-id'), 10);
+            if (selectedPage !== this.currentPage) {
+                this.currentPage = selectedPage;
+                this.updateShownData();
+            }
+        }catch(error){
+            this.showToast('Error', 'Error navigating pages', 'error');
+        }
+    } 
 
     handleTemplateUpdate(event) {
         this.allRecords = event.detail; 
@@ -230,10 +360,10 @@ export default class WbAllTemplatePage extends LightningElement {
 
     filterRecords() {
         try {
-            let filtered = [...this.allRecords];
+            let filtered = [...this.data];
 
             if (this.categoryValue) {
-                filtered = filtered.filter(record => record.MVWB__Template_Category__c === this.categoryValue);
+                filtered = filtered.filter(record => record.Template_Category__c === this.categoryValue);
             }
     
             if (this.timePeriodValue) {
@@ -249,14 +379,15 @@ export default class WbAllTemplatePage extends LightningElement {
                 filtered = filtered.filter(record => new Date(record.CreatedDate) >= fromDate);
             }
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
             }
     
             if (this.searchInput) {
-                filtered = filtered.filter(record => record.MVWB__Template_Name__c.toLowerCase().includes(this.searchInput));
+                filtered = filtered.filter(record => record.Template_Name__c.toLowerCase().includes(this.searchInput));
             }
     
             this.filteredRecords = filtered;
+            this.updateShownData();
 
         } catch (error) {
             this.showToastError('An error occurred while filtering the records.');

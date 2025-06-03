@@ -110,6 +110,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
+            console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }
@@ -211,14 +212,9 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
             .then(() => {
                 this.showToast('Success', 'Broadcast Group deleted successfully', 'success');
     
-                this.data = this.data
-                    .filter(item => item.Id !== recordId)
-                    .map((item, index) => ({
-                        ...item,
-                        index: index + 1,
-                    }));
-
-                this.filteredData = this.data;
+                // Remove the deleted record from both lists
+                this.data = this.data.filter(item => item.Id !== recordId);
+                this.filteredData = this.filteredData.filter(item => item.Id !== recordId);
     
                 // Update paginatedData to reflect the changes
                 this.updateShownData();
