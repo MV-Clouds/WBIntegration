@@ -10,7 +10,9 @@ import { NavigationMixin } from 'lightning/navigation';
 
 export default class AutomationConfig extends NavigationMixin(LightningElement) {
     @track automationData = [];
-    @track originalAutomationData = [];
+    // @track originalAutomationData = [];
+    // @track data = [];
+    @track paginatedData = [];
     @track isLoading = true;
     @track isModalOpen = false;
     @track templateOptions = [];
@@ -19,7 +21,86 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     @track selectedTemplateId = '';
     @track recordId = null;
     @track showLicenseError = false;
+    @track currentPage = 1;
+    @track pageSize = 15;
+    @track visiblePages = 5;
+
     // @track isEditMode = false;
+
+    get showNoRecordsMessage() {
+        return this.automationData.length === 0;
+    }
+
+    get totalItems() {
+        return this.automationData.length;
+    }
+    
+    get totalPages() {
+        return Math.ceil(this.totalItems / this.pageSize);
+    }
+    
+    get pageNumbers() {
+        try {
+            const totalPages = this.totalPages;
+            const currentPage = this.currentPage;
+            const visiblePages = this.visiblePages;
+
+            let pages = [];
+
+            if (totalPages <= visiblePages) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push({
+                        number: i,
+                        isEllipsis: false,
+                        className: `pagination-button ${i === currentPage ? 'active' : ''}`
+                    });
+                }
+            } else {
+                pages.push({
+                    number: 1,
+                    isEllipsis: false,
+                    className: `pagination-button ${currentPage === 1 ? 'active' : ''}`
+                });
+
+                if (currentPage > 3) {
+                    pages.push({ isEllipsis: true });
+                }
+
+                let start = Math.max(2, currentPage - 1);
+                let end = Math.min(currentPage + 1, totalPages - 1);
+
+                for (let i = start; i <= end; i++) {
+                    pages.push({
+                        number: i,
+                        isEllipsis: false,
+                        className: `pagination-button ${i === currentPage ? 'active' : ''}`
+                    });
+                }
+
+                if (currentPage < totalPages - 2) {
+                    pages.push({ isEllipsis: true });
+                }
+
+                pages.push({
+                    number: totalPages,
+                    isEllipsis: false,
+                    className: `pagination-button ${currentPage === totalPages ? 'active' : ''}`
+                });
+            }
+            return pages;
+        } catch (error) {
+            this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
+            return null;
+        }
+    }
+    
+    get isFirstPage() {
+        return this.currentPage === 1;
+    }
+    
+    get isLastPage() {
+        return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
+    }
     
     async connectedCallback() {
         try {
@@ -49,6 +130,16 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         }
     }
 
+    updateShownData() {
+        try {
+            const startIndex = (this.currentPage - 1) * this.pageSize;
+            const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
+            this.paginatedData = this.automationData.slice(startIndex, endIndex);
+        } catch (error) {
+            this.showToast('Error', 'Error updating shown data', 'error');
+        }
+    }
+
     /** 
     * Method Name: fetchAutomations 
     * @description: fetches all automation records to display on the UI  
@@ -63,13 +154,15 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     id: record.Id,
                     srNo: index + 1,
                     name: record.Name,
-                    description: record.MVWB__Description__c,
-                    template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : '',
-                    templateType: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Type__c : ''
+                    description: record.Description__c,
+                    template: record.WB_Template__r ? record.WB_Template__r.Template_Name__c : '',
+                    templateType: record.WB_Template__r ? record.WB_Template__r.Template_Type__c : ''
                 }));
                 // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
 
                 this.automationData = [...this.originalAutomationData];
+                this.updateShownData();
+
             })
             .catch(error => {
                 console.error('Error fetching automation records:', error);
@@ -136,8 +229,8 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         const automationRecord = {
             // Id: this.isEditMode ? this.recordId : undefined,
             Name: this.name,
-            MVWB__Description__c: this.description,
-            MVWB__WB_Template__c: this.selectedTemplateId
+            Description__c: this.description,
+            WB_Template__c: this.selectedTemplateId
         };
 
         // console.log('Automation Record:', JSON.stringify(automationRecord));
@@ -157,9 +250,9 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     id: record.Id,
                     srNo: index + 1,
                     name: record.Name,
-                    description: record.MVWB__Description__c,
-                    template: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Name__c : '',
-                    templateType: record.MVWB__WB_Template__r ? record.MVWB__WB_Template__r.MVWB__Template_Type__c : ''
+                    description: record.Description__c,
+                    template: record.WB_Template__r ? record.WB_Template__r.Template_Name__c : '',
+                    templateType: record.WB_Template__r ? record.WB_Template__r.Template_Type__c : ''
                 }));
                 // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
                 this.automationData = [...this.originalAutomationData];
@@ -224,6 +317,8 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
             (auto.description || '').toLowerCase().includes(searchTerm) ||
             (auto.template || '').toLowerCase().includes(searchTerm)
         );
+        
+        this.updateShownData();
         // console.log('Filtered Data:', this.automationData);
     }
 

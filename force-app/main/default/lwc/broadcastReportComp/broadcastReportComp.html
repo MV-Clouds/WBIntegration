@@ -54,9 +54,9 @@
                                             <tr key={row.Id} class="slds-table_bordered">
                                                 <td class="sr-no">{row.index}</td>
                                                 <td>
-                                                    <a href="javascript:void(0);" class="clickable-name" data-record-id={row.Id} data-object-name={row.MVWB__Object_Name__c} onclick={handleNameClick}>{row.Name}</a>
+                                                    <a href="javascript:void(0);" class="clickable-name" data-record-id={row.Id} data-object-name={row.Object_Name__c} onclick={handleNameClick}>{row.Name}</a>
                                                 </td>
-                                                <td>{row.MVWB__Count_of_Members__c}</td>
+                                                <td>{row.Count_of_Members__c}</td>
                                             </tr>
                                         </template>
                                     </tbody>
@@ -70,7 +70,7 @@
                                 <div class="empty-state">
                                     <div class="empty-state__content">
                                         <div class="empty-state__icon">
-                                            <img src="/resource/MVWB__emptyState" alt="" draggable="false">
+                                            <img src="/resource/emptyState" alt="" draggable="false">
                                         </div>
                                         <div class="empty-state__message">No Data Available to Show.</div>
                                     </div>
@@ -164,7 +164,7 @@
                             <div class="empty-state">
                                 <div class="empty-state__content">
                                     <div class="empty-state__icon">
-                                        <img src="/resource/MVWB__emptyState" alt="" draggable="false">
+                                        <img src="/resource/emptyState" alt="" draggable="false">
                                     </div>
                                     <div class="empty-state__message">No Data Available to Show.</div>
                                 </div>

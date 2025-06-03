@@ -35,41 +35,96 @@
                         </button>
                     </div>
                 </div>
-                
-                <table class="slds-table slds-table_bordered slds-table_cell-buffer custom-table">
-                    <thead>
-                        <tr>
-                            <th scope="col">No.</th>
-                            <th scope="col">Automation Name</th>
-                            <th scope="col">Description</th>
-                            <th scope="col">Template</th>
-                            <th scope="col">Actions</th>
+
+                <!-- <table class="slds-table slds-table_bordered slds-table_cell-buffer custom-table"> -->
+
+                <div class="slds-m-around_medium custom-table">
+
+                    <template if:true={paginatedData.length}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">No.</th>
+                                    <th scope="col">Automation Name</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Template</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- <template if:false={paginatedData.length}>
+                        <tr class="no-data">
+                            <td colspan="5">No Automation Configurations Found</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <template if:false={automationData.length}>
-                            <tr class="no-data">
-                                <td colspan="5">No Automation Configurations Found</td>
-                            </tr>
+                    </template> -->
+                                <template for:each={paginatedData} for:item="auto">
+                                    <tr key={auto.id}>
+                                        <td class="tableData">{auto.srNo}</td>
+                                        <td class="tableData">{auto.name}</td>
+                                        <td class="tableData">{auto.description}</td>
+                                        <td class="tableData">{auto.template}</td>
+                                        <td class="tableData tablebtns" data-label="Actions">
+                                            <button class="action-buttons slds-m-horizontal--x-small">
+                                                <img src="/resource/editIcon" alt="edit" class="action edit"
+                                                    onclick={handleEdit} data-id={auto.id}
+                                                    data-template-type={auto.templateType} />
+                                            </button>
+                                            <button class="action-buttons">
+                                                <img src="/resource/trashIcon" alt="delete" class="action trash"
+                                                    onclick={handleDelete} data-id={auto.id} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </template>
+                    <template if:true={showNoRecordsMessage}>
+                        <div class="no-records-message">
+                            <div class="empty-state">
+                                <div class="empty-state__content">
+                                    <div class="empty-state__icon">
+                                        <img src="/resource/emptyState" alt="" draggable="false">
+                                    </div>
+                                    <div class="empty-state__message">No Data Available to Show.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <template if:true={paginatedData.length}>
+                    <div class="pagination-container">
+                        <button class="pagination-button" disabled={isFirstPage} onclick={handlePrevious}>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520"
+                                fill="#fff">
+                                <path
+                                    d="M342 477 134 272c-6-6-6-16 0-22L342 45c6-6 16-6 22 0l22 22c6 6 6 16 0 22L221 250c-6 6-6 16 0 22l163 161c6 6 6 16 0 22l-22 22c-5 5-14 5-20 0z" />
+                            </svg>
+                            Previous
+                        </button>
+
+                        <template for:each={pageNumbers} for:item="page">
+                            <template if:false={page.isEllipsis}>
+                                <button key={page.number} data-id={page.number} class={page.className}
+                                    onclick={handlePageChange}>
+                                    {page.number}
+                                </button>
+                            </template>
+                            <template if:true={page.isEllipsis}>
+                                <span key={page.number} class="pagination-ellipsis">...</span>
+                            </template>
                         </template>
-                        <template for:each={automationData} for:item="auto">
-                            <tr key={auto.id}>
-                                <td class="tableData">{auto.srNo}</td>
-                                <td class="tableData">{auto.name}</td>
-                                <td class="tableData">{auto.description}</td>
-                                <td class="tableData">{auto.template}</td>
-                                <td class="tableData tablebtns" data-label="Actions">
-                                    <button class="action-buttons slds-m-horizontal--x-small">
-                                        <img src="/resource/MVWB__Edit_button" alt="edit" class="action edit" onclick={handleEdit} data-id={auto.id} data-template-type={auto.templateType} />
-                                    </button>
-                                    <button class="action-buttons">
-                                        <img src="/resource/MVWB__Delete_Button" alt="delete" class="action trash" onclick={handleDelete} data-id={auto.id} />
-                                    </button>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
+
+                        <button class="pagination-button" disabled={isLastPage} onclick={handleNext}>
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" height="52" width="52" viewBox="0 0 520 520"
+                                fill="#fff">
+                                <path
+                                    d="m179 44 207 205c6 6 6 16 0 22L179 476c-6 6-16 6-22 0l-22-22c-6-6-6-16 0-22l163-161c6-6 6-16 0-22L136 88c-6-6-6-16 0-22l22-22c6-5 15-5 21 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </template>
             </template>
 
             <template if:true={isModalOpen}>
@@ -77,24 +132,30 @@
                     <div class="slds-modal__container">
                         <header class="slds-modal__header">
                             <h2 class="slds-text-heading_medium">{modalTitle}</h2>
-                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeModal}>
+                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                onclick={closeModal}>
                                 <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
                             </button>
                         </header>
-                        
+
                         <div class="slds-modal__content slds-p-around_medium">
-                            <lightning-input class="input-field" label="Name" value={name} placeholder="Enter Automation Name" onchange={handleChange}></lightning-input>
-
-                            <lightning-combobox class="input-field" label="Template" value={selectedTemplateId} placeholder="Select Template" options={templateOptions} onchange={handleChange}></lightning-combobox>
-
-                            <lightning-textarea class="input-field" label="Description" value={description} placeholder="Write a description..." onchange={handleChange}></lightning-textarea>
-
+                            <lightning-input class="input-field" label="Name" value={name}
+                                placeholder="Enter Automation Name" onchange={handleChange}>
+                            </lightning-input>
+                            <lightning-combobox class="input-field" label="Template" value={selectedTemplateId}
+                                placeholder="Select Template" options={templateOptions} onchange={handleChange}>
+                            </lightning-combobox>
+                            <lightning-textarea class="input-field" label="Description" value={description}
+                                placeholder="Write a description..." onchange={handleChange}>
+                            </lightning-textarea>
                             <footer class="slds-modal__footer">
                                 <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
                                 <button class="save-button" onclick={handleSave}>Save</button>
                             </footer>
                         </div>
+
                     </div>
+
                 </section>
                 <div class="slds-backdrop slds-backdrop_open"></div>
             </template>
