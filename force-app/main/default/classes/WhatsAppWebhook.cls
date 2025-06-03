@@ -453,7 +453,12 @@ global without sharing class WhatsAppWebhook{
             EventBus.publish(newChatEvent);
 
             if(userRecs.isEmpty()){
-                sendNotificationForContact(recordId, objectApiName);
+                List<Chat__c> lastSentChat = [SELECT Id, Phone__c, CreatedById FROM Chat__c WHERE Phone__c = :formattedNumber AND Type_of_Message__c = 'Outbound Messages' ORDER BY CreatedDate DESC LIMIT 1];
+                if (lastSentChat.size() > 0){
+                    sendNotificationForContact(recordId, objectApiName, lastSentChat[0].CreatedById);
+                } else {
+                    sendNotificationForContact(recordId, objectApiName, null);
+                }
             }
 
         } catch (Exception e){
@@ -614,7 +619,7 @@ global without sharing class WhatsAppWebhook{
         return filedata;
     }
 
-    public static void sendNotificationForContact(String recordId, String objectApiName){
+    public static void sendNotificationForContact(String recordId, String objectApiName, String addresseeId){
         try{
             String query = 'SELECT Id, Name, CreatedById FROM ' + objectApiName + ' WHERE Id = :recordId LIMIT 1';
             List<SObject> records = Database.query(query);
@@ -629,6 +634,9 @@ global without sharing class WhatsAppWebhook{
             // Prepare the custom notification object
             Set<String> addressee = new Set<String>();
             addressee.add((Id) record.get('CreatedById'));
+            if( addresseeId != null && addresseeId != ''){
+                addressee.add((Id) addresseeId);
+            }
             Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
             customNotificationObj.setBody(messageContent);
             customNotificationObj.setTitle('New Whatsapp Message Received');
