@@ -82,7 +82,7 @@
                                     <div class="chooseDoc">
                                         <div class="custom-upload-button" onclick={openModal}>
                                             <label class="upload-label">
-                                                <img src="/resource/uploadDocIcon" alt="Upload Icon" class="upload-icon" />
+                                                <img src="/resource/MVWB__uploadDocIcon" alt="Upload Icon" class="upload-icon" />
                                                 <template if:true={NoFileSelected}>
                                                     <span>Choose Flow</span>
                                                 </template>
@@ -152,7 +152,7 @@
                                                     <p class="uploadlabel">Image</p>
                                                     <div class="custom-upload-button">
                                                         <label class="upload-label">
-                                                            <img src="/resource/uploadImgIcon" alt="Upload Icon"
+                                                            <img src="/resource/MVWB__uploadImgIcon" alt="Upload Icon"
                                                                 class="upload-icon" />
                                                             <template if:true={NoFileSelected}>
                                                                 <span>Choose JPG or PNG file</span>
@@ -179,7 +179,7 @@
                                                     <p class="uploadlabel">Video</p>
                                                     <div class="custom-upload-button">
                                                         <label class="upload-label">
-                                                            <img src="/resource/uploadvideoIcon" alt="Upload Icon"
+                                                            <img src="/resource/MVWB__uploadvideoIcon" alt="Upload Icon"
                                                                 class="upload-icon" />
                                                             <template if:true={NoFileSelected}>
                                                                 <span>Choose MP4 file</span>
@@ -205,7 +205,7 @@
                                                     <p class="uploadlabel">Document</p>
                                                     <div class="custom-upload-button">
                                                         <label class="upload-label">
-                                                            <img src="/resource/uploadDocIcon" alt="Upload Icon"
+                                                            <img src="/resource/MVWB__uploadDocIcon" alt="Upload Icon"
                                                                 class="upload-icon" />
                                                             <template if:true={NoFileSelected}>
                                                                 <span>Choose PDF file</span>
@@ -266,7 +266,7 @@
                                                         protect the
                                                         security and integrity of our services.</p>
                                                 </div>
-                                                <template for:each={header_variables} for:item="varItem"
+                                                <template for:each={computedHeaderVariables} for:item="varItem"
                                                     for:index="index">
                                                     <div key={varItem.id} class="true-div">
                                                         <p class="var">{varItem.index}</p>
@@ -279,8 +279,8 @@
 
                                                         <!-- Dynamic Field Selection -->
                                                         <select class="field-dropdown field-header-dd dropdown" data-id={varItem.id} onchange={handleFieldChange} style="border:0;">
-                                                            <template for:each={fields} for:item="field">
-                                                                <option key={field.value} class="header-field-option" value={field.value}>
+                                                            <template for:each={varItem.options} for:item="field">
+                                                                <option key={field.value} class="header-field-option" value={field.value} selected={field.isSelected}>
                                                                     {field.label}
                                                                 </option>
                                                             </template>
@@ -333,7 +333,7 @@
                                     <div class="inner-rich">
                                         <div class="rich-icon">
                                             <button class="toolbar-button" onclick={handleEmoji}>
-                                                <img src="/resource/wbSmileIcon" class="custom-icon" />
+                                                <img src="/resource/MVWB__wbSmileIcon" class="custom-icon" />
                                             </button>
                                             <template for:each={toolbarButtonsWithClasses} for:item="button">
                                                 <button key={button.title} class={button.classes}
