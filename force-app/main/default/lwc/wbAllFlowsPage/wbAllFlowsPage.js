@@ -23,6 +23,7 @@ export default class WbAllFlowsPage extends LightningElement {
     @track showPopup = false;
     @track isFlowDraft = false;
     @track showLicenseError = false;
+    @track isEditMode = false;
     @track selectedFlowId = '';
 
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
@@ -56,7 +57,6 @@ export default class WbAllFlowsPage extends LightningElement {
 
     async checkLicenseStatus() {
         try {
-
             const isLicenseValid = await checkLicenseUsablility();
             if (!isLicenseValid) {
                 this.showLicenseError = true;
@@ -73,6 +73,7 @@ export default class WbAllFlowsPage extends LightningElement {
                     this.allRecords = data.map(record => {
                         return {
                             ...record,
+                            isEditable: record.MVWB__Status__c === 'Published' || record.MVWB__Status__c === 'Draft',
                             isDraft: record.MVWB__Status__c === 'Draft',
                             isPublished: record.MVWB__Status__c === 'Published',
                             isDeprecated: record.MVWB__Status__c === 'Deprecated',
@@ -90,6 +91,7 @@ export default class WbAllFlowsPage extends LightningElement {
     }
 
     showCreateFlow(){
+        this.isEditMode = false;
         this.isFlowVisible = false;
         this.iscreateflowvisible = true;
     }
@@ -133,7 +135,14 @@ export default class WbAllFlowsPage extends LightningElement {
                 year: 'numeric'
             });
         }
-    }   
+    }
+
+    editFlow(event){
+        this.selectedFlowId = event.currentTarget.dataset.id;
+        this.isEditMode = true;
+        this.isFlowVisible = false;
+        this.iscreateflowvisible = true;
+    }
     
     deleteFlow(event){
         try {
