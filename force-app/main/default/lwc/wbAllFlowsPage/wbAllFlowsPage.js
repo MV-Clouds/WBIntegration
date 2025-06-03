@@ -23,6 +23,7 @@ export default class WbAllFlowsPage extends LightningElement {
     @track showPopup = false;
     @track isFlowDraft = false;
     @track showLicenseError = false;
+    @track isEditMode = false;
     @track selectedFlowId = '';
     @track currentPage = 1;
     @track pageSize = 10;
@@ -152,9 +153,10 @@ export default class WbAllFlowsPage extends LightningElement {
                         return {
                             ...record,
                             serialNumber: index + 1,
-                            isDraft: record.Status__c === 'Draft',
-                            isPublished: record.Status__c === 'Published',
-                            isDeprecated: record.Status__c === 'Deprecated',
+                            isEditable: record.MVWB__Status__c === 'Published' || record.MVWB__Status__c === 'Draft',
+                            isDraft: record.MVWB__Status__c === 'Draft',
+                            isPublished: record.MVWB__Status__c === 'Published',
+                            isDeprecated: record.MVWB__Status__c === 'Deprecated',
                             LastModifiedDate: this.formatDate(record.LastModifiedDate)
                         };
                     });
@@ -169,6 +171,7 @@ export default class WbAllFlowsPage extends LightningElement {
     }
 
     showCreateFlow(){
+        this.isEditMode = false;
         this.isFlowVisible = false;
         this.iscreateflowvisible = true;
     }
@@ -249,7 +252,14 @@ handlePageChange(event) {
                 year: 'numeric'
             });
         }
-    }   
+    }
+
+    editFlow(event){
+        this.selectedFlowId = event.currentTarget.dataset.id;
+        this.isEditMode = true;
+        this.isFlowVisible = false;
+        this.iscreateflowvisible = true;
+    }
     
     deleteFlow(event){
         try {

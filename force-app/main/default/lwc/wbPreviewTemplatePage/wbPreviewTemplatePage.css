@@ -529,6 +529,10 @@ input{
 
 }
 
+.videoPreview{
+    max-height: 150px;
+    padding-top:5px;
+}
 
 /* Backdrop covers the entire component */
 .license-error {

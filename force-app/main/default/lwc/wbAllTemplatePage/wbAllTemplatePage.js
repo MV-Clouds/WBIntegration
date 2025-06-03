@@ -148,6 +148,7 @@ export default class WbAllTemplatePage extends LightningElement {
             this.isTemplateVisible = true;
             this.fetchCategoryAndStatusOptions();
             this.fetchAllTemplate(true);
+
             this.registerPlatformEventListener();
         } catch (e) {
             console.error('Error in connectedCallback:::', e.message);
@@ -235,6 +236,7 @@ export default class WbAllTemplatePage extends LightningElement {
             this.isLoading=true;
         }
         // this.isLoading=true;
+
         getWhatsAppTemplates()
         .then(data => {
             try {

@@ -26,6 +26,16 @@
 
                     <div class="filterparent">
                         <div class="filterdiv">
+                            <lightning-input variant="label-hidden" class="filter search-div" type="search"
+                                placeholder="Search Name" onchange={handleSearchInputChange}></lightning-input>
+                            <lightning-combobox variant="label-hidden" class="filter" value={statusValues}
+                                placeholder="Status" options={statusOptions}
+                                onchange={handleStatusChange}></lightning-combobox>
+                        </div>
+
+
+                    <div class="filterparent">
+                        <div class="filterdiv">
                             <div class="search-container">
                                 <div class="search-icon">
                                     <lightning-icon icon-name="utility:search" size="x-small"></lightning-icon>
@@ -207,8 +217,8 @@
             </div>
         </template>
         <template if:true={iscreateflowvisible}>
-            <c-wb-create-flow-page></c-wb-create-flow-page>
-        </template>
 
+            <c-create-flow-management is-edit-mode={isEditMode} selected-flow-id={selectedFlowId}></c-create-flow-management>
+        </template>
     </template>
 </template>

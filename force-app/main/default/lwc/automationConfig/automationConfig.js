@@ -158,8 +158,8 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                     template: record.WB_Template__r ? record.WB_Template__r.Template_Name__c : '',
                     templateType: record.WB_Template__r ? record.WB_Template__r.Template_Type__c : ''
                 }));
-
                 // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
+
                 this.automationData = [...this.originalAutomationData];
                 this.updateShownData();
 
@@ -182,8 +182,13 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     fetchTemplates() {
         getTemplates()
             .then(data => {
-                this.templateOptions = data.map(template => ({
-                    label: template.Template_Name__c,
+                const filteredTemplates = data.filter(template => {
+                    const buttons = JSON.parse(template.MVWB__WBButton_Body__c || '[]');
+                    return buttons.some(button => button.type === "QUICK_REPLY" || button.type === "FLOW");
+                });
+                this.templateOptions = filteredTemplates
+                .map(template => ({
+                    label: template.MVWB__Template_Name__c,
                     value: template.Id
                 }));
             })
@@ -252,7 +257,6 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                 // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
                 this.automationData = [...this.originalAutomationData];
 
-
                 // console.log('this.automationData in handleSave =', JSON.stringify(this.automationData));
 
                 const savedAutomation = this.automationData.find(auto => auto.id === savedRecordId);
@@ -260,7 +264,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
 
                 if (savedAutomation) {
                     let cmpDef = {
-                        componentDef : 'c:automationPath',
+                        componentDef : 'MVWB:automationPath',
                         attributes: {
                             recordId: savedAutomation.id,
                             templateType: savedAutomation.templateType
@@ -307,7 +311,6 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     */
     handleSearch(event) {
         // console.log('Search term:', event.target.value);
-
         const searchTerm = event.target.value.toLowerCase().trim();
         this.automationData = this.originalAutomationData.filter(auto =>
             (auto.name || '').toLowerCase().includes(searchTerm) ||
@@ -357,7 +360,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         // }
 
         let cmpDef = {
-            componentDef : 'c:automationPath',
+            componentDef : 'MVWB:automationPath',
             attributes: {
                 recordId: recordId,
                 templateType: templateType

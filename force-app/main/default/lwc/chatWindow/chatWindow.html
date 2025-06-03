@@ -2,7 +2,7 @@
     <template if:false={showLicenseError}>
     <lightning-spinner alternative-text="Loading" size="small" if:true={showSpinner}></lightning-spinner>
     
-    <div class="main-chat-window-div">
+    <div class="main-chat-window-div lightTheme">
         <div class="backdrop-div" if:true={displayBackDrop} onclick={handleBackDropClick}></div>
         <div class="toggle-parent-div">
             <div class="toggle-mode-div" onclick={toggleTheme}>

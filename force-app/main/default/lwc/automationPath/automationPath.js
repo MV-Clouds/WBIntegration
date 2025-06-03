@@ -67,24 +67,33 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         URL: ["EmbeddedLink"]
     };
 
+
     async connectedCallback() {
         try {
+            
             await this.checkLicenseStatus();
             if (this.showLicenseError) {
                 return; // Stops execution if license is expired
             }
+            if(this.pageRef){
+                this.objectApiName = this.pageRef.attributes.objectApiName;
+            }
+
+            // console.log('Automation Path Loaded with Record ID:', this.recordId);
+            // console.log('Automation Path Loaded with Template Type:', this.templateType);
     
             if (!this.recordId) return;
     
             this.isFlowTemplate = this.templateType === 'Flow';
             this.selectedAction = this.isFlowTemplate ? 'create' : 'whatsapp';
     
+            // console.log('isFlowTemplate:', this.isFlowTemplate);
+    
             this.isFlowTemplate
                 ? (this.loadObjects(), this.loadRequiredFields(), this.setFlowId())
                 : (this.fetchTemplates(), this.loadEmailTemplates());
     
-            this.fetchAutomationName();
-            this.fetchAutomationPaths();
+            await this.fetchAutomationName();
             
         } catch (error) {
             console.error('Error in connectedCallback:::', e.message);
@@ -94,6 +103,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
+            // console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }
@@ -180,7 +190,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     //     };
                     // });
 
-                    // // Now add chatWindowRows2 items that weren't already in chatWindowRows1
+                    // Now add chatWindowRows2 items that weren't already in chatWindowRows1
                     // const existingFields = new Set(this.chatWindowRows1.map(row => row.selectedObjectField));
                     // const additionalRows = this.chatWindowRows2.filter(row => !existingFields.has(row.selectedObjectField));
 
@@ -217,7 +227,6 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                             };
                         });
                     }
-
                     // console.log('finalRows:', JSON.stringify(finalRows));
                     this.chatWindowRows = finalRows;
                     // console.log('CHAT WINDOW ROWS:', JSON.stringify(this.chatWindowRows));
@@ -272,7 +281,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     //     const flowFieldTypes = {};
 
     //     screens.forEach(screen => {
-    //         console.log('Screen:', JSON.stringify(screen));
+    //         // console.log('Screen:', JSON.stringify(screen));
     //         const children = screen.layout?.children || [];
     //         children.forEach(child => {
     //             if (child.type === 'Form') {
@@ -363,7 +372,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     fetchAutomationName() {
-        getAutomationById({ recordId: this.recordId })
+        return getAutomationById({ recordId: this.recordId })
             .then(result => {
                 if (result) {
                     this.automation = {
@@ -371,11 +380,11 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         name: result.Name,
                         description: result.MVWB__Description__c,
                         templateId: result.MVWB__WB_Template__c || '',
-                        templateName: result.MVWB__WB_Template__r?.MVWB__Template_Name__c || 'N/A',
+                        templateName: result.MVWB__WB_Template__r?.MVWB__Template_Name__c || '',
                         templateType: result.MVWB__WB_Template__r?.MVWB__Template_Type__c || ''
                     };
 
-                    console.log('this.automation =', JSON.stringify(this.automation));
+                    // console.log('this.automation =', JSON.stringify(this.automation));
                     if (result.MVWB__WB_Template__r?.MVWB__WBButton_Body__c) {
                         try {
                             const buttons = JSON.parse(result.MVWB__WB_Template__r.MVWB__WBButton_Body__c);
@@ -395,7 +404,8 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                             console.error("Error parsing MVWB__WBButton_Body__c:", error);
                         }
                     }
-                    console.log('this.quickreplybuttons:', JSON.stringify(this.quickReplyButtons));
+                    // console.log('this.quickreplybuttons:', JSON.stringify(this.quickReplyButtons));
+                    this.fetchAutomationPaths();
                 }
             })
             .catch(error => {
@@ -411,6 +421,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         getAutomationPathsByAutomationId({ automationId: this.recordId })
             .then((result) => {
                 // console.log('Fetched Automation Paths:', JSON.stringify(result));
+
                 if (!this.isFlowTemplate) {
 
                     // console.log('this.isFlowTemplate:', this.isFlowTemplate);
@@ -446,10 +457,10 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         this.FlowRecordId = existingFlowPath.Id || '';
                         this.selectedObject = existingFlowPath.MVWB__Object_Name__c || '';
                         // console.log('this.selectedObject :', this.selectedObject);
-                        
+
                         this.loadFlowFields();
                         // console.log('After JSON DATA');
-                        
+
                         // this.fetchFieldsForObject(this.selectedObject);
                         getObjectFields({ objectName: this.selectedObject })
                             .then((result) => {
@@ -482,7 +493,6 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                             .catch((error) => {
                                 console.error('Error fetching object fields:', error);
                             });
-
                         // console.log('this.objectFields fetchFieldsForObject:- ', JSON.stringify(this.objectFields));
 
                         this.FlowId = existingFlowPath.MVWB__WB_Flow__c || '';
@@ -504,11 +514,11 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
 
     // getFilteredFlowFields(objectFieldType) {
     //     objectFieldType = objectFieldType.toUpperCase();
-    //     console.log('Called with objectFieldType:', objectFieldType);
+    //     // console.log('Called with objectFieldType:', objectFieldType);
     //     const compatibleTypes = (this.typeCompatibilityMap[objectFieldType] || []).map(t => t.toUpperCase());
     //     // console.log('Compatible Types:', JSON.stringify(compatibleTypes));
     //     // console.log('All Flow Fields:', JSON.stringify(this.flowFields, null, 2));
-    //     console.log('this.flowFields ::: ', JSON.stringify(this.flowFields));
+    //     // console.log('this.flowFields ::: ', JSON.stringify(this.flowFields));
 
     //     return this.flowFields
     //         .filter(field => {
@@ -522,9 +532,9 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     getFilteredFlowFields(objectFieldType) {
         objectFieldType = objectFieldType.toUpperCase();
         // console.log('Called with objectFieldType:', objectFieldType);
-    
+
         const compatibleTypes = (this.typeCompatibilityMap[objectFieldType] || []).map(t => t.toUpperCase());
-    
+
         // console.log('this.flowFields ::: ', JSON.stringify(this.flowFields));
 
         return this.flowFields
@@ -545,11 +555,10 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         try {
             // console.log('Fetching fields for object:', objectName);
             getObjectFields({ objectName: objectName })
-
-            .then((result) => {
-                // console.log('fetchFieldsForObjects after apex:- ',JSON.stringify(result))
-                this.objectFields = result;
-            });
+                .then((result) => {
+                    // console.log('fetchFieldsForObjects after apex:- ',JSON.stringify(result))
+                    this.objectFields = result;
+                });
             // console.log('this.objectFields fetchFieldsForObject:- ', JSON.stringify(this.objectFields));
         } catch (error) {
             console.error('Error fetching fields:', error);
@@ -562,8 +571,8 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         return this.quickReplyButtons.map(btn => ({
             ...btn,
             computedClass: this.selectedTemplateButtonId === btn.id
-                ? 'slds-button slds-button_outline-brand slds-button_stretch selected-button btn'
-                : 'slds-button slds-button_outline-brand slds-button_stretch btn'
+                ? 'slds-button slds-button_outline-brand slds-button_stretch selected-button'
+                : 'slds-button slds-button_outline-brand slds-button_stretch'
         }));
     }
 
@@ -647,7 +656,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
 
     // handleSendOptionChange(event) {
     //     this.isScheduled = event.target.value === 'scheduled';
-    //     console.log('Send Option:', this.isScheduled);
+    //     // console.log('Send Option:', this.isScheduled);
     // }
 
     handleSearchChange(event) {
@@ -664,18 +673,18 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 templateType: this.selectedAction,
             };
         }
-    
+
         // console.log('Updated automationPaths:', JSON.stringify(this.automationPaths));
     }
 
     // handleDurationValueChange(event) {
     //     this.durationValue = event.target.value;
-    //     console.log('Selected Duration Value:', this.durationValue);
+    //     // console.log('Selected Duration Value:', this.durationValue);
     // }
 
     // handleDurationUnitChange(event) {
     //     this.durationUnit = event.target.value;
-    //     console.log('Selected Duration Unit:', this.durationUnit);
+    //     // console.log('Selected Duration Unit:', this.durationUnit);
     // }
 
     handleCancel() {
@@ -695,7 +704,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         this[NavigationMixin.Navigate]({
             type: "standard__navItemPage",
             attributes: {
-                apiName: 'Automation_Configuration'
+                apiName: 'MVWB__Automation_Configuration'
             },
         });
     }
@@ -826,7 +835,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
 
                 createRecord(recordInput)
                     .then(result => {
-                        // console.log('result = ', JSON.stringify(result)); 
+                        // console.log('result = ', JSON.stringify(result));
                         this.showToast('Success', 'Record saved successfully', 'success');
                     })
                     .catch(error => {

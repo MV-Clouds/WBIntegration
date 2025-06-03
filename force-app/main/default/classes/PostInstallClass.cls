@@ -24,36 +24,7 @@ global class PostInstallClass implements InstallHandler {
     */
     global void onInstall(InstallContext context) {
         try {
-            MVWB__EmbeddedSignUpConfig__c embeddedConfig = MVWB__EmbeddedSignUpConfig__c.getInstance();
             List<Profile> systemAdminProfile = [SELECT Id, Name FROM Profile WHERE Name = 'System Administrator'];
-            embeddedConfig.MVWB__Client_Id__c = '514916280628381';
-            embeddedConfig.MVWB__Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
-            embeddedConfig.MVWB__Config_Id__c = '8971126402921271';
-            embeddedConfig.SetupOwnerId = systemAdminProfile[0].Id;
-            upsert embeddedConfig;
-            
-            List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Client_Id__c, MVWB__Client_Secret__c, MVWB__Is_License_Valid__c, MVWB__Expiration_Date__c, MVWB__Next_Callout_Date__c, MVWB__Password__c, MVWB__Username__c FROM MVWB__LicenseConfig__c LIMIT 1];
-            MVWB__LicenseConfig__c licenseConfig = new MVWB__LicenseConfig__c();
-            if (configList != null && configList.size() > 0) {
-                licenseConfig = configList[0];
-                licenseConfig.MVWB__Client_Id__c = '3MVG9fe4g9fhX0E4o3IT3oGMiqurUSa0NG8pvAJd48VWiX4Nnuf901ij43yVCcLidSdA76x3f64HEf.e.0nLh';
-                licenseConfig.MVWB__Client_Secret__c = 'CE75344BC73CEE272C81B8791E24EB6C73A9B66C68F41BA89E90CD5A3900B9E0';
-                licenseConfig.MVWB__Username__c = 'insightsintegration@00d5g000007qhe9eaa.ext';
-                licenseConfig.MVWB__Password__c = 'wbconnect@1';
-                licenseConfig.MVWB__Is_License_Valid__c = true;
-                licenseConfig.MVWB__Expiration_Date__c = Date.today().addMonths(1);
-                licenseConfig.MVWB__Next_Callout_Date__c = Date.today().addMonths(1);
-                update licenseConfig;
-            } else {
-                licenseConfig.MVWB__Client_Id__c = '3MVG9fe4g9fhX0E4o3IT3oGMiqurUSa0NG8pvAJd48VWiX4Nnuf901ij43yVCcLidSdA76x3f64HEf.e.0nLh';
-                licenseConfig.MVWB__Client_Secret__c = 'CE75344BC73CEE272C81B8791E24EB6C73A9B66C68F41BA89E90CD5A3900B9E0';
-                licenseConfig.MVWB__Username__c = 'insightsintegration@00d5g000007qhe9eaa.ext';
-                licenseConfig.MVWB__Password__c = 'wbconnect@1';
-                licenseConfig.MVWB__Is_License_Valid__c = true;
-                licenseConfig.MVWB__Expiration_Date__c = Date.today().addMonths(1);
-                licenseConfig.MVWB__Next_Callout_Date__c = Date.today().addMonths(1);
-                insert licenseConfig;
-            }
 
             if(context.previousVersion() == null || Test.isRunningTest()) {
                 String orgDataTable = '';
@@ -196,6 +167,48 @@ global class PostInstallClass implements InstallHandler {
                 String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
                 String jobName = 'PLMS_Validity_Check_' + System.currentTimeMillis();
                 System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
+
+                MVWB__EmbeddedSignUpConfig__c embeddedConfig = new MVWB__EmbeddedSignUpConfig__c();
+                embeddedConfig.MVWB__Client_Id__c = '514916280628381';
+                embeddedConfig.MVWB__Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
+                embeddedConfig.MVWB__Config_Id__c = '8971126402921271';
+                embeddedConfig.SetupOwnerId = systemAdminProfile[0].Id;
+                insert embeddedConfig;
+
+                MVWB__LicenseConfig__c licenseConfig = new MVWB__LicenseConfig__c();
+                licenseConfig.MVWB__Client_Id__c = '3MVG9fe4g9fhX0E4o3IT3oGMiqurUSa0NG8pvAJd48VWiX4Nnuf901ij43yVCcLidSdA76x3f64HEf.e.0nLh';
+                licenseConfig.MVWB__Client_Secret__c = 'CE75344BC73CEE272C81B8791E24EB6C73A9B66C68F41BA89E90CD5A3900B9E0';
+                licenseConfig.MVWB__Username__c = 'insightsintegration@00d5g000007qhe9eaa.ext';
+                licenseConfig.MVWB__Password__c = 'wbconnect@1';
+                licenseConfig.MVWB__Is_License_Valid__c = true;
+                licenseConfig.MVWB__Expiration_Date__c = Date.today().addMonths(1);
+                licenseConfig.MVWB__Next_Callout_Date__c = Date.today().addMonths(1);
+                insert licenseConfig;
+            } else {
+                List<MVWB__EmbeddedSignUpConfig__c> embeddedConfigList = [SELECT Id, MVWB__Client_Id__c, MVWB__Client_Secret__c, MVWB__Config_Id__c, SetupOwnerId FROM MVWB__EmbeddedSignUpConfig__c LIMIT 1];
+                if( embeddedConfigList != null && !embeddedConfigList.isEmpty() && embeddedConfigList.size() > 0) {
+                    MVWB__EmbeddedSignUpConfig__c embeddedConfig = new MVWB__EmbeddedSignUpConfig__c();
+                    embeddedConfig = embeddedConfigList[0];
+                    embeddedConfig.MVWB__Client_Id__c = '514916280628381';
+                    embeddedConfig.MVWB__Client_Secret__c = '6e1719dde4e730a3a55e0eab8899f62b';
+                    embeddedConfig.MVWB__Config_Id__c = '8971126402921271';
+                    embeddedConfig.SetupOwnerId = systemAdminProfile[0].Id;
+                    update embeddedConfig;
+                }
+
+                List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Client_Id__c, MVWB__Client_Secret__c, MVWB__Is_License_Valid__c, MVWB__Expiration_Date__c, MVWB__Next_Callout_Date__c, MVWB__Password__c, MVWB__Username__c FROM MVWB__LicenseConfig__c LIMIT 1];
+                if (configList != null && !configList.isEmpty() && configList.size() > 0) {
+                    MVWB__LicenseConfig__c licenseConfig = new MVWB__LicenseConfig__c();
+                    licenseConfig = configList[0];
+                    licenseConfig.MVWB__Client_Id__c = '3MVG9fe4g9fhX0E4o3IT3oGMiqurUSa0NG8pvAJd48VWiX4Nnuf901ij43yVCcLidSdA76x3f64HEf.e.0nLh';
+                    licenseConfig.MVWB__Client_Secret__c = 'CE75344BC73CEE272C81B8791E24EB6C73A9B66C68F41BA89E90CD5A3900B9E0';
+                    licenseConfig.MVWB__Username__c = 'insightsintegration@00d5g000007qhe9eaa.ext';
+                    licenseConfig.MVWB__Password__c = 'wbconnect@1';
+                    licenseConfig.MVWB__Is_License_Valid__c = true;
+                    licenseConfig.MVWB__Expiration_Date__c = Date.today().addMonths(1);
+                    licenseConfig.MVWB__Next_Callout_Date__c = Date.today().addMonths(1);
+                    update licenseConfig;
+                }
             }
         } catch (Exception e) {
             Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();

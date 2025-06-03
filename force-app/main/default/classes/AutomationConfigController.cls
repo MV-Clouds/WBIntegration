@@ -36,12 +36,14 @@ public without sharing class AutomationConfigController {
             Set<String> validObjectNames = new Set<String>();
             
             MVWB__Object_Config__mdt config = [
+
                 SELECT MVWB__ChatWindowConfigInfo__c 
+
                 FROM MVWB__Object_Config__mdt 
                 WHERE DeveloperName = 'objectConfigInfo' 
                 LIMIT 1
             ];
-    
+
             if (String.isNotBlank(config.MVWB__ChatWindowConfigInfo__c)) {
                 Map<String, Object> chatConfig = (Map<String, Object>) JSON.deserializeUntyped(config.MVWB__ChatWindowConfigInfo__c);
                 validObjectNames.addAll(chatConfig.keySet());
@@ -65,11 +67,11 @@ public without sharing class AutomationConfigController {
     
             // Step 3: Return templates with valid variables or no variables, and matching status
             List<Template__c> finalTemplates = [
-                SELECT Id, Template_Name__c, Template_Type__c 
+                SELECT Id, Template_Name__c, Template_Type__c, WBButton_Body__c 
                 FROM Template__c 
                 WHERE Status__c = 'Active-Quality Pending'
                   AND (Id IN :templatesWithValidObjects OR Id NOT IN :templatesWithAnyVariables)
-                WITH USER_MODE
+                WITH SECURITY_ENFORCED
             ];
     
             return finalTemplates;

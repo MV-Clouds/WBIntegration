@@ -1,4 +1,4 @@
-:host {
+.lightTheme {
     /* General Purpose Variables */
     --height-of-main-chat-container : 30rem;
     --height-for-emoji : 0;
@@ -48,7 +48,7 @@
     --reaction-bg-color: white;
     --reaction-border-color: #eaeaea;
 }
-:host([data-theme="dark"]) {
+.darkTheme {
     /* THE DARK MODE STYLES */
     /* Styles for main container */
     --main-bg-color: black;

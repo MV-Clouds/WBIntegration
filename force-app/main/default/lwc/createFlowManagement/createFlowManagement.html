@@ -21,7 +21,8 @@
 
         <template if:true={isFlowVisible}>
             <div class="slds-theme_default main">
-                <template if:true={iscreateflowvisible}>   
+                <!-- <template if:true={iscreateflowvisible}>    -->
+                <template if:false={isEdit}>   
                     <div class="heading">
                         <p class="txt">Create Flow</p>
                     </div>  
@@ -94,7 +95,8 @@
                         <lightning-button variant="brand" label="Create" onclick={handleCreate} class="slds-m-left_x-small" disabled={isCreateDisabled}></lightning-button>
                     </div>
                 </template>
-                <template if:true={isJsonVisible}>
+                <!-- <template if:true={isJsonVisible}> -->
+                <template if:true={isEdit}>
                     <div class="divcontainer2">
                         <div class="createFlowDiv">
                             <div class="name-header">
@@ -119,7 +121,7 @@
                                         <button class="run-btn slds-m-horizontal--xx-small" onclick={onSaveClick}>Save</button>
                                     </template>
                                     <template if:true={isPublishedEnabled}>
-                                        <button class="run-btn slds-m-horizontal--xx-small" onclick={onPublishClick}>Publish</button>
+                                        <button class="run-btn slds-m-horizontal--xx-small" onclick={onPublishClick} disabled={disablePublish}>Publish</button>
                                     </template>
                                     <template if:true={isDeleteEnabled}>
                                         <button class="run-btn slds-m-horizontal--xx-small" onclick={onDeleteClick}>Delete</button>
@@ -128,19 +130,22 @@
                                         <button class="run-btn slds-m-horizontal--xx-small" onclick={onDeprecateClick}>Deprecate</button>
                                     </template>
                                 </div>
-                            </div>
+                            </div> 
+                           
                             <div class="flow-content">
                                 <div class="edit-content">
-                                    <div class="editor-div slds-m-top--medium slds-p-around--x-small">
+                                    <div class="editor-div slds-p-around--x-small">
                                         <p class="editor-heading slds-p-around--small slds-text-heading--medium">Editor</p>
-                                        <!-- <button class="run-btn" onclick={onRunClick}>Run</button> -->
+                                        <button class="run-btn" onclick={onRunClick}>Run</button>
                                     </div>
                                     <div class="editor-container">
                                         <div class="editor" lwc:dom="manual"></div>
                                     </div>
                                 </div>
                                 <div class="previewFlow">
-                                    <iframe class="flowIframe" src={flowPreviewURL} width="430" height="800" ></iframe>
+                                    <!-- <c-whatsapp-flow-previewer jsondata={jsonString}></c-whatsapp-flow-previewer> -->
+                                    <c-wb-flow-preview flowname={flowName} jsonstringdata={jsonString}></c-wb-flow-preview>
+
                                 </div>
                             </div>
                         </div>
@@ -200,8 +205,7 @@
                         </div>
                     </div>
                 </template> 
-                
-             </div>
+            </div>
         </template>
         <template if:false={isFlowVisible}>
             <c-wb-all-flows-page></c-wb-all-flows-page>

@@ -11,7 +11,7 @@
     background-size: cover;
     border-radius: 5px;
     height: 100%;
-    overflow-x: scroll;
+    overflow: scroll;
     scrollbar-width: none;
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.5), 0 1px 8px 0 rgba(0, 0, 0, 0.29);
 }
@@ -54,12 +54,20 @@
 .flow-content{
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     margin-bottom: 1rem;
+    overflow-x: hidden;
 }
 
 .edit-content{
-    width: 70%;
+    width: 100%;
+    min-width: 30%;
+    margin-top: 1rem;
+    margin-right: 1rem;
+    box-shadow: 2px 2px 10px rgba(0,0,0, 0.1);
+    border-radius: 5px;
+    border: 1px solid #eee;
+    height: calc(100vh - 220px);
 }
 
 .previewFlow{
@@ -191,7 +199,7 @@ label{
 }
 
 .run-btn{
-    width: 67px;
+    width: 76px;
     height: 41px;
     margin-top: 5px;
     background: white;
@@ -200,10 +208,18 @@ label{
     font-size: 14px;
 }
 
+.run-btn:disabled {
+    background: #e0e0e0;
+    color: #888888;
+    border-color: #cccccc;
+    cursor: not-allowed;
+}
+
 .editor-div {
     display: flex;
     justify-content: space-between;
     background-color: white;
+    border-radius: 5px 5px 0 0;
 }
 
 .editor-heading{
@@ -211,9 +227,8 @@ label{
 }
 
 .editor-container {
-    height: 742px;
+    height: calc(100vh - 290px);
     border: 1px solid #d8dde6;
-    overflow-y: scroll;
     /* pointer-events: none; */
 }
 
@@ -442,46 +457,4 @@ img{
 .flowIframe{
     box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 8px 0 rgba(0, 0, 0, 0.19);
     border: none;
-}
-
-
-/* Backdrop covers the entire component */
-.license-error {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8); /* Dark overlay */
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Centered popup */
-.popup-container {
-    background: #b71c1c; /* Dark red for warning */
-    color: white;
-    padding: 24px 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    max-width: 400px;
-    text-align: center;
-    font-family: Arial, sans-serif;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-/* Styling for title */
-.popup-content h2 {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-}
-
-/* Styling for message */
-.popup-content p {
-    font-size: 16px;
-    margin: 0;
 }

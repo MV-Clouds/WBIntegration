@@ -169,6 +169,8 @@ tr:nth-child(even) {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
+    max-width: 100%;
 }
 
 .btns{
@@ -181,6 +183,21 @@ tr:nth-child(even) {
     padding: 0;
     border: none;
     background: transparent;
+    cursor: pointer;
+}
+
+.action{
+    width: 27px;
+    color: black;
+    border: 1px solid #dfdddd;
+    /* background: white; */
+    padding: 0.27rem;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.trash{
+    padding: 0.37rem;
 }
 
 .left-icon {
