@@ -55,14 +55,14 @@
                                         <tr key={row.Id}>
                                             <td class="sr-no">{row.index}</td>
                                             <td>{row.Name}</td>
-                                            <td>{row.Count_of_Members__c}</td>
-                                            <td>{row.Description__c}</td>
+                                            <td>{row.MVWB__Count_of_Members__c}</td>
+                                            <td>{row.MVWB__Description__c}</td>
                                             <td class="tableData tablebtns" data-label="Actions">
                                                 <button class="action-buttons">
-                                                    <img src="/resource/editIcon" class="action edit" alt="edit" data-id={row.Id} onclick={handleEditGroup} >
+                                                    <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={row.Id} onclick={handleEditGroup} >
                                                 </button>
                                                 <button class="action-buttons">
-                                                    <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={row.Id} onclick={handleDeleteGroup}>
+                                                    <img src="/resource/MVWB__trashIcon" class="action trash" alt="delete" data-id={row.Id} onclick={handleDeleteGroup}>
                                                 </button>
                                             </td>
                                         </tr>
