@@ -39,7 +39,7 @@ export default class WbAllTemplatePage extends LightningElement {
     channelName = '/event/MVWB__Template_Update__e';
     @track showLicenseError = false;
     @track currentPage = 1;
-    @track pageSize = 10;
+    @track pageSize = 15;
     @track visiblePages = 5;
     @track data = [];
     @track paginatedData = [];

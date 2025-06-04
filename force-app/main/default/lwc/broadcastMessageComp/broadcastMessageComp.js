@@ -14,7 +14,7 @@ export default class BroadcastMessageComp extends LightningElement {
     @track filteredData = []; // filtered data based on search
     @track paginatedData = [];
     @track currentPage = 1;
-    @track pageSize = 10;
+    @track pageSize = 15;
     @track visiblePages = 5;
     @track isLoading = false;
     @track configMap = {}; // store object -> {nameField, phoneField}
