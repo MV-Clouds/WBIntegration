@@ -1,6 +1,9 @@
 <template>
     <template if:false={showLicenseError}>
         <div class="automation-container slds-box slds-theme_default">
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </template>
     
             <!-- Header Section -->
             <div class="slds-p-horizontal_large slds-p-top_medium">
