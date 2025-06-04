@@ -12,7 +12,6 @@ public with sharing class WhatsAppFlowController {
     public static List<Flow__c> getWhatsAppFlowById(String flowId) {
         List<Flow__c> flowRecs = [SELECT Id, Flow_Name__c, Status__c, Category__c, Template_Type__c, Flow_JSON__c, LastModifiedDate FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
         return flowRecs.size() > 0 ? flowRecs : new List<Flow__c>();
-
     }
 
     @AuraEnabled

@@ -33,6 +33,10 @@
 
 }
 
+.table tbody tr:hover {
+    background-color: #e1eaf5;
+}
+
 .custom-button {
     display: inline-flex;
     align-items: center;
@@ -78,6 +82,17 @@
     border-radius: 50%;
     padding: 0.2rem;
     transform: scale(0.6);
+}
+
+.btns{
+    /* background-color: white; */
+    color: #4194f9;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+
+    --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }
 
 .search-div {

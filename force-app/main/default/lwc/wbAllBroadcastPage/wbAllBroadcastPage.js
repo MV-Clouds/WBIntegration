@@ -1,6 +1,5 @@
 import { LightningElement, track } from 'lwc';
 import getBroadcastRecs from '@salesforce/apex/BroadcastMessageController.getBroadcastRecs';
-import getCampaignRecs from '@salesforce/apex/MarketingMessageController.getCampaignRecs';
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
@@ -8,9 +7,7 @@ import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.ge
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
 import { subscribe, unsubscribe } from 'lightning/empApi';
 import { NavigationMixin } from 'lightning/navigation';
-// import deleteMarketingCampaign from '@salesforce/apex/MarketingMessageController.deleteMarketingCampaign';
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
-
 
 export default class WbAllBroadcastPage extends NavigationMixin(LightningElement) {
     @track data = [];
@@ -23,6 +20,8 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     @track templateMap = new Map(); // Store the raw Map from Apex
     @track selectedTemplate = null;
     @track selectedDateTime;
+    @track broadcastSearchTerm = '';
+    @track broadcastGroupSearchTerm = '';
     @track currentPage = 1;
     @track pageSize = 15;
     @track visiblePages = 5;
@@ -58,7 +57,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     @track buttonList=[];
 
     subscription = {};
-    channelName = '/event/BroadcastUpdateEvent__e';
+    channelName = '/event/MVWB__BroadcastUpdateEvent__e';
 
     get showNoRecordsMessage() {
         return this.filteredData.length === 0;
@@ -138,31 +137,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     get isNextDisabled() {
         return this.selectedGroupIds.length === 0;
     }
-
-    get displayListOptions() {
-        return [
-            { label: 'Broadcast', value: 'Broadcast' },
-            { label: 'Campaign', value: 'Campaign' }
-        ];
-    }
-
-    checkActionDisabled(event){
-        const status = event.target.dataset.value;
-        console.log('Status ::: ',status);
-        
-        if(status == 'Completed'){
-            return true;
-        } else {
-            return false;
-        }
-    }
     
-    // connectedCallback() {
-    //     this.loadBroadcastGroups();
-    //     this.subscribeToPlatformEvent();
-    //     this.loadAllTemplates(); // Load templates on component initialization
-    // }
-
     async connectedCallback(){
         try {
             this.isLoading = true;
@@ -171,11 +146,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 return; // Stops execution if license is expired
             }
             this.isTemplateVisible = true;
-            if (this.isBroadCastSelected) {
-                this.loadBroadcastGroups();
-            } else {
-                this.loadCampaigns();
-            }
+            this.loadBroadcastGroups();
             this.subscribeToPlatformEvent();
             this.loadAllTemplates(); // Load templates on component initialization
             
@@ -187,7 +158,6 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
-            console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }
@@ -206,9 +176,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
         getTemplatesByObject()
             .then(result => {
                 // Convert the Apex Map to JavaScript Map
-                this.templateMap = new Map(Object.entries(result));
-                console.log('Template Map ::: ',this.templateMap);
-                
+                this.templateMap = new Map(Object.entries(result));                
                 this.updateTemplateOptions(); // Update options based on selected object
             })
             .catch(error => {
@@ -236,7 +204,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
 
         // Convert to combobox options format
         this.templateOptions = combinedTemplates.map(template => ({
-            label: template.Template_Name__c,
+            label: template.MVWB__Template_Name__c,
             value: template.Id
         }));
 
@@ -246,7 +214,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     subscribeToPlatformEvent() {
         subscribe(this.channelName, -1, (message) => {
             
-            if(message.data.payload.IsChanged__c === true){
+            if(message.data.payload.MVWB__IsChanged__c === true){
                 this.loadBroadcastGroups();
             }            
         })
@@ -257,21 +225,6 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             this.showToast('Error', 'Failed to subscribe to platform event.', 'error');
         });
     }
-    // subscribeToPlatformEvent() {
-    //     subscribe(this.channelName, -1, (message) => {
-    //         if (message.data.payload.IsChanged__c === true) {
-    //             if (this.isBroadCastSelected) {
-    //                 this.loadBroadcastGroups();
-    //             }
-    //         }
-    //     })
-    //     .then((response) => {
-    //         this.subscription = response;
-    //     })
-    //     .catch(() => {
-    //         this.showToast('Error', 'Failed to subscribe to platform event.', 'error');
-    //     });
-    // }
 
     // Method to unsubscribe from the Platform Event
     unsubscribeFromPlatformEvent() {
@@ -285,14 +238,11 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
         // this.isLoading = true;
         getBroadcastRecs()
             .then(result => {
-                console.log('Broadcast groups ::: ',result);
-                
                 this.data = result.map((item, index) => ({
                     ...item,
-                    index : index + 1
+                    index : index + 1,
                 }));                
-                console.log('Data ::: ',this.data);
-                
+
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })
@@ -303,58 +253,6 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.isLoading = false;
             });
     }
-
-    loadCampaigns() {
-        this.isLoading = true;
-        getCampaignRecs() // Replace with the actual Apex method to fetch campaigns
-            .then(result => {
-                this.data = result.map((item, index) => {
-                    return {
-                        ...item,
-                        index: index + 1,
-                        startDate: this.formatDate(item.Start_Date__c),
-                        endDate: this.formatDate(item.End_Date__c),
-                        isDisabled : item.Status__c == 'Completed' ? true : false
-                    };
-                });
-                console.log('Campaigns ::: ',this.data);
-                
-                this.filteredData = [...this.data];
-                this.updateShownData();
-            })
-            .catch(() => {
-                this.showToast('Error', 'Failed to load campaigns', 'error');
-            })
-            .finally(() => {
-                this.isLoading = false;
-            });
-    }
-
-    formatDate(dateStr) {
-        if (!dateStr) return '';
-        const dateObj = new Date(dateStr);
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        }).format(dateObj);
-    }
-
-    // handleListChange(event) {
-    //     this.selectedListValue = event.detail.value;
-    //     this.isBroadCastSelected = this.selectedListValue === 'Broadcast';
-    //     this.currentPage = 1; // Reset to the first page when changing the list
-        
-    
-    //     if (this.isBroadCastSelected) {
-    //         this.loadBroadcastGroups();
-    //     } else {
-    //         this.loadCampaigns();
-    //     }
-    // }
     
     updateShownData() {
         try {
@@ -367,16 +265,17 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     }
 
     handleSearch(event) {
+        this.broadcastSearchTerm = event.target.value.trim().toLowerCase();
         try {
-            if(event.detail.value.trim().toLowerCase() != null) {
+            if(event.target.value.trim().toLowerCase() != null) {
                 this.filteredData = this.data.filter(item => 
                     item.Name &&
-                    item.Name.toLowerCase().includes(event.detail.value.trim().toLowerCase())
+                    item.Name.toLowerCase().includes(event.target.value.trim().toLowerCase())
                 );
                 this.updateShownData();
             }
         } catch (error) {
-            this.showToast('Error', 'Error searching', 'error');
+            this.showToast('Error', `Error searching : ${error}`, 'error');
         }
     }
     
@@ -431,6 +330,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     }
 
     handleSearchPopup(event) {
+        this.broadcastGroupSearchTerm = event.target.value.trim().toLowerCase();
         const searchValue = event.target.value.trim().toLowerCase();
     
         // Filter the broadcast groups based on the search value
@@ -449,27 +349,21 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
         try {
             const groupId = event.target.dataset.id;
             const selectedGroup = this.broadcastGroups.find(group => group.Id === groupId);
-            console.log('Selected group ::: ',selectedGroup);
-            
+    
             if (event.target.checked) {
                 // Add group ID to selected list if checked
                 if (!this.selectedGroupIds.some(group => group.Id === groupId)) {
                     this.selectedGroupIds = [
                         ...this.selectedGroupIds,
-                        { Id: groupId, ObjName: selectedGroup.Object_Name__c,Name:selectedGroup.Name } // Store both Id and Name
+                        { Id: groupId, ObjName: selectedGroup.MVWB__Object_Name__c,Name:selectedGroup.Name } // Store both Id and Name
                     ];
                 }
             } else {
                 // Remove group ID if unchecked
                 this.selectedGroupIds = this.selectedGroupIds.filter(group => group.Id !== groupId);
             }
-
-            console.log('Selected group ids ::: ',this.selectedGroupIds);
-            
     
             this.selectedObjectName = this.selectedGroupIds[0]?.ObjName || '';
-            console.log('Selected object name ::: ',this.selectedObjectName);
-            
     
             // Update filteredGroups to reflect selection
             this.filteredGroups = this.filteredGroups.map(group => ({
@@ -673,18 +567,14 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     handleSchedule(){
 
         if(this.selectedDateTime === '' || this.selectedDateTime === null){
-            console.log('selectedTime==> ', this.selectedDateTime);
             this.showToast('Error!', 'Please select date and time', 'error');
             return;
         }     
 
         const selectedTime = new Date(this.selectedDateTime);
-        console.log('selectedTime==> ', this.selectedDateTime);
-        
         const now = new Date();
 
         if (selectedTime < now) {
-            console.log('selectedTime==> ', this.selectedDateTime);
             this.showToast('Error!', 'Selected date and time cannot be in the past', 'error');
             return;
         }   
@@ -718,8 +608,6 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
 
         this.isLoading = true;
         let grpIdList = this.selectedGroupIds.map(record => record.Id);
-        // console.log('Selected group ids ::: ',grpIdList);
-        // console.log('Selected template ::: ',this.selectedGroupIds);
 
         createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: false, timeOfMessage: ''})
             .then(result => {
@@ -737,109 +625,6 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.isLoading = false;
             });
     }
-
-    // handleListChange(event){
-    //     const selectedValue = event.detail.value;
-    //     console.log('Selected value ::: ',selectedValue);
-    //     // this.selectedTemplate = selectedValue;
-    // }
-
-    handleNextbroadcastOnPopup(event) {
-        try {
-            const firstObjName = this.selectedGroupIds[0]?.ObjName;
-            const allSameObjName = this.selectedGroupIds.every(group => group.ObjName === firstObjName);
-
-            if (!allSameObjName) {
-                this.showToast('Error!', 'Please select groups with the same object name', 'error');
-                return;
-            }
-
-            const names = this.selectedGroupIds.map(item => item.Name); // Extract names from selectedGroupIds
-            console.log('Selected template ::: ', this.selectedTemplate);
-            console.log('Selected names ::: ', names);
-
-            event.preventDefault();
-
-            // Encode the data as query parameters
-            const navigationState = {
-                groupNames: names,
-                objectName : this.selectedObjectName,
-                groupId : this.selectedGroupIds,
-                campaignId: ''
-            };
-            const encodedNavigationState = btoa(JSON.stringify(navigationState));
-            this.showPopup = false;
-            // Navigate to the wbCreateMarketingCampaign component
-            this[NavigationMixin.Navigate]({
-                type: 'standard__navItemPage',
-                attributes: {
-                    apiName: 'create_Marketing' // Replace with the API name of your Lightning Tab
-                },
-                state: {
-                    c__navigationState: encodedNavigationState
-                }
-            });
-        } catch (error) {
-            console.error('Error in handleNextbroadcastOnPopup:', error);
-            this.showToast('Error!', 'An error occurred while navigating', 'error');
-        }
-    }
-
-    // editMarketingCampaign(event){
-    //     const campaignId = event.target.dataset.id; // Get the campaign ID from the button or element
-    //     if (!campaignId) {
-    //         this.showToast('Error', 'Campaign ID is missing', 'error');
-    //         return;
-    //     }
-    //     const navigationState = {
-    //         // groupNames: names,
-    //         // objectName : this.selectedObjectName,
-    //         // groupId : this.selectedGroupIds,
-    //         campaignId: campaignId
-    //     };
-    //     const encodedNavigationState = btoa(JSON.stringify(navigationState));
-
-    //     // Navigate to the wbCreateMarketingCampaign component
-    //     this[NavigationMixin.Navigate]({
-    //         type: 'standard__navItemPage',
-    //         attributes: {
-    //             apiName: 'create_Marketing' // Replace with the API name of your Lightning Tab
-    //         },
-    //         state: {
-    //             c__navigationState: encodedNavigationState
-    //         }
-    //     });
-    // }
-
-    // deleteMarketingCampaign(event) {
-    //     const campaignId = event.target.dataset.id; // Get the campaign ID from the button or element
-    //     if (!campaignId) {
-    //         this.showToast('Error', 'Campaign ID is missing', 'error');
-    //         return;
-    //     }
-    
-    //     // Confirm deletion
-    //     // if (!confirm('Are you sure you want to delete this campaign?')) {
-    //     //     return;
-    //     // }
-    
-    //     this.isLoading = true; // Show a loading spinner
-    //     deleteMarketingCampaign({ campaignId })
-    //         .then((result) => {
-    //             if (result === 'Success') {
-    //                 this.showToast('Success', 'Campaign deleted successfully', 'success');
-    //                 this.loadCampaigns(); // Reload the campaigns list
-    //             } else {
-    //                 this.showToast('Error', result, 'error');
-    //             }
-    //         })
-    //         .catch((error) => {
-    //             this.showToast('Error', `Failed to delete campaign: ${error.body.message}`, 'error');
-    //         })
-    //         .finally(() => {
-    //             this.isLoading = false; // Hide the loading spinner
-    //         });
-    // }
     
     handleNameClick(event) {
         this.selectedRecordId = event.target.dataset.recordId;

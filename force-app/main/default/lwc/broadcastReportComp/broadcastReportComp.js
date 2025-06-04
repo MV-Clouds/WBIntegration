@@ -41,11 +41,11 @@ export default class BroadcastReportComp extends LightningElement {
     }
 
     get status() {
-        return this.record?.Status__c || '—';
+        return this.record?.MVWB__Status__c || '—';
     }
 
     get recipientCount() {
-        return this.record?.Recipient_Count__c || '0';
+        return this.record?.MVWB__Recipient_Count__c || '0';
     }
 
     get groupName() {
@@ -55,7 +55,7 @@ export default class BroadcastReportComp extends LightningElement {
     
     get memberCount() {
         const group = this.data?.find(item => item.Id === this.selectedGroupId);
-        return group?.Count_of_Members__c?.toString() || '0';
+        return group?.MVWB__Count_of_Members__c?.toString() || '0';
     }    
 
     get totalItems() {
@@ -211,7 +211,7 @@ export default class BroadcastReportComp extends LightningElement {
         .then(result => {
             // Find the record that matches the given recordId
             this.record = result.find(item => item.Id === this.recordId);
-            this.templateName = this.record.Template__r?.Template_Name__c || '—';
+            this.templateName = this.record.MVWB__Template__r?.MVWB__Template_Name__c || '—';
         })
         .catch(error => {
             console.error('Error fetching records:', error);
@@ -226,7 +226,7 @@ export default class BroadcastReportComp extends LightningElement {
                     ...item,
                     index: index + 1,
                 }));
-                this.selectedGroupObject = this.data.Object_Name__c;
+                this.selectedGroupObject = this.data.MVWB__Object_Name__c;
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })

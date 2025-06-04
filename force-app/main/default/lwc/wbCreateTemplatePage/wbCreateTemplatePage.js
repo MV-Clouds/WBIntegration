@@ -884,8 +884,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 .then((data) => {
                     const { template, templateVariables } = data;
 
-                    this.selectedOption = template.Template_Type__c;
-                    this.activeTab = template.Template_Category__c;
+                    this.selectedOption = template.MVWB__Template_Type__c;
+                    this.activeTab = template.MVWB__Template_Category__c;
                     if (this.activeTab === 'Marketing') {
                         this.selectedTab = 'section1';
                     } else if (this.activeTab === 'Utility') {
