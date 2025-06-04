@@ -98,7 +98,8 @@ public with sharing class ObjectConfigController {
                 
                 // Skip fields that shouldn't be included
                 if (fieldDescribe.isNillable() || fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || 
-                    !fieldDescribe.isCreateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
+                    !fieldDescribe.isCreateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId() || 
+                    fieldDescribe.getType() == Schema.DisplayType.BOOLEAN) {
                     continue;
                 }
     
@@ -133,7 +134,13 @@ public with sharing class ObjectConfigController {
                 
                 // Handle lookup fields (assign first record ID)
                 else if (fieldDescribe.getType() == Schema.DisplayType.Reference) {
-                    String relatedObject = fieldDescribe.getReferenceTo()[0].getDescribe().getName();
+                    System.debug(fieldDescribe.getReferenceTo());
+                    String relatedObject = '';
+                    if(fieldDescribe.getName() == 'OwnerId') {
+                        relatedObject = 'User';
+                    } else {
+                        relatedObject = fieldDescribe.getReferenceTo()[0].getDescribe().getName();
+                    }
                     fieldInfo.put('value', '');
                     fieldInfo.put('relatedObject', relatedObject);
                     fieldInfo.put('relatedRecordName', '');
