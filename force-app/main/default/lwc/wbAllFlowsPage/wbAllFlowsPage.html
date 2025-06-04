@@ -11,7 +11,6 @@
         </div>
     </template>
     <template if:false={showLicenseError}>
-
         <template if:true={isFlowVisible}>
             <div class="slds-theme_default main">
                 <template if:true={isLoading}>
@@ -24,14 +23,13 @@
                         <p class="txt">WhatsApp Flows</p>
                     </div>
 
-                    <div class="filterparent">
-                        <div class="filterdiv">
+                        <!-- <div class="filterdiv">
                             <lightning-input variant="label-hidden" class="filter search-div" type="search"
                                 placeholder="Search Name" onchange={handleSearchInputChange}></lightning-input>
                             <lightning-combobox variant="label-hidden" class="filter" value={statusValues}
                                 placeholder="Status" options={statusOptions}
                                 onchange={handleStatusChange}></lightning-combobox>
-                        </div>
+                        </div> -->
 
 
                     <div class="filterparent">
@@ -41,13 +39,9 @@
                                     <lightning-icon icon-name="utility:search" size="x-small"></lightning-icon>
                                 </div>
                                 <input type="search" class="slds-input" name="searchInput" placeholder="Search Name"
-                                    onkeyup={handleChange} />
+                                    onkeyup={handleSearchInputChange} />
                             </div>
 
-                            <!-- <lightning-input variant="label-hidden" class="filter search-div" type="search" placeholder="Search Name" onchange={handleSearchInputChange}></lightning-input> -->
-                            <!-- <lightning-combobox variant="label-hidden" class="filter" value={statusValues}
-                                placeholder="Status" options={statusOptions}
-                                onchange={handleStatusChange}></lightning-combobox> -->
                             <div class="custom-status-select">
                                 <select class="filter" value={statusValues} onchange={handleStatusChange}>
                                     <option value="" disabled selected>Status</option>
@@ -100,44 +94,50 @@
                                         <td class="tableData" data-label="Sr. No.">
                                             <div class="slds-truncate">{record.serialNumber}</div>
                                         </td>
-                                        <td class="tableData" data-label="Flow Name" title={record.Flow_Name__c}>
-                                            <div class="truncate-name">{record.Flow_Name__c}</div>
+                                        <td class="tableData" data-label="Flow Name" title={record.MVWB__Flow_Name__c}>
+                                            <div class="truncate-name">{record.MVWB__Flow_Name__c}</div>
                                         </td>
                                         <td class="tableData" data-label="Flow ID">
-                                            <div class="slds-truncate">{record.Flow_Id__c}</div>
+                                            <div class="slds-truncate">{record.MVWB__Flow_Id__c}</div>
                                         </td>
                                         <td class="tableData" data-label="Status">
                                             <div class="slds-truncate">
-                                                <p class={record.Status__c}>{record.Status__c}</p>
+                                                <p class={record.MVWB__Status__c}>{record.MVWB__Status__c}</p>
                                             </div>
                                         </td>
                                         <td class="tableData status" data-label="LastModifiedDate">
                                             <div class="slds-truncate">{record.LastModifiedDate}</div>
                                         </td>
                                         <td class="tableData tablebtns" data-label="Actions">
-                                            <template if:false={record.isPublished}>
-                                                <!-- <button class="action-buttons slds-m-right--x-small">
-                                                <img src="/resource/editIcon" class={record.cssClass} alt="edit" data-id={record.id} onclick={editTemplate} >
+                                            <template if:false={record.isDeprecated}>
+                                                <button class="action-buttons">
+                                                    <img src="/resource/MVWB__previewIcon" class="action" title="preview"
+                                                        alt="preview" data-id={record.MVWB__Flow_Id__c}
+                                                        onclick={previewTemplate}>
+                                                </button>
+                                            </template>
+                                            <!-- <button disabled={record.isButtonDisabled} class="action-buttons slds-m-horizontal--x-small">
+                                                <img src="/resource/editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
                                             </button> -->
-                                                <button class="action-buttons">
-                                                    <img src="/resource/editIcon" class="action edit" alt="edit"
-                                                        data-id={record.id} onclick={editTemplate}>
-                                                </button>
-                                            </template>
-                                            <template if:true={record.isPublished}>
-                                                <button class="action-buttons">
-                                                    <img src="/resource/previewIcon" class="action" alt="preview"
-                                                        data-id={record.id} onclick={previewTemplate}>
-                                                </button>
-                                                <button class="action-buttons">
-                                                    <img src="/resource/editIcon" class="action edit" alt="edit"
-                                                        data-id={record.id} onclick={editTemplate}>
-                                                </button>
-                                                <button class="action-buttons">
-                                                    <img src="/resource/trashIcon" class="action trash" alt="delete"
-                                                        data-id={record.id} onclick={deleteTemplate}>
-                                                </button>
-                                            </template>
+                                            <button class="action-buttons">
+                                                <template if:true={record.isEditable}>
+                                                    <img src="/resource/MVWB__editIcon" class="action"
+                                                        title="Edit" alt="Edit" data-id={record.MVWB__Flow_Id__c}
+                                                        data-status={record.MVWB__Status__c} onclick={editFlow}>
+                                                </template>
+                                            </button>
+                                            <button class="action-buttons">
+                                                <template if:true={record.isPublished}>
+                                                    <img src="/resource/MVWB__trashIcon" class="action trash"
+                                                        title="Deprecate" alt="Deprecate" data-id={record.MVWB__Flow_Id__c}
+                                                        data-status={record.MVWB__Status__c} onclick={deprecateFlow}>
+                                                </template>
+                                                <template if:true={record.isDraft}>
+                                                    <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete"
+                                                        alt="Delete" data-id={record.MVWB__Flow_Id__c}
+                                                        data-status={record.MVWB__Status__c} onclick={deleteFlow}>
+                                                </template>
+                                            </button>
                                         </td>
                                     </tr>
                                 </template>
@@ -150,9 +150,9 @@
                             <div class="empty-state">
                                 <div class="empty-state__content">
                                     <div class="empty-state__icon">
-                                        <img src="/resource/emptyState" alt="" draggable="false">
+                                        <img src="/resource/MVWB__emptyState" alt="" draggable="false">
                                     </div>
-                                    <div class="empty-state__message">No Data Available to Show.</div>
+                                    <div class="empty-state__message">No data available to show</div>
                                 </div>
                             </div>
                         </div>
@@ -217,7 +217,6 @@
             </div>
         </template>
         <template if:true={iscreateflowvisible}>
-
             <c-create-flow-management is-edit-mode={isEditMode} selected-flow-id={selectedFlowId}></c-create-flow-management>
         </template>
     </template>

@@ -20,7 +20,7 @@
 }
 
 .container {
-    padding: 1rem 1rem 0 1rem;
+    padding: 0rem 1rem 0 1rem;
     flex-grow: 1;
 }
 
@@ -264,14 +264,18 @@ span {
 .action-buttons{
     padding: 0;
     border: none;
-    background: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+.table tbody tr:hover {
+    background-color: #e1eaf5;
 }
 
 .action{
     width: 27px;
     color: black;
     border: 1px solid #dfdddd;
-    /* background: white; */
     padding: 0.27rem;
     border-radius: 3px;
     cursor: pointer;

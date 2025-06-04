@@ -382,7 +382,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 // Format template body
                 this.formatedTempBody = this.formatText(this.tempBody);
 
-                if (template.Template_Category__c === 'Authentication') {
+                if (template.MVWB__Template_Category__c === 'Authentication') {
                     this.formatedTempBody = '{{code}} ' + this.formatedTempBody;
                     if (this.isSecurityRecommedation) {
                         this.formatedTempBody += '\n For your security, do not share this code.';

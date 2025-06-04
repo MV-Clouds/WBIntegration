@@ -9,7 +9,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
     @track filteredData = [];
     @track paginatedData = [];
     @track currentPage = 1;
-    @track pageSize = 10;
+    @track pageSize = 15;
     @track visiblePages = 5;
     @track isLoading = false;
     @track isNewBroadcast = false;
@@ -110,7 +110,6 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
     async checkLicenseStatus() {
         try {
             const isLicenseValid = await checkLicenseUsablility();
-            console.log('isLicenseValid => ', isLicenseValid);
             if (!isLicenseValid) {
                 this.showLicenseError = true;
             }

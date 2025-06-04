@@ -9,9 +9,9 @@ public with sharing class WhatsAppFlowController {
     }
 
     @AuraEnabled
-    public static List<MVWB__Flow__c> getWhatsAppFlowById(String flowId) {
-        List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Flow_Name__c, MVWB__Status__c, MVWB__Category__c, MVWB__Template_Type__c, MVWB__Flow_JSON__c, LastModifiedDate FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
-        return flowRecs.size() > 0 ? flowRecs : new List<MVWB__Flow__c>();
+    public static List<Flow__c> getWhatsAppFlowById(String flowId) {
+        List<Flow__c> flowRecs = [SELECT Id, Flow_Name__c, Status__c, Category__c, Template_Type__c, Flow_JSON__c, LastModifiedDate FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+        return flowRecs.size() > 0 ? flowRecs : new List<Flow__c>();
     }
 
     @AuraEnabled
@@ -131,10 +131,10 @@ public with sharing class WhatsAppFlowController {
                 System.debug('Status Code: ' + response.getStatusCode());
                 System.debug('Response Body: ' + response.getBody());
 
-                List<MVWB__Flow__c> flowRecs = [SELECT Id, MVWB__Status__c, MVWB__Flow_Id__c FROM MVWB__Flow__c WHERE MVWB__Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                List<Flow__c> flowRecs = [SELECT Id, Flow_JSON__c, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
                 if(flowRecs.size() > 0){
-                    flowRecs[0].MVWB__Flow_JSON__c = flowJson;
-                    flowRecs[0].MVWB__Status__c = 'Draft';
+                    flowRecs[0].Flow_JSON__c = flowJson;
+                    flowRecs[0].Status__c = 'Draft';
                     update as user flowRecs;
                 }
                 

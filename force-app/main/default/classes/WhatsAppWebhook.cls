@@ -33,12 +33,7 @@ global without sharing class WhatsAppWebhook{
     global static void doPost(){
         System.debug('InDoPost Method' + RestContext.request.headers.get('hub.verify_token'));
         System.debug('InDoPost Method2 ' + RestContext.request.params.get('hub.verify_token'));
-        // Verify Token (Replace with your Verify Token)
-        String verifyToken = '7fa1634d4f849b8ced3a249ec4ce8bb7db4d8046';
-        if (RestContext.request.headers.get('hub.verify_token') != verifyToken){
-            System.debug('InDoPost Method If condition');
-            RestContext.response.statusCode = 403;
-        }
+        
         // Get WhatsApp's raw JSON data
         System.debug('InDoPost Method before Payload');
         String jsonString = RestContext.request.requestBody.toString();
@@ -46,7 +41,6 @@ global without sharing class WhatsAppWebhook{
         try{
             processWhatsAppPayload(jsonString);
         } catch (Exception e){
-            // ErrorHandler.insert_errordata(e, 'WhatsAppWebhook', 'doPost', e.getMessage());
             System.debug('Error processing WhatsApp payload: ' + e.getMessage());
         }
     }
@@ -54,7 +48,7 @@ global without sharing class WhatsAppWebhook{
     public static void processWhatsAppPayload(String jsonString){
         try{
             System.debug('jsonString: ' + jsonString);
-            List<WhatsAppMessage> parsedMessages = parseMessages(jsonString);
+            parseMessages(jsonString);
 
             Map<String, Object> payload = (Map<String, Object>)JSON.deserializeUntyped(jsonString);
             System.debug('payload: ' + payload);
@@ -63,19 +57,16 @@ global without sharing class WhatsAppWebhook{
             Object messageobj = listofmessages[0];
 
             Map<String, Object> sender = new Map<String,Object>();
-            // for (Object messageobj : listofmessages) {
             if (messageobj != null){
                 Map<String, Object> messageMap = (Map<String, Object>)messageobj;
                 if (messageMap.get('changes') != null){
                     List<Object> changes = (List<Object>)messageMap.get('changes');
                     if (changes != null && !changes.isEmpty()){
                         Object changeObj = changes[0];
-                        // for (Object changeObj : changes) {
                         Map<String, Object> changeMap = (Map<String, Object>)changeObj;
                         Map<String, Object> value = (Map<String, Object>)changeMap.get('value');
                         Map<String, Object> metadata = (Map<String, Object>)value.get('metadata');
                         System.debug('value--->' + value);
-                        // Map<String, Object> metadata = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) changeObj).get('value')).get('metadata');
                         // Extract the phone_number_id
                         phoneNumberId = (String) metadata.get('phone_number_id');
                         System.debug('phonenumberid -- ' + phoneNumberId);
@@ -85,21 +76,14 @@ global without sharing class WhatsAppWebhook{
                         if(senders !=null && senders.size() > 0){
                             sender =  (Map<String, Object>) senders[0];
                         }
-                        
-                        // messages = (List<Object>) metadata.get('messages');
-                        System.debug('messages ==> ' + messages);
-                        // processWhatsAppMessages(messages);;
-                        // }
-                        // }
                     }
                 }
             }
-            // }
+
             if (messages != null){
                 Map<String, Object> message = (Map<String, Object>)messages[0];
                 processSingleMessage(message, sender);
             }
-            // processWhatsAppMessages(messages);
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processWhatsAppPayload', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in processWhatsAppPayload: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
@@ -469,7 +453,12 @@ global without sharing class WhatsAppWebhook{
             EventBus.publish(newChatEvent);
 
             if(userRecs.isEmpty()){
-                sendNotificationForContact(recordId, objectApiName);
+                List<Chat__c> lastSentChat = [SELECT Id, Phone__c, CreatedById FROM Chat__c WHERE Phone__c = :formattedNumber AND Type_of_Message__c = 'Outbound Messages' ORDER BY CreatedDate DESC LIMIT 1];
+                if (lastSentChat.size() > 0){
+                    sendNotificationForContact(recordId, objectApiName, lastSentChat[0].CreatedById);
+                } else {
+                    sendNotificationForContact(recordId, objectApiName, null);
+                }
             }
 
         } catch (Exception e){
@@ -630,7 +619,7 @@ global without sharing class WhatsAppWebhook{
         return filedata;
     }
 
-    public static void sendNotificationForContact(String recordId, String objectApiName){
+    public static void sendNotificationForContact(String recordId, String objectApiName, String addresseeId){
         try{
             String query = 'SELECT Id, Name, CreatedById FROM ' + objectApiName + ' WHERE Id = :recordId LIMIT 1';
             List<SObject> records = Database.query(query);
@@ -645,6 +634,9 @@ global without sharing class WhatsAppWebhook{
             // Prepare the custom notification object
             Set<String> addressee = new Set<String>();
             addressee.add((Id) record.get('CreatedById'));
+            if( addresseeId != null && addresseeId != ''){
+                addressee.add((Id) addresseeId);
+            }
             Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
             customNotificationObj.setBody(messageContent);
             customNotificationObj.setTitle('New Whatsapp Message Received');
@@ -658,9 +650,8 @@ global without sharing class WhatsAppWebhook{
         }
     }
 
-    public static List<WhatsAppMessage> parseMessages(String jsonString){
+    public static void parseMessages(String jsonString){
         try{
-            List<WhatsAppMessage> messages = new List<WhatsAppMessage>();
             Map<String, Object> jsonMap = (Map<String, Object>)JSON.deserializeUntyped(jsonString);
             List<Object> entries = (List<Object>)jsonMap.get('entry');
 
@@ -673,80 +664,7 @@ global without sharing class WhatsAppWebhook{
                         for (Object changeObj : changes){
                             Map<String, Object> change = (Map<String, Object>)changeObj;
                             Map<String, Object> value = (Map<String, Object>)change.get('value');
-                            List<Object> contacts = (List<Object>)value.get('contacts');
                             List<Object> statuses = (List<Object>)value.get('statuses');
-
-                            if (contacts != null && !contacts.isEmpty()){
-                                for (Object contactObj : contacts){
-                                    Map<String, Object> contact = (Map<String, Object>)contactObj;
-                                    Map<String, Object> profile = (Map<String, Object>)contact.get('profile');
-                                    String profileName = (String) profile.get('name');
-
-                                    List<Object> messagesList = (List<Object>)value.get('messages');
-                                    if (messagesList != null && !messagesList.isEmpty()){
-                                        for (Object messageObj : messagesList){
-                                            Map<String, Object> message = (Map<String, Object>)messageObj;
-                                            WhatsAppMessage msg = new WhatsAppMessage();
-                                            msg.profileName = profileName;
-                                            msg.timestamp = (String) message.get('timestamp');
-                                            msg.WAMId = (String) message.get('id');
-
-                                            String messageType = (String) message.get('type');
-
-                                            switch  on messageType{
-                                                when 'text'{
-                                                    Map<String, Object> text = (Map<String, Object>)message.get('text');
-                                                    msg.textBody = (String) text.get('body');
-                                                    msg.textType = messageType;
-                                                }
-                                                when 'document'{
-                                                    Map<String, Object> document = (Map<String, Object>)message.get('document');
-                                                    msg.textBody = (String) document.get('filename');
-                                                    msg.textType = messageType;
-                                                    msg.mimeType = (String) document.get('mime_type');
-                                                    msg.documentId = (String) document.get('id');
-                                                }
-                                                when 'image'{
-                                                    Map<String, Object> image = (Map<String, Object>)message.get('image');
-                                                    msg.imageBody = (String) image.get('caption');
-                                                    msg.imageType = messageType;
-                                                    msg.mimeType = (String) image.get('mime_type');
-                                                    msg.imageId = (String) image.get('id');
-                                                    msg.imageUrl = (String) image.get('link');
-                                                }
-                                                when 'video'{
-                                                    Map<String, Object> image = (Map<String, Object>)message.get('video');
-                                                    msg.videoBody = (String) image.get('caption');
-                                                    msg.videoType = messageType;
-                                                    msg.mimeType = (String) image.get('mime_type');
-                                                    msg.videoId = (String) image.get('id');
-                                                    msg.videoUrl = (String) image.get('link');
-                                                }
-                                                when 'audio'{
-                                                    Map<String, Object> image = (Map<String, Object>)message.get('audio');
-                                                    msg.audioBody = (String) image.get('caption');
-                                                    msg.audioType = messageType;
-                                                    msg.mimeType = (String) image.get('mime_type');
-                                                    msg.audioId = (String) image.get('id');
-                                                    msg.audioUrl = (String) image.get('link');
-                                                }
-                                                when 'button'{
-                                                    Map<String, Object> button = (Map<String, Object>)message.get('button');
-                                                    msg.textBody = (String) button.get('text');
-                                                    msg.textType = messageType;
-                                                }
-                                                // Handle other types (images, videos, etc.) if needed
-                                                when else{
-                                                    // Handle unsupported message types if necessary
-                                                    msg.textBody = 'Unsupported message type: ' + messageType;
-                                                    msg.textType = messageType;
-                                                }
-                                            }
-                                            messages.add(msg);
-                                        }
-                                    }
-                                }
-                            }
 
                             if (statuses != null && !statuses.isEmpty()){
                                 for (Object statusObj : statuses){
@@ -785,11 +703,9 @@ global without sharing class WhatsAppWebhook{
                     }
                 }
             }
-            return messages;
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'parseMessages', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in parseMessages: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
-            return null;
         }
     }
 
@@ -846,61 +762,6 @@ global without sharing class WhatsAppWebhook{
         }
     }
 
-    // public static void updateContactUserConsent(Contact con){
-
-    //     try{
-    //         System.debug('con.MVEX__User_Consent_Received__c' + con.MVEX__User_Consent_Received__c);
-    //         if (con.MVEX__User_Consent_Received__c == false){
-    //             con.MVEX__User_Consent_Received__c = true;
-    //             update con;
-    //         }
-    //     } catch (Exception e){
-    //         ErrorHandler.insert_errordata(e, 'WhatsAppWebhook', 'updateContactUserConsent', e.getMessage());
-    //         System.debug('Error in updateContactUserConsent: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
-    //     }
-    // }
-
-    public class WhatsAppMessage{
-        public String profileName{ get; set; }
-
-        public String timestamp{ get; set; }
-
-        public String WAMId{ get; set; }
-
-        public String textBody{ get; set; }
-
-        public String textType{ get; set; }
-
-        public String mimeType{ get; set; }
-
-        public String documentId{ get; set; }
-
-        public String imageId{ get; set; }
-
-        public String imageUrl{ get; set; }
-
-        public String imageBody{ get; set; }
-
-        public String imageType{ get; set; }
-
-        public String videoBody{ get; set; }
-
-        public String videoId{ get; set; }
-
-        public String videoUrl{ get; set; }
-
-        public String videoType{ get; set; }
-
-        public String audioBody{ get; set; }
-
-        public String audioType{ get; set; }
-
-        public String audioId{ get; set; }
-
-        public String audioUrl{ get; set; }
-
-    }
-
     public class CDLWrapper{
         public String linkedEntityId;
         public String contentDocumentId;
@@ -908,7 +769,5 @@ global without sharing class WhatsAppWebhook{
             this.linkedEntityId = linkedEntityId;
             this.contentDocumentId = contentDocumentId;
         }
-
     }
-
 }
