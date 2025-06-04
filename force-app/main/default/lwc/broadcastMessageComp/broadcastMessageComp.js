@@ -387,6 +387,7 @@ export default class BroadcastMessageComp extends LightningElement {
     handleListViewChange(event) {
         this.selectedListView = event.detail.value;
         this.fetchAllListViewRecords(this.selectedListView, this.sessionId, this.maxLimit);        
+        this.isLoading = true;
     }
 
     /**
@@ -440,6 +441,7 @@ export default class BroadcastMessageComp extends LightningElement {
         
         this.fetchListViewSOQL(listViewId, sessionId)
             .then(query => {
+                this.isLoading = false;
                 if (!query) {
                     return;
                 }
@@ -465,6 +467,7 @@ export default class BroadcastMessageComp extends LightningElement {
     * @Created By: Tirth Shah
     */
     fetchRecords(queryUrl, sessionId, maxLimit) {
+        this.isLoading = false;
         const domainURL = location.origin.replace('lightning.force.com', 'my.salesforce.com');
 
         const headers = new Headers();
