@@ -30,6 +30,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     @track FlowRecordId = '';
     @track isEdit = false;
     @track showLicenseError = false;
+    @track isLoading = false;
     // @track isFlowAutomationCreated = false;
 
     // --- Data Properties ---
@@ -710,7 +711,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     handleSave() {
-
+        this.isLoading = true;
         // console.log('saveAutomationPath triggered');
 
         if (!this.isFlowTemplate) {
@@ -748,10 +749,18 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             saveAutomationPaths({ automationPaths: automationPathRecords })
                 .then((result) => {
                     this.showToast('Success', `Automation Paths saved successfully.`, 'success');
+                    this.isLoading = false;
+                    this[NavigationMixin.Navigate]({
+                        type: "standard__navItemPage",
+                        attributes: {
+                            apiName: 'MVWB__Automation_Configuration'
+                        },
+                    });
                 })
                 .catch((error) => {
                     this.showToast('Error', `Failed to save automation paths.`, 'error');
-                });
+                    this.isLoading = false;
+                })
         } else {
             const fields = {};
 
@@ -822,10 +831,18 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                 updateRecord(updateInput)
                     .then(() => {
                         this.showToast('Success', 'Record updated successfully', 'success');
+                        this.isLoading = false;
+                        this[NavigationMixin.Navigate]({
+                            type: "standard__navItemPage",
+                            attributes: {
+                                apiName: 'MVWB__Automation_Configuration'
+                            },
+                        });
                     })
                     .catch(error => {
                         console.error('Error updating record', error);
                         this.showToast('Error', 'Error updating record', 'error');
+                        this.isLoading = false;
                     });
             } else {
 
@@ -837,10 +854,18 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     .then(result => {
                         // console.log('result = ', JSON.stringify(result));
                         this.showToast('Success', 'Record saved successfully', 'success');
+                        this.isLoading = false;
+                        this[NavigationMixin.Navigate]({
+                            type: "standard__navItemPage",  
+                            attributes: {
+                                apiName: 'MVWB__Automation_Configuration'
+                            },
+                        });
                     })
                     .catch(error => {
                         console.error('Error saving record', JSON.stringify(error));
                         this.showToast('Error', 'Error saving record', 'error');
+                        this.isLoading = false;
                     });
             }
         }
