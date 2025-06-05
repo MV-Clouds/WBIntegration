@@ -94,15 +94,15 @@
                                         <td class="tableData" data-label="Sr. No.">
                                             <div class="slds-truncate">{record.serialNumber}</div>
                                         </td>
-                                        <td class="tableData" data-label="Flow Name" title={record.MVWB__Flow_Name__c}>
-                                            <div class="truncate-name">{record.MVWB__Flow_Name__c}</div>
+                                        <td class="tableData" data-label="Flow Name" title={record.Flow_Name__c}>
+                                            <div class="truncate-name">{record.Flow_Name__c}</div>
                                         </td>
                                         <td class="tableData" data-label="Flow ID">
-                                            <div class="slds-truncate">{record.MVWB__Flow_Id__c}</div>
+                                            <div class="slds-truncate">{record.Flow_Id__c}</div>
                                         </td>
                                         <td class="tableData" data-label="Status">
                                             <div class="slds-truncate">
-                                                <p class={record.MVWB__Status__c}>{record.MVWB__Status__c}</p>
+                                                <p class={record.Status__c}>{record.Status__c}</p>
                                             </div>
                                         </td>
                                         <td class="tableData status" data-label="LastModifiedDate">
@@ -111,8 +111,8 @@
                                         <td class="tableData tablebtns" data-label="Actions">
                                             <template if:false={record.isDeprecated}>
                                                 <button class="action-buttons">
-                                                    <img src="/resource/MVWB__previewIcon" class="action" title="preview"
-                                                        alt="preview" data-id={record.MVWB__Flow_Id__c}
+                                                    <img src="/resource/previewIcon" class="action" title="preview"
+                                                        alt="preview" data-id={record.Flow_Id__c}
                                                         onclick={previewTemplate}>
                                                 </button>
                                             </template>
@@ -121,21 +121,21 @@
                                             </button> -->
                                             <button class="action-buttons">
                                                 <template if:true={record.isEditable}>
-                                                    <img src="/resource/MVWB__editIcon" class="action"
-                                                        title="Edit" alt="Edit" data-id={record.MVWB__Flow_Id__c}
-                                                        data-status={record.MVWB__Status__c} onclick={editFlow}>
+                                                    <img src="/resource/editIcon" class="action"
+                                                        title="Edit" alt="Edit" data-id={record.Flow_Id__c}
+                                                        data-status={record.Status__c} onclick={editFlow}>
                                                 </template>
                                             </button>
                                             <button class="action-buttons">
                                                 <template if:true={record.isPublished}>
-                                                    <img src="/resource/MVWB__trashIcon" class="action trash"
-                                                        title="Deprecate" alt="Deprecate" data-id={record.MVWB__Flow_Id__c}
-                                                        data-status={record.MVWB__Status__c} onclick={deprecateFlow}>
+                                                    <img src="/resource/trashIcon" class="action trash"
+                                                        title="Deprecate" alt="Deprecate" data-id={record.Flow_Id__c}
+                                                        data-status={record.Status__c} onclick={deprecateFlow}>
                                                 </template>
                                                 <template if:true={record.isDraft}>
-                                                    <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete"
-                                                        alt="Delete" data-id={record.MVWB__Flow_Id__c}
-                                                        data-status={record.MVWB__Status__c} onclick={deleteFlow}>
+                                                    <img src="/resource/trashIcon" class="action trash" title="Delete"
+                                                        alt="Delete" data-id={record.Flow_Id__c}
+                                                        data-status={record.Status__c} onclick={deleteFlow}>
                                                 </template>
                                             </button>
                                         </td>
@@ -150,7 +150,7 @@
                             <div class="empty-state">
                                 <div class="empty-state__content">
                                     <div class="empty-state__icon">
-                                        <img src="/resource/MVWB__emptyState" alt="" draggable="false">
+                                        <img src="/resource/emptyState" alt="" draggable="false">
                                     </div>
                                     <div class="empty-state__message">No data available to show</div>
                                 </div>

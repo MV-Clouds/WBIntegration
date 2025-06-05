@@ -190,9 +190,9 @@ export default class CreateFlowManagement extends LightningElement {
         getWhatsAppFlowById({ flowId: this.flowId })
             .then((data) => {
                 if (data) {
-                    this.jsonString = data[0].MVWB__Flow_JSON__c;
-                    this.status = data[0].MVWB__Status__c;
-                    this.flowName = data[0].MVWB__Flow_Name__c;
+                    this.jsonString = data[0].Flow_JSON__c;
+                    this.status = data[0].Status__c;
+                    this.flowName = data[0].Flow_Name__c;
                     this.LastUpdatedDate = data[0].LastModifiedDate;
                     this.formatJSONDataonUI();
                 } else {
