@@ -410,21 +410,21 @@
 
                 <div class="slds-modal__content pop-up" id="modal-content-id-1">
                     <div class="pop-heading">
-                        Warning
+                        ⚠️ Warning
                     </div>
                     <div class="popUpBody slds-p-around--medium">
                         <!-- Groups List -->
                         <div class="box-container">
-                            <p>Phone field mismatch for Object {selectedObject} in Webhook Configuration and Chat Window Configuration. Please keep phone field same for both configurations in order to not get any mismatched phone numbers field to send in chat window.</p>
+                            <p>Phone field mismatch detected for object {selectedObject} between Webhook Configuration and Chat Window Configuration. Please ensure both configurations use the same phone field to avoid sending mismatched phone numbers in the chat window.</p>
                         </div>
 
                         <div class="popUpFooter slds-text-align--center">
                             <lightning-button variant="brand-outline" onclick={handleCloseOnPopup} label="Close" class="slds-m-left_x-small"></lightning-button>
                             <template if:true={showPopupWBConfig}>
-                                <lightning-button variant="brand" label="Save" onclick={handleSaveWBConfigPopup} class="slds-m-left_x-small" ></lightning-button>
+                                <lightning-button variant="brand" label="Save Anyway" onclick={handleSaveWBConfigPopup} class="slds-m-left_x-small" ></lightning-button>
                             </template>
                             <template if:true={showPopupChatConfig}>
-                                <lightning-button variant="brand" label="Save" onclick={handleSaveChatConfigPopup} class="slds-m-left_x-small" ></lightning-button>
+                                <lightning-button variant="brand" label="Save Anyway" onclick={handleSaveChatConfigPopup} class="slds-m-left_x-small" ></lightning-button>
                             </template>
                         </div>
                     </div>

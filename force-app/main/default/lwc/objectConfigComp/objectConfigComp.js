@@ -18,6 +18,7 @@ export default class ObjectConfigComp extends LightningElement {
     @track availableObjectOptions = [];
     @track chatWindowRows = [];
     @track chatConfigCounter = 0;
+    @track selectedWebhookPhoneField = '';
     @track selectedPhoneFieldVal = '';
     @track selectedPhoneFieldLabel = '';
     @track activeSectionName = 'webhookConfig'; // Default open section
@@ -65,8 +66,10 @@ export default class ObjectConfigComp extends LightningElement {
             getUserConfig()
                 .then(data => {
                     const config = JSON.parse(data.ObjectConfigInfo);
+                    
                     if(config != '{}'){
                         this.selectedObject = this.capitalizeFirstLetter(config.objectApiName) || 'Contact';
+                        this.selectedWebhookPhoneField = config?.phoneField || '';
                         
                         // Store field values in an object
                         let savedFieldValues = config.requiredFields?.reduce((acc, field) => {
@@ -151,6 +154,8 @@ export default class ObjectConfigComp extends LightningElement {
             getRequiredFields({ objectName: this.selectedObject })
                 .then(data => {
                     this.textFields = data[0]?.textFields;
+                    
+                    const apexPhoneField = this.selectedWebhookPhoneField;
 
                     this.phoneFields = data[0]?.phoneFields.map(field => {
                         return {
@@ -158,8 +163,19 @@ export default class ObjectConfigComp extends LightningElement {
                             isSelected: false
                         };
                     });
-                    this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
-                    const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
+                    // Determine which phone field to select
+                    let selectedField = null;
+                    
+                    if (apexPhoneField && this.phoneFields.some(field => field.value === apexPhoneField)) {
+                        selectedField = this.phoneFields.find(field => field.value === apexPhoneField);
+                    } else if (this.phoneFields.some(field => field.value === 'Phone')) {
+                        selectedField = this.phoneFields.find(field => field.value === 'Phone');
+                    } else {
+                        selectedField = this.phoneFields[0] || null;
+                    }
+                    
+                    // this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
+                    // const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
                     if (selectedField) {
                         this.selectedPhoneFieldVal = selectedField.value;
                         this.selectedPhoneFieldLabel = selectedField.label;
