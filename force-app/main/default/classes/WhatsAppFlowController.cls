@@ -1,6 +1,6 @@
 public with sharing class WhatsAppFlowController {
 
-    public static List<WBConnect_Configuration__mdt> wbConfig = WBConnect_Configuration__mdt.getAll().values(); 
+    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
     
     @AuraEnabled
     public static List<sObject> getWhatsAppFlows() {
@@ -18,18 +18,18 @@ public with sharing class WhatsAppFlowController {
     public static String getJSONData(String type) {
         String jsonString = '';
         try {
-            List<WBC_Flows_JSON__mdt> FlowJSON = [SELECT Id, Default_JSON__c, Collect_purchase_interest_JSON__c, Customer_support_JSON__c, Get_feedback_JSON__c, Send_a_survey_JSON__c FROM WBC_Flows_JSON__mdt WITH SECURITY_ENFORCED LIMIT 1];
+            List<MVWB__WBC_Flows_JSON__mdt> FlowJSON = [SELECT Id, MVWB__Default_JSON__c, MVWB__Collect_purchase_interest_JSON__c, MVWB__Customer_support_JSON__c, MVWB__Get_feedback_JSON__c, MVWB__Send_a_survey_JSON__c FROM MVWB__WBC_Flows_JSON__mdt WITH SECURITY_ENFORCED LIMIT 1];
             
             if(type == 'Default') {
-                jsonString = FlowJSON[0].Default_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Default_JSON__c;
             } else if(type == 'Collect purchase interest') {
-                jsonString = FlowJSON[0].Collect_purchase_interest_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Collect_purchase_interest_JSON__c;
             } else if(type == 'Get feedback') {
-                jsonString = FlowJSON[0].Get_feedback_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Get_feedback_JSON__c;
             } else if(type == 'Send a survey') {
-                jsonString = FlowJSON[0].Send_a_survey_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Send_a_survey_JSON__c;
             } else if(type == 'Customer support') {
-                jsonString = FlowJSON[0].Customer_support_JSON__c;
+                jsonString = FlowJSON[0].MVWB__Customer_support_JSON__c;
             }
         } catch (Exception e) {
             System.debug('Error retrieving or parsing JSON: ' + e.getMessage());
@@ -41,8 +41,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String createWhatsAppFlow(String flowName, List<String> categories, String flowJson, String templateType) {
         try {
-            String accessToken = wbConfig[0].Access_Token__c;
-            String endpoint = wbConfig[0].API_Endpoint__c + '/' + wbConfig[0].API_Version__c + '/' + wbConfig[0].Business_Account_Id__c + '/flows';
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Business_Account_Id__c + '/flows';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -115,8 +115,8 @@ public with sharing class WhatsAppFlowController {
             // Convert the body to a Blob
             Blob bodyBlob = Blob.valueOf(bodyString);
           
-            String accessToken = wbConfig[0].Access_Token__c;
-            String endpoint = wbConfig[0].API_Endpoint__c + '/' + wbConfig[0].API_Version__c + '/' + flowId + '/assets';
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/assets';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -153,8 +153,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String publishWhatsAppFlow(String flowId) {
         try {
-            String accessToken = wbConfig[0].Access_Token__c;
-            String endpoint = wbConfig[0].API_Endpoint__c + '/' + wbConfig[0].API_Version__c + '/' + flowId + '/publish';
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/publish';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -187,8 +187,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String deleteWhatsAppFlow(String flowId) {
         try {
-            String accessToken = wbConfig[0].Access_Token__c;
-            String endpoint = wbConfig[0].API_Endpoint__c + '/' + wbConfig[0].API_Version__c + '/' + flowId;
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId;
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('DELETE');
@@ -214,8 +214,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String deprecateWhatsAppFlow(String flowId) {
         try {
-            String accessToken = wbConfig[0].Access_Token__c;
-            String endpoint = wbConfig[0].API_Endpoint__c + '/' + wbConfig[0].API_Version__c + '/' + flowId + '/deprecate';
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '/deprecate';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('POST');
@@ -242,8 +242,8 @@ public with sharing class WhatsAppFlowController {
     @AuraEnabled
     public static String getPreviewURLofWhatsAppFlow(String flowId) {
         try {
-            String accessToken = wbConfig[0].Access_Token__c;
-            String endpoint = wbConfig[0].API_Endpoint__c + '/' + wbConfig[0].API_Version__c + '/' + flowId + '?fields=preview.invalidate(false)';
+            String accessToken = wbConfig[0].MVWB__Access_Token__c;
+            String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + flowId + '?fields=preview.invalidate(false)';
             HttpRequest request = new HttpRequest();
             request.setEndpoint(endpoint);
             request.setMethod('GET');

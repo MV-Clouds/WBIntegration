@@ -21,8 +21,8 @@ export default class FlowPreviewModel extends LightningElement {
         getAllFlows()
             .then((data) => {
                 this.flows = data.map(flow => ({
-                    id: flow.Flow_Id__c,
-                    name: flow.Flow_Name__c,
+                    id: flow.MVWB__Flow_Id__c,
+                    name: flow.MVWB__Flow_Name__c,
                     date: this.formatDate(flow.LastModifiedDate),
                     isSelected: false
                 }));
