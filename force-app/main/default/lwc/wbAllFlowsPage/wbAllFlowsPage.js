@@ -153,10 +153,10 @@ export default class WbAllFlowsPage extends LightningElement {
                         return {
                             ...record,
                             serialNumber: index + 1,
-                            isEditable: record.Status__c === 'Published' || record.Status__c === 'Draft',
-                            isDraft: record.Status__c === 'Draft',
-                            isPublished: record.Status__c === 'Published',
-                            isDeprecated: record.Status__c === 'Deprecated',
+                            isEditable: record.MVWB__Status__c === 'Published' || record.MVWB__Status__c === 'Draft',
+                            isDraft: record.MVWB__Status__c === 'Draft',
+                            isPublished: record.MVWB__Status__c === 'Published',
+                            isDeprecated: record.MVWB__Status__c === 'Deprecated',
                             LastModifiedDate: this.formatDate(record.LastModifiedDate)
                         };
                     });
@@ -191,11 +191,11 @@ export default class WbAllFlowsPage extends LightningElement {
             let filtered = [...this.allRecords];
     
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
             }
     
             if (this.searchInput) {
-                filtered = filtered.filter(record => record.Flow_Name__c.toLowerCase().includes(this.searchInput));
+                filtered = filtered.filter(record => record.MVWB__Flow_Name__c.toLowerCase().includes(this.searchInput));
             }
     
             this.filteredRecords = filtered;
@@ -331,8 +331,8 @@ export default class WbAllFlowsPage extends LightningElement {
             var flowId = event.currentTarget.dataset.id;
             this.showPopup = true;
 
-            let matchingRecord = this.filteredRecords.find(record => record.Flow_Id__c === flowId);
-            if (matchingRecord && matchingRecord.Status__c === 'Draft') {
+            let matchingRecord = this.filteredRecords.find(record => record.MVWB__Flow_Id__c === flowId);
+            if (matchingRecord && matchingRecord.MVWB__Status__c === 'Draft') {
                 this.isFlowDraft = true;
             }
 
