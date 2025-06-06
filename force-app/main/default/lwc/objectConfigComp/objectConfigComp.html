@@ -32,7 +32,7 @@
         </template>
 
         <!-- Accordion Component -->
-        <lightning-accordion active-section-name={activeSectionName} onsectiontoggle={handleSectionToggle}>
+        <lightning-accordion allow-multiple-sections-open active-section-name={activeSectionName} onsectiontoggle={handleSectionToggle}>
             <!-- Webhook Configuration Section -->
             <lightning-accordion-section name="webhookConfig" label="Webhook Configuration">
                 <template if:false={isWebhookConfigEdit}>
@@ -396,5 +396,42 @@
         </lightning-accordion>
     </div>
 
+    <template if:true={showPopup}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container" style="width: 100rem !important;">
+
+                <!-- Close Button -->
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                    title="Close" onclick={handleCloseOnPopup} style="background-color: white !important;">
+                    <lightning-icon icon-name="utility:close" alternative-text="Close"
+                        size="small"></lightning-icon>
+                </button>
+
+                <div class="slds-modal__content pop-up" id="modal-content-id-1">
+                    <div class="pop-heading">
+                        ⚠️ Warning
+                    </div>
+                    <div class="popUpBody slds-p-around--medium">
+                        <!-- Groups List -->
+                        <div class="box-container">
+                            <p>Phone field mismatch detected for object {selectedObject} between Webhook Configuration and Chat Window Configuration. Please ensure both configurations use the same phone field to avoid sending mismatched phone numbers in the chat window.</p>
+                        </div>
+
+                        <div class="popUpFooter slds-text-align--center">
+                            <lightning-button variant="brand-outline" onclick={handleCloseOnPopup} label="Close" class="slds-m-left_x-small"></lightning-button>
+                            <template if:true={showPopupWBConfig}>
+                                <lightning-button variant="brand" label="Save Anyway" onclick={handleSaveWBConfigPopup} class="slds-m-left_x-small" ></lightning-button>
+                            </template>
+                            <template if:true={showPopupChatConfig}>
+                                <lightning-button variant="brand" label="Save Anyway" onclick={handleSaveChatConfigPopup} class="slds-m-left_x-small" ></lightning-button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
     </template>
 </template>
