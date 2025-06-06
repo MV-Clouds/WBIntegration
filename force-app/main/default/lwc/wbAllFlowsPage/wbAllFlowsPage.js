@@ -6,8 +6,8 @@ import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.depre
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.getPreviewURLofWhatsAppFlow';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
-import FLOW_OBJECT from "@salesforce/schema/Flow__c";
-import STATUS_FIELD from "@salesforce/schema/Flow__c.Status__c";
+import FLOW_OBJECT from "@salesforce/schema/MVWB__Flow__c";
+import STATUS_FIELD from "@salesforce/schema/MVWB__Flow__c.MVWB__Status__c";
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbAllFlowsPage extends LightningElement {
@@ -24,11 +24,13 @@ export default class WbAllFlowsPage extends LightningElement {
     @track isFlowDraft = false;
     @track showLicenseError = false;
     @track isEditMode = false;
+    @track isNameClicked = false;
     @track selectedFlowId = '';
     @track currentPage = 1;
-    @track pageSize = 10;
+    @track pageSize = 15;
     @track visiblePages = 5;
     @track paginatedData = [];
+
     get showNoRecordsMessage() {
         return this.filteredRecords.length === 0;
     }
@@ -104,7 +106,6 @@ export default class WbAllFlowsPage extends LightningElement {
         return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
     }
 
-
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
     flowMetadata;
 
@@ -175,6 +176,11 @@ export default class WbAllFlowsPage extends LightningElement {
         this.isFlowVisible = false;
         this.iscreateflowvisible = true;
     }
+    
+    handleNameClick(event) {
+        this.selectedFlowId = event.target.dataset.recordId;
+        this.isNameClicked = true;
+    }
 
     handleStatusChange(event) {
         this.statusValues = event.detail.value;
@@ -191,16 +197,14 @@ export default class WbAllFlowsPage extends LightningElement {
             let filtered = [...this.allRecords];
     
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
             }
     
             if (this.searchInput) {
-                filtered = filtered.filter(record => record.Flow_Name__c.toLowerCase().includes(this.searchInput));
+                filtered = filtered.filter(record => record.MVWB__Flow_Name__c.toLowerCase().includes(this.searchInput));
             }
     
             this.filteredRecords = filtered;
-            console.log('Filter Data ::: '+this.filteredRecords);
-            
             this.isLoading = false;
             this.updateShownData();
         } catch (error) {
@@ -219,29 +223,39 @@ export default class WbAllFlowsPage extends LightningElement {
         }
     }
 
+    handlePrevious() {
+        try{
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.updateShownData();
+            }
+        }catch(error){
+            this.showToast('Error', 'Error navigating to previous page', 'error');
+        }
+    }
+
     handleNext() {
-    try{
-        if (this.currentPage < this.totalPages) {
-            this.currentPage++;
-            this.updateShownData();
+        try{
+            if (this.currentPage < this.totalPages) {
+                this.currentPage++;
+                this.updateShownData();
+            }
+        }catch(error){
+            this.showToast('Error', 'Error navigating pages', 'error');
         }
-    }catch(error){
-        this.showToast('Error', 'Error navigating pages', 'error');
     }
-}
 
-handlePageChange(event) {
-    try{
-        const selectedPage = parseInt(event.target.getAttribute('data-id'), 10);
-        if (selectedPage !== this.currentPage) {
-            this.currentPage = selectedPage;
-            this.updateShownData();
+    handlePageChange(event) {
+        try{
+            const selectedPage = parseInt(event.target.getAttribute('data-id'), 10);
+            if (selectedPage !== this.currentPage) {
+                this.currentPage = selectedPage;
+                this.updateShownData();
+            }
+        }catch(error){
+            this.showToast('Error', 'Error navigating pages', 'error');
         }
-    }catch(error){
-        this.showToast('Error', 'Error navigating pages', 'error');
-    }
-} 
-
+    } 
 
     formatDate(dateString) {
         if(dateString){
@@ -323,8 +337,8 @@ handlePageChange(event) {
             var flowId = event.currentTarget.dataset.id;
             this.showPopup = true;
 
-            let matchingRecord = this.filteredRecords.find(record => record.Flow_Id__c === flowId);
-            if (matchingRecord && matchingRecord.Status__c === 'Draft') {
+            let matchingRecord = this.filteredRecords.find(record => record.MVWB__Flow_Id__c === flowId);
+            if (matchingRecord && matchingRecord.MVWB__Status__c === 'Draft') {
                 this.isFlowDraft = true;
             }
 
