@@ -711,163 +711,178 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     handleSave() {
-        this.isLoading = true;
-        // console.log('saveAutomationPath triggered');
-
-        if (!this.isFlowTemplate) {
-
-            const allButtonsHaveTemplates = Object.values(this.automationPaths).every(value => value !== null);
-
-            if (!allButtonsHaveTemplates) {
-                this.showToast('Error', 'Please select a template for all buttons before saving.', 'error');
-                return;
-            }
-
-            const automationPathRecords = Object.entries(this.automationPaths).map(([button, { templateId, templateType }]) => {
-                let actionType = "Send Email";
-                let actionTemplate = null;
-                let actionEmailTemplate = null;
-
-                if (templateType === "whatsapp") {
-                    actionType = "Send Message";
-                    actionTemplate = templateId;
-                } else {
-                    actionEmailTemplate = templateId;
-                }
-
-                return {
+        try {
+            this.isLoading = true;
+            // console.log('saveAutomationPath triggered');
+    
+            if (!this.isFlowTemplate) {
+    
+                // const allButtonsHaveTemplates = Object.values(this.automationPaths).every(value => value !== null);
+    
+                // if (!allButtonsHaveTemplates) {
+                //     this.showToast('Error', 'Please select a template for all buttons before saving.', 'error');
+                //     this.isLoading = false;
+                //     return;
+                // }
+                console.log('this.automationPaths:', JSON.stringify(this.automationPaths));
+                
+                const automationPathRecords = Object.entries(this.automationPaths)
+                .filter(([button, value]) => value !== null && typeof value === 'object')
+                .map(([button, { templateId, templateType }]) => {
+                    let actionType = "Send Email";
+                    let actionTemplate = null;
+                    let actionEmailTemplate = null;
+    
+                    if (templateType === "whatsapp") {
+                        actionType = "Send Message";
+                        actionTemplate = templateId;
+                    } else {
+                        actionEmailTemplate = templateId;
+                    }
+    
+                    return {
                     MVWB__Automation__c: this.recordId,
                     MVWB__Button_Value__c: button,
                     MVWB__Action_Type__c: actionType,
                     MVWB__Action_Template__c: actionTemplate,
                     MVWB__Action_Email_Template__c: actionEmailTemplate
-                };
-            });
-
+                    };
+                });
+    
             // console.log('Saving Automation Paths:', JSON.stringify(automationPathRecords));
-
-            saveAutomationPaths({ automationPaths: automationPathRecords })
-                .then((result) => {
-                    this.showToast('Success', `Automation Paths saved successfully.`, 'success');
-                    this.isLoading = false;
-                    this[NavigationMixin.Navigate]({
-                        type: "standard__navItemPage",
-                        attributes: {
-                            apiName: 'MVWB__Automation_Configuration'
-                        },
-                    });
-                })
-                .catch((error) => {
-                    this.showToast('Error', `Failed to save automation paths.`, 'error');
-                    this.isLoading = false;
-                })
-        } else {
-            const fields = {};
-
-            if (!this.selectedObject) {
-                this.showToast('Error', 'Please select an object.', 'error');
-                return;
-            }
-
-            // Check for any empty selectedFlowField
-            const hasEmptyFlowField = this.chatWindowRows.some(row => !row.selectedFlowField);
-            if (hasEmptyFlowField) {
-                this.showToast('Error', 'Please map all fields before saving.', 'error');
-                return;
-            }
-
-            // Check for duplicate selectedObjectField values
-            const selectedObjectFields = new Set();
-            let hasDuplicates = false;
-
-            for (let row of this.chatWindowRows) {
-                const field = row.selectedObjectField;
-                if (field) {
-                    if (selectedObjectFields.has(field)) {
-                        hasDuplicates = true;
-                        break;
-                    }
-                    selectedObjectFields.add(field);
-                }
-            }
-
-            if (hasDuplicates) {
-                this.showToast('Error', 'Each object field must be mapped uniquely.', 'error');
-                return;
-            }
-
-            fields.MVWB__Automation__c = this.recordId;
-            fields.MVWB__Action_Type__c = 'Create a Record';
-            // 1. Object Name
-            fields.MVWB__Object_Name__c = this.selectedObject;
-
-            // 2. Field Mapping
-            const mapping = {};
-            // this.chatWindowRows.forEach(row => {
-            //     if (row.selectedFlowField && row.selectedObjectField) {
-            //         mapping[row.selectedFlowField] = row.selectedObjectField;
-            //     }
-            // });
-            this.chatWindowRows.forEach(row => {
-                if (row.selectedFlowField && row.selectedObjectField) {
-                    if (!mapping[row.selectedFlowField]) {
-                        mapping[row.selectedFlowField] = [];
-                    }
-                    mapping[row.selectedFlowField].push(row.selectedObjectField);
-                }
-            });
-
-            fields.MVWB__Field_Mapping__c = JSON.stringify(mapping);
-            fields.MVWB__WB_Flow__c = this.FlowId;
-
-            if (this.FlowRecordId) {
-
-                // console.log('Updating existing record with ID:', this.FlowRecordId);
-
-                fields.Id = this.FlowRecordId;
-                // console.log('Fields to save:', JSON.stringify(fields));
-
-                const updateInput = { fields };
-                updateRecord(updateInput)
-                    .then(() => {
-                        this.showToast('Success', 'Record updated successfully', 'success');
+    
+                saveAutomationPaths({ automationPaths: automationPathRecords })
+                    .then((result) => {
+                        this.showToast('Success', `Automation Paths saved successfully.`, 'success');
                         this.isLoading = false;
                         this[NavigationMixin.Navigate]({
                             type: "standard__navItemPage",
                             attributes: {
-                                apiName: 'MVWB__Automation_Configuration'
+                            apiName: 'MVWB__Automation_Configuration'
                             },
                         });
-                    })
-                    .catch(error => {
-                        console.error('Error updating record', error);
-                        this.showToast('Error', 'Error updating record', 'error');
                         this.isLoading = false;
-                    });
+                    })
+                    .catch((error) => {
+                        this.showToast('Error', `Failed to save automation paths.`, 'error');
+                        this.isLoading = false;
+                    })
             } else {
-
-                // console.log('Creating new record');
-                // console.log('Fields to save:', JSON.stringify(fields));
-                const recordInput = { apiName: 'MVWB__Automation_Path__c', fields };
-
-                createRecord(recordInput)
-                    .then(result => {
-                        // console.log('result = ', JSON.stringify(result));
-                        this.showToast('Success', 'Record saved successfully', 'success');
-                        this.isLoading = false;
-                        this[NavigationMixin.Navigate]({
-                            type: "standard__navItemPage",  
-                            attributes: {
+                const fields = {};
+    
+                if (!this.selectedObject) {
+                    this.showToast('Error', 'Please select an object.', 'error');
+                    return;
+                }
+    
+                // Check for any empty selectedFlowField
+                const hasEmptyFlowField = this.chatWindowRows.some(row => !row.selectedFlowField);
+                if (hasEmptyFlowField) {
+                    this.showToast('Error', 'Please map all fields before saving.', 'error');
+                    return;
+                }
+    
+                // Check for duplicate selectedObjectField values
+                const selectedObjectFields = new Set();
+                let hasDuplicates = false;
+    
+                for (let row of this.chatWindowRows) {
+                    const field = row.selectedObjectField;
+                    if (field) {
+                        if (selectedObjectFields.has(field)) {
+                            hasDuplicates = true;
+                            break;
+                        }
+                        selectedObjectFields.add(field);
+                    }
+                }
+    
+                if (hasDuplicates) {
+                    this.showToast('Error', 'Each object field must be mapped uniquely.', 'error');
+                    this.isLoading = false;
+                    return;
+                }
+    
+            fields.MVWB__Automation__c = this.recordId;
+            fields.MVWB__Action_Type__c = 'Create a Record';
+                // 1. Object Name
+            fields.MVWB__Object_Name__c = this.selectedObject;
+    
+                // 2. Field Mapping
+                const mapping = {};
+                // this.chatWindowRows.forEach(row => {
+                //     if (row.selectedFlowField && row.selectedObjectField) {
+                //         mapping[row.selectedFlowField] = row.selectedObjectField;
+                //     }
+                // });
+                this.chatWindowRows.forEach(row => {
+                    if (row.selectedFlowField && row.selectedObjectField) {
+                        if (!mapping[row.selectedFlowField]) {
+                            mapping[row.selectedFlowField] = [];
+                        }
+                        mapping[row.selectedFlowField].push(row.selectedObjectField);
+                    }
+                });
+    
+            fields.MVWB__Field_Mapping__c = JSON.stringify(mapping);
+            fields.MVWB__WB_Flow__c = this.FlowId;
+    
+                if (this.FlowRecordId) {
+    
+                // console.log('Updating existing record with ID:', this.FlowRecordId);
+    
+                    fields.Id = this.FlowRecordId;
+                    // console.log('Fields to save:', JSON.stringify(fields));
+    
+                    const updateInput = { fields };
+                    updateRecord(updateInput)
+                        .then(() => {
+                            this.showToast('Success', 'Record updated successfully', 'success');
+                            this.isLoading = false;
+                            this[NavigationMixin.Navigate]({
+                                type: "standard__navItemPage",
+                                attributes: {
                                 apiName: 'MVWB__Automation_Configuration'
-                            },
+                                },
+                            });
+                            this.isLoading = false;
+                        })
+                        .catch(error => {
+                            console.error('Error updating record', error);
+                            this.showToast('Error', 'Error updating record', 'error');
+                            this.isLoading = false;
                         });
-                    })
-                    .catch(error => {
-                        console.error('Error saving record', JSON.stringify(error));
-                        this.showToast('Error', 'Error saving record', 'error');
-                        this.isLoading = false;
-                    });
+                } else {
+    
+                    // console.log('Creating new record');
+                    // console.log('Fields to save:', JSON.stringify(fields));
+                const recordInput = { apiName: 'MVWB__Automation_Path__c', fields };
+    
+                    createRecord(recordInput)
+                        .then(result => {
+                            // console.log('result = ', JSON.stringify(result));
+                            this.showToast('Success', 'Record saved successfully', 'success');
+                            this.isLoading = false;
+                            this[NavigationMixin.Navigate]({
+                                type: "standard__navItemPage",  
+                                attributes: {
+                                apiName: 'MVWB__Automation_Configuration'
+                                },
+                            });
+                            this.isLoading = false;
+                        })
+                        .catch(error => {
+                            console.error('Error saving record', JSON.stringify(error));
+                            this.showToast('Error', 'Error saving record', 'error');
+                            this.isLoading = false;
+                        });
+                }
             }
+            this.isLoading = false;
+        } catch (error) {
+            console.error('Error in handleSave:', error);
+            this.showToast('Error', 'An unexpected error occurred while saving.', 'error');
+            this.isLoading = false;
         }
     }
 
