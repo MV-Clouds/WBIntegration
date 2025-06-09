@@ -717,13 +717,13 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     
             if (!this.isFlowTemplate) {
     
-                // const allButtonsHaveTemplates = Object.values(this.automationPaths).every(value => value !== null);
+                const atLeastOneButtonHasTemplate = Object.values(this.automationPaths).some(value => value !== null);
     
-                // if (!allButtonsHaveTemplates) {
-                //     this.showToast('Error', 'Please select a template for all buttons before saving.', 'error');
-                //     this.isLoading = false;
-                //     return;
-                // }
+                if (!atLeastOneButtonHasTemplate) {
+                    this.showToast('Error', 'Please select a template for at least one button before saving.', 'error');
+                    this.isLoading = false;
+                    return;
+                }
                 console.log('this.automationPaths:', JSON.stringify(this.automationPaths));
                 
                 const automationPathRecords = Object.entries(this.automationPaths)
