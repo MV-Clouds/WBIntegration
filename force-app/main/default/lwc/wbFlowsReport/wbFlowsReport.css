@@ -14,7 +14,60 @@
 }
 
 .heading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
     padding: 0 1rem;
+    margin: 0 1rem;
+}
+
+.breadcrumb-nav {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.breadcrumb-link {
+    color: rgb(107, 107, 107);
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    max-width: 140px;       /* Adjust width based on your layout */
+    display: inline-block;  /* Needed for truncation */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom; /* Align better with breadcrumb separator */
+}
+
+.breadcrumb-link:hover {
+    text-decoration: underline !important;
+}
+
+.current-crumb {
+    color: #2b2929;
+    font-size: 16px;
+    font-weight: 600;
+    max-width: 140px;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.slds-breadcrumb__item:not(:first-child)::before {
+    font-size: medium;
+    color: rgb(107, 107, 107);
+}
+
+ol .slds-list_horizontal {
+    align-items: baseline;
+}
+
+.heading {
+    font-size: 1.5rem;
+    margin: 0 auto;
 }
 
 .report-tabs{
@@ -66,9 +119,15 @@
     width: 10%;
 }
 
-.table th, .table td {
+.table th {
     padding: 0.75rem;
-    text-align: center !important;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.left-align {
+    text-align: left !important;
 }
 
 .table thead{
@@ -91,10 +150,11 @@
 
 .table td{
     height: 10%;
-    padding: 10px;
+    padding: 0.75rem;
     font-size: 15px;
     max-width: 200px;
-    overflow: visible;
+    text-align: center;
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     border: none;

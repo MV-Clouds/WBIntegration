@@ -3,9 +3,19 @@
         <div class="wrapper">
             <lightning-spinner alternative-text="Loading" size="medium" variant="base" if:true={isLoading}></lightning-spinner>
     
-            <div class="heading-container slds-grid slds-grid">
-                <lightning-button label="Back" variant="brand" icon-position="left" icon-name="utility:chevronleft" onclick={handleBack}></lightning-button>
-                <h1 class="slds-align_absolute-center heading">Flow Report</h1>
+            <div class="heading-container">
+                <nav class="slds-breadcrumb slds-grid_vertical-align-center breadcrumb-nav" aria-label="Breadcrumbs">
+                    <ol class="slds-list_horizontal slds-wrap" role="list">
+                        <template for:each={breadcrumbs} for:item="crumb" for:index="index">
+                            <li key={crumb.label} class="slds-breadcrumb__item" role="presentation">
+                                <a href="javascript:void(0);" class={crumb.className} data-index={index} onclick={handleBreadcrumbClick}>
+                                    {crumb.label}
+                                </a>
+                            </li>
+                        </template>
+                    </ol>
+                </nav>
+                <h1 class="heading">Flow Report</h1>
             </div>
             <template if:true={flowReport}>
                 <div class="slds-m-around_medium container">
@@ -15,7 +25,7 @@
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th class="sr-no">Sr. No</th>
+                                        <th class="sr-no">No.</th>
                                         <th>Submitter Name</th>
                                         <th>Submitter Phone</th>
                                         <th>Submission Date</th>
@@ -26,7 +36,7 @@
                                         <tr key={row.Id} class="slds-table_bordered">
                                             <td class="sr-no">{row.index}</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="clickable-name" data-record-id={row.Id} data-object-name={row.MVWB__Object_Name__c} onclick={handleNameClick}>{row.MVWB__Submitter_Name__c}</a>
+                                                <a href="javascript:void(0);" class="clickable-name" data-record-id={row.Id} onclick={handleNameClick}>{row.MVWB__Submitter_Name__c}</a>
                                             </td>
                                             <td>{row.MVWB__Submitter_Phone__c}</td>
                                             <td>{row.CreatedDate}</td>
@@ -90,19 +100,19 @@
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th class="sr-no">Sr. No</th>
-                                        <th>Flow Screen</th>
-                                        <th>Flow Field</th>
-                                        <th>User Input</th>
+                                        <th class="sr-no">No.</th>
+                                        <th class="left-align">Flow Field</th>
+                                        <th class="left-align">User Response</th>
+                                        <th class="left-align">Flow Screen</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <template for:each={paginatedDetails} for:item="row">
                                         <tr key={row.Id} class="slds-table_bordered">
                                             <td class="sr-no">{row.index}</td>
-                                            <td>{row.flowScreen}</td>
-                                            <td>{row.flowField}</td>
-                                            <td>{row.userInput}</td>
+                                            <td class="left-align">{row.flowField}</td>
+                                            <td class="left-align">{row.userInput}</td>
+                                            <td class="left-align">{row.flowScreen}</td>
                                             <!-- <td class="tableData" data-label="Status">
                                                 <div class="slds-truncate status"><p class={row.status}>{row.status}</p></div>
                                             </td> -->

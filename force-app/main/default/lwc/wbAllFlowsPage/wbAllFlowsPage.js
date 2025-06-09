@@ -6,8 +6,8 @@ import deprecateWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.depre
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WhatsAppFlowController.getPreviewURLofWhatsAppFlow';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
-import FLOW_OBJECT from "@salesforce/schema/MVWB__Flow__c";
-import STATUS_FIELD from "@salesforce/schema/MVWB__Flow__c.MVWB__Status__c";
+import FLOW_OBJECT from "@salesforce/schema/Flow__c";
+import STATUS_FIELD from "@salesforce/schema/Flow__c.Status__c";
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class WbAllFlowsPage extends LightningElement {
@@ -26,6 +26,7 @@ export default class WbAllFlowsPage extends LightningElement {
     @track isEditMode = false;
     @track isNameClicked = false;
     @track selectedFlowId = '';
+    @track selectedFlowName = '';
     @track currentPage = 1;
     @track pageSize = 15;
     @track visiblePages = 5;
@@ -179,6 +180,7 @@ export default class WbAllFlowsPage extends LightningElement {
     
     handleNameClick(event) {
         this.selectedFlowId = event.target.dataset.recordId;
+        this.selectedFlowName = event.currentTarget.textContent;
         this.isNameClicked = true;
     }
 

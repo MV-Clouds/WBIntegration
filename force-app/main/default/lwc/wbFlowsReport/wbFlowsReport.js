@@ -6,6 +6,7 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class WbFlowsReport extends LightningElement {
     @api selectedFlowId;
+    @api selectedFlowName;
 
     @track recordId;
     @track flowDetails;
@@ -24,12 +25,19 @@ export default class WbFlowsReport extends LightningElement {
     @track currentGrpPage = 1;
     @track pageGrpSize = 15;
     @track visibleGrpPages = 5;
+    @track breadcrumbs = [{ label: 'Flows' }];
 
     connectedCallback() {
         this.fetchFlowDetailsById();
         // this.loadBroadcastGroups();
         console.log('flowReport = ', this.flowReport);
         console.log('Selected Flow ID:', this.selectedFlowId);
+        console.log('Selected Flow Name:', this.selectedFlowName);
+        this.breadcrumbs = [
+            { label: 'All flows' },
+            { label: this.selectedFlowName }
+        ];
+        this.updateBreadcrumbs();
         this.updateShownData();
     }
 
@@ -390,8 +398,55 @@ export default class WbFlowsReport extends LightningElement {
     handleNameClick(event){
         this.isFlowSubmissionDetails=true;
         this.flowReport=false;
-        this.selectedSubmissionId = event.target.dataset.recordId;  
+        this.selectedSubmissionId = event.target.dataset.recordId;
+
+        const submitterName = event.currentTarget.textContent;
+        if (!this.breadcrumbs.find(b => b.label === submitterName)) {
+            this.breadcrumbs = [...this.breadcrumbs, { label: submitterName }];
+            this.updateBreadcrumbs();
+        }
         this.fetchSubmissionDetailsById();
+    }
+
+    handleBreadcrumbClick(event) {
+        const index = parseInt(event.currentTarget.dataset.index, 10);
+        const clickedLabel = this.breadcrumbs[index].label;
+
+        // Trim breadcrumbs to clicked item
+        this.breadcrumbs = this.breadcrumbs.slice(0, index + 1);
+
+        // Handle view toggling based on breadcrumb length
+        if (this.breadcrumbs.length === 1) {
+            // Only "Flows" breadcrumb
+            this.flowReport = false;
+            this.isFlowSubmissionDetails = false;
+            this.record = null;
+            this.paginatedData = [];
+        } else if (this.breadcrumbs.length === 2) {
+            // "Flows > Flow_Name"
+            this.isFlowSubmissionDetails = false;
+            this.flowReport = true;
+            this.flowSubmissionDetails = null;
+            this.paginatedDetails = [];
+        } else if (this.breadcrumbs.length === 3) {
+            // "Flows > Flow_Name > Submitter"
+            this.isFlowSubmissionDetails = true;
+            this.flowReport = false;
+            this.fetchSubmissionDetailsById();
+        }
+        this.updateBreadcrumbs();
+    }
+
+    updateBreadcrumbs() {
+        this.breadcrumbs = this.breadcrumbs.map((b, i, arr) => {
+            return {
+                ...b,
+                className:
+                    i === arr.length - 1
+                        ? 'breadcrumb-link current-crumb'
+                        : 'breadcrumb-link'
+            };
+        });
     }
 
     // fetchGroupMembers() {

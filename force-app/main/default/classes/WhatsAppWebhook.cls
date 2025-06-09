@@ -457,75 +457,7 @@ global without sharing class WhatsAppWebhook{
                                         String labelToValueJson = mapResponseToLabels(flowJson, responseJson);
                                         System.debug('Label-Value Mapped JSON: ' + labelToValueJson);
 
-                                        // Step 1: Fetch config
-                                        MVWB__Object_Config__mdt configMdt = [
-                                            SELECT MVWB__ChatWindowConfigInfo__c 
-                                            FROM MVWB__Object_Config__mdt 
-                                            WHERE DeveloperName = 'objectConfigInfo' 
-                                            LIMIT 1
-                                        ];
-
-                                        Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(configMdt.MVWB__ChatWindowConfigInfo__c);
-
-                                        // Step 2: Dynamically construct SOSL RETURNING part
-                                        List<String> returningParts = new List<String>();
-                                        Map<String, String> objectToPhoneFieldMap = new Map<String, String>();
-
-                                        for (String objectName : configMap.keySet()) {
-                                            Map<String, Object> objConfig = (Map<String, Object>) configMap.get(objectName);
-                                            String phoneField = (String) objConfig.get('phoneField');
-
-                                            returningParts.add(objectName + '(Id, ' + phoneField + ')');
-                                            objectToPhoneFieldMap.put(objectName, phoneField);
-                                        }
-
-                                        String soslQuery = 'FIND \'' + senderPhone + '\' IN PHONE FIELDS RETURNING ' + String.join(returningParts, ', ');
-                                        System.debug('Dynamic SOSL Query: ' + soslQuery);
-
-                                        // Step 3: Execute SOSL
-                                        List<List<SObject>> results = Search.query(soslQuery);
-
-                                        System.debug('SOSL Results: ' + results);
-
-                                        // Step 4: Detect matched object
-                                        String matchedObject = null;
-                                        SObject matchedRecord = null;
-
-                                        for (List<SObject> resultList : results) {
-                                            if (!resultList.isEmpty()) {
-                                                matchedRecord = resultList[0];
-                                                matchedObject = matchedRecord.getSObjectType().getDescribe().getName();
-                                                break;
-                                            }
-                                        }
-
-                                        System.debug('Matched object: ' + matchedObject);
-                                        System.debug('Matched record: ' + matchedRecord);
-
-                                        // Step 1: Get config for matched object
-                                        Map<String, Object> matchedConfig = (Map<String, Object>) configMap.get(matchedObject);
-                                        String nameField = (String) matchedConfig.get('nameField');
-                                        String phoneField = (String) matchedConfig.get('phoneField');
-
-                                        // Step 2: Build dynamic query
-                                        String soql = 'SELECT ' + nameField + ' FROM ' + matchedObject + ' WHERE ' + phoneField + ' = :senderPhone LIMIT 1';
-
-                                        // Step 3: Execute dynamic query
-                                        SObject matchedRecord1 = Database.query(soql);
-
-                                        // Step 4: Access name
-                                        String personName = (String) matchedRecord1.get(nameField);
-
-                                        System.debug('Name: ' + personName);
-
-                                        // Create and insert Flow_Submission__c record
-                                        Flow_Submission__c submission = new Flow_Submission__c(
-                                            WB_Flow__c = flowRecordId,
-                                            Flow_Response_Mapping__c = labelToValueJson,
-                                            Submitter_Phone__c = senderPhone,
-                                            Submitter_Name__c = personName
-                                        );
-                                        insert submission;
+                                        createFlowSubmissionRecord(senderPhone, flowRecordId, labelToValueJson);
                                     }
                                 }
                             }
@@ -631,6 +563,79 @@ global without sharing class WhatsAppWebhook{
             'flowJson' => flow.Flow_JSON__c,
             'flowId'   => flow.Id
         };
+    }
+
+    public static void createFlowSubmissionRecord(String senderPhone, Id flowRecordId, String labelToValueJson) {
+
+        // Step 1: Fetch config
+        MVWB__Object_Config__mdt configMdt = [SELECT MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt WHERE DeveloperName = 'objectConfigInfo' LIMIT 1];
+
+        Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(configMdt.MVWB__ChatWindowConfigInfo__c);
+
+        // Step 2: Dynamically construct SOSL RETURNING part
+        List<String> returningParts = new List<String>();
+        Map<String, String> objectToPhoneFieldMap = new Map<String, String>();
+
+        for (String objectName : configMap.keySet()) {
+            Map<String, Object> objConfig = (Map<String, Object>) configMap.get(objectName);
+            String phoneField = (String) objConfig.get('phoneField');
+
+            returningParts.add(objectName + '(Id, ' + phoneField + ')');
+            objectToPhoneFieldMap.put(objectName, phoneField);
+        }
+
+        String soslQuery = 'FIND \'' + senderPhone + '\' IN PHONE FIELDS RETURNING ' + String.join(returningParts, ', ');
+        System.debug('Dynamic SOSL Query: ' + soslQuery);
+
+        // Step 3: Execute SOSL
+        List<List<SObject>> results = Search.query(soslQuery);
+
+        System.debug('SOSL Results: ' + results);
+
+        // Step 4: Detect matched object
+        String matchedObject = null;
+        SObject matchedRecord = null;
+
+        for (List<SObject> resultList : results) {
+            if (!resultList.isEmpty()) {
+                matchedRecord = resultList[0];
+                matchedObject = matchedRecord.getSObjectType().getDescribe().getName();
+                break;
+            }
+        }
+
+        System.debug('Matched object: ' + matchedObject);
+        System.debug('Matched record: ' + matchedRecord);
+
+        // Step 1: Get config for matched object
+        Map<String, Object> matchedConfig = (Map<String, Object>) configMap.get(matchedObject);
+        if (matchedConfig == null) {
+            System.debug('No configuration found for matched object: ' + matchedObject);
+            return;
+        }
+        
+        String nameField = (String) matchedConfig.get('nameField');
+        String phoneField = (String) matchedConfig.get('phoneField');
+
+        // Step 2: Build dynamic query
+        String soql = 'SELECT ' + nameField + ' FROM ' + matchedObject + ' WHERE ' + phoneField + ' = :senderPhone LIMIT 1';
+
+        // Step 3: Execute dynamic query
+        SObject matchedRecord1 = Database.query(soql);
+
+        // Step 4: Access name
+        String senderName = (String) matchedRecord1.get(nameField);
+
+        System.debug('Name: ' + senderName);
+
+        // Create and insert Flow_Submission__c record
+        Flow_Submission__c submission = new Flow_Submission__c(
+            WB_Flow__c = flowRecordId,
+            Flow_Response_Mapping__c = labelToValueJson,
+            Submitter_Phone__c = senderPhone,
+            Submitter_Name__c = senderName
+        );
+        insert submission;
     }
 
     public static String mapResponseToLabels(String flowJsonStr, String responseJsonStr) {
