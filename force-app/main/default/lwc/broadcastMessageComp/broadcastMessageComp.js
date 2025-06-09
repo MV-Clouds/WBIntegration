@@ -14,7 +14,7 @@ export default class BroadcastMessageComp extends LightningElement {
     @track filteredData = []; // filtered data based on search
     @track paginatedData = [];
     @track currentPage = 1;
-    @track pageSize = 10;
+    @track pageSize = 15;
     @track visiblePages = 5;
     @track isLoading = false;
     @track configMap = {}; // store object -> {nameField, phoneField}
@@ -212,13 +212,13 @@ export default class BroadcastMessageComp extends LightningElement {
                     this.createBtnLabel= 'Update Broadcast Group'
                     let groupData = result.group || {};
                     
-                    this.selectedObject = groupData.Object_Name__c || '';  // Set Object Name
+                    this.selectedObject = groupData.MVWB__Object_Name__c || '';  // Set Object Name
                     this.loadListViews();
-                    this.selectedListView = groupData.List_View__c || '';  // Set List View Name
+                    this.selectedListView = groupData.MVWB__List_View__c || '';  // Set List View Name
 
 
                     this.broadcastGroupName = groupData.Name;
-                    this.messageText = groupData.Description__c;
+                    this.messageText = groupData.MVWB__Description__c;
 
                     this.groupMembers = result.members || [];
                     
@@ -387,6 +387,7 @@ export default class BroadcastMessageComp extends LightningElement {
     handleListViewChange(event) {
         this.selectedListView = event.detail.value;
         this.fetchAllListViewRecords(this.selectedListView, this.sessionId, this.maxLimit);        
+        this.isLoading = true;
     }
 
     /**
@@ -440,6 +441,7 @@ export default class BroadcastMessageComp extends LightningElement {
         
         this.fetchListViewSOQL(listViewId, sessionId)
             .then(query => {
+                this.isLoading = false;
                 if (!query) {
                     return;
                 }
@@ -465,6 +467,7 @@ export default class BroadcastMessageComp extends LightningElement {
     * @Created By: Tirth Shah
     */
     fetchRecords(queryUrl, sessionId, maxLimit) {
+        this.isLoading = false;
         const domainURL = location.origin.replace('lightning.force.com', 'my.salesforce.com');
 
         const headers = new Headers();
@@ -502,7 +505,7 @@ export default class BroadcastMessageComp extends LightningElement {
                     if (this.isIntialRender && this.broadcastGroupId && this.groupMembers.length > 0) {
                         this.isIntialRender = false; // Prevent future updates from modifying selection
         
-                        const memberPhoneNumbers = new Set(this.groupMembers.map(member => member.Phone_Number__c));
+                        const memberPhoneNumbers = new Set(this.groupMembers.map(member => member.MVWB__Phone_Number__c));
         
                         this.data.forEach(record => {
                             if (memberPhoneNumbers.has(record.phone)) {
@@ -602,8 +605,8 @@ export default class BroadcastMessageComp extends LightningElement {
     }
 
     handleSave(){
-        if(this.messageText.trim() === '' || this.broadcastGroupName.trim() === ''){            
-            this.showToast('Error', 'Please fill in all required fields', 'error');
+        if(this.broadcastGroupName.trim() === ''){            
+            this.showToast('Error', 'Please enter the Broadcast Group Name', 'error');
             return;
         }
 

@@ -18,13 +18,20 @@ export default class ObjectConfigComp extends LightningElement {
     @track availableObjectOptions = [];
     @track chatWindowRows = [];
     @track chatConfigCounter = 0;
+    @track selectedWebhookPhoneField = '';
     @track selectedPhoneFieldVal = '';
     @track selectedPhoneFieldLabel = '';
     @track activeSectionName = 'webhookConfig'; // Default open section
     @track isWebhookConfigEdit = false;
     @track isChatWindowConfigEdit = false;
     @track isLoading = false;
+    @track jsonData = '';
+    @track configJson = '';
+    @track warningMessage = false;
     @track showLicenseError = false;
+    @track showPopup = false;
+    @track showPopupWBConfig = false;
+    @track showPopupChatConfig = false;
 
     // Fetch saved metadata on load
     async connectedCallback(){
@@ -59,8 +66,10 @@ export default class ObjectConfigComp extends LightningElement {
             getUserConfig()
                 .then(data => {
                     const config = JSON.parse(data.ObjectConfigInfo);
+                    
                     if(config != '{}'){
                         this.selectedObject = this.capitalizeFirstLetter(config.objectApiName) || 'Contact';
+                        this.selectedWebhookPhoneField = config?.phoneField || '';
                         
                         // Store field values in an object
                         let savedFieldValues = config.requiredFields?.reduce((acc, field) => {
@@ -145,6 +154,8 @@ export default class ObjectConfigComp extends LightningElement {
             getRequiredFields({ objectName: this.selectedObject })
                 .then(data => {
                     this.textFields = data[0]?.textFields;
+                    
+                    const apexPhoneField = this.selectedWebhookPhoneField;
 
                     this.phoneFields = data[0]?.phoneFields.map(field => {
                         return {
@@ -152,8 +163,19 @@ export default class ObjectConfigComp extends LightningElement {
                             isSelected: false
                         };
                     });
-                    this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
-                    const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
+                    // Determine which phone field to select
+                    let selectedField = null;
+                    
+                    if (apexPhoneField && this.phoneFields.some(field => field.value === apexPhoneField)) {
+                        selectedField = this.phoneFields.find(field => field.value === apexPhoneField);
+                    } else if (this.phoneFields.some(field => field.value === 'Phone')) {
+                        selectedField = this.phoneFields.find(field => field.value === 'Phone');
+                    } else {
+                        selectedField = this.phoneFields[0] || null;
+                    }
+                    
+                    // this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
+                    // const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
                     if (selectedField) {
                         this.selectedPhoneFieldVal = selectedField.value;
                         this.selectedPhoneFieldLabel = selectedField.label;
@@ -360,8 +382,7 @@ export default class ObjectConfigComp extends LightningElement {
                 return;
             }
     
-            this.isLoading = true;
-            const jsonData = JSON.stringify({
+            this.jsonData = JSON.stringify({
                 objectApiName: this.selectedObject,
                 phoneField: this.selectedPhoneFieldVal,
                 requiredFields: this.requiredFields.map(field => ({
@@ -370,23 +391,22 @@ export default class ObjectConfigComp extends LightningElement {
                     type: field.type
                 }))
             });
-    
-            saveUserConfig({ jsonData : jsonData })
-                .then(response => {
-                    if(response == 'Success'){
-                        this.showToast('Success', 'Configuration saved successfully', 'success');
-                        this.populateReferenceNames();
-                        this.isWebhookConfigEdit = false;
-                    } else {
-                        this.showToast('Error', response, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving config:', error);
-                })
-                .finally(() => {
-                    this.isLoading = false;
-                });
+
+            const config = {};
+            this.chatWindowRows.forEach(row => {
+                if (row.selectedObject && row.selectedNameField && row.selectedPhoneField) {
+                    config[row.selectedObject] = {
+                        nameField: row.selectedNameField,
+                        phoneField: row.selectedPhoneField
+                    };
+                }
+            });
+            this.configJson = JSON.stringify(config);
+            this.validatePhoneFieldMismatch(this.jsonData, this.configJson, 'webhook');
+
+            if(!this.warningMessage){
+                this.saveWebhookConfigCall();
+            }
         } catch (error) {
             console.error('Exception in saving configuration: ', error);
         }
@@ -580,7 +600,6 @@ export default class ObjectConfigComp extends LightningElement {
                 this.showToast('Error', 'All rows must have an Object, Name, and Phone field selected.', 'error');
                 return; // Exit if validation fails
             }
-            this.isLoading = true;
             const config = {};
             this.chatWindowRows.forEach(row => {
                 if (row.selectedObject && row.selectedNameField && row.selectedPhoneField) {
@@ -590,26 +609,112 @@ export default class ObjectConfigComp extends LightningElement {
                     };
                 }
             });
-            const configJson = JSON.stringify(config);
-    
-            saveUserConfig({ jsonDataForChat : configJson })
-                .then(response => {
-                    if(response == 'Success'){
-                        this.showToast('Success', 'Configuration saved successfully', 'success');
-                        this.isChatWindowConfigEdit = false;
-                    } else {
-                        this.showToast('Error', response, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving config:', error);
-                })
-                .finally(() => {
-                    this.isLoading = false;
-                });
+            this.configJson = JSON.stringify(config);
+
+            this.jsonData = JSON.stringify({
+                objectApiName: this.selectedObject,
+                phoneField: this.selectedPhoneFieldVal,
+                requiredFields: this.requiredFields.map(field => ({
+                    name: field.apiName,
+                    value: field.value.toString(),
+                    type: field.type
+                }))
+            });
+            this.validatePhoneFieldMismatch(this.jsonData, this.configJson, 'chat');
+
+            if(!this.warningMessage){
+                this.saveChatConfigCall();
+            }
         } catch (error) {
             this.showToast('Error', 'Error saving configuration: ' + error.body.message, 'error');
         }
+    }
+
+    validatePhoneFieldMismatch(jsonData, configJson, configType) {
+        const config = JSON.parse(configJson);
+        const jsonDataConfig = JSON.parse(jsonData);
+
+        const objName = jsonDataConfig.objectApiName;
+        const jsonPhoneField = jsonDataConfig.phoneField;
+        
+        if (config.hasOwnProperty(objName)) {
+            const configPhoneField = config[objName].phoneField;
+
+            if (jsonPhoneField !== configPhoneField) {
+                this.warningMessage = true;
+                this.showPopup = true;
+                if(configType === 'webhook') {
+                    this.showPopupWBConfig = true;
+                } else if(configType === 'chat') {
+                    this.showPopupChatConfig = true;
+                }
+                // this.showToast('Warning', `Warning: Phone field mismatch for ${objName}. Expected '${configPhoneField}', but got '${jsonPhoneField}'.`, 'warning');
+                return;
+            }
+        }
+    }
+
+    handleSaveWBConfigPopup(){
+        this.showPopupWBConfig = false;
+        this.warningMessage = false;
+        this.showPopup = false;
+        this.saveWebhookConfigCall();
+    }
+
+    handleSaveChatConfigPopup(){
+        this.showPopupChatConfig = false;
+        this.warningMessage = false;
+        this.showPopup = false;
+        this.saveChatConfigCall();
+    }
+
+    handleCloseOnPopup(){
+        this.showPopupWBConfig = false;
+        this.showPopupChatConfig = false;
+        this.showPopup = false;
+        this.warningMessage = false;
+        this.isLoading = false;
+    }
+
+    saveWebhookConfigCall(){
+        this.isLoading = true;
+        console.log(this.jsonData);
+        
+        saveUserConfig({ jsonData : this.jsonData })
+            .then(response => {
+                if(response == 'Success'){
+                    this.showToast('Success', 'Configuration saved successfully', 'success');
+                    this.populateReferenceNames();
+                    this.isWebhookConfigEdit = false;
+                } else {
+                    this.showToast('Error', response, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving config:', error);
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+    }
+
+    saveChatConfigCall(){
+        this.isLoading = true;
+        saveUserConfig({ jsonDataForChat : this.configJson })
+            .then(response => {
+                if(response == 'Success'){
+                    this.showToast('Success', 'Configuration saved successfully', 'success');
+                    this.isChatWindowConfigEdit = false;
+                } else {
+                    this.showToast('Error', response, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving config:', error);
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
     }
 
     showToast(title, message, variant) {

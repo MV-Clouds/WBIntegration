@@ -101,12 +101,10 @@ tr{
 }
 
 .table-container {
-
     border-radius: 0.4rem;
     overflow: scroll;
     scrollbar-width: none !important;
     flex-grow: 1;
-    
 }
 
 

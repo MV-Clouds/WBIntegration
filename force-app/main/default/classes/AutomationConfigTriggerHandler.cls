@@ -2,7 +2,7 @@
  * @description       :
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             :
- * @last modified on  : 04-22-2025
+ * @last modified on  : 04-08-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
  **/
 public without sharing class AutomationConfigTriggerHandler {
@@ -15,7 +15,7 @@ public without sharing class AutomationConfigTriggerHandler {
     private Boolean isDelete = false;
     private Boolean isUndelete = false;
     private static final String CLASS_NAME = 'AutomationConfigTriggerHandler';
-    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
+    public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values();
     
     public AutomationConfigTriggerHandler( List<Chat__c> newList,  List<Chat__c> oldList, Map<Id, Chat__c> newMap, Map<Id, Chat__c> oldMap, Boolean isInsert, Boolean isUpdate, Boolean isDelete, Boolean isUndelete) {
         this.recordNewList = newList;
@@ -29,73 +29,63 @@ public without sharing class AutomationConfigTriggerHandler {
     }
     
     public void filterAndProcessValidChats() {
-      try {
-        List<Chat__c> validChats = new List<Chat__c>();
-        Set<Id> replyToIds = new Set<Id>();
-        
-        for (Chat__c newChat : (List<Chat__c>)recordNewList) {
-            if (newChat.Type_of_Message__c == 'Inbound Messages' && newChat.Reply_to__c != null) {
-                replyToIds.add(newChat.Reply_to__c);
+        try {
+            List<Chat__c> validChats = new List<Chat__c>();
+            Set<Id> replyToIds = new Set<Id>();
+            
+            for (Chat__c newChat : (List<Chat__c>)recordNewList) {
+                if (newChat.Type_of_Message__c == 'Inbound Messages' && newChat.Reply_to__c != null) {
+                    replyToIds.add(newChat.Reply_to__c);
+                }
             }
-        }
-        
-        Map<Id, Chat__c> parentChatMap = new Map<Id, Chat__c>();
-        if (!replyToIds.isEmpty()) {
-            for (Chat__c parent : [
-                SELECT Id, Whatsapp_Template__r.WBButton_Body__c, Reply_to__c
-                FROM Chat__c
-                WHERE Id IN :replyToIds
-            ]) {
-                parentChatMap.put(parent.Id, parent);
+            
+            Map<Id, Chat__c> parentChatMap = new Map<Id, Chat__c>();
+            if (!replyToIds.isEmpty()) {
+                for (Chat__c parent : [ SELECT Id, Whatsapp_Template__r.WBButton_Body__c, Reply_to__c FROM Chat__c WHERE Id IN :replyToIds]) {
+                    parentChatMap.put(parent.Id, parent);
+                }
             }
-        }
-        
-        for (Chat__c newChat : (List<Chat__c>)recordNewList) {
-            if (isValidAutomationChat(newChat, parentChatMap.get(newChat.Reply_to__c))) {
-                validChats.add(newChat);
+            
+            for (Chat__c newChat : (List<Chat__c>)recordNewList) {
+                if (isValidAutomationChat(newChat, parentChatMap.get(newChat.Reply_to__c))) {
+                    validChats.add(newChat);
+                }
             }
-        }
-        
-        if (!validChats.isEmpty()) {
-            processAutomationConfiguration(validChats);
-        } else {
-            System.debug('No valid messages found (Button/Interactive & Inbound Message). Exiting trigger.');
-}
+            
+            if (!validChats.isEmpty()) {
+                processAutomationConfiguration(validChats);
+            } else {
+                System.debug('No valid messages found (Button/Interactive & Inbound Message). Exiting trigger.');
+            }
         } catch (Exception e) {
-
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'filterAndProcessValidChats','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
     }
     
     private Boolean isValidAutomationChat(Chat__c newChat, Chat__c parentChat) {
-try {
-
-        if (newChat.Type_of_Message__c != 'Inbound Messages') {
-            System.debug('Not an Inbound Message. Exiting. ' + newChat.Message__c + 'ID = ' + newChat.Id);
-            return false;
-        }
-        
-        String buttonType = null;
-        
-        if (newChat.Reply_to__c != null && parentChat != null && parentChat.Whatsapp_Template__r != null) {
-            try {
-                String buttonBody = parentChat.Whatsapp_Template__r.WBButton_Body__c;
-                buttonType = getButtonTypeByText(buttonBody, newChat.Message__c);
-                System.debug('Button Type: ' + buttonType);
-            } catch (Exception e) {
-                System.debug('Error parsing button JSON: ' + e.getMessage());
+        try {
+            if (newChat.Type_of_Message__c != 'Inbound Messages') {
+                System.debug('Not an Inbound Message. Exiting. ' + newChat.Message__c + 'ID = ' + newChat.Id);
+                return false;
             }
-
-        }
-        
-        return buttonType == 'QUICK_REPLY' || newChat.Message_Type__c == 'interactive';
-
+            
+            String buttonType = null;
+            
+            if (newChat.Reply_to__c != null && parentChat != null && parentChat.Whatsapp_Template__r != null) {
+                try {
+                    String buttonBody = parentChat.Whatsapp_Template__r.WBButton_Body__c;
+                    buttonType = getButtonTypeByText(buttonBody, newChat.Message__c);
+                    System.debug('Button Type: ' + buttonType);
+                } catch (Exception e) {
+                    System.debug('Error parsing button JSON: ' + e.getMessage());
+                }
+            }
+            
+            return buttonType == 'QUICK_REPLY' || newChat.Message_Type__c == 'interactive';
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'isValidAutomationChat','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
-        
-        return buttonType == 'QUICK_REPLY' || newChat.Message_Type__c == 'interactive';
     }
     
     public static String getButtonTypeByText(String jsonInput, String buttonText) {
@@ -112,7 +102,6 @@ try {
                 }
             }
         } catch (Exception e) {
-
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'getButtonTypeByText','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
@@ -121,113 +110,72 @@ try {
     
     public static void processAutomationConfiguration(List<Chat__c> newChats) {
         System.debug('Handler method called');
-try {   
-        // Step 1: Collect context message IDs and filter relevant chats
-        Set<String> contextMessageIds = new Set<String>();
-        List<Chat__c> potentialPathReplies = new List<Chat__c>();
-        
-        for (Chat__c newChat : newChats) {
-            // if (String.isNotBlank(newChat.WhatsAppContextMessageID__c)) {
-                contextMessageIds.add(newChat.WhatsAppContextMessageID__c);
-                if (String.isNotBlank(newChat.Message__c) || String.isNotBlank(newChat.Flow_Response_JSON__c)) {
-                    System.debug('Adding to potentialPathReplies: ' + newChat.Flow_Response_JSON__c);
-                    if(String.isNotBlank(newChat.Flow_Response_JSON__c)){
-                        System.debug('Adding contextMessageId: ' + newChat.Reply_To__c);
-                        Chat__c contextMessageId = [SELECT Id, WhatsAppMessageId__c FROM Chat__c WHERE Id = :newChat.Reply_to__c];
-                        System.debug('Adding contextMessageId: ' + contextMessageId);
-                        contextMessageIds.add(contextMessageId.WhatsAppMessageId__c);
+        try {   
+            // Step 1: Collect context message IDs and filter relevant chats
+            Set<String> contextMessageIds = new Set<String>();
+            List<Chat__c> potentialPathReplies = new List<Chat__c>();
+            
+            for (Chat__c newChat : newChats) {
+                // if (String.isNotBlank(newChat.WhatsAppContextMessageID__c)) {
+                    contextMessageIds.add(newChat.WhatsAppContextMessageID__c);
+                    if (String.isNotBlank(newChat.Message__c) || String.isNotBlank(newChat.Flow_Response_JSON__c)) {
+                        System.debug('Adding to potentialPathReplies: ' + newChat.Flow_Response_JSON__c);
+                        if(String.isNotBlank(newChat.Flow_Response_JSON__c)){
+                            System.debug('Adding contextMessageId: ' + newChat.Reply_To__c);
+                            Chat__c contextMessageId = [SELECT Id, WhatsAppMessageId__c FROM Chat__c WHERE Id = :newChat.Reply_to__c];
+                            System.debug('Adding contextMessageId: ' + contextMessageId);
+                            contextMessageIds.add(contextMessageId.WhatsAppMessageId__c);
+                        }
+                        potentialPathReplies.add(newChat);
                     }
-                    potentialPathReplies.add(newChat);
-                }
-            // }
-
-        }
-        
-        if (contextMessageIds.isEmpty() || potentialPathReplies.isEmpty()) {
-            System.debug('No valid replies found, exiting.');
-            return;
-        }
-        System.debug('ContextMessageIds and PotentialPathReplies found');
-        
-        // Step 2: Get original messages and extract template IDs
-        Map<String, Chat__c> originalChatsMap = fetchOriginalChats(contextMessageIds);
-        Set<String> templateIdsToCheck = extractTemplateIds(originalChatsMap);
-        
-        if (templateIdsToCheck.isEmpty()) {
-            System.debug('No templates found, exiting.');
-            return;
-        }
-        System.debug('Template found on orginal messages.');
-        
-        // Step 3: Map Templates to Automation IDs
-        Map<String, List<Id>> templateIdToAutomationIdMap = fetchAutomationMappings(templateIdsToCheck);
-        if (templateIdToAutomationIdMap.isEmpty()) {
-            System.debug('No matching Automations found, exiting.');
-            return;
-        }
-        System.debug('Matching Automation records found.');
-        System.debug('TemplateIdToAutomationIdMap: ' + templateIdToAutomationIdMap);
-        
-        // Step 4: Fetch Automation Paths
-        Map<Id, Map<String, Automation_Path__c>> automationPathsMap = fetchAutomationPaths(templateIdToAutomationIdMap);
-        if (automationPathsMap.isEmpty()) {
-            System.debug('No Automation Paths found.');
-        }
-        System.debug('Automation Path records found.');
-        
-        // Step 5: Process matching chats and send responses
-        processMatchingChats(potentialPathReplies, originalChatsMap, templateIdToAutomationIdMap, automationPathsMap);
-
+                // }
+            }
+            
+            if (contextMessageIds.isEmpty() || potentialPathReplies.isEmpty()) {
+                System.debug('No valid replies found, exiting.');
+                return;
+            }
+            System.debug('ContextMessageIds and PotentialPathReplies found');
+            
+            // Step 2: Get original messages and extract template IDs
+            Map<String, Chat__c> originalChatsMap = fetchOriginalChats(contextMessageIds);
+            Set<String> templateIdsToCheck = extractTemplateIds(originalChatsMap);
+            
+            if (templateIdsToCheck.isEmpty()) {
+                System.debug('No templates found, exiting.');
+                return;
+            }
+            System.debug('Template found on orginal messages.');
+            
+            // Step 3: Map Templates to Automation IDs
+            Map<String, List<Id>> templateIdToAutomationIdMap = fetchAutomationMappings(templateIdsToCheck);
+            if (templateIdToAutomationIdMap.isEmpty()) {
+                System.debug('No matching Automations found, exiting.');
+                return;
+            }
+            System.debug('Matching Automation records found.');
+            System.debug('TemplateIdToAutomationIdMap: ' + templateIdToAutomationIdMap);
+            
+            // Step 4: Fetch Automation Paths
+            Map<Id, Map<String, Automation_Path__c>> automationPathsMap = fetchAutomationPaths(templateIdToAutomationIdMap);
+            if (automationPathsMap.isEmpty()) {
+                System.debug('No Automation Paths found.');
+            }
+            System.debug('Automation Path records found.');
+            
+            // Step 5: Process matching chats and send responses
+            processMatchingChats(potentialPathReplies, originalChatsMap, templateIdToAutomationIdMap, automationPathsMap);
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'processAutomationConfiguration','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
-        
-        if (contextMessageIds.isEmpty() || potentialPathReplies.isEmpty()) {
-            System.debug('No valid replies found, exiting.');
-            return;
-        }
-        System.debug('ContextMessageIds and PotentialPathReplies found');
-        
-        // Step 2: Get original messages and extract template IDs
-        Map<String, Chat__c> originalChatsMap = fetchOriginalChats(contextMessageIds);
-        Set<String> templateIdsToCheck = extractTemplateIds(originalChatsMap);
-        
-        if (templateIdsToCheck.isEmpty()) {
-            System.debug('No templates found, exiting.');
-            return;
-        }
-        System.debug('Template found on orginal messages.');
-        
-        // Step 3: Map Templates to Automation IDs
-        Map<String, List<Id>> templateIdToAutomationIdMap = fetchAutomationMappings(templateIdsToCheck);
-        if (templateIdToAutomationIdMap.isEmpty()) {
-            System.debug('No matching Automations found, exiting.');
-            return;
-        }
-        System.debug('Matching Automation records found.');
-        System.debug('TemplateIdToAutomationIdMap: ' + templateIdToAutomationIdMap);
-        
-        // Step 4: Fetch Automation Paths
-        Map<Id, Map<String, Automation_Path__c>> automationPathsMap = fetchAutomationPaths(templateIdToAutomationIdMap);
-        if (automationPathsMap.isEmpty()) {
-            System.debug('No Automation Paths found.');
-        }
-        System.debug('Automation Path records found.');
-        
-        // Step 5: Process matching chats and send responses
-        processMatchingChats(potentialPathReplies, originalChatsMap, templateIdToAutomationIdMap, automationPathsMap);
     }
     
     private static Map<String, Chat__c> fetchOriginalChats(Set<String> contextMessageIds) {
-        try {          
+        try{
             System.debug('Fetching original chats for context message IDs: ' + contextMessageIds);
             Map<String, Chat__c> originalChatsMap = new Map<String, Chat__c>();
             
-            for (Chat__c originalChat : [
-                SELECT Id, Whatsapp_Template__c, WhatsAppMessageId__c
-                FROM Chat__c
-                WHERE WhatsAppMessageId__c IN :contextMessageIds
-            ]) {
+            for (Chat__c originalChat : [ SELECT Id, Whatsapp_Template__c, WhatsAppMessageId__c FROM Chat__c WHERE WhatsAppMessageId__c IN :contextMessageIds]) {
                 if (originalChat.Whatsapp_Template__c != null) {
                     System.debug('Adding to originalChatsMap: ' + originalChat.WhatsAppMessageId__c);
                 }
@@ -236,12 +184,10 @@ try {
                 }
             }
             return originalChatsMap;
-
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'fetchOriginalChats','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
-        return originalChatsMap;
     }
     
     private static Set<String> extractTemplateIds(Map<String, Chat__c> originalChatsMap) {
@@ -256,10 +202,8 @@ try {
     }
     
     private static Map<String, List<Id>> fetchAutomationMappings(Set<String> templateIdsToCheck) {
-        try {
-            
+        try{
             Map<String, List<Id>> templateIdToAutomationIdMap = new Map<String, List<Id>>();
-        
             for (Automation__c automation : [ SELECT Id, WB_Template__c FROM Automation__c WHERE WB_Template__c IN :templateIdsToCheck]) {
                 if (automation.WB_Template__c != null) {
                     String templateId = automation.WB_Template__c;
@@ -270,20 +214,16 @@ try {
                     }
                     templateIdToAutomationIdMap.get(templateId).add(automation.Id);
                 }
-                templateIdToAutomationIdMap.get(templateId).add(automation.Id);
             }
             return templateIdToAutomationIdMap;
-
         } catch (Exception e) {
-                
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'fetchAutomationMappings','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
-        return templateIdToAutomationIdMap;
     }
     
     private static Map<Id, Map<String, Automation_Path__c>> fetchAutomationPaths(Map<String, List<Id>> templateIdToAutomationIdMap) {
-        try {
+        try{
             System.debug('Fetching Automation Paths for template IDs: ' + templateIdToAutomationIdMap);
             Map<Id, Map<String, Automation_Path__c>> automationPathsMap = new Map<Id, Map<String, Automation_Path__c>>();
             
@@ -293,11 +233,7 @@ try {
             }
             System.debug('Relevant Automation IDs: ' + relevantAutomationIds);
             
-            for (Automation_Path__c path : [
-                SELECT Id, Automation__c, Button_Value__c, Action_Template__c, Action_Type__c, Action_Email_Template__c, Object_Name__c, Field_Mapping__c
-                FROM Automation_Path__c
-                WHERE Automation__c IN :relevantAutomationIds
-            ]) {
+            for (Automation_Path__c path : [ SELECT Id, Automation__c, Button_Value__c, Action_Template__c, Action_Type__c, Action_Email_Template__c, Object_Name__c, Field_Mapping__c FROM Automation_Path__c WHERE Automation__c IN :relevantAutomationIds]) {
                 System.debug('Adding to automationPathsMap: ' + path);
 
                 if (path.Automation__c != null) {
@@ -318,20 +254,15 @@ try {
                 }
             }
             return automationPathsMap;
-
         } catch (Exception e) {
-                
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler','methodName' => 'fetchAutomationPaths','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             return null;
         }
-        return automationPathsMap;
     }
     
     private static void processMatchingChats(List<Chat__c> potentialPathReplies, Map<String, Chat__c> originalChatsMap, Map<String, List<Id>> templateIdToAutomationIdMap, Map<Id, Map<String, Automation_Path__c>> automationPathsMap) {
-        try {
-
+        try{
             for (Chat__c newChat : potentialPathReplies) {
-            
                 Chat__c originalChat = new Chat__c();
                 
                 if(newChat.Message_Type__c == 'interactive'){
@@ -343,27 +274,26 @@ try {
                 }
                 
                 if (originalChat != null && String.isNotBlank(originalChat.Whatsapp_Template__c)) {
-                    
                     List<Id> automationIds = templateIdToAutomationIdMap.get(originalChat.Whatsapp_Template__c);
                     System.debug('Automation ID: ' + automationIds);
                     System.debug('automationPathsMap: ' + automationPathsMap);
                     for (Id automationId : automationIds) {
-
                         System.debug('automationpathmap.containsKey(automationId): ' + automationPathsMap.containsKey(automationId));
                         
                         if (automationId != null && automationPathsMap.containsKey(automationId)) {
-                            
                             String normalizedMessageBody = '';
                             if(newChat.Message_Type__c == 'interactive'){
                                 normalizedMessageBody = 'interactive';
                             } else{
                                 normalizedMessageBody = newChat.Message__c.toLowerCase().trim();
                             }
+
+                            // Contact contactRecord = [SELECT Id FROM Contact WHERE Phone = :newChat.Phone__c LIMIT 1];
+                            // Id contactId = contactRecord != null ? contactRecord.Id : null; //try removing this line
                             
                             Map<String, Automation_Path__c> pathsForThisAutomation = automationPathsMap.get(automationId);
                             
                             if (pathsForThisAutomation.containsKey(normalizedMessageBody)) {
-                                
                                 // *** If ALL CONDITIONS MET ***
                                 Automation_Path__c matchingPath = pathsForThisAutomation.get(normalizedMessageBody);
                                 
@@ -372,15 +302,9 @@ try {
                                 // System.debug('Chat ID (inserting) is a reply to Template (' + originalChat.Whatsapp_Template__c + ') with Automation (' + automationId + ') and matching Path (' + matchingPath.Id + ') found via Button Value (' + matchingPath.Button_Value__c + ').');
                                 
                                 if (matchingPath.Action_Type__c == 'Send Message') {
-                                    
                                     List<Template_Variable__c> tempvar = [SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM Template_Variable__c WHERE Template__c = :matchingPath.Action_Template__c LIMIT 1];
                                     
-                                    MVWB__Object_Config__mdt configMdt = [
-                                        SELECT MVWB__ChatWindowConfigInfo__c 
-                                        FROM MVWB__Object_Config__mdt 
-                                        WHERE DeveloperName = 'objectConfigInfo' 
-                                        LIMIT 1
-                                    ];
+                                    MVWB__Object_Config__mdt configMdt = [SELECT MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt WHERE DeveloperName = 'objectConfigInfo' LIMIT 1];
                                     
                                     Map<String, Object> tempData;
 
@@ -388,7 +312,6 @@ try {
                                     // Step 2: Parse JSON
                                     Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(configMdt.MVWB__ChatWindowConfigInfo__c);
                                     if (!tempvar.isEmpty()) {
-
                                         Map<String, Object> objectApiName = (Map<String, Object>) (configMap.get(tempvar[0].Object_Name__c));
                                         String phoneField = (String) objectApiName.get('phoneField');
                                         
@@ -401,30 +324,29 @@ try {
                                         
                                         tempData = getTemplateData(matchingPath.Action_Template__c, objectId, tempvar[0].Object_Name__c);
                                     } else {
-
-                                        String objectName;
-                                        if (!configMap.isEmpty()) {
-                                            objectName = configMap.keySet().iterator().next(); // Gets the first (and only) key
-                                        }
-                                        System.debug('objectName = ' + objectName);
+                                        System.debug('No template variables found for the template ID: ' + matchingPath.Action_Template__c);
+                                        // String objectName;
+                                        // if (!configMap.isEmpty()) {
+                                        //     objectName = configMap.keySet().iterator().next(); // Gets the first (and only) key
+                                        // }
+                                        // System.debug('objectName = ' + objectName);
                                         
                                         // Optional: Get inner field values
-                                        Map<String, Object> fieldMap = (Map<String, Object>) configMap.get(objectName);
-                                        System.debug('fieldMap = ' + fieldMap);
-                                        String phoneField = (String) fieldMap.get('phoneField');
+                                        // Map<String, Object> fieldMap = (Map<String, Object>) configMap.get(objectName);
+                                        // System.debug('fieldMap = ' + fieldMap);
+                                        // String phoneField = (String) fieldMap.get('phoneField');
 
                                         // Map<String, String> objectApiName = (Map<String,String>) (configMap.get(tempvar.Object_Name__c));
                                         // String phoneField = (String) objectApiName.get('phoneField');
                                         
                                         // Step 3: Build dynamic query
-                                        System.debug('newChat.Phone__c = ' + phoneNumber);
-                                        String soql = 'SELECT Id FROM ' + objectName + ' WHERE ' + phoneField + ' = \'' + phoneNumber + '\' LIMIT 1';
+                                        // System.debug('newChat.Phone__c = ' + phoneNumber);
+                                        // String soql = 'SELECT Id FROM ' + objectName + ' WHERE ' + phoneField + ' = \'' + phoneNumber + '\' LIMIT 1';
 
-                                        SObject result = Database.query(soql);
-                                        Id objectId = result != null ? result.Id : null;
+                                        // SObject result = Database.query(soql);
+                                        // Id objectId = result != null ? result.Id : null;
                                         
-                                        
-                                        tempData = getTemplateData(matchingPath.Action_Template__c, objectId, '');
+                                        tempData = getTemplateData(matchingPath.Action_Template__c, '', '');
                                     }
                                     
                                     System.debug('tempData = ' + tempData);
@@ -448,13 +370,10 @@ try {
                                     Message_Sent_Time__c = System.now()
                                         );
                                     update chatToUpdate;
-                                    
                                 // } else if (matchingPath.Action_Type__c == 'Send Email') {
-                                    
                                 //     Contact contactRecord1 = [SELECT Id, Email FROM Contact WHERE Phone = :newChat.Phone__c LIMIT 1];
                                     
                                 //     if (contactRecord1 != null && String.isNotBlank(contactRecord1.Email) && String.isNotBlank(matchingPath.Action_Email_Template__c)) {
-                                        
                                 //         Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
                                 //         email.setToAddresses(new String[] { contactRecord1.Email });
                                 //         email.setTemplateId(matchingPath.Action_Email_Template__c);
@@ -465,24 +384,18 @@ try {
                                 //         try {
                                 //             Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
                                 //             System.debug('Email sent to: ' + contactRecord1.Email);
-                                            
                                 //         } catch (Exception e) {
                                 //             System.debug('Failed to send email: ' + e.getMessage());
                                 //         }
                                 //     } else {
                                 //         System.debug('Email or TemplateId missing. Cannot send email.');
                                 //     }
-                                    
                                 } else if (matchingPath.Action_Type__c == 'Create a Record') {
-                                    
                                     String flowResponseJson = newChat.Flow_Response_JSON__c;
                                     String fieldMappingJson = matchingPath.Field_Mapping__c;
                                     String objectName = matchingPath.Object_Name__c;
                                     
-                                    if (String.isNotBlank(flowResponseJson) &&
-                                        String.isNotBlank(fieldMappingJson) &&
-                                    String.isNotBlank(objectName)) {
-                                        
+                                    if (String.isNotBlank(flowResponseJson) && String.isNotBlank(fieldMappingJson) && String.isNotBlank(objectName)) {
                                         try {
                                             // Parse flow response and field mapping
                                             Map<String, Object> flowResponse = (Map<String, Object>) JSON.deserializeUntyped(flowResponseJson);
@@ -519,7 +432,6 @@ try {
                                             System.debug('recordToInsert before insert: ' + recordToInsert);
                                             insert recordToInsert;
                                             System.debug('Record of type ' + objectName + ' inserted successfully: ' + recordToInsert);
-                                            
                                         } catch (Exception e) {
                                             System.debug('Error processing flow response for record creation: ' + e.getMessage());
                                         }
@@ -527,7 +439,6 @@ try {
                                         System.debug('Missing required data: Flow Response, Field Mapping, or Object Name');
                                     }
                                 }
-                                
                             } else {
                                 System.debug('No matching path found for message: "' + newChat.Message__c + '"');
                             }
@@ -540,7 +451,6 @@ try {
         }
     }
 
-  
     public static Map<String, object> getTemplateData(String templateId, String recordId, String objectApiName){
         try {
             Map<String, Object> templateData = new Map<String, Object>();
@@ -550,7 +460,6 @@ try {
             Set<Id> matchingTemplateIds = new Set<Id>();
 
             if (!String.isBlank(objectApiName)) {
-
                 for (Template_Variable__c tv : [SELECT Template__c FROM Template_Variable__c WHERE Object_Name__c = :objectApiName]) {
                     matchingTemplateIds.add(tv.Template__c);
                 }
@@ -617,7 +526,7 @@ try {
                         if (tv.Type__c == 'Header') {
                             headerVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
                             template.WBHeader_Body__c = template.WBHeader_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
-                        }else if(tv.Type__c == 'Body'){
+                        } else if(tv.Type__c == 'Body'){
                             bodyVariables.add(valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' '));
                             template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(tv.Name , valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c!= null ? tv.Alternate_Text__c : ' ') );
                         }
@@ -652,6 +561,7 @@ try {
             data.put('headerType', template.Header_Type__c);
             data.put('headerParameters', (List<Object>)templateData.get('headerParams'));
             data.put('bodyParameters', (List<Object>)templateData.get('bodyParams'));
+
             if(template.WBButton_Body__c != null){
                 // data.put('buttonValue', (List<Map<String, Object>>)JSON.deserializeUntyped(template.WBButton_Body__c));
                 Object rawData = JSON.deserializeUntyped(template.WBButton_Body__c);
@@ -816,7 +726,6 @@ try {
                 resultMap.put('chat', chat);
                 // return resultMap;
             }
-
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
             String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
 
@@ -844,7 +753,7 @@ try {
                 newChatEvent.Type__c = 'new';
                 // newChatEvent.ContactId__c = whatsappChat.Contact__c;
                 EventBus.publish(newChatEvent);
-            }else{
+            } else {
                 System.debug('Error sending WhatsApp Message: '+response.getBody());
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
@@ -853,7 +762,6 @@ try {
             chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id];
             resultMap.put('chat', chat);
             // return resultMap;
-            
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => chatId, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
@@ -863,7 +771,6 @@ try {
     
     public static Chat__c createChat(Map<String, String> chatData ){
         try {
-            
             String message = chatData.get('message');
             String templateId = chatData.get('templateId');
             String messageType = chatData.get('messageType');

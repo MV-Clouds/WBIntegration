@@ -143,7 +143,7 @@ public with sharing class WhatsAppFlowController {
                 System.debug('Status Code: ' + response.getStatusCode());
                 System.debug('Response Body: ' + response.getBody());
 
-                List<Flow__c> flowRecs = [SELECT Id, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
+                List<Flow__c> flowRecs = [SELECT Id, Flow_JSON__c, Status__c, Flow_Id__c FROM Flow__c WHERE Flow_Id__c = :flowId WITH SECURITY_ENFORCED LIMIT 1];
                 if(flowRecs.size() > 0){
                     flowRecs[0].Flow_JSON__c = flowJson;
                     flowRecs[0].Status__c = 'Draft';

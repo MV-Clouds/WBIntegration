@@ -433,6 +433,7 @@ export default class CreateFlowManagement extends LightningElement {
             .then(result => {
                 this.status = 'Draft';
                 this.showToast('Success', 'Flow updated successfully', 'success');
+                this.onRunClick();
                 this.isUnsavedChanges = false;
             })
             .catch(error => {

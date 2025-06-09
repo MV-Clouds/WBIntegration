@@ -36,10 +36,10 @@ export default class WbAllTemplatePage extends LightningElement {
     @track isFilterVisible = false;
     @track editTemplateId='';
     @track subscription = null;
-    channelName = '/event/Template_Update__e';
+    channelName = '/event/MVWB__Template_Update__e';
     @track showLicenseError = false;
     @track currentPage = 1;
-    @track pageSize = 10;
+    @track pageSize = 15;
     @track visiblePages = 5;
     @track data = [];
     @track paginatedData = [];
@@ -148,7 +148,6 @@ export default class WbAllTemplatePage extends LightningElement {
             this.isTemplateVisible = true;
             this.fetchCategoryAndStatusOptions();
             this.fetchAllTemplate(true);
-
             this.registerPlatformEventListener();
         } catch (e) {
             console.error('Error in connectedCallback:::', e.message);
@@ -176,12 +175,12 @@ export default class WbAllTemplatePage extends LightningElement {
             // this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
 
             // Call updateRecord only if Template_Id__c and Template_Status__c are present
-            if (payload.Template_Id__c && payload.Template_Status__c) {
-                this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
+            if (payload.MVWB__Template_Id__c && payload.MVWB__Template_Status__c) {
+                this.updateRecord(payload.MVWB__Template_Id__c, payload.MVWB__Template_Status__c);
             }
 
             // Call a different method if Fetch_All_Templates__c is present
-            if (payload.Fetch_All_Templates__c) {
+            if (payload.MVWB__Fetch_All_Templates__c) {
                 this.fetchAllTemplate(false); // Replace with your actual method name
             }
         };
@@ -209,7 +208,7 @@ export default class WbAllTemplatePage extends LightningElement {
     updateRecord(templateId, newStatus) {
         const recordIndex = this.allRecords.findIndex((record) => record.Id === templateId);
         if (recordIndex !== -1) {
-            const updatedRecord = { ...this.allRecords[recordIndex], Status__c: newStatus };
+            const updatedRecord = { ...this.allRecords[recordIndex], MVWB__Status__c: newStatus };
             updatedRecord.isButtonDisabled = newStatus === 'In-Review';
             updatedRecord.cssClass = updatedRecord.isButtonDisabled ? 'action edit disabled' : 'action edit';
 
@@ -236,13 +235,12 @@ export default class WbAllTemplatePage extends LightningElement {
             this.isLoading=true;
         }
         // this.isLoading=true;
-
         getWhatsAppTemplates()
         .then(data => {
             try {
                 if (data) {
                     this.data = data.map((record, index) => {
-                        const isButtonDisabled = record.Status__c === 'In-Review';
+                        const isButtonDisabled = record.MVWB__Status__c === 'In-Review';
                         
                         return {
                             ...record,
@@ -278,6 +276,17 @@ export default class WbAllTemplatePage extends LightningElement {
             this.paginatedData = this.filteredRecords.slice(startIndex, endIndex);
         } catch (error) {
             this.showToast('Error', 'Error updating shown data', 'error');
+        }
+    }
+
+    handlePrevious() {
+        try{
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.updateShownData();
+            }
+        }catch(error){
+            this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
 
@@ -363,7 +372,7 @@ export default class WbAllTemplatePage extends LightningElement {
             let filtered = [...this.data];
 
             if (this.categoryValue) {
-                filtered = filtered.filter(record => record.Template_Category__c === this.categoryValue);
+                filtered = filtered.filter(record => record.MVWB__Template_Category__c === this.categoryValue);
             }
     
             if (this.timePeriodValue) {
@@ -379,11 +388,11 @@ export default class WbAllTemplatePage extends LightningElement {
                 filtered = filtered.filter(record => new Date(record.CreatedDate) >= fromDate);
             }
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
             }
     
             if (this.searchInput) {
-                filtered = filtered.filter(record => record.Template_Name__c.toLowerCase().includes(this.searchInput));
+                filtered = filtered.filter(record => record.MVWB__Template_Name__c.toLowerCase().includes(this.searchInput));
             }
     
             this.filteredRecords = filtered;

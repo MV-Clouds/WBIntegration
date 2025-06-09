@@ -171,3 +171,38 @@ tr:nth-child(even) {
     font-size: 16px;
     margin: 0;
 }
+
+.pop-up{
+    height: auto;
+    max-height: 74vh;
+    padding: 0;
+    border-radius: 5px;
+    overflow: hidden;
+    display: block;
+}
+
+.popUpBody {
+    height: 100%;
+    background-image: url('/resource/MVWB__wbiTemplateBg');
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.pop-heading{
+    font-size: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    font-weight: 500;
+    color: white;
+    padding: 0.4rem;
+    background: #0077B6;
+}
+
+.popUpFooter{
+    position: sticky;
+    bottom: 0;
+    padding-top: 1rem;
+}
