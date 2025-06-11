@@ -24,7 +24,9 @@ export default class WbAllFlowsPage extends LightningElement {
     @track isFlowDraft = false;
     @track showLicenseError = false;
     @track isEditMode = false;
+    @track isNameClicked = false;
     @track selectedFlowId = '';
+    @track selectedFlowName = '';
     @track currentPage = 1;
     @track pageSize = 15;
     @track visiblePages = 5;
@@ -174,6 +176,12 @@ export default class WbAllFlowsPage extends LightningElement {
         this.isEditMode = false;
         this.isFlowVisible = false;
         this.iscreateflowvisible = true;
+    }
+    
+    handleNameClick(event) {
+        this.selectedFlowId = event.target.dataset.recordId;
+        this.selectedFlowName = event.currentTarget.textContent;
+        this.isNameClicked = true;
     }
 
     handleStatusChange(event) {

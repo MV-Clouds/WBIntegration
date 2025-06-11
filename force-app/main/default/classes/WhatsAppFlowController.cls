@@ -15,6 +15,18 @@ public with sharing class WhatsAppFlowController {
     }
 
     @AuraEnabled
+    public static List<Flow_Submission__c> getFlowSubmissionByFlowId(Id flowId) {
+        List<Flow_Submission__c> flowRecs = [SELECT Id, Submitter_Name__c, Submitter_Phone__c, Flow_Response_Mapping__c, CreatedDate FROM Flow_Submission__c WHERE WB_Flow__c = :flowId WITH SECURITY_ENFORCED];
+        return flowRecs.size() > 0 ? flowRecs : new List<Flow_Submission__c>();
+    }
+
+    @AuraEnabled
+    public static List<Flow_Submission__c> getFlowSubmissionById(Id submissionId) {
+        List<Flow_Submission__c> flowRecs = [SELECT Submitter_Name__c, Submitter_Phone__c, Flow_Response_Mapping__c, CreatedDate FROM Flow_Submission__c WHERE Id = :submissionId WITH SECURITY_ENFORCED];
+        return flowRecs.size() > 0 ? flowRecs : new List<Flow_Submission__c>();
+    }
+
+    @AuraEnabled
     public static String getJSONData(String type) {
         String jsonString = '';
         try {

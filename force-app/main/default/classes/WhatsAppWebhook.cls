@@ -429,8 +429,20 @@ global without sharing class WhatsAppWebhook{
                             if (nfmReply != null) { 
                                 String responseJson = (String)nfmReply.get('response_json');
                                 System.debug('responseJson: ' + responseJson);
-                                if(responseJson != null){
+                                if (responseJson != null && contextId != null) {
                                     whatsappChat.Flow_Response_JSON__c = responseJson;
+
+                                    Map<String, Object> flowData = getFlowJsonFromContextId(contextId);
+                                    if (flowData != null) {
+                                        String flowJson = (String) flowData.get('flowJson');
+                                        Id flowRecordId = (Id) flowData.get('flowId');
+
+                                        System.debug('Flow JSON associated with this response: ' + flowJson);
+                                        String labelToValueJson = mapResponseToLabels(flowJson, responseJson);
+                                        System.debug('Label-Value Mapped JSON: ' + labelToValueJson);
+
+                                        createFlowSubmissionRecord(senderPhone, flowRecordId, labelToValueJson);
+                                    }
                                 }
                             }
                         }
@@ -465,6 +477,244 @@ global without sharing class WhatsAppWebhook{
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'processSingleMessage', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in processSingleMessage: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
         }
+    }
+
+    public static Map<String,Object> getFlowJsonFromContextId(String contextId) {
+        if (String.isBlank(contextId)) return null;
+
+        // Step 1: Get Chat__c record using contextId
+        List<Chat__c> chatList = [
+            SELECT Id, Whatsapp_Template__c 
+            FROM Chat__c 
+            WHERE WhatsAppMessageId__c = :contextId 
+            LIMIT 1
+        ];
+
+        if (chatList.isEmpty()) return null;
+
+        System.debug('ChatList: ' + chatList);
+
+        Id whatsappTemplateId = chatList[0].Whatsapp_Template__c;
+        if (whatsappTemplateId == null) return null;
+
+        // Step 2: Get Template__c record
+        List<Template__c> templateList = [
+            SELECT Id, WBButton_Body__c 
+            FROM Template__c 
+            WHERE Id = :whatsappTemplateId 
+            LIMIT 1
+        ];
+
+        if (templateList.isEmpty()) return null;
+
+        System.debug('TemplateList: ' + templateList);
+
+        String buttonBodyJson = templateList[0].WBButton_Body__c;
+        if (String.isBlank(buttonBodyJson)) return null;
+
+        System.debug('Button Body JSON: ' + buttonBodyJson);
+
+        // Step 3: Parse WBButton_Body__c JSON to extract flow_id
+        List<Object> buttonArray = (List<Object>) JSON.deserializeUntyped(buttonBodyJson);
+
+        String flowId;
+        for (Object obj : buttonArray) {
+            Map<String, Object> buttonObj = (Map<String, Object>) obj;
+            if ((String) buttonObj.get('type') == 'FLOW' && buttonObj.containsKey('flow_id')) {
+                flowId = (String) buttonObj.get('flow_id');
+                break;
+            }
+        }
+
+        if (String.isBlank(flowId)) return null;
+
+        // Step 4: Query Flow__c using flowId
+        List<Flow__c> flowList = [
+            SELECT Id, Flow_JSON__c 
+            FROM Flow__c 
+            WHERE Flow_Id__c = :flowId 
+            LIMIT 1
+        ];
+
+        if (flowList.isEmpty()) return null;
+
+        System.debug('FlowList: ' + flowList);
+
+        Flow__c flow = flowList[0];
+
+        // Step 5: Return map with both flow JSON and Flow__c Id
+        return new Map<String, Object>{
+            'flowJson' => flow.Flow_JSON__c,
+            'flowId'   => flow.Id
+        };
+    }
+
+    public static void createFlowSubmissionRecord(String senderPhone, Id flowRecordId, String labelToValueJson) {
+
+        // Step 1: Fetch config
+        MVWB__Object_Config__mdt configMdt = [SELECT MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt WHERE DeveloperName = 'objectConfigInfo' LIMIT 1];
+
+        Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(configMdt.MVWB__ChatWindowConfigInfo__c);
+
+        // Step 2: Dynamically construct SOSL RETURNING part
+        List<String> returningParts = new List<String>();
+        Map<String, String> objectToPhoneFieldMap = new Map<String, String>();
+
+        for (String objectName : configMap.keySet()) {
+            Map<String, Object> objConfig = (Map<String, Object>) configMap.get(objectName);
+            String phoneField = (String) objConfig.get('phoneField');
+
+            returningParts.add(objectName + '(Id, ' + phoneField + ')');
+            objectToPhoneFieldMap.put(objectName, phoneField);
+        }
+
+        String soslQuery = 'FIND \'' + senderPhone + '\' IN PHONE FIELDS RETURNING ' + String.join(returningParts, ', ');
+        System.debug('Dynamic SOSL Query: ' + soslQuery);
+
+        // Step 3: Execute SOSL
+        List<List<SObject>> results = Search.query(soslQuery);
+
+        System.debug('SOSL Results: ' + results);
+
+        // Step 4: Detect matched object
+        String matchedObject = null;
+        SObject matchedRecord = null;
+
+        for (List<SObject> resultList : results) {
+            if (!resultList.isEmpty()) {
+                matchedRecord = resultList[0];
+                matchedObject = matchedRecord.getSObjectType().getDescribe().getName();
+                break;
+            }
+        }
+
+        System.debug('Matched object: ' + matchedObject);
+        System.debug('Matched record: ' + matchedRecord);
+
+        // Step 1: Get config for matched object
+        Map<String, Object> matchedConfig = (Map<String, Object>) configMap.get(matchedObject);
+        if (matchedConfig == null) {
+            System.debug('No configuration found for matched object: ' + matchedObject);
+            return;
+        }
+        
+        String nameField = (String) matchedConfig.get('nameField');
+        String phoneField = (String) matchedConfig.get('phoneField');
+
+        // Step 2: Build dynamic query
+        String soql = 'SELECT ' + nameField + ' FROM ' + matchedObject + ' WHERE ' + phoneField + ' = :senderPhone LIMIT 1';
+
+        // Step 3: Execute dynamic query
+        SObject matchedRecord1 = Database.query(soql);
+
+        // Step 4: Access name
+        String senderName = (String) matchedRecord1.get(nameField);
+
+        System.debug('Name: ' + senderName);
+
+        // Create and insert Flow_Submission__c record
+        Flow_Submission__c submission = new Flow_Submission__c(
+            WB_Flow__c = flowRecordId,
+            Flow_Response_Mapping__c = labelToValueJson,
+            Submitter_Phone__c = senderPhone,
+            Submitter_Name__c = senderName
+        );
+        insert submission;
+    }
+
+    public static String mapResponseToLabels(String flowJsonStr, String responseJsonStr) {
+        // Parse the flow definition and response JSON
+        Map<String, Object> flowJson = (Map<String, Object>) JSON.deserializeUntyped(flowJsonStr);
+        Map<String, Object> responseJson = (Map<String, Object>) JSON.deserializeUntyped(responseJsonStr);
+
+        Map<String, Object> finalLabelToValueMap = new Map<String, Object>();
+
+        // Extract screens array
+        List<Object> screens = (List<Object>) flowJson.get('screens');
+        Integer screenIndex = 0;
+
+        for (Object screenObj : screens) {
+            Map<String, Object> screen = (Map<String, Object>) screenObj;
+            Map<String, Object> layout = (Map<String, Object>) screen.get('layout');
+            List<Object> layoutChildren = (List<Object>) layout.get('children');
+
+            Integer formIndex = 0;
+
+            for (Object childObj : layoutChildren) {
+                Map<String, Object> child = (Map<String, Object>) childObj;
+                if (child.get('type') == 'Form') {
+                    List<Object> formChildren = (List<Object>) child.get('children');
+                    Integer fieldIndex = 0;
+
+                    for (Object formFieldObj : formChildren) {
+                        Map<String, Object> formField = (Map<String, Object>) formFieldObj;
+                        System.debug('formField: ' + formField);
+
+                        if (formField.containsKey('name') && formField.containsKey('label')) {
+                            String name = (String) formField.get('name');
+                            String label = (String) formField.get('label');
+
+                            List<String> possibleKeys = new List<String>{
+                                name,
+                                'screen_' + screenIndex + '_' + name + '_' + fieldIndex,
+                                'screen_' + screenIndex + '_' + name
+                            };
+
+                            Object matchedValue = null;
+                            for (String key : possibleKeys) {
+                                if (responseJson.containsKey(key)) {
+                                    matchedValue = responseJson.get(key);
+                                    break;
+                                }
+                            }
+
+                            if (matchedValue != null) {
+                                // Handle Dropdown or CheckboxGroup
+                                if (formField.containsKey('data-source')) {
+                                    List<Object> dataSource = (List<Object>) formField.get('data-source');
+
+                                    // If the value is a List → CheckboxGroup
+                                    if (matchedValue instanceof List<Object>) {
+                                        List<Object> selectedTitles = new List<Object>();
+                                        for (Object val : (List<Object>) matchedValue) {
+                                            for (Object optionObj : dataSource) {
+                                                Map<String, Object> option = (Map<String, Object>) optionObj;
+                                                if (String.valueOf(option.get('id')) == String.valueOf(val)) {
+                                                    selectedTitles.add(option.get('title'));
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        matchedValue = selectedTitles;
+                                    }
+                                    // If the value is a single item → Dropdown
+                                    else {
+                                        for (Object optionObj : dataSource) {
+                                            Map<String, Object> option = (Map<String, Object>) optionObj;
+                                            if (String.valueOf(option.get('id')) == String.valueOf(matchedValue)) {
+                                                matchedValue = option.get('title');
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                String screenTitle = screen.containsKey('title') ? (String)screen.get('title') : 'Screen ' + screenIndex;
+                                String keyLabel = screenTitle + ' - ' + label;
+                                finalLabelToValueMap.put(keyLabel, matchedValue);
+
+                                finalLabelToValueMap.put(keyLabel, matchedValue);
+                            }
+                        }
+                        fieldIndex++;
+                    }
+                    formIndex++;
+                }
+            }
+            screenIndex++;
+        }
+
+        return JSON.serialize(finalLabelToValueMap);
     }
 
     public static String getFileExtension(String mimeType){
