@@ -65,7 +65,7 @@
                     </div>
                     <div class="slds-m-around_medium table-container">
                         <template if:true={paginatedData.length}>
-                            <table class="slds-table">
+                            <table>
                                 <thead>
                                     <tr class="tablerow">
                                         <th class="tableHead" scope="col">
@@ -115,29 +115,29 @@
                                                             alt="preview" data-id={record.MVWB__Flow_Id__c}
                                                             onclick={previewTemplate}>
                                                     </button>
+                                                    <!-- <button disabled={record.isButtonDisabled} class="action-buttons slds-m-horizontal--x-small">
+                                                        <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
+                                                    </button> -->
+                                                    <button class="action-buttons">
+                                                        <template if:true={record.isEditable}>
+                                                            <img src="/resource/MVWB__editIcon" class="action"
+                                                                title="Edit" alt="Edit" data-id={record.MVWB__Flow_Id__c}
+                                                                data-status={record.MVWB__Status__c} onclick={editFlow}>
+                                                        </template>
+                                                    </button>
+                                                    <button class="action-buttons">
+                                                        <template if:true={record.isPublished}>
+                                                            <img src="/resource/MVWB__trashIcon" class="action trash"
+                                                                title="Deprecate" alt="Deprecate" data-id={record.MVWB__Flow_Id__c}
+                                                                data-status={record.MVWB__Status__c} onclick={deprecateFlow}>
+                                                        </template>
+                                                        <template if:true={record.isDraft}>
+                                                            <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete"
+                                                                alt="Delete" data-id={record.MVWB__Flow_Id__c}
+                                                                data-status={record.MVWB__Status__c} onclick={deleteFlow}>
+                                                        </template>
+                                                    </button>
                                                 </template>
-                                                <!-- <button disabled={record.isButtonDisabled} class="action-buttons slds-m-horizontal--x-small">
-                                                    <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
-                                                </button> -->
-                                                <button class="action-buttons">
-                                                    <template if:true={record.isEditable}>
-                                                        <img src="/resource/MVWB__editIcon" class="action"
-                                                            title="Edit" alt="Edit" data-id={record.MVWB__Flow_Id__c}
-                                                            data-status={record.MVWB__Status__c} onclick={editFlow}>
-                                                    </template>
-                                                </button>
-                                                <button class="action-buttons">
-                                                    <template if:true={record.isPublished}>
-                                                        <img src="/resource/MVWB__trashIcon" class="action trash"
-                                                            title="Deprecate" alt="Deprecate" data-id={record.MVWB__Flow_Id__c}
-                                                            data-status={record.MVWB__Status__c} onclick={deprecateFlow}>
-                                                    </template>
-                                                    <template if:true={record.isDraft}>
-                                                        <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete"
-                                                            alt="Delete" data-id={record.MVWB__Flow_Id__c}
-                                                            data-status={record.MVWB__Status__c} onclick={deleteFlow}>
-                                                    </template>
-                                                </button>
                                             </td>
                                         </tr>
                                     </template>
