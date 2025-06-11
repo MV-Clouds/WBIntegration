@@ -417,7 +417,6 @@ global without sharing class WhatsAppWebhook{
                     }
                 }
 
-                // Rachit - WP Flow changes
                 if (messageType.equalsIgnoreCase('interactive')) {
                     Map<String, Object> interactive = (Map<String, Object>)message.get('interactive');
                     System.debug('interactive: ' + interactive);
