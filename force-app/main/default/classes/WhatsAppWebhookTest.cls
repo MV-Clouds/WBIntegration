@@ -35,12 +35,14 @@ private class WhatsAppWebhookTest {
         Template__c temp = new Template__c(
             Template_Name__c = 'hello_world',
             Status__c = 'In-Review',
-            Template_Id__c = '138470518808412'
+            Template_Id__c = '138470518808412',
+            WBButton_Body__c = '[{"type":"FLOW","text":"View flow","flow_id":"540575928691819"}]'
         );
         insert temp;
 
         Chat__c dummyChatReact = new Chat__c(
-            WhatsAppMessageId__c = 'wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSNjMxRUI5Mzg0RTlBRTUwNEM5AA=='
+            WhatsAppMessageId__c = 'wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSNjMxRUI5Mzg0RTlBRTUwNEM5AA==',
+            Whatsapp_Template__c = temp.Id
         );
         insert dummyChatReact;
 
@@ -51,7 +53,11 @@ private class WhatsAppWebhookTest {
         insert config;
 
         // Create Flow__c record
-        Flow__c flow = new Flow__c(Flow_Name__c = 'Test Flow');
+        Flow__c flow = new Flow__c(
+            Flow_Name__c = 'Test Flow',
+            Flow_JSON__c = '{"screens":[{"title":"Test Screen","layout":{"children":[{"type":"Form","children":[{"name":"field1","label":"Field 1","data-source":[{"id":"1","title":"Option A"},{"id":"2","title":"Option B"}]}]}]}}]}',
+            Flow_Id__c = '540575928691819'
+        );
         insert flow;
 
         // Create a Contact to match by phone
@@ -202,6 +208,20 @@ private class WhatsAppWebhookTest {
     }
 
     @IsTest
+    static void testProcessWhatsAppPayloadInteractive() {
+        HttpResponse mockResponse = new HttpResponse();
+        mockResponse.setHeader('Content-Type', 'application/json');
+        mockResponse.setStatusCode(200);
+        mockResponse.setBodyAsBlob(Blob.valueOf('mock-binary-data'));
+
+        String documentjsonPayload = '{"object":"whatsapp_business_account","entry":[{"id":"499269473267232","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919558019600","phone_number_id":"397858113402150"},"contacts":[{"profile":{"name":"Harsh Gandhi"},"wa_id":"919664599641"}],"messages":[{"context":{"from":"919558019600","id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSMUI5MUJFN0EwN0MzOUZGODUzAA=="},"from":"919664599641","id":"wamid.HBgMOTE5NjY0NTk5NjQxFQIAEhggMDEzMUU0Q0MzODc2MTgxQzREQUE4NkQ5RkYxMTAzQTgA","timestamp":"2147483647","type":"interactive","interactive":{"type":"nfm_reply","nfm_reply":{"response_json":"{\"additional_customization\":\"None\",\"flow_token\":\"unused\"}","body":"Sent","name":"flow"}}}]},"field":"messages"}]}]}';
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(mockResponse));
+        WhatsAppWebhook.processWhatsAppPayload(documentjsonPayload);
+        Test.stopTest();
+    }
+
+    @IsTest
     static void testHandleMediaAttachment() {
         HttpResponse mockResponse = new HttpResponse();
         mockResponse.setHeader('Content-Type', 'application/json');
@@ -325,5 +345,13 @@ private class WhatsAppWebhookTest {
 
         System.assertEquals(1, resultMap.size(), 'There should be one key-value pair');
         System.assertEquals('Option B', resultMap.get('Screen 1 - Field 1'));
+    }
+
+    @isTest
+    static void testGetFlowJsonFromContextId() {
+
+        Test.startTest();
+        WhatsAppWebhook.getFlowJsonFromContextId('wamid.HBgMOTE5NjY0NTk5NjQxFQIAERgSNjMxRUI5Mzg0RTlBRTUwNEM5AA==');
+        Test.stopTest();
     }
 }

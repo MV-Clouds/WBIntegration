@@ -13,7 +13,7 @@ import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicense
 export default class WbAllFlowsPage extends LightningElement {
     @track allRecords = [];
     @track filteredRecords = [];
-    @track statusValues = [];
+    @track statusValues = 'All';
     @track statusOptions = [];
     @track isFlowVisible = false;
     @track iscreateflowvisible = false;
@@ -122,7 +122,7 @@ export default class WbAllFlowsPage extends LightningElement {
 
     async connectedCallback(){
         try {
-            this.showSpinner = true;
+            this.isLoading = true;
             await this.checkLicenseStatus();
             if (this.showLicenseError) {
                 return; // Stops execution if license is expired
@@ -167,6 +167,9 @@ export default class WbAllFlowsPage extends LightningElement {
                 .catch((error) => {
                     console.error(error);
                 })
+                .finnally(() => {
+                    this.isLoading = false;
+                });
         } catch (error) {
             console.error('Error in fetchWhatsAppFlows : ' , error);
         }
@@ -185,7 +188,7 @@ export default class WbAllFlowsPage extends LightningElement {
     }
 
     handleStatusChange(event) {
-        this.statusValues = event.detail.value;
+        this.statusValues = event.target.value;
         this.filterRecords();
     }
 
@@ -198,8 +201,8 @@ export default class WbAllFlowsPage extends LightningElement {
         try {
             let filtered = [...this.allRecords];
     
-            if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
+            if (this.statusValues && this.statusValues !== 'All') {
+                filtered = filtered.filter(record => record.MVWB__Status__c === this.statusValues);
             }
     
             if (this.searchInput) {

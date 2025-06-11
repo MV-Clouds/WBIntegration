@@ -8,7 +8,7 @@
                     <ol class="slds-list_horizontal slds-wrap" role="list">
                         <template for:each={breadcrumbs} for:item="crumb" for:index="index">
                             <li key={crumb.label} class="slds-breadcrumb__item" role="presentation">
-                                <a href="javascript:void(0);" class={crumb.className} data-index={index} onclick={handleBreadcrumbClick}>
+                                <a href="javascript:void(0);" title={crumb.label} class={crumb.className} data-index={index} onclick={handleBreadcrumbClick}>
                                     {crumb.label}
                                 </a>
                             </li>
@@ -55,7 +55,7 @@
                                     <div class="empty-state__icon">
                                         <img src="/resource/MVWB__emptyState" alt="" draggable="false">
                                     </div>
-                                    <div class="empty-state__message">No Data Available to Show.</div>
+                                    <div class="empty-state__message">No data available to show.</div>
                                 </div>
                             </div>
                         </div>
@@ -131,7 +131,7 @@
                                     <div class="empty-state__icon">
                                         <img src="/resource/MVWB__emptyState" alt="" draggable="false">
                                     </div>
-                                    <div class="empty-state__message">No Data Available to Show.</div>
+                                    <div class="empty-state__message">No data available to show.</div>
                                 </div>
                             </div>
                         </div>
