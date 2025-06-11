@@ -483,30 +483,18 @@ global without sharing class WhatsAppWebhook{
         if (String.isBlank(contextId)) return null;
 
         // Step 1: Get Chat__c record using contextId
-        List<Chat__c> chatList = [
-            SELECT Id, Whatsapp_Template__c 
-            FROM Chat__c 
-            WHERE WhatsAppMessageId__c = :contextId 
-            LIMIT 1
-        ];
+        List<Chat__c> chatList = [SELECT Id, Whatsapp_Template__c FROM Chat__c WHERE WhatsAppMessageId__c = :contextId LIMIT 1];
 
         if (chatList.isEmpty()) return null;
-
         System.debug('ChatList: ' + chatList);
 
         Id whatsappTemplateId = chatList[0].Whatsapp_Template__c;
         if (whatsappTemplateId == null) return null;
 
         // Step 2: Get Template__c record
-        List<Template__c> templateList = [
-            SELECT Id, WBButton_Body__c 
-            FROM Template__c 
-            WHERE Id = :whatsappTemplateId 
-            LIMIT 1
-        ];
+        List<Template__c> templateList = [SELECT Id, WBButton_Body__c FROM Template__c WHERE Id = :whatsappTemplateId LIMIT 1];
 
         if (templateList.isEmpty()) return null;
-
         System.debug('TemplateList: ' + templateList);
 
         String buttonBodyJson = templateList[0].WBButton_Body__c;
@@ -529,19 +517,12 @@ global without sharing class WhatsAppWebhook{
         if (String.isBlank(flowId)) return null;
 
         // Step 4: Query Flow__c using flowId
-        List<Flow__c> flowList = [
-            SELECT Id, Flow_JSON__c 
-            FROM Flow__c 
-            WHERE Flow_Id__c = :flowId 
-            LIMIT 1
-        ];
+        List<Flow__c> flowList = [SELECT Id, Flow_JSON__c FROM Flow__c WHERE Flow_Id__c = :flowId LIMIT 1];
 
         if (flowList.isEmpty()) return null;
-
         System.debug('FlowList: ' + flowList);
 
         Flow__c flow = flowList[0];
-
         // Step 5: Return map with both flow JSON and Flow__c Id
         return new Map<String, Object>{
             'flowJson' => flow.Flow_JSON__c,
@@ -553,7 +534,6 @@ global without sharing class WhatsAppWebhook{
 
         // Step 1: Fetch config
         MVWB__Object_Config__mdt configMdt = [SELECT MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt WHERE DeveloperName = 'objectConfigInfo' LIMIT 1];
-
         Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(configMdt.MVWB__ChatWindowConfigInfo__c);
 
         // Step 2: Dynamically construct SOSL RETURNING part
@@ -573,7 +553,6 @@ global without sharing class WhatsAppWebhook{
 
         // Step 3: Execute SOSL
         List<List<SObject>> results = Search.query(soslQuery);
-
         System.debug('SOSL Results: ' + results);
 
         // Step 4: Detect matched object
@@ -609,7 +588,6 @@ global without sharing class WhatsAppWebhook{
 
         // Step 4: Access name
         String senderName = (String) matchedRecord1.get(nameField);
-
         System.debug('Name: ' + senderName);
 
         // Create and insert Flow_Submission__c record
@@ -626,7 +604,6 @@ global without sharing class WhatsAppWebhook{
         // Parse the flow definition and response JSON
         Map<String, Object> flowJson = (Map<String, Object>) JSON.deserializeUntyped(flowJsonStr);
         Map<String, Object> responseJson = (Map<String, Object>) JSON.deserializeUntyped(responseJsonStr);
-
         Map<String, Object> finalLabelToValueMap = new Map<String, Object>();
 
         // Extract screens array

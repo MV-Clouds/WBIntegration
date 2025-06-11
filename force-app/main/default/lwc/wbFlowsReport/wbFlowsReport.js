@@ -2,7 +2,6 @@ import { LightningElement, track, api } from 'lwc';
 import getWhatsAppFlowById from '@salesforce/apex/WhatsAppFlowController.getWhatsAppFlowById';
 import getFlowSubmissionByFlowId from '@salesforce/apex/WhatsAppFlowController.getFlowSubmissionByFlowId';
 import getFlowSubmissionById from '@salesforce/apex/WhatsAppFlowController.getFlowSubmissionById';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class WbFlowsReport extends LightningElement {
     @api selectedFlowId;
@@ -29,10 +28,9 @@ export default class WbFlowsReport extends LightningElement {
 
     connectedCallback() {
         this.fetchFlowDetailsById();
-        // this.loadBroadcastGroups();
-        console.log('flowReport = ', this.flowReport);
-        console.log('Selected Flow ID:', this.selectedFlowId);
-        console.log('Selected Flow Name:', this.selectedFlowName);
+        // console.log('flowReport = ', this.flowReport);
+        // console.log('Selected Flow ID:', this.selectedFlowId);
+        // console.log('Selected Flow Name:', this.selectedFlowName);
         this.breadcrumbs = [
             { label: 'All flows' },
             { label: this.selectedFlowName }
@@ -129,7 +127,7 @@ export default class WbFlowsReport extends LightningElement {
             }
             return pages;
         } catch (error) {
-            this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
+            console.error(error);
             return null;
         }
     }
@@ -206,7 +204,7 @@ export default class WbFlowsReport extends LightningElement {
             }
             return pages;
         } catch (error) {
-            this.showToast('Error', 'Error in pageGrpNumbers->' + error, 'error');
+            console.error(error);
             return null;
         }
     }
@@ -221,7 +219,7 @@ export default class WbFlowsReport extends LightningElement {
 
     fetchFlowDetailsById() {
         this.isLoading = true;
-        console.log('Fetching flow details for ID:', this.selectedFlowId);
+        // console.log('Fetching flow details for ID:', this.selectedFlowId);
         getWhatsAppFlowById({ flowId: this.selectedFlowId })
             .then(result => {
                 if (result && result.length > 0) {
@@ -230,8 +228,8 @@ export default class WbFlowsReport extends LightningElement {
                 }
                 this.fetchFlowReportById();
             })
-            .catch(() => {
-                this.showToast('Error', 'Failed to load flow details', 'error');
+            .catch((error) => {
+                console.error('Error fetching flow details:', error);
             })
             .finally(() => {
                 this.isLoading = false;
@@ -239,7 +237,7 @@ export default class WbFlowsReport extends LightningElement {
     }
 
     fetchFlowReportById(){
-        console.log('Fetching flow report for ID:', this.recordId);
+        // console.log('Fetching flow report for ID:', this.recordId);
         this.isLoading = true;
         getFlowSubmissionByFlowId({ flowId: this.recordId })
             .then(result => {
@@ -251,16 +249,13 @@ export default class WbFlowsReport extends LightningElement {
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })
-            .catch(() => {
-                this.showToast('Error', 'Failed to load reports', 'error');
-            })
-            .finally(() => {
-                this.isLoading = false;
+            .catch((error) => {
+                console.error('Error fetching flow report:', error);
             });
     }
 
     fetchSubmissionDetailsById() {
-        console.log('Fetching submission details for ID:', this.selectedSubmissionId);
+        // console.log('Fetching submission details for ID:', this.selectedSubmissionId);
         this.isLoading = true;
 
         getFlowSubmissionById({ submissionId: this.selectedSubmissionId })
@@ -297,7 +292,7 @@ export default class WbFlowsReport extends LightningElement {
                     });
 
                     this.flowSubmissionDetails = transformed;
-                    console.log('Transformed Submission Details:', JSON.stringify(this.flowSubmissionDetails));
+                    // console.log('Transformed Submission Details:', JSON.stringify(this.flowSubmissionDetails));
                 }
 
                 this.isFlowSubmissionDetails = true;
@@ -306,43 +301,20 @@ export default class WbFlowsReport extends LightningElement {
                 this.updateGroupData();
             })
             .catch((e) => {
-                this.showToast('Error', 'Failed to load submission details', 'error');
-                console.error(e.message, e.lineNumber, e.columnNumber);
+                console.error('Error fetching submission details:', e);
             })
             .finally(() => {
                 this.isLoading = false;
             });
     }
 
-    // loadBroadcastGroups() {
-    //     this.isLoading = true;
-    //     getBroadcastGroupsByBroadcastId({broadcastId: this.recordId})
-    //         .then(result => {
-    //             this.data = result.map((item, index) => ({
-    //                 ...item,
-    //                 index: index + 1,
-    //             }));
-    //             this.selectedGroupObject = this.data.Object_Name__c;
-    //             this.filteredData = [...this.data];
-    //             this.updateShownData();
-    //         })
-    //         .catch(() => {
-    //             this.showToast('Error', 'Failed to load broadcast groups', 'error');
-    //         })
-    //         .finally(() => {
-    //             this.isLoading = false;
-    //         });
-    // }
-
     updateShownData() {
         try {
             const startIndex = (this.currentPage - 1) * this.pageSize;
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredData.slice(startIndex, endIndex);
-            console.log('Paginated Data:', JSON.stringify(this.paginatedData));
-            console.log('Filtered Data:', JSON.stringify(this.filteredData));
         } catch (error) {
-            this.showToast('Error', 'Error updating shown data', 'error');
+            console.error('Error updating shown data:', error);
         }
     }
 
@@ -353,7 +325,7 @@ export default class WbFlowsReport extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            this.showToast('Error', 'Error navigating to previous page', 'error');
+            console.error('Error navigating to previous page:', error);
         }
     }
     
@@ -364,7 +336,7 @@ export default class WbFlowsReport extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            this.showToast('Error', 'Error navigating pages', 'error');
+            console.error('Error navigating pages:', error);
         }
     }
 
@@ -376,7 +348,7 @@ export default class WbFlowsReport extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            this.showToast('Error', 'Error navigating pages', 'error');
+            console.error('Error navigating pages:', error);
         }
     } 
 
@@ -396,45 +368,53 @@ export default class WbFlowsReport extends LightningElement {
     }
 
     handleNameClick(event){
-        this.isFlowSubmissionDetails=true;
-        this.flowReport=false;
-        this.selectedSubmissionId = event.target.dataset.recordId;
-
-        const submitterName = event.currentTarget.textContent;
-        if (!this.breadcrumbs.find(b => b.label === submitterName)) {
-            this.breadcrumbs = [...this.breadcrumbs, { label: submitterName }];
-            this.updateBreadcrumbs();
+        try {
+            this.isFlowSubmissionDetails=true;
+            this.flowReport=false;
+            this.selectedSubmissionId = event.target.dataset.recordId;
+    
+            const submitterName = event.currentTarget.textContent;
+            if (!this.breadcrumbs.find(b => b.label === submitterName)) {
+                this.breadcrumbs = [...this.breadcrumbs, { label: submitterName }];
+                this.updateBreadcrumbs();
+            }
+            this.fetchSubmissionDetailsById();
+        } catch (error) {
+            console.error('Error in handleNameClick:', error);
         }
-        this.fetchSubmissionDetailsById();
     }
 
     handleBreadcrumbClick(event) {
-        const index = parseInt(event.currentTarget.dataset.index, 10);
-        const clickedLabel = this.breadcrumbs[index].label;
-
-        // Trim breadcrumbs to clicked item
-        this.breadcrumbs = this.breadcrumbs.slice(0, index + 1);
-
-        // Handle view toggling based on breadcrumb length
-        if (this.breadcrumbs.length === 1) {
-            // Only "Flows" breadcrumb
-            this.flowReport = false;
-            this.isFlowSubmissionDetails = false;
-            this.record = null;
-            this.paginatedData = [];
-        } else if (this.breadcrumbs.length === 2) {
-            // "Flows > Flow_Name"
-            this.isFlowSubmissionDetails = false;
-            this.flowReport = true;
-            this.flowSubmissionDetails = null;
-            this.paginatedDetails = [];
-        } else if (this.breadcrumbs.length === 3) {
-            // "Flows > Flow_Name > Submitter"
-            this.isFlowSubmissionDetails = true;
-            this.flowReport = false;
-            this.fetchSubmissionDetailsById();
+        try {
+            const index = parseInt(event.currentTarget.dataset.index, 10);
+            const clickedLabel = this.breadcrumbs[index].label;
+    
+            // Trim breadcrumbs to clicked item
+            this.breadcrumbs = this.breadcrumbs.slice(0, index + 1);
+    
+            // Handle view toggling based on breadcrumb length
+            if (this.breadcrumbs.length === 1) {
+                // Only "Flows" breadcrumb
+                this.flowReport = false;
+                this.isFlowSubmissionDetails = false;
+                this.record = null;
+                this.paginatedData = [];
+            } else if (this.breadcrumbs.length === 2) {
+                // "Flows > Flow_Name"
+                this.isFlowSubmissionDetails = false;
+                this.flowReport = true;
+                this.flowSubmissionDetails = null;
+                this.paginatedDetails = [];
+            } else if (this.breadcrumbs.length === 3) {
+                // "Flows > Flow_Name > Submitter"
+                this.isFlowSubmissionDetails = true;
+                this.flowReport = false;
+                this.fetchSubmissionDetailsById();
+            }
+            this.updateBreadcrumbs();
+        } catch (error) {
+            console.error('Error in handleBreadcrumbClick:', error);
         }
-        this.updateBreadcrumbs();
     }
 
     updateBreadcrumbs() {
@@ -449,41 +429,13 @@ export default class WbFlowsReport extends LightningElement {
         });
     }
 
-    // fetchGroupMembers() {
-    //     this.isLoading = true;
-    //     getBroadcastMembersByGroupId({
-    //         groupId: this.selectedSubmissionId,
-    //         objectName: this.selectedGroupObject
-    //     })
-    //     .then(result => {
-    //         this.flowSubmissionDetails = result.map((item, index) => ({
-    //             id: item.record.Id,
-    //             name: item.record.Name || 'Not Specified',
-    //             phone: item.record.Phone || item.record.MobilePhone || '',
-    //             status: item.status || '',
-    //             index: index + 1
-    //         }));
-            
-    //         this.filteredDetails = [...this.flowSubmissionDetails];
-    //         this.updateGroupData();
-    //     })
-    //     .catch(error => {
-    //         console.error('Failed to load broadcast members', error);
-    //     })
-    //     .finally(() => {
-    //         this.isLoading = false;
-    //     });
-    // }
-
     updateGroupData() {
         try {
             const startIndex = (this.currentGrpPage - 1) * this.pageGrpSize;
             const endIndex = Math.min(startIndex + this.pageGrpSize, this.totalGrpItems);
             this.paginatedDetails = this.filteredDetails.slice(startIndex, endIndex);
-            console.log('Paginated Details:', JSON.stringify(this.paginatedDetails));
-            
         } catch (error) {
-            this.showToast('Error', 'Error updating shown data', 'error');
+            console.error('Error updating shown data:', error);
         }
     }
 
@@ -494,7 +446,7 @@ export default class WbFlowsReport extends LightningElement {
                 this.updateGroupData();
             }
         }catch(error){
-            this.showToast('Error', 'Error navigating to previous page', 'error');
+            console.error('Error in handleGrpPrevious:', error);
         }
     }
     
@@ -505,7 +457,7 @@ export default class WbFlowsReport extends LightningElement {
                 this.updateGroupData();
             }
         }catch(error){
-            this.showToast('Error', 'Error navigating pages', 'error');
+            console.error('Error in handleGrpNext:', error);
         }
     }
 
@@ -517,7 +469,7 @@ export default class WbFlowsReport extends LightningElement {
                 this.updateGroupData();
             }
         }catch(error){
-            this.showToast('Error', 'Error navigating pages', 'error');
+            console.error('Error in handleGrpPageChange:', error);
         }
     }
 
@@ -530,10 +482,5 @@ export default class WbFlowsReport extends LightningElement {
                 year: 'numeric'
             });
         }
-    }
-
-    showToast(title, message, varient) {
-        const toastEvent = new ShowToastEvent({title: title, message: message, variant: varient});
-        this.dispatchEvent(toastEvent);
     }
 }

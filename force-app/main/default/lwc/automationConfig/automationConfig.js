@@ -417,6 +417,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     * Created By: Kavya Trivedi
     */
     handleDelete(event) {
+        this.isLoading = true;
         const recordId = event.currentTarget.dataset.id;
         if (!recordId) return;
     
@@ -428,6 +429,9 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         .catch(error => {
             console.error('Error deleting record:', error);
             this.showToast('Error', 'Error deleting automation.', 'error');
+        })
+        .finally(() => {
+            this.isLoading = false;
         });
     }    
 
