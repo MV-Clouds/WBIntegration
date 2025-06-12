@@ -2,10 +2,10 @@ public with sharing class SyncTemplateController{
     // public SyncTemplateController() {
     // }
     @AuraEnabled
-    public static Map<String, Object> syncTemplateData(){
+    public static List<String> syncTemplateData(){
         Map<String, Object> allMetaTemplatesMap = new Map<String, Object>();
         List<Template__c> allTemplatesMap = new List<Template__c>();
-        Set<String> pendingTemplateNameList = new Set<String>();
+        List<String> pendingTemplateNameList = new List<String>();
         Set<String> templateNameList = new Set<String>();
         
         try{
@@ -30,7 +30,7 @@ public with sharing class SyncTemplateController{
 
             for(String metaTemplateName : allMetaTemplatesMap.keySet()){
                 if (!templateNameList.contains(metaTemplateName)){
-                    pendingTemplateNameList.add(metaTemplateName);
+                    pendingTemplateNameList.add(metaTemplateName+'');
                 }  
             }
             System.debug('Pending Template Names: ' + pendingTemplateNameList);
@@ -39,7 +39,7 @@ public with sharing class SyncTemplateController{
         } catch (Exception e){
             throw new AuraHandledException('Error syncing template data: ' + e.getMessage());
         }
-        return allMetaTemplatesMap;
+        return pendingTemplateNameList;
     }
 
     private static void fetchAllMetaTemplates(String url, String accessToken, Map<String, Object> allMetaTemplatesMap){
