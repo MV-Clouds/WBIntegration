@@ -245,6 +245,8 @@ tr:nth-child(even) {
 .btns{
     background-color: white;
     color: #4194f9;
+    display: flex;
+    gap: 9px;
     --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }
 .Actionbtn {
