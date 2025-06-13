@@ -316,11 +316,13 @@ private class BroadcastMessageControllerTest {
     static void testGetBroadcastMembersByGroupId() {
         Test.startTest();
 
+        Broadcast__c broadcast = [SELECT Id FROM Broadcast__c LIMIT 1];
+
         // Provide the groupId and objectName
         Broadcast_Group__c groups = [SELECT Id FROM Broadcast_Group__c LIMIT 1];
         String objectName = 'Contact'; // Make sure 'Lead' is configured correctly in getObjectConfigs()
 
-        List<BroadcastMessageController.BroadcastMemberWrapper> result = BroadcastMessageController.getBroadcastMembersByGroupId(groups.Id, objectName);
+        List<BroadcastMessageController.BroadcastMemberWrapper> result = BroadcastMessageController.getBroadcastMembersByGroupId(groups.Id, objectName, broadcast.Id);
 
         Test.stopTest();
     }
