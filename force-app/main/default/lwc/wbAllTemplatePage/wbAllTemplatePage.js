@@ -14,6 +14,7 @@ MODIFICATION LOG*
 import { LightningElement, track, wire,api } from 'lwc';
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
+import getSyncTemplateData from '@salesforce/apex/SyncTemplateController.syncTemplateData';
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
@@ -43,6 +44,12 @@ export default class WbAllTemplatePage extends LightningElement {
     @track visiblePages = 5;
     @track data = [];
     @track paginatedData = [];
+    @track showModal = false;
+    @track missingTemplatesList = [];
+    showScrollButton = true;
+    isTemplateCreationConfirmed = false;
+    isMissingTemplateCreationDisabled = true;
+
 
     get actionButtonClass(){
         return 'custom-button cus-btns' ;
@@ -484,4 +491,63 @@ export default class WbAllTemplatePage extends LightningElement {
         });
         this.dispatchEvent(toastEvent);
     }
+    
+    syncTemplate(){
+        this.isLoading = true;
+        this.syncTemplateData();
+    }
+    
+    handleProceed() {
+        // Initiate your process here
+        this.showModal = false;
+    }
+
+    closeModal() {
+        this.showModal = false;
+    }
+
+    
+    handleConfirmationChange(event) {
+        this.isTemplateCreationConfirmed = event.target.checked;
+        this.isMissingTemplateCreationDisabled = !this.isTemplateCreationConfirmed;
+    }
+
+    syncTemplateData() {
+        getSyncTemplateData()
+            .then(data => {
+                console.log(data);
+                this.missingTemplatesList = data;
+                this.isLoading = false;
+                this.showModal = true;
+            })
+            .catch(error => {
+                console.error('Error fetching pending template list: ', error);
+                this.isLoading = false;
+            });
+    }
+    scrollToBottom() {
+        const listElement = this.template.querySelector('.template-list');
+        listElement.scrollTo({
+            top: listElement.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+
+    handleScroll() {
+        const listElement = this.template.querySelector('.template-list');
+        const scrollBottom = listElement.scrollHeight - listElement.scrollTop - listElement.clientHeight;
+        this.showScrollButton = scrollBottom > 10;
+    }
+
+    renderedCallback() {
+        if (this.showModal) {
+            const listElement = this.template.querySelector('.template-list');
+            if (listElement) {
+                listElement.addEventListener('scroll', () => this.handleScroll());
+                // Check initial state
+                this.handleScroll();
+            }
+        }
+    }
+    
 }
