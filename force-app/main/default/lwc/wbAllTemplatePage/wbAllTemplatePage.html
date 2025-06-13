@@ -187,6 +187,70 @@
     <template if:true={isCreateTemplate}>
         <c-wb-template-parent edittemplateid={editTemplateId}></c-wb-template-parent>
     </template>
+
+    <template if:true={showModal}>
+        <!-- <c-missing-templates-modal 
+            template-names={missingTemplates} 
+            onproceed={handleProceed}
+            oncancel={handleCancel}>
+        </c-missing-templates-modal> -->
+        <div class="modal-container">
+            <div class="modal-overlay" onclick={closeModal}></div>
+            <div class="modal-content">
+                <!-- Header -->
+                <div class="modal-header">
+                    <h2>Missing Templates</h2>
+                    <button class="close-btn" onclick={closeModal}>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13 1L1 13M1 1L13 13" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Content Area -->
+                <div class="modal-body">
+                    <p class="info-text">The following templates are not present in Salesforce but are found in your Meta business account:</p>
+                    
+                    <div class="template-list-container">
+                        <div class="template-list" id="templateList">
+                            <template for:each={missingTemplatesList} for:item="template">
+                                <div key={template} class="template-item">
+                                    <span class="template-name">{template}</span>
+                                </div>
+                            </template>
+                            
+                            <!-- Scroll to bottom button - inside template list -->
+                            <div if:true={showScrollButton} class="scroll-to-bottom-container">
+                                <button class="scroll-to-bottom-btn" onclick={scrollToBottom}>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M8 12L3 7L3.7 6.3L8 10.6L12.3 6.3L13 7L8 12Z" fill="#3B82F6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="confirmation-checkbox">
+                        <input type="checkbox" id="confirmCreation" 
+                            checked={isTemplateCreationConfirmed} 
+                            onchange={handleConfirmationChange}>
+                        <label for="confirmCreation">
+                            Confirm template creation
+                            <div class="info-note">This process may take several minutes to complete.</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <button class="btn secondary" onclick={closeModal}>Cancel</button>
+                    <button class="btn primary" disabled={isMissingTemplateCreationDisabled} onclick={handleProceed}>Proceed</button>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <!-- <template if:true={isMissingTemplateModal}>
+    </template> -->
     
     <template if:true={showPopup}>
         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
