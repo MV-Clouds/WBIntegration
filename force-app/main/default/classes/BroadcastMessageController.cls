@@ -569,7 +569,7 @@ public with sharing class BroadcastMessageController {
     }
 
     @AuraEnabled
-    public static List<BroadcastMemberWrapper> getBroadcastMembersByGroupId(String groupId, String objectName) {
+    public static List<BroadcastMemberWrapper> getBroadcastMembersByGroupId(String groupId, String objectName, String broadcastId) {
         try {
             if (String.isBlank(groupId) || String.isBlank(objectName)) {
                 throw new AuraHandledException('Broadcast Group ID and Object Name are required');
@@ -593,11 +593,8 @@ public with sharing class BroadcastMessageController {
             // Step 2: Get phone numbers and statuses
             List<Broadcast_Group_Member__c> members = [ SELECT Phone_Number__c, Status__c FROM Broadcast_Group_Member__c  WHERE Broadcast_Group_ID__c = :groupId  AND Phone_Number__c != null WITH SECURITY_ENFORCED];
 
-            Map<String, String> phoneToStatus = new Map<String, String>();
             Set<String> phoneNumbers = new Set<String>();
-
             for (Broadcast_Group_Member__c member : members) {
-                phoneToStatus.put(member.Phone_Number__c, member.Status__c);
                 phoneNumbers.add(member.Phone_Number__c);
             }
 
@@ -605,10 +602,19 @@ public with sharing class BroadcastMessageController {
                 return new List<BroadcastMemberWrapper>();
             }
 
+            // Step 3: Fetch chat statuses using phone numbers
+            Map<String, String> phoneToChatStatus = new Map<String, String>();
+            List<Chat__c> broadcastRelatedChats = [SELECT Phone__c, Message_Status__c FROM Chat__c WHERE WB_Broadcast__c = :broadcastId AND Phone__c IN :phoneNumbers WITH SECURITY_ENFORCED];
+
+            for (Chat__c chat : broadcastRelatedChats) {
+                // If there are multiple chats per phone, you can decide to pick the latest or first one — adjust as needed
+                if (!phoneToChatStatus.containsKey(chat.Phone__c)) {
+                    phoneToChatStatus.put(chat.Phone__c, chat.Message_Status__c);
+                }
+            }
+
             // Step 3: Build and run the dynamic query
-            String query = 'SELECT Id, Name, ' + phoneField +
-                            ' FROM ' + objectName +
-                            ' WHERE ' + phoneField + ' IN :phoneNumbers';
+            String query = 'SELECT Id, Name, ' + phoneField + ' FROM ' + objectName + ' WHERE ' + phoneField + ' IN :phoneNumbers';
             List<SObject> matchedRecords = Database.query(query);
 
             // Step 4: Wrap with status
@@ -617,12 +623,11 @@ public with sharing class BroadcastMessageController {
                 String phoneValue = (String)record.get(phoneField);
                 BroadcastMemberWrapper wrapper = new BroadcastMemberWrapper();
                 wrapper.record = record;
-                wrapper.status = phoneToStatus.get(phoneValue);
+                wrapper.status = phoneToChatStatus.get(phoneValue);
                 result.add(wrapper);
             }
 
             return result;
-
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastMembersByGroupId','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error fetching records: ' + e.getMessage());

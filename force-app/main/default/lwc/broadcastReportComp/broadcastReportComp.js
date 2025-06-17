@@ -309,7 +309,8 @@ export default class BroadcastReportComp extends LightningElement {
         this.isLoading = true;
         getBroadcastMembersByGroupId({
             groupId: this.selectedGroupId,
-            objectName: this.selectedGroupObject
+            objectName: this.selectedGroupObject,
+            broadcastId: this.recordId
         })
         .then(result => {
             this.groupData = result.map((item, index) => ({
