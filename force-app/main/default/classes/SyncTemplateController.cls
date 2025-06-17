@@ -266,6 +266,9 @@ public with sharing class SyncTemplateController{
     public static void confirmTemplateSync() {
         SyncTemplateDataWrapper syncTemplateWrapper = syncTemplateData(true);
 
+        List<Template__c> templatesToInsert = new List<Template__c>();
+        List<Template_Variable__c> allVarsToInsert = new List<Template_Variable__c>();
+
         for (String templateName : syncTemplateWrapper.allMetaTemplatesMap.keySet()) {
             Map<String, Object> templateData = (Map<String, Object>) syncTemplateWrapper.allMetaTemplatesMap.get(templateName);
 
@@ -274,12 +277,11 @@ public with sharing class SyncTemplateController{
 
             CreateTemplateWrapper.TemplateWrapper tw = new CreateTemplateWrapper.TemplateWrapper();
             tw.templateName = templateName;
-            tw.templateType = (String) templateData.get('sub_category');
+            tw.templateType = determineTemplateType(templateData);
 
             tw.headAlternateTexts = new List<String>();
             tw.varAlternateTexts = new List<String>();
-
-            // --- Flags for templateMiscellaneousData ---
+            System.debug('284');
             Map<String, Object> miscFlags = new Map<String, Object>();
             Boolean addMedia = false, addHeaderVar = false, isHeaderText = false;
             Boolean isVisitSite = false, isCheckboxChecked = false, isFlowSelected = false;
@@ -316,7 +318,10 @@ public with sharing class SyncTemplateController{
                         Map<String, Object> example = (Map<String, Object>) comp.get('example');
                         if (example.containsKey('header_handle')) {
                             List<Object> handleList = (List<Object>) example.get('header_handle');
+                            
+                            System.debug('Head Text ::: ');
                             for (Object h : handleList) {
+                                System.debug('Head text ::: '+h);
                                 tw.headAlternateTexts.add((String) h);
                             }
                             if (!handleList.isEmpty()) {
@@ -332,9 +337,11 @@ public with sharing class SyncTemplateController{
                     if (comp.containsKey('example')) {
                         Map<String, Object> example = (Map<String, Object>) comp.get('example');
                         if (example.containsKey('body_text')) {
+                            System.debug('Body Text ::: ');
                             List<Object> bodyTextList = (List<Object>) example.get('body_text');
                             for (Object groupBody : bodyTextList) {
                                 for (Object val : (List<Object>) groupBody) {
+                                    System.debug('groupBody ::: '+val);
                                     tw.varAlternateTexts.add((String) val);
                                 }
                             }
@@ -374,17 +381,14 @@ public with sharing class SyncTemplateController{
                 }
             }
 
-            // Additional metadata
             Boolean isSecurityRecommedation = templateData.containsKey('add_security_recommendation') ? (Boolean) templateData.get('add_security_recommendation') : false;
             Boolean isCodeExpiration = templateData.containsKey('code_expiration_minutes');
             Integer expireTime = templateData.containsKey('message_send_ttl_seconds') ? (Integer) templateData.get('message_send_ttl_seconds') : null;
 
-            // Assign to wrapper
             tw.isSecurityRecommedation = isSecurityRecommedation;
             tw.isCodeExpiration = isCodeExpiration;
             tw.expireTime = expireTime;
 
-            // Finalize misc data
             miscFlags.put('isImageFile', isImageFile);
             miscFlags.put('isImgSelected', isImgSelected);
             miscFlags.put('isDocSelected', isDocSelected);
@@ -409,96 +413,74 @@ public with sharing class SyncTemplateController{
 
             tw.templateMiscellaneousData = JSON.serialize(miscFlags);
 
-            // --- Final debug logs ---
-            System.debug('metaTempId: ' + metaTempId);
-            System.debug('metaTemplateStatus: ' + metaTemplateStatus);
-            System.debug('templateData: ' + JSON.serialize(templateData));
-            System.debug('TemplateWrapper: ' + JSON.serialize(tw));
-
-            // If needed:
-            processTemplateAfterSync(metaTempId, metaTemplateStatus, templateData, tw);
-        }
-    }
-
-
-    public static Id processTemplateAfterSync(String metaTempId, String metaTemplateStatus, Map<String, Object> payload, CreateTemplateWrapper.TemplateWrapper templateWrapper) {
-        Id templateId;
-        try {
-            // Always create a new Template__c record
             Template__c whatsAppTemplate = new Template__c();
-
-            // Step 2: Update or set values from wrapper + payload
             whatsAppTemplate.Template_Id__c = String.isNotBlank(metaTempId) ? metaTempId : null;
-            whatsAppTemplate.Template_Name__c = templateWrapper.templateName;
-            whatsAppTemplate.Template_Category__c = templateWrapper.templateCategory;
-            whatsAppTemplate.Language__c = templateWrapper.tempLanguage;
-            whatsAppTemplate.Template_Type__c = templateWrapper.templateType;
-            whatsAppTemplate.Template_Miscellaneous_Data__c = templateWrapper.templateMiscellaneousData;
+            whatsAppTemplate.Template_Name__c = tw.templateName;
+            whatsAppTemplate.Template_Category__c = tw.templateCategory;
+            whatsAppTemplate.Language__c = tw.tempLanguage;
+            whatsAppTemplate.Template_Type__c = tw.templateType;
+            whatsAppTemplate.Template_Miscellaneous_Data__c = tw.templateMiscellaneousData;
             whatsAppTemplate.Status__c = formatStatus(metaTemplateStatus);
 
-            // Step 3: Populate header
-            if (templateWrapper.tempHeaderFormat == 'IMAGE' || templateWrapper.tempHeaderFormat == 'VIDEO' || templateWrapper.tempHeaderFormat == 'DOCUMENT') {
-                whatsAppTemplate.Header_Type__c = templateWrapper.tempHeaderFormat;
-                whatsAppTemplate.WBImage_Header_Handle__c = templateWrapper.tempHeaderHandle;
-                whatsAppTemplate.File_Name__c = templateWrapper.tempImgName;
-                whatsAppTemplate.WBHeader_Body__c = templateWrapper.tempImgUrl;
+            if (tw.tempHeaderFormat == 'IMAGE' || tw.tempHeaderFormat == 'VIDEO' || tw.tempHeaderFormat == 'DOCUMENT') {
+                whatsAppTemplate.Header_Type__c = tw.tempHeaderFormat;
+                whatsAppTemplate.WBImage_Header_Handle__c = tw.tempHeaderHandle;
+                whatsAppTemplate.File_Name__c = tw.tempImgName;
+                whatsAppTemplate.WBHeader_Body__c = tw.tempImgUrl;
             } else {
                 whatsAppTemplate.Header_Type__c = 'TEXT';
-                whatsAppTemplate.WBHeader_Body__c = templateWrapper.tempHeaderText;
+                whatsAppTemplate.WBHeader_Body__c = tw.tempHeaderText;
             }
 
-            // Step 4: Populate footer and body
-            whatsAppTemplate.WBFooter_Body__c = templateWrapper.tempFooterText;
-            whatsAppTemplate.WBTemplate_Body__c = templateWrapper.templateBody;
-            whatsAppTemplate.WBButton_Body__c = templateWrapper.url; // raw button payload JSON
+            whatsAppTemplate.WBFooter_Body__c = tw.tempFooterText;
+            whatsAppTemplate.WBTemplate_Body__c = tw.templateBody;
+            whatsAppTemplate.WBButton_Body__c = tw.url;
 
-            // Step 5: Insert template
-            insert whatsAppTemplate;
-            templateId = whatsAppTemplate.Id;
+            templatesToInsert.add(whatsAppTemplate);
 
-            // Step 6: Create Template_Variable__c records
-            List<Template_Variable__c> varsToInsert = new List<Template_Variable__c>();
             String fixedObject = 'Account';
             String fixedField = 'AccountNumber';
             String fixedName = '{{' + fixedObject + '.' + fixedField + '}}';
-
-            for (Integer i = 0; i < templateWrapper.headAlternateTexts.size(); i++) {
-                varsToInsert.add(new Template_Variable__c(
+            System.debug('TW ::: '+tw);
+            for (String headAlt : tw.headAlternateTexts) {
+                System.debug('Head Add text :: '+headAlt);
+                allVarsToInsert.add(new Template_Variable__c(
                     Name = fixedName,
                     Type__c = 'Header',
                     Object_Name__c = fixedObject,
                     Field_Name__c = fixedField,
-                    Alternate_Text__c = templateWrapper.headAlternateTexts[i],
-                    Template__c = templateId
+                    Alternate_Text__c = headAlt
                 ));
             }
 
-            for (Integer i = 0; i < templateWrapper.varAlternateTexts.size(); i++) {
-                varsToInsert.add(new Template_Variable__c(
+            for (String bodyAlt : tw.varAlternateTexts) {
+                System.debug('Body Add text :: '+bodyAlt);
+                allVarsToInsert.add(new Template_Variable__c(
                     Name = fixedName,
                     Type__c = 'Body',
                     Object_Name__c = fixedObject,
                     Field_Name__c = fixedField,
-                    Alternate_Text__c = templateWrapper.varAlternateTexts[i],
-                    Template__c = templateId
+                    Alternate_Text__c = bodyAlt
                 ));
             }
-
-            if (!varsToInsert.isEmpty()) {
-                insert varsToInsert;
-            }
-
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{
-                'className' => 'TemplateProcessor',
-                'methodName' => 'processTemplateAfterSync',
-                'exceptionObj' => e,
-                'isApiException' => false,
-                'moreDetails' => e.getMessage()
-            });
         }
 
-        return templateId;
+        if (!templatesToInsert.isEmpty()) {
+            insert templatesToInsert;
+            for (Integer i = 0; i < templatesToInsert.size(); i++) {
+                Id templateId = templatesToInsert[i].Id;
+                for (Template_Variable__c tv : allVarsToInsert) {
+                    if (tv.Template__c == null) {
+                        tv.Template__c = templateId;
+                    }
+                }
+            }
+        }
+
+        if (!allVarsToInsert.isEmpty()) {
+            System.debug(allVarsToInsert);
+            insert allVarsToInsert;
+        }
     }
 
     private static String formatStatus(String status) {
@@ -507,6 +489,40 @@ public with sharing class SyncTemplateController{
         if (status == 'REJECTED') return 'Rejected';
         if (status == 'APPROVED') return 'Active-Quality Pending';
         return status;
+    }
+
+    private static String determineTemplateType(Map<String, Object> templateData) {
+        String category = ((String) templateData.get('category')).toUpperCase();
+        Boolean hasFlowButton = false;
+
+        // Check buttons
+        List<Object> components = (List<Object>) templateData.get('components');
+        for (Object compObj : components) {
+            Map<String, Object> comp = (Map<String, Object>) compObj;
+            if (comp.get('type') == 'BUTTONS') {
+                List<Object> buttons = (List<Object>) comp.get('buttons');
+                for (Object btn : buttons) {
+                    Map<String, Object> button = (Map<String, Object>) btn;
+                    String buttonType = (String) button.get('type');
+                    if (buttonType == 'FLOW') {
+                        hasFlowButton = true;
+                        break;
+                    }
+                }
+            }
+            if (hasFlowButton) break;
+        }
+
+        // Apply rules
+        if (category == 'MARKETING') {
+            return hasFlowButton ? 'Flow' : 'CustomMarketing';
+        } else if (category == 'UTILITY') {
+            return hasFlowButton ? 'flowutility' : 'Custom';
+        } else if (category == 'AUTHENTICATION') {
+            return 'One-time passcode';
+        }  else {
+            return 'Custom';
+        }
     }
 
 
