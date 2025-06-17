@@ -1,3 +1,10 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 05-29-2025
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
 <apex:page html-style="height: 100%;" showHeader="false" sidebar="false" controller="WhatsappConfigController">
 <html>
     <body>
@@ -251,11 +258,11 @@
                 content: "";
                 position: absolute;
                 z-index: -1;
-                top: -16px;
-                right: -16px;
+                top: -18px;
+                right: -18px;
                 background: #0077B6;
-                height: 36px;
-                width: 36px;
+                height: 50px;
+                width: 50px;
                 border-radius: 36px;
                 transform: scale(1);
                 transition: transform 0.35s ease-out;

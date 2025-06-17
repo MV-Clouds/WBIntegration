@@ -17,7 +17,6 @@ export default class WhatsappFlowPreviewer extends LightningElement {
     set currentscreenid(value) {
         if (value !== this._currentscreenid) {
             this._currentscreenid = value;
-            this.generatePreview();
         }
     }
 

@@ -1,4 +1,4 @@
-public class WhatsappConfigController {
+public without sharing class WhatsappConfigController {
 
     public static String whatsappBusinessAppId {get; set;}
     public static String clientId {get; set;}
@@ -8,18 +8,18 @@ public class WhatsappConfigController {
     // Constructor to load the metadata record
     public WhatsappConfigController() {
         // Fetch the metadata record
-        List<MVWB__WBConnect_Configuration__mdt  > metaList = [SELECT MasterLabel, MVWB__Business_Account_Id__c FROM MVWB__WBConnect_Configuration__mdt WITH SECURITY_ENFORCED];
+        List<MVWB__WBConnect_Configuration__mdt  > metaList = [SELECT MasterLabel, MVWB__Business_Account_Id__c FROM MVWB__WBConnect_Configuration__mdt];
         if(metaList.size() > 0){
             whatsappBusinessAppId = metaList[0].MVWB__Business_Account_Id__c;
         }else {
             whatsappBusinessAppId = '';
         }
 
-        List<EmbeddedSignUpConfig__c> embeddedConfig = [SELECT Id, Config_Id__c, Client_Secret__c, Client_Id__c FROM EmbeddedSignUpConfig__c WITH SECURITY_ENFORCED];
+        List<MVWB__EmbeddedSignUpConfig__c> embeddedConfig = [SELECT Id, MVWB__Config_Id__c, MVWB__Client_Secret__c, MVWB__Client_Id__c FROM MVWB__EmbeddedSignUpConfig__c];
         if(embeddedConfig.size() > 0){
-            clientId = embeddedConfig[0].Client_Id__c;
-            clientSecret = embeddedConfig[0].Client_Secret__c;
-            configurationId = embeddedConfig[0].Config_Id__c;
+            clientId = embeddedConfig[0].MVWB__Client_Id__c;
+            clientSecret = embeddedConfig[0].MVWB__Client_Secret__c;
+            configurationId = embeddedConfig[0].MVWB__Config_Id__c;
         }
 
     }
@@ -28,13 +28,13 @@ public class WhatsappConfigController {
     public static String saveFBLoginDetails(String sAccessToken, String phoneId, String wabaId, String appId){
         try{
 
-            List<EmbeddedSignUpConfig__c> embeddedConfig = [SELECT Id, Config_Id__c, Client_Secret__c, Client_Id__c FROM EmbeddedSignUpConfig__c WITH SECURITY_ENFORCED];
+            List<MVWB__EmbeddedSignUpConfig__c> embeddedConfig = [SELECT Id, MVWB__Config_Id__c, MVWB__Client_Secret__c, MVWB__Client_Id__c FROM MVWB__EmbeddedSignUpConfig__c];
             if(embeddedConfig.size() < 1){
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsappConfigController', 'methodName' => 'saveFBLoginDetails', 'exceptionObj' => null, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'No Embedded Sign Up Configuration Found!', 'apiResponse' => null });
                 return 'Failure';
             }
             
-            String tokenUrl = 'https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=' + embeddedConfig[0].Client_Id__c + '&client_secret=' + embeddedConfig[0].Client_Secret__c + '&fb_exchange_token='+sAccessToken;
+            String tokenUrl = 'https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=' + embeddedConfig[0].MVWB__Client_Id__c + '&client_secret=' + embeddedConfig[0].MVWB__Client_Secret__c + '&fb_exchange_token='+sAccessToken;
             HttpRequest req = new HttpRequest();
             req.setEndpoint(tokenUrl);
             req.setMethod('GET');
@@ -74,7 +74,7 @@ public class WhatsappConfigController {
     public static Boolean saveMetaData(String accessToken, String phoneId, String wabaId, String appId){
 
         try {
-            List<MVWB__WBConnect_Configuration__mdt  > metaList = [SELECT MasterLabel, DeveloperName FROM MVWB__WBConnect_Configuration__mdt WITH SECURITY_ENFORCED];
+            List<MVWB__WBConnect_Configuration__mdt  > metaList = [SELECT MasterLabel, DeveloperName FROM MVWB__WBConnect_Configuration__mdt];
 
             Metadata.CustomMetadata mdata = new Metadata.CustomMetadata();
             if(metaList.size() > 0){
@@ -117,8 +117,11 @@ public class WhatsappConfigController {
 
             Metadata.DeployContainer container = new Metadata.DeployContainer();
             container.addMetadata(mdata);
+            
+            System.debug('madata ==> '+mdata);
 
-            Metadata.Operations.enqueueDeployment(container, null);
+            Id jobId = Metadata.Operations.enqueueDeployment(container, null);
+            System.debug('jobId ==> '+jobId);            
 
             return true;
             

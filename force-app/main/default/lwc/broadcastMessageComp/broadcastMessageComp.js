@@ -386,8 +386,8 @@ export default class BroadcastMessageComp extends LightningElement {
 
     handleListViewChange(event) {
         this.selectedListView = event.detail.value;
-        this.fetchAllListViewRecords(this.selectedListView, this.sessionId, this.maxLimit);        
-        this.isLoading = true;
+        this.fetchAllListViewRecords(this.selectedListView, this.sessionId, this.maxLimit);  
+        this.isLoading = true;      
     }
 
     /**

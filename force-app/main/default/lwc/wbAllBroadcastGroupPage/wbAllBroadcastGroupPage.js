@@ -200,7 +200,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
         this.broadcastGroupId = recordId;
         this.isAllGroupPage = false;
         this.isNewBroadcast = true;
-        this.isLoading = true;
+
     }
 
     handleDeleteGroup(event) {
