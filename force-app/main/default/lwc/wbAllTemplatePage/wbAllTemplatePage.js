@@ -15,6 +15,7 @@ import { LightningElement, track, wire,api } from 'lwc';
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
 import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
 import getSyncTemplateData from '@salesforce/apex/SyncTemplateController.syncTemplateData';
+import confirmTemplateSync from '@salesforce/apex/SyncTemplateController.confirmTemplateSync';
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
@@ -500,6 +501,17 @@ export default class WbAllTemplatePage extends LightningElement {
     handleProceed() {
         // Initiate your process here
         this.showModal = false;
+        confirmTemplateSync().then(
+            ()=>{
+                console.log('Success');
+                
+            }
+        )
+        .catch(()=>{
+            console.log('Failed');
+            
+        })
+
     }
 
     closeModal() {
@@ -513,7 +525,7 @@ export default class WbAllTemplatePage extends LightningElement {
     }
 
     syncTemplateData() {
-        getSyncTemplateData()
+        getSyncTemplateData({isTemplateSyncConfirm:false})
             .then(data => {
                 console.log(data);
                 this.missingTemplatesList = data.pendingTemplateListName;
