@@ -516,7 +516,13 @@ export default class WbAllTemplatePage extends LightningElement {
         getSyncTemplateData()
             .then(data => {
                 console.log(data);
-                this.missingTemplatesList = data;
+                this.missingTemplatesList = data.pendingTemplateListName;
+                console.log(this.missingTemplatesList);
+                console.log('---------------------------------');
+                console.log(data.pendingFlowListNames);
+                
+                
+                
                 this.isLoading = false;
                 this.showModal = true;
             })

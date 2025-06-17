@@ -2,7 +2,7 @@ public with sharing class SyncTemplateController{
     // public SyncTemplateController() {
     // }
     @AuraEnabled
-    public static List<String> syncTemplateData(){
+    public static SyncTemplateDataWrapper syncTemplateData(){
         Map<String, Object> allMetaTemplatesMap = new Map<String, Object>();
         List<Template__c> allTemplatesMap = new List<Template__c>();
         List<String> pendingTemplateNameList = new List<String>();
@@ -10,6 +10,7 @@ public with sharing class SyncTemplateController{
         Set<String> flowIdSet = new Set<String>();
         Map<String, String> allMetaFlowsMap = new Map<String, String>(); // id → name
         Map<String, String> pendingFlowIdToNameMap = new Map<String, String>();
+        SyncTemplateDataWrapper synTemplateWrapper = new SyncTemplateDataWrapper();
 
         
         try{
@@ -23,10 +24,7 @@ public with sharing class SyncTemplateController{
 
             fetchAllMetaTemplates(endpoint, accessToken, allMetaTemplatesMap);
             allTemplatesMap = SyncTemplateController.fetchAllTemplates(config[0].MVWB__Business_Account_Id__c);
-            // System.debug(allMetaTemplatesMap.size());
-            // System.debug(allMetaTemplatesMap.keySet());
-            // System.debug(allTemplatesMap.size());
-            // System.debug(allTemplatesMap);
+
             for (Template__c templateList : allTemplatesMap){
 
                 templateNameList.add(templateList.Template_Name__c);
@@ -77,28 +75,24 @@ public with sharing class SyncTemplateController{
             String flowsEndpoint = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__API_Version__c + '/' + config[0].MVWB__Business_Account_Id__c + '/flows';
             fetchAllMetaFlows(flowsEndpoint, accessToken, allMetaFlowsMap);
 
-            // for (String usedFlowId : flowIdSet) {
-            //     if (!allMetaFlowsMap.containsKey(usedFlowId)) {
-            //         pendingFlowIdToNameMap.put(usedFlowId, 'Unknown'); // Name not found
-            //     }
-            // }
-
             for (String metaFlowId : allMetaFlowsMap.keySet()) {
                 if (!flowIdSet.contains(metaFlowId)) {
                     pendingFlowIdToNameMap.put(metaFlowId, allMetaFlowsMap.get(metaFlowId));
                 }
             }
 
-            System.debug('Extracted Flow IDs: ' + flowIdSet);
-            System.debug('Pending Template Names: ' + pendingTemplateNameList);
-            System.debug(pendingTemplateNameList.size());
-            System.debug('Pending Flow IDs (not found in Salesforce): ' + pendingFlowIdToNameMap);
+            // System.debug('Extracted Flow IDs: ' + flowIdSet);
+            // System.debug('Pending Template Names: ' + pendingTemplateNameList);
+            // System.debug(pendingTemplateNameList.size());
+            // System.debug('Pending Flow IDs (not found in Salesforce): ' + pendingFlowIdToNameMap);
 
+            synTemplateWrapper.pendingTemplateListName = pendingTemplateNameList;
+            synTemplateWrapper.pendingFlowListNames = pendingFlowIdToNameMap.values();
 
         } catch (Exception e){
             throw new AuraHandledException('Error syncing template data: ' + e.getMessage());
         }
-        return pendingTemplateNameList;
+        return synTemplateWrapper;
     }
 
     private static void fetchAllMetaTemplates(String url, String accessToken, Map<String, Object> allMetaTemplatesMap){
@@ -182,5 +176,10 @@ public with sharing class SyncTemplateController{
         }
         return savedFlowIds;
     }
+
+    public class SyncTemplateDataWrapper {
+       @AuraEnabled public List<String> pendingTemplateListName;
+       @AuraEnabled public List<String> pendingFlowListNames;
+   }
 
 }
