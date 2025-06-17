@@ -19,6 +19,7 @@ public with sharing class SyncTemplateController{
                 throw new AuraHandledException('WBConnect metadata configuration missing.');
             }
 
+            // Get first 50 meta templates from template library
             String accessToken = config[0].MVWB__Access_Token__c;
             String endpoint = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__API_Version__c + '/' + config[0].MVWB__Business_Account_Id__c + '/message_templates?limit=50';
 
@@ -72,6 +73,8 @@ public with sharing class SyncTemplateController{
             Set<String> allFlowList = fetchAllFlows();
             flowIdSet.addAll(allFlowList);
 
+            
+            // Get first few meta flow from meta flow library
             String flowsEndpoint = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__API_Version__c + '/' + config[0].MVWB__Business_Account_Id__c + '/flows';
             fetchAllMetaFlows(flowsEndpoint, accessToken, allMetaFlowsMap);
 
@@ -95,6 +98,7 @@ public with sharing class SyncTemplateController{
         return synTemplateWrapper;
     }
 
+    //Recursively call next templates utill last template is not found
     private static void fetchAllMetaTemplates(String url, String accessToken, Map<String, Object> allMetaTemplatesMap){
         Http http = new Http();
         HttpRequest req = new HttpRequest();
@@ -128,12 +132,16 @@ public with sharing class SyncTemplateController{
         }
     }
 
+    
+    // Fetch all salesforce template list from template object record
     private static List<Template__c> fetchAllTemplates(String BusinessId){
         return [Select Template_Name__c, Id
                 From Template__c
                 where WBBussiness_Id__c = :BusinessId];
     }
 
+    
+    //Recursively call next templates utill last flow is not found
     private static void fetchAllMetaFlows(String url, String accessToken, Map<String, String> allMetaFlowsMap) {
         Http http = new Http();
         HttpRequest req = new HttpRequest();
@@ -169,6 +177,7 @@ public with sharing class SyncTemplateController{
         }
     }
 
+    // Fetch all salesforce flow list from Flow object record
     private static Set<String> fetchAllFlows() {
         Set<String> savedFlowIds = new Set<String>();
         for (Flow__c f : [SELECT Flow_Id__c FROM Flow__c WHERE Flow_Id__c != null]) {
