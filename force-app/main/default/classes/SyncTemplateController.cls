@@ -243,6 +243,10 @@ public with sharing class SyncTemplateController{
         Boolean isImgSelected = false, isVidSelected = false, isDocSelected = false;
         Boolean isImageFileUploader = false, isVideoFileUploader = false, isDocFileUploader = false;
         Boolean isFlowMarketing = false, isFlowUtility = false;
+        
+
+        String tempAwsFileName = '';
+        String contentVersionId = '';
 
         List<Object> components = (List<Object>) templateData.get('components');
         for (Object compObj : components) {
@@ -262,7 +266,7 @@ public with sharing class SyncTemplateController{
                 } else if (format == 'TEXT') {
                     isHeaderText = true;
                 }
-
+                
                 if (comp.containsKey('text') && !String.isEmpty((String) comp.get('text'))) {
                     addHeaderVar = true;
                     tw.tempHeaderText = (String) comp.get('text');
@@ -282,7 +286,15 @@ public with sharing class SyncTemplateController{
                     }
 
                     if (!handleList.isEmpty() && handleList[0] != null) {
-                        tw.tempImgUrl = (String) handleList[0];
+                        // tw.tempImgUrl = (String) handleList[0];
+                        String metaMediaUrl = (String) handleList[0];
+                        if (metaMediaUrl != null) {
+                            PublicUrlContentWapper publicUrlContentWrapper = getMediaPublicUrl(metaMediaUrl,tw.templateName);
+                            tw.tempImgUrl = publicUrlContentWrapper.publicUrl;
+                            tw.tempImgName = publicUrlContentWrapper.fileName;
+                            tempAwsFileName = publicUrlContentWrapper.fileName;
+                            contentVersionId = publicUrlContentWrapper.contentVersionId;
+                        }
                     }
                 }
             }
@@ -341,6 +353,9 @@ public with sharing class SyncTemplateController{
         tw.isCodeExpiration = isCodeExpiration;
         tw.expireTime = expireTime;
 
+
+        miscFlags.put('contentVersionId', contentVersionId);
+        miscFlags.put('awsFileName', tempAwsFileName);
         miscFlags.put('isImageFile', isImageFile);
         miscFlags.put('isImgSelected', isImgSelected);
         miscFlags.put('isDocSelected', isDocSelected);
@@ -486,6 +501,94 @@ public with sharing class SyncTemplateController{
             return 'Custom';
         }
     }
+
+    private static PublicUrlContentWapper getMediaPublicUrl(String mediaUrl,String templateName) {
+        MVWB__AWS_Config__c configData = !configList.isEmpty() ? configList[0] : null;
+        String publicUrl = '';
+        DownloadWhatsAppMediaWrapper fileBlob = downloadWhatsAppMedia(mediaUrl);
+        PublicUrlContentWapper publicUrlWrapper = new PublicUrlContentWapper();
+
+        if(fileBlob.blobData!=null) {
+            String mediaFileName = generateUniqueFilename(templateName, fileBlob.contentType);
+            if((configData!=null)&&(configData.MVWB__AWS_Secret_Access_Key__c != null)){
+                publicUrl = AWSFilesController.uploadFileToS3(mediaFileName,fileBlob.blobData,fileBlob.contentType);
+                publicUrlWrapper.contentVersionId = null;
+                publicUrlWrapper.publicUrl = publicUrl;
+            }
+            else{
+                String base64String = EncodingUtil.base64Encode(fileBlob.blobData);
+                Map<String,String> contentVersionFileContent = FileUploaderController.uploadFile(base64String,mediaFileName);
+                publicUrlWrapper.contentVersionId = contentVersionFileContent.get('contentVersionId');
+                publicUrlWrapper.publicUrl = contentVersionFileContent.get('publicUrl');
+            }
+            publicUrlWrapper.fileName =  mediaFileName;
+        }
+        
+        return publicUrlWrapper;
+    }
+
+    private static DownloadWhatsAppMediaWrapper downloadWhatsAppMedia(String downloadUrl) {
+        List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values();
+        String accessToken = config[0].MVWB__Access_Token__c;
+
+        DownloadWhatsAppMediaWrapper downloadMediaWrapper = new DownloadWhatsAppMediaWrapper();
+
+        Http http = new Http();
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(downloadUrl);
+        req.setMethod('GET');
+        req.setHeader('Authorization', 'Bearer ' + accessToken);
+        req.setHeader('Accept', '*/*');
+
+        HttpResponse res = http.send(req);
+        if (res.getStatusCode() == 200) {
+            downloadMediaWrapper.blobData = res.getBodyAsBlob();
+            downloadMediaWrapper.contentType = res.getHeader('Content-Type');
+            System.debug(res.getBodyAsBlob());
+
+            return downloadMediaWrapper; // ✅ Now this matches the return type
+        } else {
+            System.debug('❌ WhatsApp media download failed. Code: ' + res.getStatusCode());
+            System.debug(res.getBody());
+            throw new AuraHandledException('Failed to download media.');
+        }
+    }
+
+    public static String generateUniqueFilename(String templateName, String contentType) {
+        // Step 1: Map content type to file extension
+        Map<String, String> extensionMap = new Map<String, String>{
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'application/pdf' => 'pdf',
+            'video/mp4' => 'mp4',
+            'application/json' => 'json'
+        };
+
+        String extension = extensionMap.containsKey(contentType) ? extensionMap.get(contentType) : 'bin';
+
+        // Step 2: Format current date and time
+        String dateStr = DateTime.now().format('yyyyMMdd_HHmmss');
+
+        // Step 3: Generate a short random string
+        String randomStr = EncodingUtil.convertToHex(Crypto.generateDigest('SHA1', Blob.valueOf(String.valueOf(Math.random())))).substring(0, 6).toUpperCase();
+
+        // Step 4: Combine all
+        return templateName + '_' + dateStr + '_' + randomStr + '.' + extension;
+    }
+
+
+    public class DownloadWhatsAppMediaWrapper{
+        @AuraEnabled public Blob blobData;
+        @AuraEnabled public String contentType;
+    }
+
+    public class PublicUrlContentWapper{
+        @AuraEnabled public String publicUrl;
+        @AuraEnabled public String contentVersionId;
+        @AuraEnabled public String fileName;
+
+    }
+
 
 
 }

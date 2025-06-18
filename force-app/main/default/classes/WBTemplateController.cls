@@ -77,6 +77,7 @@
    public static String sendPreviewTemplate(String jsonData) {
        String errorMessage=null;
        try {
+            System.debug(jsonData);
            HttpRequest httpReq = new HttpRequest();
            List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
            if(config==null && config.isEmpty()){
@@ -527,8 +528,8 @@
                     Id templateId = CreateTemplateWrapper.handleSuccessResponse(metaTemplateId, metaTempStatus, payload, templateWrapper);
 
                     if(templateId != null) {
-                        MVWB__Template_Update__e fetchAllTemplatesEvent = new MVWB__Template_Update__e();
-                        fetchAllTemplatesEvent.MVWB__Fetch_All_Templates__c = true;
+                        Template_Update__e fetchAllTemplatesEvent = new Template_Update__e();
+                        fetchAllTemplatesEvent.Fetch_All_Templates__c = true;
                         EventBus.publish(fetchAllTemplatesEvent);
                     } else {
                         
