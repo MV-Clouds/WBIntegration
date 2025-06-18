@@ -127,7 +127,7 @@ export default class WbFlowsReport extends LightningElement {
             }
             return pages;
         } catch (error) {
-            console.error(error);
+            console.error('Error in getPageNumbers :: ', error);
             return null;
         }
     }
@@ -204,7 +204,7 @@ export default class WbFlowsReport extends LightningElement {
             }
             return pages;
         } catch (error) {
-            console.error(error);
+            console.error('Error in pageGrpNumber :: ',error);
             return null;
         }
     }

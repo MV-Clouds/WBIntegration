@@ -40,6 +40,7 @@ import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getO
 import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
 import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import deleteImagesFromS3 from '@salesforce/apex/AWSFilesController.deleteImagesFromS3';
+import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WBTemplateController.getPreviewURLofWhatsAppFlow';
 import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
 import buildPayload from './wbCreateTemplateWrapper'
 
@@ -537,6 +538,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
             // this.isAllTemplate = false;
             this.fetchTemplateData(); // Load template data when ID is set
+            // this.fetchFlowPreviewId();
         }
     }
 
@@ -944,7 +946,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.isFlowMarketing = templateMiscellaneousData.isFlowMarketing
                             this.isFlowUtility = templateMiscellaneousData.isFlowUtility
                             this.isFlowSelected = templateMiscellaneousData.isFlowSelected
-                            this.selectedFlow = templateMiscellaneousData.isFlowSelected
+                            this.selectedFlow = templateMiscellaneousData.selectedFlow
                             this.isFeatureEnabled = templateMiscellaneousData.isFeatureEnabled
                             this.awsFileName = templateMiscellaneousData.awsFileName
 
@@ -1104,6 +1106,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.header = headerBody.trim().replace(/^\*\*|\*\*$/g, '');
                         }
                         this.loading = false;
+                        this.fetchFlowPreviewId();
                     }, 2000);
                 })
                 .catch((error) => {
@@ -1113,6 +1116,33 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         } catch (error) {
             console.error('Error fetching template data: ', error);
             this.isLoading = false;
+        }
+    }
+
+    fetchFlowPreviewId(){
+        try {
+            console.log(this.isFlowSelected);
+            console.log(this.selectedFlow);
+            
+            
+            if(this.isFlowSelected && this.selectedFlow && this.selectedFlow.id){
+                let selectedId = this.selectedFlow.id;
+                getPreviewURLofWhatsAppFlow({ flowId: selectedId })
+                    .then((data) => {
+                        console.log({data});
+                        
+                        if (data !== 'failed') {
+                            this.iframeSrc = data;
+                        } else {
+                            console.error('Invalid preview URL received', data);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching preview URL:', error);
+                    });
+            } 
+        } catch (error) {
+            console.error('Error in fetchFlowPreviewId :', error);
         }
     }
 

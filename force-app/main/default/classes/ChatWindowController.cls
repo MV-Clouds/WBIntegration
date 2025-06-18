@@ -165,6 +165,7 @@ public with sharing class ChatWindowController {
             return chat;
         } catch (Exception e) {
             if(e.getMessage().contains('STORAGE_LIMIT_EXCEEDED')){
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  'STORAGE_LIMIT_EXCEEDED', 'apiResponse' => null});
                 throw new AuraHandledException('STORAGE_LIMIT_EXCEEDED');
             }
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});

@@ -27,6 +27,7 @@ public with sharing class BroadcastMessageController {
             ];
     
             if (objectConfigList.isEmpty() && !Test.isRunningTest()) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getObjectConfigs','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Object Config not found!','apiResponse' => null});
                 throw new AuraHandledException('Object Config not found!');
             }
     
@@ -71,6 +72,7 @@ public with sharing class BroadcastMessageController {
         try {
             return [SELECT Id, Name FROM ListView WHERE SobjectType = :objectApiName WITH SECURITY_ENFORCED ORDER BY LastViewedDate DESC];
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getListViewsForObject', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error fetching list views: ' + e.getMessage());
         }
     }
@@ -106,6 +108,7 @@ public with sharing class BroadcastMessageController {
         try {
             // Ensure user has delete permission
             if (!Schema.sObjectType.Broadcast_Group__c.isDeletable()) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'deleteBroadcastGroup','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Insufficient permissions to delete this record.','apiResponse' => null});
                 throw new AuraHandledException('Insufficient permissions to delete this record.');
             }
             
@@ -118,6 +121,7 @@ public with sharing class BroadcastMessageController {
             ];
             
             if (groupToDelete == null) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'deleteBroadcastGroup','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Record not found for deletion.','apiResponse' => null});
                 throw new AuraHandledException('There was a problem deleting the record. ' + groupId);
             }
             
@@ -228,6 +232,7 @@ public with sharing class BroadcastMessageController {
                 String.isBlank(listViewName) ||
                 String.isBlank(phoneField) || 
                 phoneNumbers.isEmpty()) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'processBroadcastMessageWithObject','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'All fields in the request are required, including the broadcast group name','apiResponse' => null});
                 throw new AuraHandledException('All fields in the request are required, including the broadcast group name');
             }
     
@@ -263,6 +268,7 @@ public with sharing class BroadcastMessageController {
     
                 Database.SaveResult insertResult = Database.insert(broadcastGroup, false, AccessLevel.USER_MODE);
                 if (!insertResult.isSuccess()) {
+                    ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'processBroadcastMessageWithObject','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Failed to create broadcast group.','apiResponse' => null});
                     throw new AuraHandledException('Failed to create broadcast group.');
                 }
             }
@@ -304,6 +310,7 @@ public with sharing class BroadcastMessageController {
                 Database.SaveResult[] insertResults = Database.insert(newMembersToInsert, false, AccessLevel.USER_MODE);
                 for (Database.SaveResult res : insertResults) {
                     if (!res.isSuccess()) {
+                        ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'processBroadcastMessageWithObject','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Error inserting some broadcast group members.','apiResponse' => null});
                         throw new AuraHandledException('Error inserting some broadcast group members.');
                     }
                 }
@@ -313,6 +320,7 @@ public with sharing class BroadcastMessageController {
                 Database.DeleteResult[] deleteResults = Database.delete(membersToDelete, false, AccessLevel.USER_MODE);
                 for (Database.DeleteResult res : deleteResults) {
                     if (!res.isSuccess()) {
+                        ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'processBroadcastMessageWithObject','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Error deleting some broadcast group members.','apiResponse' => null});
                         throw new AuraHandledException('Error deleting some broadcast group members.');
                     }
                 }
@@ -338,6 +346,7 @@ public with sharing class BroadcastMessageController {
         try {
             // Validate input
             if (String.isBlank(groupId)) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastGroupDetails','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Group ID is required','apiResponse' => null});
                 throw new AuraHandledException('Group ID is required');
             }
 
@@ -437,6 +446,7 @@ public with sharing class BroadcastMessageController {
 
                 // Validate that the scheduled time is in the future
                 if (userDateTime < DateTime.now()) {
+                    ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'createChatRecods','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Scheduled time must be in the future.','apiResponse' => null});
                     throw new AuraHandledException('Scheduled time must be in the future.');
                 }
 
@@ -484,6 +494,7 @@ public with sharing class BroadcastMessageController {
     public static List<Broadcast_Group__c> getBroadcastGroupsByBroadcastId(String broadcastId) {
         try {
             if (String.isBlank(broadcastId)) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastGroupsByBroadcastId','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Broadcast ID is required','apiResponse' => null});
                 throw new AuraHandledException('Broadcast ID is required');
             }
 
@@ -521,6 +532,7 @@ public with sharing class BroadcastMessageController {
             // Get the describe information for the specified object
             Map<String, Schema.SObjectType> globalDescribe = Schema.getGlobalDescribe();
             if (!globalDescribe.containsKey(objectApiName)) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getDateFieldsForPicklist','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Invalid object API name: ' + objectApiName,'apiResponse' => null});
                 throw new AuraHandledException('Invalid object API name: ' + objectApiName);
             }
 
@@ -572,6 +584,7 @@ public with sharing class BroadcastMessageController {
     public static List<BroadcastMemberWrapper> getBroadcastMembersByGroupId(String groupId, String objectName, String broadcastId) {
         try {
             if (String.isBlank(groupId) || String.isBlank(objectName)) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastMembersByGroupId','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Broadcast Group ID and Object Name are required','apiResponse' => null});
                 throw new AuraHandledException('Broadcast Group ID and Object Name are required');
             }
 
@@ -580,6 +593,7 @@ public with sharing class BroadcastMessageController {
             Map<String, String> objectConfig = (Map<String, String>) configMap.get(objectName);
 
             if (objectConfig == null) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastMembersByGroupId','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Invalid object configuration for: ' + objectName,'apiResponse' => null});
                 throw new AuraHandledException('Invalid object configuration for: ' + objectName);
             }
 
@@ -587,6 +601,7 @@ public with sharing class BroadcastMessageController {
             String nameField = objectConfig.get('nameField');
 
             if (String.isBlank(phoneField) || String.isBlank(nameField)) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastMembersByGroupId','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Missing phone or name field config for object: ' + objectName,'apiResponse' => null});
                 throw new AuraHandledException('Missing phone or name field config for object: ' + objectName);
             }
 

@@ -98,8 +98,11 @@ public with sharing class ObjectConfigController {
                 
                 // Skip fields that shouldn't be included
                 if (fieldDescribe.isNillable() || fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || 
-                    !fieldDescribe.isCreateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId() || 
-                    fieldDescribe.getType() == Schema.DisplayType.BOOLEAN) {
+                    !fieldDescribe.isCreateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
+                    continue;
+                } else if(fieldDescribe.getType() == Schema.DisplayType.BOOLEAN){
+                    continue;
+                } else if(fieldDescribe.getName() == 'CreatedDate' || fieldDescribe.getName() == 'LastModifiedDate' || fieldDescribe.getName() == 'SystemModstamp' || fieldDescribe.getName() == 'Id' || fieldDescribe.getName() == 'CreatedById' || fieldDescribe.getName() == 'LastModifiedById'){
                     continue;
                 }
     

@@ -67,6 +67,7 @@ export default class WhatsappFlowPreviewer extends LightningElement {
                     this._currentscreenid = this.parsedJson.screens[0]?.id || null;
                 }
             } catch (error) {
+                console.error('Error parsing JSON:', error);
                 return;
             }
             let html = '';

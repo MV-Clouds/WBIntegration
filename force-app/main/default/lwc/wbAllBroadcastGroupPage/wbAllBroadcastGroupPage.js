@@ -80,6 +80,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
             }
             return pages;
         } catch (error) {
+            console.error('Error in pageNumbers:', error);
             this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
@@ -129,7 +130,8 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Error loading broadcast groups:', error);
                 this.showToast('Error', 'Error loading records', 'error');
             })
             .finally(() => {
@@ -143,6 +145,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredData.slice(startIndex, endIndex);
         } catch (error) {
+            console.error('Error updating shown data:', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -157,6 +160,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
             
             this.updateShownData();
         } catch (error) {
+            console.error('Error handling search:', error);
             this.showToast('Error', 'Error searching records', 'error');
         }
     }
@@ -168,6 +172,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error handling previous button:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -179,6 +184,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error handling next button:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -191,6 +197,7 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error handling page change:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 
@@ -218,7 +225,8 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
                 // Update paginatedData to reflect the changes
                 this.updateShownData();
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Failed to delete Broadcast Group:', error);
                 this.showToast('Error', 'Failed to delete Broadcast Group', 'error');
             })
             .finally(() => {

@@ -24,6 +24,7 @@ export default class WbFlowPreview extends NavigationMixin(LightningElement) {
             }));
             this.detailsValue = this.detailsOptions.length ? this.detailsOptions[0].value : null;
         } catch (e) {
+            console.error('Error parsing JSON:', e);
             this.detailsOptions = [];
             this.detailsValue = null;
         }

@@ -154,6 +154,7 @@ export default class BroadcastMessageComp extends LightningElement {
             }
             return pages;
         } catch (error) {
+            console.error('Error in pageNumbers:', error);
             this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
@@ -190,6 +191,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 this.configMap = result.configMap;
             })
             .catch(error => {
+                console.error('Error loading configs:', error);
                 this.showToast('Error', 'Error loading configs', 'error');
             })
             .finally(() => {
@@ -229,7 +231,8 @@ export default class BroadcastMessageComp extends LightningElement {
                     });
 
                 })
-                .catch(() => {
+                .catch((error) => {
+                    console.error('Error fetching group details', error);
                     this.showToast('Error', 'Error fetching group details', 'error');
                 })
                 .finally(() => {
@@ -252,6 +255,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 isSelected: this.selectedRecords.has(record.Id)
             }));
         } catch (error) {
+            console.error('Error updating shown data:', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -269,6 +273,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error handling previous button click:', error);
             this.showToast('Error', 'Error handling previous button click', 'error');
         }
     }
@@ -286,6 +291,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error handling next button click:', error);
             this.showToast('Error', 'Error handling next button click', 'error');
         }
     }
@@ -304,6 +310,7 @@ export default class BroadcastMessageComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error handling page change:', error);
             this.showToast('Error', 'Error handling page change', 'error');
         }
     }
@@ -376,7 +383,8 @@ export default class BroadcastMessageComp extends LightningElement {
                     value: lv.Id
                 }));
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Error loading list views:', error);
                 this.showToast('Error', 'Error loading list views', 'error');
             })
             .finally(() => {
@@ -533,7 +541,7 @@ export default class BroadcastMessageComp extends LightningElement {
             }
             })
             .catch(error => {
-                console.error('Error fetching records:', error.message);
+                console.error('Error fetching records:', error);
                 this.showToast('error', 'Error', 'Failed to retrieve records');
                 return false;
             });
@@ -645,6 +653,7 @@ export default class BroadcastMessageComp extends LightningElement {
 
         })
         .catch(error => {
+            this.showToast('Error in sending broadcast', error, 'error');
             this.showToast('Error', error.body?.message || 'Failed to process broadcast', 'error');
         })
         .finally(() => {

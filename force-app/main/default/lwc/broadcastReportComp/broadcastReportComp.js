@@ -116,6 +116,7 @@ export default class BroadcastReportComp extends LightningElement {
             }
             return pages;
         } catch (error) {
+            console.error('Error generating pagination buttons:', error);
             this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
@@ -193,6 +194,7 @@ export default class BroadcastReportComp extends LightningElement {
             }
             return pages;
         } catch (error) {
+            console.error('Error generating group pagination buttons:', error);
             this.showToast('Error', 'Error in pageGrpNumbers->' + error, 'error');
             return null;
         }
@@ -230,7 +232,8 @@ export default class BroadcastReportComp extends LightningElement {
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Failed to load broadcast groups', error);
                 this.showToast('Error', 'Failed to load broadcast groups', 'error');
             })
             .finally(() => {
@@ -244,6 +247,7 @@ export default class BroadcastReportComp extends LightningElement {
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredData.slice(startIndex, endIndex);
         } catch (error) {
+            console.error('Error updating shown data:', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -255,6 +259,7 @@ export default class BroadcastReportComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error navigating to previous page:', error);
             this.showToast('Error', 'Error navigating to previous page', 'error');
         }
     }
@@ -266,6 +271,7 @@ export default class BroadcastReportComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error navigating pages:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -278,6 +284,7 @@ export default class BroadcastReportComp extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error navigating pages:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 
@@ -325,6 +332,7 @@ export default class BroadcastReportComp extends LightningElement {
             this.updateGroupData();
         })
         .catch(error => {
+            console.error('Error fetching group members:', error);
             console.error('Failed to load broadcast members', error);
         })
         .finally(() => {
@@ -339,6 +347,7 @@ export default class BroadcastReportComp extends LightningElement {
             this.paginatedGrpData = this.filteredGrpData.slice(startIndex, endIndex);
             
         } catch (error) {
+            console.error('Error updating shown data:', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -350,6 +359,7 @@ export default class BroadcastReportComp extends LightningElement {
                 this.updateGroupData();
             }
         }catch(error){
+            console.error('Error navigating to previous page:', error);
             this.showToast('Error', 'Error navigating to previous page', 'error');
         }
     }
@@ -361,6 +371,7 @@ export default class BroadcastReportComp extends LightningElement {
                 this.updateGroupData();
             }
         }catch(error){
+            console.error('Error navigating pages:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -373,6 +384,7 @@ export default class BroadcastReportComp extends LightningElement {
                 this.updateGroupData();
             }
         }catch(error){
+            console.error('Error navigating pages:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 
