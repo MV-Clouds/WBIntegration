@@ -89,6 +89,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
             }
             return pages;
         } catch (error) {
+            console.error('Error in pageNumbers:', error);
             this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
@@ -104,7 +105,6 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
     
     async connectedCallback() {
         try {
-            
             await this.checkLicenseStatus();
             if (this.showLicenseError) {
                 return; // Stops execution if license is expired
@@ -115,7 +115,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
             this.fetchAutomations();
             this.fetchTemplates();
         } catch (error) {
-            console.error('Error in connectedCallback:::', e.message);
+            console.error('Error in connectedCallback:::', error);
         }
     }
 
@@ -136,6 +136,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.automationData.slice(startIndex, endIndex);
         } catch (error) {
+            console.error('Error updating shown data:', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -147,6 +148,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error navigating to previous page:', error);
             this.showToast('Error', 'Error navigating to previous page', 'error');
         }
     }
@@ -158,6 +160,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error navigating to next page:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -170,6 +173,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error navigating to page:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 
@@ -290,6 +294,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
                 }));
                 // console.log('this.automationData =', JSON.stringify(this.originalAutomationData));
                 this.automationData = [...this.originalAutomationData];
+                this.updateShownData();
 
                 // console.log('this.automationData in handleSave =', JSON.stringify(this.automationData));
 
@@ -327,6 +332,7 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
             });
         })
         .catch(error => {
+            console.error('Error saving record:', error);
             const message = error.body && error.body.message ? error.body.message : JSON.stringify(error);
             console.error(`Error saving record:`, message);
             this.showToast('Error', `Failed to save automation: ${message}`, 'error');

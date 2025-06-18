@@ -119,6 +119,7 @@ export default class WbAllTemplatePage extends LightningElement {
             }
             return pages;
         } catch (error) {
+            console.error('Error in pagination:', error);
             this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
@@ -264,7 +265,7 @@ export default class WbAllTemplatePage extends LightningElement {
             }
         })
         .catch(error => {
-            console.error(error);
+            console.error('Error in fetchAllTemplate() method: ', error);
             this.isLoading=false;
         });
     }
@@ -275,6 +276,7 @@ export default class WbAllTemplatePage extends LightningElement {
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredRecords.slice(startIndex, endIndex);
         } catch (error) {
+            console.error('Error in updateShownData() method: ', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -286,6 +288,7 @@ export default class WbAllTemplatePage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handlePrevious() method: ', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -297,6 +300,7 @@ export default class WbAllTemplatePage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handleNext() method: ', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -309,6 +313,7 @@ export default class WbAllTemplatePage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handlePageChange() method: ', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 
@@ -399,6 +404,7 @@ export default class WbAllTemplatePage extends LightningElement {
             this.updateShownData();
 
         } catch (error) {
+            console.error('Error while filtering records.',error);
             this.showToastError('An error occurred while filtering the records.');
         }
        
@@ -426,7 +432,7 @@ export default class WbAllTemplatePage extends LightningElement {
                     }
                 })
                 .catch(error => {
-                    console.error(error);
+                    console.error('Error in deleting template', error);
                     this.showToastError('Error in deleting template');
                     this.isLoading=false;
                 });
@@ -436,6 +442,7 @@ export default class WbAllTemplatePage extends LightningElement {
             }
 
         } catch (error) {
+            console.error('Error while deleting template.',error);
             this.showToastError('Error in deleteTemplate:', error);
             this.isLoading = false;
         }

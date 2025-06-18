@@ -55,6 +55,11 @@ public class CreateTemplateWrapperTest {
             }
         };
 
+        Map<String, Object> response = new Map<String, Object>{
+            'success' => 'true',
+            'id' => 'someMarketingId'
+        };
+
         // Call method
         Test.startTest();
         Id templateId = CreateTemplateWrapper.handleSuccessResponse('someMarketingId', 'APPROVED', payload, templateWrapper);
@@ -114,6 +119,11 @@ public class CreateTemplateWrapperTest {
                     }
                 }
             }
+        };
+
+        Map<String, Object> response = new Map<String, Object>{
+            'success' => 'true',
+            'id' => 'auth_template_001'
         };
 
         Test.startTest();

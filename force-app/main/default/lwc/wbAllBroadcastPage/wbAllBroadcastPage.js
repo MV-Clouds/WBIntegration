@@ -121,6 +121,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             }
             return pages;
         } catch (error) {
+            console.error('Error in pageNumbers:', error);
             this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
@@ -221,7 +222,8 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
         .then((response) => {
             this.subscription = response;
         })
-        .catch(() => {
+        .catch((error) => {
+            console.error('Error in subscribe()', error);
             this.showToast('Error', 'Failed to subscribe to platform event.', 'error');
         });
     }
@@ -246,7 +248,8 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.filteredData = [...this.data];
                 this.updateShownData();
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Error in loadBroadcastGroups()', error);
                 this.showToast('Error', 'Failed to load broadcast groups', 'error');
             })
             .finally(() => {
@@ -260,6 +263,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredData.slice(startIndex, endIndex);
         } catch (error) {
+            console.error('Error in updateShownData()', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -275,6 +279,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.updateShownData();
             }
         } catch (error) {
+            console.error('Error in handleSearch()', error);
             this.showToast('Error', `Error searching : ${error}`, 'error');
         }
     }
@@ -286,6 +291,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handlePrevious()', error);
             this.showToast('Error', 'Error navigating to previous page', 'error');
         }
     }
@@ -297,6 +303,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handleNext()', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -309,6 +316,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handlePageChange()', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 
@@ -321,7 +329,8 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.broadcastGroups = result;
                 this.filteredGroups = [...this.broadcastGroups];
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Error in newBroadcast()', error);
                 this.showToast('Error', 'Error fetching broadcast groups', 'error');
             })
             .finally(() => {
@@ -371,6 +380,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 IsChecked: this.selectedGroupIds.some(selected => selected.Id === group.Id)
             }));
         } catch (error) {
+            console.error('Error in handleGroupSelection()', error);
             this.showToast('Error', 'Error handling group selection', 'error');
         }
     }
@@ -391,6 +401,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             this.popUpFirstPage = false;
             this.popUpSecondpage = true;
         } catch (error) {
+            console.error('Error in handleNextOnPopup()', error);
             this.showToast('Error!', 'Please select template', 'error');
         }
     }
@@ -565,65 +576,71 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     }
 
     handleSchedule(){
-
-        if(this.selectedDateTime === '' || this.selectedDateTime === null){
-            this.showToast('Error!', 'Please select date and time', 'error');
-            return;
-        }     
-
-        const selectedTime = new Date(this.selectedDateTime);
-        const now = new Date();
-
-        if (selectedTime < now) {
-            this.showToast('Error!', 'Selected date and time cannot be in the past', 'error');
-            return;
-        }   
-
-        let grpIdList = this.selectedGroupIds.map(record => record.Id);
-
-        createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: true, timeOfMessage: this.selectedDateTime})
-            .then(result => {
-                if(result == 'Success'){
-                    this.showToast('Success', 'Broadcast sent successfully', 'success');
-                    this.handleCloseOnPopup();
-                } else {
-                    this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
-                }
-            })
-            .catch(error => {
-                this.showToast('Error', `Broadcast sent failed - ${error}`, 'error');
-            })
-            .finally(() => {
-                this.isLoading = false;
-            });
+        try {
+            if(this.selectedDateTime === '' || this.selectedDateTime === null){
+                this.showToast('Error!', 'Please select date and time', 'error');
+                return;
+            }     
         
+            const selectedTime = new Date(this.selectedDateTime);
+            const now = new Date();
+        
+            if (selectedTime < now) {
+                this.showToast('Error!', 'Selected date and time cannot be in the past', 'error');
+                return;
+            }   
+        
+            let grpIdList = this.selectedGroupIds.map(record => record.Id);
+        
+            createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: true, timeOfMessage: this.selectedDateTime})
+                .then(result => {
+                    if(result == 'Success'){
+                        this.showToast('Success', 'Broadcast sent successfully', 'success');
+                        this.handleCloseOnPopup();
+                    } else {
+                        this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error in handleSchedule() apex',error);
+                    this.showToast('Error', `Broadcast sent failed - ${error}`, 'error');
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                });
+        } catch (error) {
+            console.error('Error in handleSchedule()',error);
+        }
     }
 
     handleSendOnPopup(){
-
-        if(this.selectedTemplate === '' || this.selectedTemplate === null){
-            this.showToast('Error!', 'Please select template', 'error');
-            return;
+        try {
+            if(this.selectedTemplate === '' || this.selectedTemplate === null){
+                this.showToast('Error!', 'Please select template', 'error');
+                return;
+            }
+    
+            this.isLoading = true;
+            let grpIdList = this.selectedGroupIds.map(record => record.Id);
+    
+            createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: false, timeOfMessage: ''})
+                .then(result => {
+                    if(result == 'Success'){
+                        this.showToast('Success', 'Broadcast sent successfully', 'success');
+                        this.handleCloseOnPopup();
+                    } else {
+                        this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    this.showToast('Error', `Broadcast sent failed - ${error}`, 'error');
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                });
+        } catch (error) {
+            console.error('Error in handleSendOnPopup()',error);
         }
-
-        this.isLoading = true;
-        let grpIdList = this.selectedGroupIds.map(record => record.Id);
-
-        createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: false, timeOfMessage: ''})
-            .then(result => {
-                if(result == 'Success'){
-                    this.showToast('Success', 'Broadcast sent successfully', 'success');
-                    this.handleCloseOnPopup();
-                } else {
-                    this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
-                }
-            })
-            .catch(error => {
-                this.showToast('Error', `Broadcast sent failed - ${error}`, 'error');
-            })
-            .finally(() => {
-                this.isLoading = false;
-            });
     }
     
     handleNameClick(event) {

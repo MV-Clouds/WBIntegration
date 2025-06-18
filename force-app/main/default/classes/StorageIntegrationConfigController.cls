@@ -16,6 +16,7 @@ public without sharing class StorageIntegrationConfigController {
     @AuraEnabled
     public static AWS_Config__c getConfiguration() {
         if (!Schema.sObjectType.AWS_Config__c.isAccessible()) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'StorageIntegrationConfigController','methodName' => 'getConfiguration','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'User does not have permission to access AWS_Config__c','apiResponse' => null});
             throw new SecurityException('You do not have permission to access AWS configuration.');
         }
 
@@ -96,9 +97,11 @@ public without sharing class StorageIntegrationConfigController {
     @AuraEnabled
     public static void deleteRecordByAccessKey(String accessKey) {
         if (!Schema.sObjectType.AWS_Config__c.isDeletable()) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'StorageIntegrationConfigController','methodName' => 'deleteRecordByAccessKey','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'User does not have permission to delete AWS_Config__c records','apiResponse' => null});
             throw new SecurityException('You do not have permission to delete records.');
         }
         if (!Schema.sObjectType.AWS_Config__c.fields.AWS_Access_Key__c.isAccessible()) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'StorageIntegrationConfigController','methodName' => 'deleteRecordByAccessKey','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'User does not have permission to access AWS_Access_Key__c field','apiResponse' => null});
             throw new SecurityException('You do not have permission to access this field.');
         }
         
@@ -112,6 +115,7 @@ public without sharing class StorageIntegrationConfigController {
             if (!records.isEmpty()) {
                 delete records[0];
             } else {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'StorageIntegrationConfigController','methodName' => 'deleteRecordByAccessKey','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Record not found for the provided access key','apiResponse' => null});
                 throw new IllegalArgumentException('Record not found');
             }
         } catch (Exception e) {

@@ -1094,6 +1094,13 @@ textarea {
     background-color: rgb(189, 189, 189);
 }
 
+.slds-form-element .slds-combobox__input{
+    border-radius: 5px;
+    padding: 0.11rem;
+    padding-left: 0.5rem;
+    border: 1px solid #8080808f;
+    box-shadow: none;
+}
 
 /* Backdrop covers the entire component */
 .license-error {

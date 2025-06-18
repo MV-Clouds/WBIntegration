@@ -68,7 +68,7 @@ export default class StorageIntegration extends LightningElement {
                 }
             })
             .catch(error => {
-                console.error(error);
+                console.error('Error in fetchConfiguration :: ',error);
                 this.showNoData = true;
             });
     }
@@ -85,7 +85,7 @@ export default class StorageIntegration extends LightningElement {
             }
             this.fetchConfiguration();
         } catch (error) {
-            
+            console.error('Error in connectedCallback:::',error);
         }
     }
 
@@ -197,6 +197,7 @@ export default class StorageIntegration extends LightningElement {
             this.fetchConfiguration();
         })
         .catch(error => {
+            console.error('Error in fetchConfiguration :: ',error);
             this.showToast('Error', error.message.body, 'error');
         });
     }

@@ -97,7 +97,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             await this.fetchAutomationName();
             
         } catch (error) {
-            console.error('Error in connectedCallback:::', e.message);
+            console.error('Error in connectedCallback:::', error);
         }
     }
 
@@ -724,7 +724,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     this.isLoading = false;
                     return;
                 }
-                console.log('this.automationPaths:', JSON.stringify(this.automationPaths));
+                // console.log('this.automationPaths:', JSON.stringify(this.automationPaths));
                 
                 const automationPathRecords = Object.entries(this.automationPaths)
                 .filter(([button, value]) => value !== null && typeof value === 'object')
@@ -758,7 +758,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                         this[NavigationMixin.Navigate]({
                             type: "standard__navItemPage",
                             attributes: {
-                            apiName: 'MVWB__Automation_Configuration'
+                                apiName: 'MVWB__Automation_Configuration'
                             },
                         });
                         this.isLoading = false;

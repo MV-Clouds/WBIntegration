@@ -1,4 +1,4 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement,api } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 // import externalDocUrl from '@salesforce/label/c.MetaDocumentationUrl';
 
@@ -7,7 +7,7 @@ export default class WbFlowPreview extends NavigationMixin(LightningElement) {
     showPreview=false;
     screens = [];
     detailsOptions = [];
-    @track detailsValue;
+    detailsValue;
     previewClass = 'preview';
     // documentationUrl = externalDocUrl;
     theme = 'light';
@@ -24,6 +24,7 @@ export default class WbFlowPreview extends NavigationMixin(LightningElement) {
             }));
             this.detailsValue = this.detailsOptions.length ? this.detailsOptions[0].value : null;
         } catch (e) {
+            console.error('Error parsing JSON:', e);
             this.detailsOptions = [];
             this.detailsValue = null;
         }

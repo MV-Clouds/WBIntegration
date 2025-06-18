@@ -482,6 +482,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     }
                 })
                 .catch((error) => {
+                    console.error('Error in sendTemplatePreview > sendPreviewTemplate:',error);
                     this.showToast('Error', error.body?.message || 'Failed to send template', 'error');
                 })
                 .finally(() => {

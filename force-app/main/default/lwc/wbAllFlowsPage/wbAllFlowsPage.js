@@ -94,6 +94,7 @@ export default class WbAllFlowsPage extends LightningElement {
             }
             return pages;
         } catch (error) {
+            console.error('Error generating pagination buttons:', error);
             this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
@@ -165,7 +166,7 @@ export default class WbAllFlowsPage extends LightningElement {
                     this.filterRecords();
                 })
                 .catch((error) => {
-                    console.error(error);
+                    console.error('Error in fetchWhatsAppFlows:::', error);
                 })
                 .finnally(() => {
                     this.isLoading = false;
@@ -224,6 +225,7 @@ export default class WbAllFlowsPage extends LightningElement {
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredRecords.slice(startIndex, endIndex);
         } catch (error) {
+            console.error('Error in updating shown data:', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -235,6 +237,7 @@ export default class WbAllFlowsPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handling previous button click:', error);
             this.showToast('Error', 'Error navigating to previous page', 'error');
         }
     }
@@ -246,6 +249,7 @@ export default class WbAllFlowsPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handling next button click:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -258,6 +262,7 @@ export default class WbAllFlowsPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
+            console.error('Error in handling page change:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     } 

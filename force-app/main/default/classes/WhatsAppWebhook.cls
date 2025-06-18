@@ -230,7 +230,16 @@ global without sharing class WhatsAppWebhook{
                         } else if (fieldType == 'Datetime') {
                             // Convert string to Datetime (assuming value is in ISO 8601 format, e.g., YYYY-MM-DDTHH:mm:ssZ)
                             if (value != null && value != '') {
-                                newRecord.put(fieldName, Datetime.valueOf(value.replace('Z', '')));
+                                
+                                // Remove milliseconds and Z
+                                String cleanValue = value.substring(0, 19).replace('T', ' ');
+
+                                // Result: "2025-06-18 13:11:14"
+                                Datetime myDate = Datetime.valueOf(cleanValue);
+
+                                // Now you can assign to the record
+                                newRecord.put(fieldName, myDate);
+                                // newRecord.put(fieldName, Datetime.valueOf(value));
                             }
                         } else if (fieldType == 'Boolean') {
                             // Convert string to Boolean

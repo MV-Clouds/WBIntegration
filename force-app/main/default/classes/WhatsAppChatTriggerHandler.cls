@@ -64,7 +64,7 @@ public without sharing class WhatsAppChatTriggerHandler {
             // Query existing Broadcast__c records
             Map<Id, Broadcast__c> broadcastsToUpdate = new Map<Id, Broadcast__c>();
             if (!broadcastIds.isEmpty()) {
-                for (Broadcast__c broadcast : [SELECT Id, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c, Recipient_Count__c 
+                for (Broadcast__c broadcast : [SELECT Id, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c, Recipient_Count__c, Broadcast_Group_IDs__c 
                                                FROM Broadcast__c 
                                                WHERE Id IN :broadcastIds]) {
                     broadcast.Total_Sent__c = broadcast.Total_Sent__c == null ? 0 : broadcast.Total_Sent__c;
@@ -75,6 +75,8 @@ public without sharing class WhatsAppChatTriggerHandler {
                     broadcastsToUpdate.put(broadcast.Id, broadcast);
                 }
             }
+
+            List<String> groupIdList = new List<String>();
     
             // Update counts based on message status
             for (Chat__c chat : recordNewList) {
@@ -94,6 +96,7 @@ public without sharing class WhatsAppChatTriggerHandler {
                 }
                 
                 Broadcast__c broadcast = broadcastsToUpdate.get(chat.WB_Broadcast__c);
+                groupIdList = broadcast.Broadcast_Group_IDs__c.split(',');
 
                 Decimal recipientLimit = broadcast.Recipient_Count__c;
                 if (chat.Message_Status__c == 'Sent' && broadcast.Total_Sent__c < recipientLimit) {

@@ -167,6 +167,7 @@ public without sharing class AutomationConfigController {
             }
 
             if (!Schema.sObjectType.Automation__c.isDeletable()) {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigController','methodName' => 'deleteAutomations','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'You do not have permission to delete Automation records.','apiResponse' => null});
                 throw new SecurityException('You do not have permission to delete Automation records.');
             }
 
