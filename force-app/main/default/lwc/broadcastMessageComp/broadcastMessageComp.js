@@ -405,9 +405,10 @@ export default class BroadcastMessageComp extends LightningElement {
     * Created By:Tirth Shah
     */
     async fetchListViewSOQL(listViewId, sessionId) {
-        const myHeaders = new Headers();
-        myHeaders.append("Authorization", "Bearer " + sessionId);
-        myHeaders.append("Content-Type", "application/json");
+        const myHeaders = {
+            "Authorization": "Bearer " + sessionId,
+            "Content-Type": "application/json"
+        }
     
         const requestOptions = {
             method: "GET",
@@ -478,9 +479,10 @@ export default class BroadcastMessageComp extends LightningElement {
         this.isLoading = false;
         const domainURL = location.origin.replace('lightning.force.com', 'my.salesforce.com');
 
-        const headers = new Headers();
-        headers.append("Authorization", "Bearer " + sessionId);
-        headers.append("Content-Type", "application/json");
+        const headers = {
+            "Authorization": "Bearer " + sessionId,
+            "Content-Type": "application/json"
+        }
 
         const requestOptions = {
             method: "GET",
