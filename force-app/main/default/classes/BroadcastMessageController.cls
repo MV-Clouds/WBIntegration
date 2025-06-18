@@ -227,7 +227,6 @@ public with sharing class BroadcastMessageController {
     
             // Basic validation
             if (String.isBlank(objectApiName) || 
-                String.isBlank(description) || 
                 String.isBlank(name) || 
                 String.isBlank(listViewName) ||
                 String.isBlank(phoneField) || 
@@ -256,6 +255,7 @@ public with sharing class BroadcastMessageController {
     
                 Database.SaveResult updateResult = Database.update(broadcastGroup, false, AccessLevel.USER_MODE);
                 if (!updateResult.isSuccess()) {
+                    ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'processBroadcastMessageWithObject','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Failed to update broadcast group.','apiResponse' => null});
                     throw new AuraHandledException('Failed to update broadcast group.');
                 }
             } else {

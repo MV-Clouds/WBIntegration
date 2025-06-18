@@ -640,7 +640,7 @@ export default class BroadcastMessageComp extends LightningElement {
             broadcastGroupId: this.broadcastGroupId,
             phoneField: phoneField
         };
-
+        
         this.isLoading = true;
 
         // Call the Apex method
@@ -653,8 +653,8 @@ export default class BroadcastMessageComp extends LightningElement {
 
         })
         .catch(error => {
+            console.error('Error in sendBroadcastMessage:',error);
             this.showToast('Error in sending broadcast', error, 'error');
-            this.showToast('Error', error.body?.message || 'Failed to process broadcast', 'error');
         })
         .finally(() => {
             this.isLoading = false;

@@ -12,11 +12,9 @@ MODIFICATION LOG*
 ********************************************************************** */
 
 import { LightningElement, track, api } from 'lwc';
-import { loadStyle } from 'lightning/platformResourceLoader';
 import { loadScript } from 'lightning/platformResourceLoader';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
-import wbCreateTempStyle from '@salesforce/resourceUrl/wbCreateTempStyle';
 import richTextZip from '@salesforce/resourceUrl/richTextZip';
 import buttonIconsZip from '@salesforce/resourceUrl/buttonIconsZip';
 import emojiData from '@salesforce/resourceUrl/emojis_data';
@@ -839,11 +837,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     renderedCallback() {
         try {
-            loadStyle(this, wbCreateTempStyle).then().catch(error => {
-                console.error("Error in loading the colors", error);
-            })
-
-
             if (this.isRendered) return;
             this.isRendered = true;
             let headerEls = this.template.querySelectorAll('.field-header-dd');
