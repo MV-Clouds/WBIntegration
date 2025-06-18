@@ -84,11 +84,6 @@ public with sharing class SyncTemplateController{
                 }
             }
 
-            // System.debug('Extracted Flow IDs: ' + flowIdSet);
-            // System.debug('Pending Template Names: ' + pendingTemplateNameList);
-            // System.debug(pendingTemplateNameList.size());
-            // System.debug('Pending Flow IDs (not found in Salesforce): ' + pendingFlowIdToNameMap);
-
             syncTemplateWrapper.pendingTemplateListName = pendingTemplateNameList;
             syncTemplateWrapper.pendingFlowListNames = pendingFlowIdToNameMap.values();
             if(isTemplateSyncConfirm){
@@ -195,11 +190,15 @@ public with sharing class SyncTemplateController{
        @AuraEnabled public Map<String, Object> allMetaTemplatesMap;
    }
 
-   
+
     // @AuraEnabled
-    // public static void confirmTemplateSync(){
+    // public static void confirmTemplateSync() {
+    //     System.debug('Hello there line 267');
     //     SyncTemplateDataWrapper syncTemplateWrapper = syncTemplateData(true);
-        
+
+    //     List<Template__c> templatesToInsert = new List<Template__c>();
+    //     List<Template_Variable__c> allVarsToInsert = new List<Template_Variable__c>();
+
     //     for (String templateName : syncTemplateWrapper.allMetaTemplatesMap.keySet()) {
     //         Map<String, Object> templateData = (Map<String, Object>) syncTemplateWrapper.allMetaTemplatesMap.get(templateName);
 
@@ -208,13 +207,18 @@ public with sharing class SyncTemplateController{
 
     //         CreateTemplateWrapper.TemplateWrapper tw = new CreateTemplateWrapper.TemplateWrapper();
     //         tw.templateName = templateName;
+    //         tw.templateType = determineTemplateType(templateData);
 
-    //         // 1. Set templateType from sub_category
-    //         tw.templateType = (String) templateData.get('sub_category');
-
-    //         // 2. Initialize
     //         tw.headAlternateTexts = new List<String>();
     //         tw.varAlternateTexts = new List<String>();
+    //         // System.debug('284');
+    //         Map<String, Object> miscFlags = new Map<String, Object>();
+    //         Boolean addMedia = false, addHeaderVar = false, isHeaderText = false;
+    //         Boolean isVisitSite = false, isCheckboxChecked = false, isFlowSelected = false;
+    //         Boolean isFeatureEnabled = false, isImageFile = false, isVideoFile = false, isDocFile = false;
+    //         Boolean isImgSelected = false, isVidSelected = false, isDocSelected = false;
+    //         Boolean isImageFileUploader = false, isVideoFileUploader = false, isDocFileUploader = false;
+    //         Boolean isFlowMarketing = false, isFlowUtility = false;
 
     //         List<Object> components = (List<Object>) templateData.get('components');
     //         for (Object compObj : components) {
@@ -222,11 +226,32 @@ public with sharing class SyncTemplateController{
     //             String type = (String) comp.get('type');
 
     //             if (type == 'HEADER') {
+    //                 String format = (String) comp.get('format');
+    //                 tw.tempHeaderFormat = format;
+
+    //                 if (format == 'IMAGE') {
+    //                     isImageFile = true; isImgSelected = true; isImageFileUploader = true; addMedia = true;
+    //                 } else if (format == 'VIDEO') {
+    //                     isVideoFile = true; isVidSelected = true; isVideoFileUploader = true; addMedia = true;
+    //                 } else if (format == 'DOCUMENT') {
+    //                     isDocFile = true; isDocSelected = true; isDocFileUploader = true; addMedia = true;
+    //                 } else if (format == 'TEXT') {
+    //                     isHeaderText = true;
+    //                 }
+
+    //                 if (comp.containsKey('text') && !String.isEmpty((String) comp.get('text'))) {
+    //                     addHeaderVar = true;
+    //                     tw.tempHeaderText = (String) comp.get('text');
+    //                 }
+
     //                 if (comp.containsKey('example')) {
     //                     Map<String, Object> example = (Map<String, Object>) comp.get('example');
     //                     if (example.containsKey('header_handle')) {
     //                         List<Object> handleList = (List<Object>) example.get('header_handle');
+                            
+    //                         System.debug('Head Text ::: ');
     //                         for (Object h : handleList) {
+    //                             System.debug('Head text ::: '+h);
     //                             tw.headAlternateTexts.add((String) h);
     //                         }
     //                         if (!handleList.isEmpty()) {
@@ -238,39 +263,183 @@ public with sharing class SyncTemplateController{
 
     //             if (type == 'BODY') {
     //                 tw.templateBody = (String) comp.get('text');
+
     //                 if (comp.containsKey('example')) {
     //                     Map<String, Object> example = (Map<String, Object>) comp.get('example');
     //                     if (example.containsKey('body_text')) {
+    //                         System.debug('Body Text ::: ');
     //                         List<Object> bodyTextList = (List<Object>) example.get('body_text');
     //                         for (Object groupBody : bodyTextList) {
     //                             for (Object val : (List<Object>) groupBody) {
+    //                                 System.debug('groupBody ::: '+val);
     //                                 tw.varAlternateTexts.add((String) val);
     //                             }
     //                         }
     //                     }
     //                 }
     //             }
-                
-    //         }
-            
-    //         System.debug('metaTempId: ' + metaTempId);
-    //         System.debug('metaTemplateStatus: ' + metaTemplateStatus);
-    //         System.debug('templateData: ' + JSON.serialize(templateData));
-    //         System.debug('TemplateWrapper: ' + JSON.serialize(tw));
-    //     // Now you can call your method
-    // }
 
+    //             if (type == 'BUTTONS') {
+    //                 List<Object> buttons = (List<Object>) comp.get('buttons');
+    //                 for (Object buttonObj : buttons) {
+    //                     Map<String, Object> button = (Map<String, Object>) buttonObj;
+    //                     String buttonType = (String) button.get('type');
+    //                     String buttonText = (String) button.get('text');
+
+    //                     if (buttonType == 'URL') {
+    //                         isVisitSite = true;
+    //                         isCheckboxChecked = true;
+    //                     }
+
+    //                     if (buttonType == 'FLOW') {
+    //                         isFlowSelected = true;
+
+    //                         String category = (String) templateData.get('category');
+    //                         if (category == 'MARKETING') isFlowMarketing = true;
+    //                         else if (category == 'UTILITY') isFlowUtility = true;
+
+    //                         List<Map<String, Object>> selectedFlows = new List<Map<String, Object>>();
+    //                         Map<String, Object> flowInfo = new Map<String, Object>{
+    //                             'type' => 'FLOW',
+    //                             'text' => buttonText,
+    //                             'flow_id' => button.get('flow_id')
+    //                         };
+    //                         selectedFlows.add(flowInfo);
+    //                         tw.selectedFlow = JSON.serialize(selectedFlows);
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         Boolean isSecurityRecommedation = templateData.containsKey('add_security_recommendation') ? (Boolean) templateData.get('add_security_recommendation') : false;
+    //         Boolean isCodeExpiration = templateData.containsKey('code_expiration_minutes');
+    //         Integer expireTime = templateData.containsKey('message_send_ttl_seconds') ? (Integer) templateData.get('message_send_ttl_seconds') : null;
+
+    //         tw.isSecurityRecommedation = isSecurityRecommedation;
+    //         tw.isCodeExpiration = isCodeExpiration;
+    //         tw.expireTime = expireTime;
+
+    //         miscFlags.put('isImageFile', isImageFile);
+    //         miscFlags.put('isImgSelected', isImgSelected);
+    //         miscFlags.put('isDocSelected', isDocSelected);
+    //         miscFlags.put('isVidSelected', isVidSelected);
+    //         miscFlags.put('isHeaderText', isHeaderText);
+    //         miscFlags.put('addHeaderVar', addHeaderVar);
+    //         miscFlags.put('addMedia', addMedia);
+    //         miscFlags.put('isImageFileUploader', isImageFileUploader);
+    //         miscFlags.put('isVideoFileUploader', isVideoFileUploader);
+    //         miscFlags.put('isDocFileUploader', isDocFileUploader);
+    //         miscFlags.put('isVideoFile', isVideoFile);
+    //         miscFlags.put('isDocFile', isDocFile);
+    //         miscFlags.put('isSecurityRecommedation', isSecurityRecommedation);
+    //         miscFlags.put('isCodeExpiration', isCodeExpiration);
+    //         miscFlags.put('expireTime', expireTime);
+    //         miscFlags.put('isVisitSite', isVisitSite);
+    //         miscFlags.put('isCheckboxChecked', isCheckboxChecked);
+    //         miscFlags.put('isFlowMarketing', isFlowMarketing);
+    //         miscFlags.put('isFlowUtility', isFlowUtility);
+    //         miscFlags.put('isFlowSelected', isFlowSelected);
+    //         miscFlags.put('isFeatureEnabled', isFeatureEnabled);
+
+    //         tw.templateMiscellaneousData = JSON.serialize(miscFlags);
+
+    //         Template__c whatsAppTemplate = new Template__c();
+    //         whatsAppTemplate.Template_Id__c = String.isNotBlank(metaTempId) ? metaTempId : null;
+    //         whatsAppTemplate.Template_Name__c = tw.templateName;
+    //         whatsAppTemplate.Template_Category__c = tw.templateCategory;
+    //         whatsAppTemplate.Language__c = tw.tempLanguage;
+    //         whatsAppTemplate.Template_Type__c = tw.templateType;
+    //         whatsAppTemplate.Template_Miscellaneous_Data__c = tw.templateMiscellaneousData;
+    //         whatsAppTemplate.Status__c = formatStatus(metaTemplateStatus);
+
+    //         if (tw.tempHeaderFormat == 'IMAGE' || tw.tempHeaderFormat == 'VIDEO' || tw.tempHeaderFormat == 'DOCUMENT') {
+    //             whatsAppTemplate.Header_Type__c = tw.tempHeaderFormat;
+    //             whatsAppTemplate.WBImage_Header_Handle__c = tw.tempHeaderHandle;
+    //             whatsAppTemplate.File_Name__c = tw.tempImgName;
+    //             whatsAppTemplate.WBHeader_Body__c = tw.tempImgUrl;
+    //         } else {
+    //             whatsAppTemplate.Header_Type__c = 'TEXT';
+    //             whatsAppTemplate.WBHeader_Body__c = tw.tempHeaderText;
+    //         }
+
+    //         whatsAppTemplate.WBFooter_Body__c = tw.tempFooterText;
+    //         whatsAppTemplate.WBTemplate_Body__c = tw.templateBody;
+    //         whatsAppTemplate.WBButton_Body__c = tw.url;
+
+    //         templatesToInsert.add(whatsAppTemplate);
+
+    //         String fixedObject = 'Account';
+    //         String fixedField = 'AccountNumber';
+    //         String fixedName = '{{' + fixedObject + '.' + fixedField + '}}';
+    //         System.debug('TW ::: '+tw);
+    //         for (String headAlt : tw.headAlternateTexts) {
+    //             System.debug('Head Add text :: '+headAlt);
+    //             allVarsToInsert.add(new Template_Variable__c(
+    //                 Name = fixedName,
+    //                 Type__c = 'Header',
+    //                 Object_Name__c = fixedObject,
+    //                 Field_Name__c = fixedField,
+    //                 Alternate_Text__c = headAlt
+    //             ));
+    //         }
+
+    //         for (String bodyAlt : tw.varAlternateTexts) {
+    //             System.debug('Body Add text :: '+bodyAlt);
+    //             allVarsToInsert.add(new Template_Variable__c(
+    //                 Name = fixedName,
+    //                 Type__c = 'Body',
+    //                 Object_Name__c = fixedObject,
+    //                 Field_Name__c = fixedField,
+    //                 Alternate_Text__c = bodyAlt
+    //             ));
+    //         }
+    //     }
+
+    //     if (!templatesToInsert.isEmpty()) {
+    //         insert templatesToInsert;
+    //         for (Integer i = 0; i < templatesToInsert.size(); i++) {
+    //             Id templateId = templatesToInsert[i].Id;
+    //             for (Template_Variable__c tv : allVarsToInsert) {
+    //                 if (tv.Template__c == null) {
+    //                     tv.Template__c = templateId;
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     if (!allVarsToInsert.isEmpty()) {
+    //         System.debug(allVarsToInsert);
+    //         insert allVarsToInsert;
+    //     }
     // }
 
     @AuraEnabled
     public static void confirmTemplateSync() {
+        System.debug('Hello there line 267');
         SyncTemplateDataWrapper syncTemplateWrapper = syncTemplateData(true);
 
+        List<String> allTemplateNames = new List<String>(syncTemplateWrapper.allMetaTemplatesMap.keySet());
+        Integer batchSize = 5;
+
+        for (Integer i = 0; i < allTemplateNames.size(); i += batchSize) {
+            Integer endIndex = Math.min(i + batchSize, allTemplateNames.size());
+            List<String> batchTemplateNames = new List<String>();
+
+            for (Integer j = i; j < endIndex; j++) {
+                batchTemplateNames.add(allTemplateNames[j]);
+            }
+
+            processTemplateBatch(batchTemplateNames, syncTemplateWrapper.allMetaTemplatesMap);
+        }
+    }
+
+
+    private static void processTemplateBatch(List<String> templateNames, Map<String, Object> allMetaTemplatesMap) {
         List<Template__c> templatesToInsert = new List<Template__c>();
         List<Template_Variable__c> allVarsToInsert = new List<Template_Variable__c>();
 
-        for (String templateName : syncTemplateWrapper.allMetaTemplatesMap.keySet()) {
-            Map<String, Object> templateData = (Map<String, Object>) syncTemplateWrapper.allMetaTemplatesMap.get(templateName);
+        for (String templateName : templateNames) {
+            Map<String, Object> templateData = (Map<String, Object>) allMetaTemplatesMap.get(templateName);
 
             String metaTempId = (String) templateData.get('id');
             String metaTemplateStatus = (String) templateData.get('status');
@@ -279,9 +448,13 @@ public with sharing class SyncTemplateController{
             tw.templateName = templateName;
             tw.templateType = determineTemplateType(templateData);
 
+            String input = (String) templateData.get('category');
+            tw.templateCategory = input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
+            tw.tempLanguage = (String) templateData.get('language') ;
+
             tw.headAlternateTexts = new List<String>();
             tw.varAlternateTexts = new List<String>();
-            System.debug('284');
+
             Map<String, Object> miscFlags = new Map<String, Object>();
             Boolean addMedia = false, addHeaderVar = false, isHeaderText = false;
             Boolean isVisitSite = false, isCheckboxChecked = false, isFlowSelected = false;
@@ -300,11 +473,11 @@ public with sharing class SyncTemplateController{
                     tw.tempHeaderFormat = format;
 
                     if (format == 'IMAGE') {
-                        isImageFile = true; isImgSelected = true; isImageFileUploader = true; addMedia = true;
+                        isImageFile = false; isImgSelected = true; isImageFileUploader = true; addMedia = true;
                     } else if (format == 'VIDEO') {
-                        isVideoFile = true; isVidSelected = true; isVideoFileUploader = true; addMedia = true;
+                        isVideoFile = false; isVidSelected = true; isVideoFileUploader = true; addMedia = true;
                     } else if (format == 'DOCUMENT') {
-                        isDocFile = true; isDocSelected = true; isDocFileUploader = true; addMedia = true;
+                        isDocFile = false; isDocSelected = true; isDocFileUploader = true; addMedia = true;
                     } else if (format == 'TEXT') {
                         isHeaderText = true;
                     }
@@ -316,32 +489,40 @@ public with sharing class SyncTemplateController{
 
                     if (comp.containsKey('example')) {
                         Map<String, Object> example = (Map<String, Object>) comp.get('example');
-                        if (example.containsKey('header_handle')) {
-                            List<Object> handleList = (List<Object>) example.get('header_handle');
-                            
-                            System.debug('Head Text ::: ');
-                            for (Object h : handleList) {
-                                System.debug('Head text ::: '+h);
+                        System.debug('Head text example ::: ' + example);
+
+                        // Safely check if either key exists and is non-null
+                        List<Object> handleTextList = (example.containsKey('header_text') && example.get('header_text') != null) 
+                            ? (List<Object>) example.get('header_text') : new List<Object>();
+
+                        List<Object> handleList = (example.containsKey('header_handle') && example.get('header_handle') != null) 
+                            ? (List<Object>) example.get('header_handle') : new List<Object>();
+
+                        // Add header_text values to alternate texts
+                        for (Object h : handleTextList) {
+                            if (h != null) {
+                                System.debug('head h :: ' + h);
                                 tw.headAlternateTexts.add((String) h);
                             }
-                            if (!handleList.isEmpty()) {
-                                tw.tempImgUrl = (String) handleList[0];
-                            }
+                        }
+
+                        // Assign the first valid header_handle as image URL
+                        if (!handleList.isEmpty() && handleList[0] != null) {
+                            tw.tempImgUrl = (String) handleList[0];
                         }
                     }
+
+                    System.debug(tw);
                 }
 
                 if (type == 'BODY') {
                     tw.templateBody = (String) comp.get('text');
-
                     if (comp.containsKey('example')) {
                         Map<String, Object> example = (Map<String, Object>) comp.get('example');
                         if (example.containsKey('body_text')) {
-                            System.debug('Body Text ::: ');
                             List<Object> bodyTextList = (List<Object>) example.get('body_text');
                             for (Object groupBody : bodyTextList) {
                                 for (Object val : (List<Object>) groupBody) {
-                                    System.debug('groupBody ::: '+val);
                                     tw.varAlternateTexts.add((String) val);
                                 }
                             }
@@ -403,7 +584,7 @@ public with sharing class SyncTemplateController{
             miscFlags.put('isDocFile', isDocFile);
             miscFlags.put('isSecurityRecommedation', isSecurityRecommedation);
             miscFlags.put('isCodeExpiration', isCodeExpiration);
-            miscFlags.put('expireTime', expireTime);
+            miscFlags.put('expireTime', expireTime==null?300:expireTime);
             miscFlags.put('isVisitSite', isVisitSite);
             miscFlags.put('isCheckboxChecked', isCheckboxChecked);
             miscFlags.put('isFlowMarketing', isFlowMarketing);
@@ -440,33 +621,36 @@ public with sharing class SyncTemplateController{
 
             String fixedObject = 'Account';
             String fixedField = 'AccountNumber';
-            String fixedName = '{{' + fixedObject + '.' + fixedField + '}}';
-            System.debug('TW ::: '+tw);
+            // String fixedName = '{{' + fixedObject + '.' + fixedField + '}}';
+            Integer headCount= 1;
+
             for (String headAlt : tw.headAlternateTexts) {
-                System.debug('Head Add text :: '+headAlt);
                 allVarsToInsert.add(new Template_Variable__c(
-                    Name = fixedName,
+                    Name = '{{'+headCount+'}}',
                     Type__c = 'Header',
                     Object_Name__c = fixedObject,
                     Field_Name__c = fixedField,
                     Alternate_Text__c = headAlt
                 ));
+                headCount++;
             }
 
+            Integer bodyCount = 1;
             for (String bodyAlt : tw.varAlternateTexts) {
-                System.debug('Body Add text :: '+bodyAlt);
                 allVarsToInsert.add(new Template_Variable__c(
-                    Name = fixedName,
+                    Name = '{{'+bodyCount+'}}',
                     Type__c = 'Body',
                     Object_Name__c = fixedObject,
                     Field_Name__c = fixedField,
                     Alternate_Text__c = bodyAlt
                 ));
+                bodyCount++;
             }
         }
 
         if (!templatesToInsert.isEmpty()) {
             insert templatesToInsert;
+
             for (Integer i = 0; i < templatesToInsert.size(); i++) {
                 Id templateId = templatesToInsert[i].Id;
                 for (Template_Variable__c tv : allVarsToInsert) {
@@ -478,10 +662,10 @@ public with sharing class SyncTemplateController{
         }
 
         if (!allVarsToInsert.isEmpty()) {
-            System.debug(allVarsToInsert);
             insert allVarsToInsert;
         }
     }
+
 
     private static String formatStatus(String status) {
         if (String.isBlank(status)) return 'In-Review';
