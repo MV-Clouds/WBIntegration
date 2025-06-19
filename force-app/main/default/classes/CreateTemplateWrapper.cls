@@ -559,7 +559,7 @@
     @return          : buttonDetails - contain type ,label and value of different buttons.
     ********************************************************
     */
-    private static String handleButtonComponent(Map<String, Object> component) {
+    public static String handleButtonComponent(Map<String, Object> component) {
         String buttonList = '';
         try {
             List<Object> buttons = (List<Object>) component.get('buttons');

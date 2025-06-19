@@ -691,7 +691,7 @@
    ********************************************************
    */
     @AuraEnabled
-    public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String payloadWrapper,String templateId) {
+    public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String payloadWrapper,String templateId,String templateName) {
         Map<String, Object> response = new Map<String, Object>();
 
         try {
@@ -741,6 +741,17 @@
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             response.put('status', 'error');
             response.put('message', e.getMessage());
+            if (e instanceof CalloutException && e.getMessage().containsIgnoreCase('Read timed out')) {
+                response.put('success', false);
+                response.put('status', 'warning');
+                response.put('message', 'Template is being created, you will be notified once it is ready.');
+                checkTemplateExistance(templateName, serializedWrapper, payloadWrapper);
+            }
+            else{
+                response.put('success', false);
+                response.put('status', 'error');
+                response.put('message', e.getMessage());
+            }
         }
        return response;
    }

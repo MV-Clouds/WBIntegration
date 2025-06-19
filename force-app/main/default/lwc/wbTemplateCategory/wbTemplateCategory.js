@@ -1,4 +1,4 @@
-/**
+C/**
  * Component Name: WbTemplateCategory
  * @description: Used LWC components to select template category and template type.
  * Date: 30/04/2025

@@ -46,7 +46,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
     @track inputValues = {};
     @track groupedVariables=[];
     @track noContact=true;
-    @track selectedCountryType = '+44';  
+    @track selectedCountryType = '+91';  
     @track countryType=[];
     @track filteredTableData = []; 
     @track variableMapping = { header: {}, body: {} };
@@ -95,26 +95,31 @@ export default class WbPreviewTemplatePage extends LightningElement {
     }
 
     formatText(inputText) {
-        try {
-            const patterns = [
-                { regex: /\n/g, replacement: '<br/>' },
-                { regex: /\*(.*?)\*/g, replacement: '<b>$1</b>' },
-                { regex: /_(.*?)_/g, replacement: '<i>$1</i>' },
-                { regex: /~(.*?)~/g, replacement: '<s>$1</s>' },
-                { regex: /```(.*?)```/g, replacement: '<code>$1</code>' }
-            ];
-    
-            // Loop through all patterns, apply them to the input text one after the other
-            let formattedText = inputText;
-            patterns.forEach(({ regex, replacement }) => {
+    try {
+        const patterns = [
+            { regex: /\n/g, replacement: '<br/>' },
+            { regex: /\*(.*?)\*/g, replacement: '<b>$1</b>' },
+            { regex: /_(.*?)_/g, replacement: '<i>$1</i>' },
+            { regex: /~(.*?)~/g, replacement: '<s>$1</s>' },
+            { regex: /```([\s\S]*?)```/g, replacement: '<code>$1</code>' } // multiline safe
+        ];
+
+        let formattedText = inputText;
+
+        patterns.forEach(({ regex, replacement }) => {
+            // Only apply if regex matches (avoids issues with unmatched groups)
+            if (regex.test(formattedText)) {
                 formattedText = formattedText.replace(regex, replacement);
-            });
-    
-            return formattedText;
-        } catch (error) {
-            console.error('Something went wrong in formatting text.', error);
-        }
+            }
+        });
+
+        return formattedText;
+    } catch (error) {
+        console.error('Something went wrong in formatting text.', error);
+        return inputText; // fallback
     }
+}
+
 
     getIconName(btntype) {
         switch (btntype) {
@@ -314,19 +319,19 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 if (!result) return;
 
                 const template = result.template;
-                const miscData = JSON.parse(template?.MVWB__Template_Miscellaneous_Data__c || '{}');
+                const miscData = JSON.parse(template?.Template_Miscellaneous_Data__c || '{}');
 
                 this.IsHeaderText = !result.isImgUrl;
-                this.originalHeader = template.MVWB__WBHeader_Body__c;
-                this.originalBody = template.MVWB__WBTemplate_Body__c;
+                this.originalHeader = template.WBHeader_Body__c;
+                this.originalBody = template.WBTemplate_Body__c;
                 this.tempBody = this.originalBody;
-                this.tempFooter = template.MVWB__WBFooter_Body__c;
+                this.tempFooter = template.WBFooter_Body__c;
 
                 this.isSecurityRecommedation = miscData.isSecurityRecommedation;
                 this.isCodeExpiration = miscData.isCodeExpiration;
                 this.expireTime = miscData.expireTime;
 
-                const headerType = template.MVWB__Header_Type__c;
+                const headerType = template.Header_Type__c;
 
                 if (['Image', 'Video', 'Document'].includes(headerType)) {
                     this.isImgSelected = headerType === 'Image' && result.isImgUrl;
@@ -342,11 +347,11 @@ export default class WbPreviewTemplatePage extends LightningElement {
 
                 this.formattedtempHeader = this.originalHeader;
 
-                this.isSendDisabled = template.MVWB__Status__c !== 'Active-Quality Pending';
+                this.isSendDisabled = template.Status__c !== 'Active-Quality Pending';
                 this.sendButtonClass = this.isSendDisabled ? 'send-btn send-btn-active' : 'send-btn';
 
                 // Parse buttons
-                const buttonBody = template.MVWB__WBButton_Body__c ? JSON.parse(template.MVWB__WBButton_Body__c) : [];
+                const buttonBody = template.WBButton_Body__c ? JSON.parse(template.WBButton_Body__c) : [];
                 this.buttonList = buttonBody.map((btn, index) => ({
                     id: index,
                     btntext: btn.text.trim(),
@@ -382,7 +387,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 // Format template body
                 this.formatedTempBody = this.formatText(this.tempBody);
 
-                if (template.MVWB__Template_Category__c === 'Authentication') {
+                if (template.Template_Category__c === 'Authentication') {
                     this.formatedTempBody = '{{code}} ' + this.formatedTempBody;
                     if (this.isSecurityRecommedation) {
                         this.formatedTempBody += '\n For your security, do not share this code.';
@@ -455,18 +460,18 @@ export default class WbPreviewTemplatePage extends LightningElement {
                 return;
             }
             
-            const buttonValue = this.template.MVWB__WBButton_Body__c != undefined?JSON.parse(this.template.MVWB__WBButton_Body__c) : '';
+            const buttonValue = this.template.WBButton_Body__c != undefined?JSON.parse(this.template.WBButton_Body__c) : '';
             
             
             const templatePayload = this.createJSONBody(phonenum, "template", {
-                templateName: this.template.MVWB__Template_Name__c,
-                languageCode: this.template.MVWB__Language__c,
-                headerImageURL: this.template.MVWB__WBHeader_Body__c,
-                headerType:this.template.MVWB__Header_Type__c,
+                templateName: this.template.Template_Name__c,
+                languageCode: this.template.Language__c,
+                headerImageURL: this.template.WBHeader_Body__c,
+                headerType:this.template.Header_Type__c,
                 headerParameters: this.headerPramsCustomList,
                 bodyParameters: this.bodyPramsCustomList,
-                buttonLabel: this.template.MVWB__Button_Label__c || '',
-                buttonType: this.template.MVWB__Button_Type__c || '',
+                buttonLabel: this.template.Button_Label__c || '',
+                buttonType: this.template.Button_Type__c || '',
                 buttonValue : buttonValue
             });
 
@@ -580,7 +585,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                     type: "body",
                     parameters: bodyParams
                 });
-            } else if(this.template.MVWB__Template_Category__c == 'Authentication'){
+            } else if(this.template.Template_Category__c == 'Authentication'){
                 components.push({
                     type: "body",
                     parameters: [
@@ -639,8 +644,7 @@ export default class WbPreviewTemplatePage extends LightningElement {
                                     parameters: [
                                         {
                                             type :'coupon_code',
-                                            coupon_code : button.example
-                                        }
+                                            coupon_code : typeof button.example == 'string' ? button.example : (typeof button.example == 'object' ? button.example[0]: button.example)                                       }
                                     ]
                                 }); 
                                 break;

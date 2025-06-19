@@ -20,9 +20,6 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
         System.debug('Batch Finished');
     }
 
-
-    
-
     private void processTemplateBatch(List<String> templateNames) {
         List<Template__c> templatesToInsert = new List<Template__c>();
         List<Template_Variable__c> allVarsToInsert = new List<Template_Variable__c>();
@@ -33,6 +30,7 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
 
             String metaTempId = (String) templateData.get('id');
             String metaTemplateStatus = (String) templateData.get('status');
+            String buttonDetails;
 
             CreateTemplateWrapper.TemplateWrapper tw = new CreateTemplateWrapper.TemplateWrapper();
             tw.templateName = templateName;
@@ -122,46 +120,95 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
                     }
                 }
 
+                // if (type == 'BUTTONS') {
+                //     List<Object> buttons = (List<Object>) comp.get('buttons');
+                //     for (Object buttonObj : buttons) {
+                //         Map<String, Object> button = (Map<String, Object>) buttonObj;
+                //         String buttonType = (String) button.get('type');
+                //         String buttonText = (String) button.get('text');
+
+                //         if (buttonType == 'URL') {
+                //             isVisitSite = true;
+                //             isCheckboxChecked = true;
+                //         }
+
+                //         if (buttonType == 'FLOW') {
+                //             isFlowSelected = true;
+                //             String category = (String) templateData.get('category');
+                //             if (category == 'MARKETING') isFlowMarketing = true;
+                //             else if (category == 'UTILITY') isFlowUtility = true;
+
+                //             List<Map<String, Object>> selectedFlows = new List<Map<String, Object>>();
+                //             Map<String, Object> flowInfo = new Map<String, Object>{
+                //                 'type' => 'FLOW',
+                //                 'text' => buttonText,
+                //                 'flow_id' => button.get('flow_id')
+                //             };
+                //             selectedFlows.add(flowInfo);
+                //             tw.selectedFlow = JSON.serialize(selectedFlows);
+                //         }
+                //     }
+                // }
+
                 if (type == 'BUTTONS') {
+                    System.debug('divij check buttons ' + comp);
+                    System.debug('divij check buttons ' + comp.get('buttons'));
                     List<Object> buttons = (List<Object>) comp.get('buttons');
                     for (Object buttonObj : buttons) {
-                        Map<String, Object> button = (Map<String, Object>) buttonObj;
-                        String buttonType = (String) button.get('type');
-                        String buttonText = (String) button.get('text');
+                        if (buttonObj instanceof Map<String, Object>) {
+                            Map<String, Object> button = (Map<String, Object>) buttonObj;
+                            String buttonType = (String) button.get('type');
+                            String buttonText = (String) button.get('text');
 
-                        if (buttonType == 'URL') {
-                            isVisitSite = true;
-                            isCheckboxChecked = true;
-                        }
+                            // ✅ Check for marketing opt-out
+                            if (buttonText == tw.marketingOptText) {
+                                button.put('isMarketingOpt', true);
+                            }
 
-                        if (buttonType == 'FLOW') {
-                            isFlowSelected = true;
-                            String category = (String) templateData.get('category');
-                            if (category == 'MARKETING') isFlowMarketing = true;
-                            else if (category == 'UTILITY') isFlowUtility = true;
+                            // ✅ Check for URL button
+                            if (buttonType == 'URL') {
+                                isVisitSite = true;
+                                isCheckboxChecked = true;
+                            }
 
-                            List<Map<String, Object>> selectedFlows = new List<Map<String, Object>>();
-                            Map<String, Object> flowInfo = new Map<String, Object>{
-                                'type' => 'FLOW',
-                                'text' => buttonText,
-                                'flow_id' => button.get('flow_id')
-                            };
-                            selectedFlows.add(flowInfo);
-                            tw.selectedFlow = JSON.serialize(selectedFlows);
+                            // ✅ Check for FLOW button
+                            if (buttonType == 'FLOW') {
+                                isFlowSelected = true;
+                                String category = (String) templateData.get('category');
+                                if (category == 'MARKETING') isFlowMarketing = true;
+                                else if (category == 'UTILITY') isFlowUtility = true;
+
+                                List<Map<String, Object>> selectedFlows = new List<Map<String, Object>>();
+                                Map<String, Object> flowInfo = new Map<String, Object>{
+                                    'type' => 'FLOW',
+                                    'text' => buttonText,
+                                    'flow_id' => button.get('flow_id')
+                                };
+                                selectedFlows.add(flowInfo);
+                                tw.selectedFlow = JSON.serialize(selectedFlows);
+                            }
                         }
                     }
-                }
+
+                    // ✅ Set WBButton_Body__c from handleButtonComponent()
+                    // buttonDetails = handleButtonComponent(comp);
+                    if (buttons != null) {
+                        buttonDetails = (String) JSON.serialize(buttons);
+                        
+                    }
+                    // whatsAppTemplate.WBButton_Body__c = buttonDetails;
+                }                
             }
 
-            Boolean isSecurityRecommedation = templateData.containsKey('add_security_recommendation') ? (Boolean) templateData.get('add_security_recommendation') : false;
+            Boolean isSecurityRecommedation = templateData.containsKey('add_security_recommendation') ? (Boolean) templateData.get('add_security_recommendation') : true;
             Boolean isCodeExpiration = templateData.containsKey('code_expiration_minutes');
             Integer expireTime = templateData.containsKey('message_send_ttl_seconds') ? (Integer) templateData.get('message_send_ttl_seconds') : null;
-
+            
             tw.isSecurityRecommedation = isSecurityRecommedation;
             tw.isCodeExpiration = isCodeExpiration;
             tw.expireTime = expireTime;
 
-
+            
             miscFlags.put('contentVersionId', contentVersionId);
             miscFlags.put('awsFileName', tempAwsFileName);
             miscFlags.put('isImageFile', isImageFile);
@@ -185,9 +232,12 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
             miscFlags.put('isFlowUtility', isFlowUtility);
             miscFlags.put('isFlowSelected', isFlowSelected);
             miscFlags.put('isFeatureEnabled', isFeatureEnabled);
-
+            miscFlags.put('authRadioButton', 'zero_tap');
+            miscFlags.put('autofillCheck', false);
+            miscFlags.put('marketingOptText', tw.marketingOptText);
+            
             tw.templateMiscellaneousData = JSON.serialize(miscFlags);
-
+            
             Template__c whatsAppTemplate = new Template__c();
             whatsAppTemplate.Template_Id__c = String.isNotBlank(metaTempId) ? metaTempId : null;
             whatsAppTemplate.Template_Name__c = tw.templateName;
@@ -195,8 +245,11 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
             whatsAppTemplate.Language__c = tw.tempLanguage;
             whatsAppTemplate.Template_Type__c = tw.templateType;
             whatsAppTemplate.Template_Miscellaneous_Data__c = tw.templateMiscellaneousData;
+            System.debug('Button body ::: '+buttonDetails);
+            whatsAppTemplate.WBButton_Body__c = (String) buttonDetails;
+            System.debug('Button body ::: '+buttonDetails);
             whatsAppTemplate.Status__c = formatStatus(metaTemplateStatus);
-
+            
             if (tw.tempHeaderFormat == 'IMAGE' || tw.tempHeaderFormat == 'VIDEO' || tw.tempHeaderFormat == 'DOCUMENT') {
                 whatsAppTemplate.Header_Type__c = tw.tempHeaderFormat;
                 whatsAppTemplate.WBImage_Header_Handle__c = tw.tempHeaderHandle;
@@ -209,7 +262,7 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
 
             whatsAppTemplate.WBFooter_Body__c = tw.tempFooterText;
             whatsAppTemplate.WBTemplate_Body__c = tw.templateBody;
-            whatsAppTemplate.WBButton_Body__c = tw.url;
+            // whatsAppTemplate.WBButton_Body__c = tw.url;
 
             templatesToInsert.add(whatsAppTemplate);
 
@@ -266,8 +319,6 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
         }
     }
 
-
-
     private static String formatStatus(String status) {
         if (String.isBlank(status)) return 'In-Review';
         if (status == 'PENDING') return 'In-Review';
@@ -300,7 +351,7 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
 
         // Apply rules
         if (category == 'MARKETING') {
-            return hasFlowButton ? 'Flow' : 'CustomMarketing';
+            return hasFlowButton ? 'Flow' : 'Custom';
         } else if (category == 'UTILITY') {
             return hasFlowButton ? 'flowutility' : 'Custom';
         } else if (category == 'AUTHENTICATION') {
@@ -383,6 +434,21 @@ public with sharing class SyncTemplateBatchClass implements Database.Batchable<S
         // Step 4: Combine all
         return templateName + '_' + dateStr + '_' + randomStr + '.' + extension;
     }
+
+    // public static String handleButtonComponent(Map<String, Object> component) {
+    //     String buttonList = '';
+    //     try {
+    //         List<Object> buttons = (List<Object>) component.get('buttons');
+    
+    //         if (buttons != null) {
+    //             buttonList = (String) JSON.serialize(buttons);
+                
+    //         }
+    //     } catch (Exception e) {
+    //         ExceptionHandler.logException(new Map<String, Object>{'className' => 'CreateTemplateWrapper', 'methodName' => 'handleButtonComponent', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+    //     }
+    //     return buttonList; 
+    // }
 
 
     public class DownloadWhatsAppMediaWrapper{

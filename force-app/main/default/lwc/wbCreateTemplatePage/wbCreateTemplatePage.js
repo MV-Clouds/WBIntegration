@@ -884,8 +884,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 .then((data) => {
                     const { template, templateVariables } = data;
 
-                    this.selectedOption = template.MVWB__Template_Type__c;
-                    this.activeTab = template.MVWB__Template_Category__c;
+                    this.selectedOption = template.Template_Type__c;
+                    this.activeTab = template.Template_Category__c;
                     if (this.activeTab === 'Marketing') {
                         this.selectedTab = 'section1';
                     } else if (this.activeTab === 'Utility') {
@@ -901,25 +901,25 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     }, 700);
                     setTimeout(() => {
 
-                        this.templateName = template.MVWB__Template_Name__c || '';
-                        this.metaTemplateId = template.MVWB__Template_Id__c || '';
-                        const headerBody = template.MVWB__WBHeader_Body__c || '';
+                        this.templateName = template.Template_Name__c || '';
+                        this.metaTemplateId = template.Template_Id__c || '';
+                        const headerBody = template.WBHeader_Body__c || '';
 
-                        const headerType = template.MVWB__Header_Type__c || 'None';
+                        const headerType = template.Header_Type__c || 'None';
 
-                        this.footer = template.MVWB__WBFooter_Body__c || '';
-                        this.selectedLanguage = template.MVWB__Language__c;
+                        this.footer = template.WBFooter_Body__c || '';
+                        this.selectedLanguage = template.Language__c;
                         this.languageOptions = this.languageOptions.map(option => ({
                             ...option,
                             isSelected: option.value === this.selectedLanguage
                         }));
 
-                        this.tempBody = template.MVWB__WBTemplate_Body__c || 'Hello';
+                        this.tempBody = template.WBTemplate_Body__c || 'Hello';
                         this.formatedTempBody = this.formatText(this.tempBody);
                         this.previewBody = this.tempBody ? this.formatText(this.tempBody) : 'Hello';
 
                         try {
-                            const templateMiscellaneousData = JSON.parse(template.MVWB__Template_Miscellaneous_Data__c);
+                            const templateMiscellaneousData = JSON.parse(template.Template_Miscellaneous_Data__c);
                             this.contentVersionId = templateMiscellaneousData.contentVersionId
                             this.isImageFile = templateMiscellaneousData.isImageFile
                             this.isImgSelected = templateMiscellaneousData.isImgSelected
@@ -968,15 +968,15 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         // const parser = new DOMParser();
                         // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
                         // this.previewHeader = doc.documentElement.textContent;
-                        if (template.MVWB__Header_Type__c == 'Image' || template.MVWB__Header_Type__c == 'Video' || template.MVWB__Header_Type__c == 'Document') {
+                        if (template.Header_Type__c == 'Image' || template.Header_Type__c == 'Video' || template.Header_Type__c == 'Document') {
                             const parser = new DOMParser();
-                            const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
+                            const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
                             this.previewHeader = doc.documentElement.textContent || "";
 
-                            this.fileName = template.MVWB__File_Name__c;
-                            this.fileType = template.MVWB__Header_Type__c;
+                            this.fileName = template.File_Name__c;
+                            this.fileType = template.Header_Type__c;
 
-                            this.filePreview = template.MVWB__WBHeader_Body__c;
+                            this.filePreview = template.WBHeader_Body__c;
 
                         } else {
                             this.previewHeader = this.formatText(headerBody) || '';
@@ -984,8 +984,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
 
                         // this.previewHeader= this.formatText(headerBody) ||'';
-                        this.selectedContentType = template.MVWB__Header_Type__c || 'None';
-                        this.btntext = template.MVWB__Button_Label__c || '';
+                        this.selectedContentType = template.Header_Type__c || 'None';
+                        this.btntext = template.Button_Label__c || '';
                         let tvs = templateVariables.map(tv => {
                             let temp = {
                                 object: tv.objName,
@@ -1018,9 +1018,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         if (this.addHeaderVar) {
                             this.buttonDisabled = true;
                         }
-                        if (template.MVWB__WBButton_Body__c) {
+                        if (template.WBButton_Body__c) {
                             // Parse JSON from WBButton_Body__c
-                            let buttonDataList = JSON.parse(template.MVWB__WBButton_Body__c);
+                            let buttonDataList = JSON.parse(template.WBButton_Body__c);
 
                             // Clear existing button and custom button lists before populating
                             this.buttonList = [];
@@ -1091,12 +1091,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
 
                         if (headerType.toLowerCase() == 'image' || headerType.toLowerCase() == 'video') {
-                            this.headerHandle = template.MVWB__WBImage_Header_Handle__c;
-                            this.imageurl = template.MVWB__WBHeader_Body__c;
+                            this.headerHandle = template.WBImage_Header_Handle__c;
+                            this.imageurl = template.WBHeader_Body__c;
                             this.NoFileSelected = false;
                             this.isfilename = true;
-                            this.fileName = template.MVWB__File_Name__c;
-                            this.fileType = template.MVWB__Header_Type__c.toLowerCase();
+                            this.fileName = template.File_Name__c;
+                            this.fileType = template.Header_Type__c.toLowerCase();
 
                             this.filePreview = headerBody;
                         }
@@ -1202,16 +1202,16 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             let AWS = window.AWS;
 
             AWS.config.update({
-                accessKeyId: confData.MVWB__AWS_Access_Key__c,
-                secretAccessKey: confData.MVWB__AWS_Secret_Access_Key__c
+                accessKeyId: confData.AWS_Access_Key__c,
+                secretAccessKey: confData.AWS_Secret_Access_Key__c
             });
 
-            AWS.config.region = confData.MVWB__S3_Region_Name__c;
+            AWS.config.region = confData.S3_Region_Name__c;
 
             this.s3 = new AWS.S3({
                 apiVersion: "2006-03-01",
                 params: {
-                    Bucket: confData.MVWB__S3_Bucket_Name__c
+                    Bucket: confData.S3_Bucket_Name__c
                 }
             });
 
@@ -1279,7 +1279,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const results = await Promise.all(uploadPromises);
             results.forEach((result) => {
                 if (result) {
-                    let bucketName = this.confData.MVWB__S3_Bucket_Name__c;
+                    let bucketName = this.confData.S3_Bucket_Name__c;
                     let objKey = result.Key;
                     let awsFileUrl = `https://${bucketName}.s3.amazonaws.com/${objKey}`;
 
@@ -1789,7 +1789,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
             if (Array.isArray(this.allTemplates)) {
                 this.templateExists = this.allTemplates.some(
-                    template => template.MVWB__Template_Name__c?.toLowerCase() === this.templateName?.toLowerCase()
+                    template => template.Template_Name__c?.toLowerCase() === this.templateName?.toLowerCase()
                 );
             } else {
                 console.warn('allTemplates is not an array or is null/undefined');
@@ -2833,7 +2833,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const serializedWrapper = JSON.stringify(template);
             const payload = JSON.stringify(buildPayload(template));
             if (this.metaTemplateId) {
-                editWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateId: this.metaTemplateId })
+                editWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateId: this.metaTemplateId, templateName: this.templateName  })
                     .then(result => {
                         if (result && result.success) {
                             this.showToastSuccess('Template successfully edited.');
