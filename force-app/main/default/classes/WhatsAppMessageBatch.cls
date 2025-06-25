@@ -247,6 +247,7 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
     @description     : This method is used to create the JSON body for the WhatsApp message.
     @param           : to - Phone number to send the message
     @param           : type - Type of the message
+    
     @param           : data - Map of data to be included in the message
     @return          : String - JSON body
     ********************************************************

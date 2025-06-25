@@ -2867,6 +2867,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             // this.templateId = templateId;
                             // this.fetchUpdatedTemplates();
                             this.navigateToAllTemplatePage();
+                        } else if(result && result.success == false && result.status == 'warning'){
+                            this.showToastWarning('Template updation taking too much time, please wait for few minutes and refresh the page to see the updated template.');
+                            this.isLoading = false;
+                            this.navigateToAllTemplatePage();
                         } else {
                             const errorResponse = JSON.parse(result.errorMessage);
                             const errorMsg = errorResponse.error.error_user_msg || 'Due to unknown error';
