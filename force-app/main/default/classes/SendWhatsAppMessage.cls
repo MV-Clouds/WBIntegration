@@ -1,3 +1,16 @@
+/**
+* @File Name : SendWhatsAppMessage.cls
+* @Description :
+* @Author :
+* @Last Modified By :
+* @Last Modified On : June 25, 2025
+* @Modification Log :
+*==============================================================================
+* Ver | Date | Author | Modification
+*==============================================================================
+* 1.0 | June 25, 2025 |  Harsh Gandhi | Initial Version
+**/
+
 global without sharing class SendWhatsAppMessage {
 
     global static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
@@ -16,7 +29,6 @@ global without sharing class SendWhatsAppMessage {
             HttpResponse response = http.send(httpReq);
             return response;
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'SendWhatsAppMessage', 'methodName' => 'sendWhatsAppMessage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => '', 'chatId' => chatId, 'moreDetails' => '', 'apiResponse' => '' });
             return null;
         }
     }
