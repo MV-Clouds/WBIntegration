@@ -2296,6 +2296,31 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
+    handleHeaderObjectChange(event){
+        try {
+            const selectedObject = event.target.value;
+            this.selectedObject = selectedObject;
+
+            getObjectFields({ objectName: selectedObject })
+                .then((result) => {
+                    this.fields = result.map((field) => ({ label: field, value: field }));
+
+                    this.header_variables = this.header_variables.map(varItem => ({
+                        ...varItem,
+                        object: selectedObject,
+                        field: this.fields[0].value
+                    }));
+
+                    this.updatePreviewContent(this.header, 'header');
+                })
+                .catch((error) => {
+                    console.error('Error fetching fields: ', error);
+                });
+        } catch (error) {
+            console.error('Something went wrong while updating variable object.', error);
+        }
+    }
+
     handleObjectChange(event) {
         try {
             const selectedObject = event.target.value;
