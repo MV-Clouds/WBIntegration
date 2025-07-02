@@ -223,6 +223,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     @track isAwsSdkInitialized = true;
     @track selectedFilesToUpload = [];
     @track awsFileName;
+    @track objectFieldMap = {};
     @api activeTab;
     @api selectedTab;
     @api selectedOption;
@@ -370,16 +371,26 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     }
 
     get computedVariables() {
-        // Add selection state to fields for each variable
-        return this.variables.map(varItem => ({
-            ...varItem,
-            options: this.fields ? this.fields.map(field => ({
-                ...field,
-                isSelected: field.value === varItem.field
-            })) : []
+        return this.variables.map(varItem => {
+            const fieldOptions = this.objectFieldMap[varItem.object] || [];
+            const objectOptions = this.availableObjectsWithSelection
+                ? this.availableObjectsWithSelection.map(object => ({
+                    ...object,
+                    isSelected: object.value === varItem.object
+                }))
+                : [];
 
-        }));
+            return {
+                ...varItem,
+                options: fieldOptions.map(field => ({
+                    ...field,
+                    isSelected: field.value === varItem.field
+                })),
+                objectOptions
+            };
+        });
     }
+
 
     get computedHeaderVariables() {
         // Add selection state to fields for each variable
@@ -392,6 +403,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
         }));
     }
+
 
     get availableObjectsWithSelection() {
         // Highlight the selected object
@@ -981,35 +993,97 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         // this.previewHeader= this.formatText(headerBody) ||'';
                         this.selectedContentType = template.MVWB__Header_Type__c || 'None';
                         this.btntext = template.MVWB__Button_Label__c || '';
-                        let tvs = templateVariables.map(tv => {
-                            let temp = {
-                                object: tv.objName,
-                                field: tv.fieldName,
-                                alternateText: tv.alternateText ? tv.alternateText : '',
-                                id: tv.variable.slice(2, 3),
-                                index: tv.variable,
-                                type: tv.type
-                            };
-                            return temp;
-                        })
-                        // this.fields = tvs.map(tv => tv.field);
-                        const tempfieldsBody = tvs.filter(tv => tv.type == 'Body').map(tv => tv.field);
-                        this.variables = tvs.filter(tv => tv.type == 'Body') || [];
-                        this.variables = this.variables.map((variable, index) => ({
-                            ...variable,
-                            field: tempfieldsBody[index] || variable.field // fallback to original field if index is missing
-                        }));
+                        // let tvs = templateVariables.map(tv => {
+                        //     let temp = {
+                        //         object: tv.objName,
+                        //         field: tv.fieldName,
+                        //         alternateText: tv.alternateText ? tv.alternateText : '',
+                        //         id: tv.variable.slice(2, 3),
+                        //         index: tv.variable,
+                        //         type: tv.type
+                        //     };
+                        //     return temp;
+                        // })
+                        // // this.fields = tvs.map(tv => tv.field);
+                        // const tempfieldsBody = tvs.filter(tv => tv.type == 'Body').map(tv => tv.field);
+                        // this.variables = tvs.filter(tv => tv.type == 'Body') || [];
+                        // this.variables = this.variables.map((variable, index) => ({
+                        //     ...variable,
+                        //     field: tempfieldsBody[index] || variable.field // fallback to original field if index is missing
+                        // }));
 
-                        const tempfieldsHead = tvs.filter(tv => tv.type == 'Header').map(tv => tv.field);
-                        this.header_variables = tvs.filter(tv => tv.type == 'Header') || [];
-                        this.header_variables = this.header_variables.map((variable, index) => ({
-                            ...variable,
-                            field: tempfieldsHead[index] || variable.field // fallback to original field if index is missing
-                        }));
-                        this.updatePreviewContent(this.previewHeader, 'header');
-                        this.updatePreviewContent(this.previewBody, 'body');
-                        this.addHeaderVar = this.header_variables?.length > 0 ? true : false;
-                        this.addVar = this.variables?.length > 0 ? true : false;
+                        // const tempfieldsHead = tvs.filter(tv => tv.type == 'Header').map(tv => tv.field);
+                        // this.header_variables = tvs.filter(tv => tv.type == 'Header') || [];
+                        // this.header_variables = this.header_variables.map((variable, index) => ({
+                        //     ...variable,
+                        //     field: tempfieldsHead[index] || variable.field // fallback to original field if index is missing
+                        // }));
+                        // this.updatePreviewContent(this.previewHeader, 'header');
+                        // this.updatePreviewContent(this.previewBody, 'body');
+                        // this.addHeaderVar = this.header_variables?.length > 0 ? true : false;
+                        // this.addVar = this.variables?.length > 0 ? true : false;
+
+                        const tvs = templateVariables.map(tv => ({
+                        object: tv.objName,
+                        field: tv.fieldName,
+                        alternateText: tv.alternateText || '',
+                        id: tv.variable.slice(2, 3),
+                        index: tv.variable,
+                        type: tv.type
+                    }));
+
+                    // Identify all unique objects
+                    const uniqueObjects = [...new Set(tvs.map(tv => tv.object))];
+
+                    // Fetch field maps for all unique objects (if not already cached)
+                    const fieldFetchPromises = uniqueObjects.map(obj => {
+                        return this.objectFieldMap[obj]
+                            ? Promise.resolve()
+                            : this.fetchFields(obj); // this must return a Promise
+                    });
+
+                    Promise.all(fieldFetchPromises)
+                        .then(() => {
+                            // Split variables into body and header groups
+                            const tempfieldsBody = tvs.filter(tv => tv.type === 'Body').map(tv => tv.field);
+                            const tempfieldsHead = tvs.filter(tv => tv.type === 'Header').map(tv => tv.field);
+
+                            // Body variables with individual field options
+                            this.variables = tvs
+                                .filter(tv => tv.type === 'Body')
+                                .map((variable, index) => {
+                                    const objectFields = this.objectFieldMap[variable.object] || [];
+                                    return {
+                                        ...variable,
+                                        field: tempfieldsBody[index] || variable.field,
+                                        options: objectFields
+                                    };
+                                });
+
+                            // Header variables
+                            this.header_variables = tvs
+                                .filter(tv => tv.type === 'Header')
+                                .map((variable, index) => {
+                                    const objectFields = this.objectFieldMap[variable.object] || [];
+                                    return {
+                                        ...variable,
+                                        field: tempfieldsHead[index] || variable.field,
+                                        options: objectFields
+                                    };
+                                });
+
+                            // Toggle flags
+                            this.addHeaderVar = this.header_variables.length > 0;
+                            this.addVar = this.variables.length > 0;
+
+                            // Update preview
+                            this.updatePreviewContent(this.previewHeader, 'header');
+                            this.updatePreviewContent(this.previewBody, 'body');
+                        })
+                        .catch(error => {
+                            console.error('Error while loading field data for editing:', error);
+                        });
+
                         if (this.addHeaderVar) {
                             this.buttonDisabled = true;
                         }
@@ -1144,7 +1218,13 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         try {
             getObjectFields({ objectName: objectName })
                 .then((result) => {
-                    this.fields = result.map((field) => ({ label: field, value: field }));
+                    console.log('result :', result);
+                    
+                    const fields = result.map((field) => ({ label: field, value: field }));
+                    this.fields = fields;
+                    this.objectFieldMap[objectName] = fields;
+                    console.log('Object Fields Map ::: '+this.objectFieldMap);
+                    
                 })
                 .catch((error) => {
                     console.error('Error fetching fields: ', error);
@@ -2161,17 +2241,30 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const maxId = this.variables.reduce((max, variable) => {
                 return Math.max(max, parseInt(variable.id));
             }, 0);
-
+            console.log('Add Variables');
+            
             this.nextIndex = maxId + 1;
-            const defaultField = this.fields[0].value;
+            console.log('Object Field Map ::: ',this.objectFieldMap);
+            
+            // const defaultField = this.fields[0].value;
+            const objectName = Object.keys(this.objectFieldMap)[0] || '';
+            const fields = this.objectFieldMap[objectName] || [];
+            const defaultField = fields[0]?.value || '';
+            console.log('Object Name ::: '+objectName);
+            console.log('Fields ::: '+fields);
+            console.log('Default Field ::: '+defaultField);
+            
+            
 
             const newVariable = {
                 id: this.nextIndex,
-                object: this.selectedObject,
+                object: objectName,
                 field: defaultField,
                 alternateText: '',
                 index: `{{${this.nextIndex}}}`,
+                options: fields // assign dropdown options
             };
+
             this.variables = [...this.variables, newVariable];
 
             this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
@@ -2203,26 +2296,14 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
-    handleObjectChange(event) {
+    handleHeaderObjectChange(event){
         try {
             const selectedObject = event.target.value;
             this.selectedObject = selectedObject;
 
-            // Update all object dropdowns to show the same selected value
-            this.template.querySelectorAll('[data-name="objectPicklist"]').forEach(dropdown => {
-                dropdown.value = selectedObject;
-            });
-
             getObjectFields({ objectName: selectedObject })
                 .then((result) => {
                     this.fields = result.map((field) => ({ label: field, value: field }));
-
-                    // Update variables for both header and body
-                    this.variables = this.variables.map(varItem => ({
-                        ...varItem,
-                        object: selectedObject,
-                        field: this.fields[0].value
-                    }));
 
                     this.header_variables = this.header_variables.map(varItem => ({
                         ...varItem,
@@ -2230,10 +2311,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         field: this.fields[0].value
                     }));
 
-                    this.formatedTempBody = this.formatText(this.tempBody);
-                    this.updateTextarea();
                     this.updatePreviewContent(this.header, 'header');
-                    this.updatePreviewContent(this.formatedTempBody, 'body');
                 })
                 .catch((error) => {
                     console.error('Error fetching fields: ', error);
@@ -2242,6 +2320,50 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             console.error('Something went wrong while updating variable object.', error);
         }
     }
+
+    handleObjectChange(event) {
+        try {
+            const selectedObject = event.target.value;
+            const variableIndex = String(event.target.dataset.index);
+
+            const updateVarFields = (fields) => {
+                this.objectFieldMap[selectedObject] = fields;
+
+                const updatedVariables = this.variables.map(varItem => {
+                    if (String(varItem.index) === variableIndex) {
+                        return {
+                            ...varItem,
+                            object: selectedObject,
+                            field: fields[0].value, // default to first field
+                            options: fields
+                        };
+                    }
+                    return varItem;
+                });
+
+                this.variables = updatedVariables;
+                this.formatedTempBody = this.formatText(this.tempBody);
+                this.updateTextarea();
+                this.updatePreviewContent(this.formatedTempBody, 'body');
+            };
+
+            if (this.objectFieldMap[selectedObject]) {
+                updateVarFields(this.objectFieldMap[selectedObject]);
+            } else {
+                getObjectFields({ objectName: selectedObject })
+                    .then((result) => {
+                        const fields = result.map((field) => ({ label: field, value: field }));
+                        updateVarFields(fields);
+                    })
+                    .catch((error) => {
+                        console.error('Error fetching fields: ', error);
+                    });
+            }
+        } catch (error) {
+            console.error('Something went wrong while updating variable object.', error);
+        }
+    }
+
 
     handleAlternateVarChange(event) {
         const variableIndex = String(event.target.dataset.index);
