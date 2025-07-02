@@ -272,7 +272,7 @@
                                                         <p class="var">{varItem.index}</p>
 
                                                         <select class="slds-select" onchange={handleHeaderObjectChange} style="border:0;">
-                                                            <template for:each={availableObjectsWithSelection} for:item="obj">
+                                                            <template for:each={varItem.objectOptions} for:item="obj">
                                                                 <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">{obj.label}</option>
                                                             </template>
                                                         </select>

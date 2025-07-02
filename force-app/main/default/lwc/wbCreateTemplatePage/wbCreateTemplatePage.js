@@ -394,14 +394,24 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     get computedHeaderVariables() {
         // Add selection state to fields for each variable
-        return this.header_variables.map(varItem => ({
-            ...varItem,
-            options: this.fields ? this.fields.map(field => ({
-                ...field,
-                isSelected: field.value === varItem.field
-            })) : []
+        return this.header_variables.map(varItem => {
+            const objectOptions = this.availableObjectsWithSelection
+                ? this.availableObjectsWithSelection.map(object => ({
+                    ...object,
+                    isSelected: object.value === varItem.object
+                }))
+                : [];
+            
+            return{
+                ...varItem,
+                options: this.fields ? this.fields.map(field => ({
+                    ...field,
+                    isSelected: field.value === varItem.field
+                })) : [],
+                objectOptions
+            }
 
-        }));
+        });
     }
 
 
