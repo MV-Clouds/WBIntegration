@@ -48,32 +48,45 @@ public without sharing class AutomationConfigController {
                 Map<String, Object> chatConfig = (Map<String, Object>) JSON.deserializeUntyped(config.MVWB__ChatWindowConfigInfo__c);
                 validObjectNames.addAll(chatConfig.keySet());
             }
-    
+
             if (validObjectNames.isEmpty()) return new List<Template__c>();
-    
-            // Step 2: Gather valid template IDs from Template Variables
-            Set<Id> templatesWithValidObjects = new Set<Id>();
-            Set<Id> templatesWithAnyVariables = new Set<Id>();
-    
+
+            // Step 2: Query all template variables and group by Template Id
+            Map<Id, List<Template_Variable__c>> templateToVariablesMap = new Map<Id, List<Template_Variable__c>>();
             for (Template_Variable__c tv : [
                 SELECT Template__c, Object_Name__c 
                 FROM Template_Variable__c
             ]) {
-                templatesWithAnyVariables.add(tv.Template__c);
-                if (validObjectNames.contains(tv.Object_Name__c)) {
-                    templatesWithValidObjects.add(tv.Template__c);
+                if (!templateToVariablesMap.containsKey(tv.Template__c)) {
+                    templateToVariablesMap.put(tv.Template__c, new List<Template_Variable__c>());
+                }
+                templateToVariablesMap.get(tv.Template__c).add(tv);
+            }
+
+            // Step 3: Filter valid template IDs
+            Set<Id> validTemplateIds = new Set<Id>();
+
+            for (Id templateId : templateToVariablesMap.keySet()) {
+                List<Template_Variable__c> variables = templateToVariablesMap.get(templateId);
+                
+                Set<String> objectNames = new Set<String>();
+                for (Template_Variable__c var : variables) {
+                    objectNames.add(var.Object_Name__c);
+                }
+
+                if (objectNames.size() == 1 && validObjectNames.contains(objectNames.iterator().next())) {
+                    validTemplateIds.add(templateId);
                 }
             }
-    
-            // Step 3: Return templates with valid variables or no variables, and matching status
+
+            // Step 4: Get templates that either have no variables or are in validTemplateIds
             List<Template__c> finalTemplates = [
-                SELECT Id, Template_Name__c, Template_Type__c, WBButton_Body__c 
-                FROM Template__c 
+                SELECT Id, Template_Name__c, Template_Type__c, WBButton_Body__c
+                FROM Template__c
                 WHERE Status__c = 'Active-Quality Pending'
-                  AND (Id IN :templatesWithValidObjects OR Id NOT IN :templatesWithAnyVariables)
+                AND (Id IN :validTemplateIds OR Id NOT IN :templateToVariablesMap.keySet())
                 WITH SECURITY_ENFORCED
             ];
-    
             return finalTemplates;
     
         } catch (Exception e) {

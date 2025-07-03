@@ -271,8 +271,8 @@
                                                     <div key={varItem.id} class="true-div">
                                                         <p class="var">{varItem.index}</p>
 
-                                                        <select class="slds-select" onchange={handleObjectChange} style="border:0;">
-                                                            <template for:each={availableObjectsWithSelection} for:item="obj">
+                                                        <select class="slds-select" onchange={handleHeaderObjectChange} style="border:0;">
+                                                            <template for:each={varItem.objectOptions} for:item="obj">
                                                                 <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">{obj.label}</option>
                                                             </template>
                                                         </select>
@@ -372,7 +372,7 @@
                                             <p>Body</p>
                                         </div>
 
-                                        <div class="true-div">
+                                        <!-- <div class="true-div">
                                             <p class="var">Select Object for merge fields :</p>
                                           
                                             <select class="object-dropdown dropdown" data-name="objectPicklist"
@@ -383,11 +383,20 @@
                                                     </option>
                                                 </template>
                                             </select>
-                                        </div>
+                                        </div> -->
 
                                         <template for:each={computedVariables} for:item="varItem" for:index="index">
                                             <div key={varItem.id} class="true-div">
                                                 <p class="var">{varItem.index}</p>
+
+                                                <select class="object-dropdown dropdown" style="border:0;" data-id={varItem.id} data-index={varItem.index} onchange={handleObjectChange}>
+                                                    <template for:each={varItem.objectOptions} for:item="objectOptions">
+                                                        <option key={objectOptions.value} class="body-field-option"
+                                                            value={objectOptions.value} selected={objectOptions.isSelected}>
+                                                            {objectOptions.label}
+                                                        </option>
+                                                    </template>
+                                                </select>
 
                                                 <select class="field-dropdown field-body-dd dropdown" style="border:0;"
                                                     data-id={varItem.id} data-index={varItem.index}
