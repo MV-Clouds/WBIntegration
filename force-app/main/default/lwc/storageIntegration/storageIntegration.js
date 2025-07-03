@@ -100,6 +100,10 @@ export default class StorageIntegration extends LightningElement {
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     /** 
     * Method Name: handleNewClick
     * @description: Enables the form for entering a new AWS configuration

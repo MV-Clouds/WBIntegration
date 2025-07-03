@@ -119,6 +119,10 @@ export default class WbAllBroadcastGroupPage extends LightningElement {
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     loadBroadcastGroups() {
         this.isLoading = true;
         getBroadcastGroups()

@@ -166,6 +166,10 @@ export default class WbAllTemplatePage extends LightningElement {
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     disconnectedCallback() {
         this.unregisterPlatformEventListener(); 
     }

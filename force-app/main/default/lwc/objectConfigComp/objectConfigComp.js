@@ -59,6 +59,10 @@ export default class ObjectConfigComp extends LightningElement {
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     // Load previously saved configuration
     loadSavedValues() {
         try {

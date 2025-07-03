@@ -148,6 +148,10 @@ export default class WbAllFlowsPage extends LightningElement {
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     fetchWhatsAppFlows(){
         try {
             getWhatsAppFlows()

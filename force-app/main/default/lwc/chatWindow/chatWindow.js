@@ -131,6 +131,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     renderedCallback(){
         try {
             if(this.scrollBottom){
