@@ -372,7 +372,7 @@ lightning-button.slds-button_brand:hover {
     max-height: 80%;
     scrollbar-width: none;
     background-color: white;
-    padding: 3%;
+    border: 7px solid white;
     border-radius: 5px;
 }
 

@@ -21,7 +21,7 @@
     padding: 24px 30px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    max-width: 400px;
+    max-width: 535px;
     text-align: center;
     font-family: Arial, sans-serif;
     animation: fadeIn 0.5s ease-in-out;
@@ -49,6 +49,7 @@
 }
 
 .cust-bt {
+    background-color: #ffcd00;
     border: none;
     margin-top: 20px;
     margin-bottom: 20px;
@@ -57,9 +58,10 @@
     cursor: pointer;
     display: inline-block;
     font-family: Neucha, sans-serif;
-    font-size: 1rem;
+    font-size: 16px;
+    font-weight: 550;
     line-height: 23px;
-    padding: .25rem;
+    padding: 0.70rem;
     transition: all 235ms ease-in-out;
     touch-action: manipulation;
 }
@@ -71,4 +73,8 @@
 
 .cust-bt:focus {
     box-shadow: rgba(0, 0, 0, .3) 2px 8px 4px -6px;
+}
+
+a{
+    color: black;
 }
