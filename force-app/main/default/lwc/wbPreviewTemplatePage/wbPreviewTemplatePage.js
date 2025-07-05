@@ -435,19 +435,28 @@ export default class WbPreviewTemplatePage extends LightningElement {
     sendTemplatePreview() {
         this.isLoading = true; 
     
-        try {
-          
-            if((this.groupedVariables.length != (this.headerPramsCustomList.length+this.bodyPramsCustomList.length)) && this.noContact){
+        try {let totalMappingsLength = 0;
+
+            if (this.groupedVariables && Array.isArray(this.groupedVariables)) {
+                totalMappingsLength = this.groupedVariables.reduce((total, group) => {
+                    if (Array.isArray(group.mappings)) {
+                        return total + group.mappings.length;
+                    }
+                    return total;
+                }, 0);
+            }
+            
+            if(totalMappingsLength != (this.headerPramsCustomList.length+this.bodyPramsCustomList.length)){
                 this.showToast('Warning', 'Please fill all input fields', 'warning');
+                this.isLoading = false;
                 return;
             }
+
             let phonenum = this.selectedContactId 
                 ? this.contactDetails.Phone 
                 : (this.selectedCountryType && this.phoneNumber) 
                     ? `${this.selectedCountryType}${this.phoneNumber}`
                     : null;
-            
-                   
 
             if (!phonenum || isNaN(Number(phonenum))) {
                 this.showToast('Warning', 'Invalid country code or phone number', 'warning');
