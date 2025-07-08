@@ -173,7 +173,7 @@ global class PostInstallClass implements InstallHandler {
                 // Call the WBConnect validity check
                 DateTime userNextCalloutTime = Date.today().addDays(7);
                 String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
-                String jobName = 'PLMS_Validity_Check_' + System.currentTimeMillis();
+                String jobName = 'PLMS_Validity_Check';
                 System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
 
                 MVWB__EmbeddedSignUpConfig__c embeddedConfig = new MVWB__EmbeddedSignUpConfig__c();

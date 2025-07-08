@@ -394,6 +394,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     get computedHeaderVariables() {
         // Add selection state to fields for each variable
         return this.header_variables.map(varItem => {
+            const fieldOptions = this.objectFieldMap[varItem.object] || [];
             const objectOptions = this.availableObjectsWithSelection
                 ? this.availableObjectsWithSelection.map(object => ({
                     ...object,
@@ -403,10 +404,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
             return{
                 ...varItem,
-                options: this.fields ? this.fields.map(field => ({
+                options: fieldOptions.map(field => ({
                     ...field,
                     isSelected: field.value === varItem.field
-                })) : [],
+                })),
                 objectOptions
             }
 
@@ -766,12 +767,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     connectedCallback() {
         try {
-            // this.isLoading = true;
-            // await this.checkLicenseStatus();
-            // if (this.showLicenseError) {
-            //     return;
-            // }
-
             this.iseditTemplatevisible = true;
             if (this.selectedTab != undefined && this.selectedOption != undefined) {
                 this.handleTabClick(this.selectedTab);
@@ -911,9 +906,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                     this.handleTabClick(this.selectedTab);
                     this.handleRadioChange(this.selectedOption);
-                    setTimeout(() => {
-                        this.handleObjectChange({ target: { value: templateVariables[0].objName } });
-                    }, 700);
+                    
                     setTimeout(() => {
 
                         this.templateName = template.MVWB__Template_Name__c || '';
@@ -955,7 +948,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.isautofillChecked = templateMiscellaneousData.autofillCheck
                             this.isVisitSite = templateMiscellaneousData.isVisitSite
                             this.isCheckboxChecked = templateMiscellaneousData.isCheckboxChecked
-                            // this.flowBooleanCheck = templateMiscellaneousData.flowBooleanCheck
                             this.isFlowMarketing = templateMiscellaneousData.isFlowMarketing
                             this.isFlowUtility = templateMiscellaneousData.isFlowUtility
                             this.isFlowSelected = templateMiscellaneousData.isFlowSelected
@@ -980,9 +972,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.handleChange(event);
                         }
 
-                        // const parser = new DOMParser();
-                        // const doc = parser.parseFromString(template?.WBHeader_Body__c, "text/html");
-                        // this.previewHeader = doc.documentElement.textContent;
                         if (template.MVWB__Header_Type__c == 'Image' || template.MVWB__Header_Type__c == 'Video' || template.MVWB__Header_Type__c == 'Document') {
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(template?.MVWB__WBHeader_Body__c, "text/html");
@@ -998,38 +987,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         }
 
 
-                        // this.previewHeader= this.formatText(headerBody) ||'';
                         this.selectedContentType = template.MVWB__Header_Type__c || 'None';
                         this.btntext = template.MVWB__Button_Label__c || '';
-                        // let tvs = templateVariables.map(tv => {
-                        //     let temp = {
-                        //         object: tv.objName,
-                        //         field: tv.fieldName,
-                        //         alternateText: tv.alternateText ? tv.alternateText : '',
-                        //         id: tv.variable.slice(2, 3),
-                        //         index: tv.variable,
-                        //         type: tv.type
-                        //     };
-                        //     return temp;
-                        // })
-                        // // this.fields = tvs.map(tv => tv.field);
-                        // const tempfieldsBody = tvs.filter(tv => tv.type == 'Body').map(tv => tv.field);
-                        // this.variables = tvs.filter(tv => tv.type == 'Body') || [];
-                        // this.variables = this.variables.map((variable, index) => ({
-                        //     ...variable,
-                        //     field: tempfieldsBody[index] || variable.field // fallback to original field if index is missing
-                        // }));
-
-                        // const tempfieldsHead = tvs.filter(tv => tv.type == 'Header').map(tv => tv.field);
-                        // this.header_variables = tvs.filter(tv => tv.type == 'Header') || [];
-                        // this.header_variables = this.header_variables.map((variable, index) => ({
-                        //     ...variable,
-                        //     field: tempfieldsHead[index] || variable.field // fallback to original field if index is missing
-                        // }));
-                        // this.updatePreviewContent(this.previewHeader, 'header');
-                        // this.updatePreviewContent(this.previewBody, 'body');
-                        // this.addHeaderVar = this.header_variables?.length > 0 ? true : false;
-                        // this.addVar = this.variables?.length > 0 ? true : false;
 
                         const tvs = templateVariables.map(tv => ({
                                 object: tv.objName,
@@ -1055,7 +1014,11 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                                 // Split variables into body and header groups
                                 const tempfieldsBody = tvs.filter(tv => tv.type === 'Body').map(tv => tv.field);
                                 const tempfieldsHead = tvs.filter(tv => tv.type === 'Header').map(tv => tv.field);
-
+                                // const tempHeadObj = tvs.filter(tv => tv.type === 'Header');
+                                // console.log('tempHeadObj', tempHeadObj);
+                                
+                                
+                                // this.handleHeaderObjectChange({ target: { value: tempHeadObj[0].object } });
                                 // Body variables with individual field options
                                 this.variables = tvs
                                     .filter(tv => tv.type === 'Body')
@@ -1196,15 +1159,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     fetchFlowPreviewId(){
         try {
-            console.log(this.isFlowSelected);
-            console.log(this.selectedFlow);
-            
-            
             if(this.isFlowSelected && this.selectedFlow && this.selectedFlow.id){
                 let selectedId = this.selectedFlow.id;
                 getPreviewURLofWhatsAppFlow({ flowId: selectedId })
                     .then((data) => {
-                        console.log({data});
                         
                         if (data !== 'failed') {
                             this.iframeSrc = data;
@@ -1226,12 +1184,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         try {
             getObjectFields({ objectName: objectName })
                 .then((result) => {
-                    console.log('result :', result);
-
                     const fields = result.map((field) => ({ label: field, value: field }));
                     this.fields = fields;
                     this.objectFieldMap[objectName] = fields;
-                    console.log('Object Fields Map ::: '+this.objectFieldMap);
                 })
                 .catch((error) => {
                     console.error('Error fetching fields: ', error);
@@ -2249,18 +2204,12 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 return Math.max(max, parseInt(variable.id));
             }, 0);
 
-            console.log('Add Variables');
-
             this.nextIndex = maxId + 1;
-            console.log('Object Field Map ::: ',this.objectFieldMap);
 
             // const defaultField = this.fields[0].value;
             const objectName = Object.keys(this.objectFieldMap)[0] || '';
             const fields = this.objectFieldMap[objectName] || [];
             const defaultField = fields[0]?.value || '';
-            console.log('Object Name ::: '+objectName);
-            console.log('Fields ::: '+fields);
-            console.log('Default Field ::: '+defaultField);
 
             const newVariable = {
                 id: this.nextIndex,
@@ -2321,15 +2270,15 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     console.error('Error fetching fields: ', error);
                 });
         } catch (error) {
-            console.error('Something went wrong while updating variable object.', error);
+            console.error('Something went wrong while updating header variable object.', error);
         }
     }
 
     handleObjectChange(event) {
         try {
-            const selectedObject = event.target.value;
-            const variableIndex = String(event.target.dataset.index);
-
+            const selectedObject = event?.target?.value;
+            const variableIndex = String(event.target?.dataset?.index);
+            
             const updateVarFields = (fields) => {
                 this.objectFieldMap[selectedObject] = fields;
 
@@ -2364,7 +2313,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 });
             }
         } catch (error) {
-            console.error('Something went wrong while updating variable object.', error);
+            console.error('Something went wrong while updating body variable object.', error);
         }
     }
 
@@ -2980,6 +2929,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
             const serializedWrapper = JSON.stringify(template);
             const payload = JSON.stringify(buildPayload(template));
+            
             if (this.metaTemplateId) {
                 editWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateId: this.metaTemplateId })
                     .then(result => {

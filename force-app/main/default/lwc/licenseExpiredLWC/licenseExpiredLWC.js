@@ -1,46 +1,37 @@
 import { LightningElement, track } from 'lwc';
-import getPLMSValidity from '@salesforce/apex/PLMSController.getPLMSValidity';
-import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
-import getExpirationDate from '@salesforce/apex/PLMSController.getExpirationDate';
+import getPLMSValidityCustom from '@salesforce/apex/PLMSController.getPLMSValidityCustom';
 
 export default class LicenseExpiredLWC extends LightningElement {
     @track isChecking = false;
     @track isOneTimeCheck = false;
-    @track isPackageExpired = true; 
+    @track errorMessage = false;
     @track expireddate;
 
     checkPackageValidity(){
         this.isChecking = true;
 
-        getPLMSValidity({doSchedule : false})
-            .then( async () => {
-                this.isPackageExpired = !(await checkLicenseUsablility()); // Invert the value to show message when expired
-                console.log('Package Expiration Status:', this.isPackageExpired);
+        getPLMSValidityCustom()
+            .then( result => {
+                if(result && result.message == 'Success' && result.isLicenseValid == true) {
+                    this.expireddate = result.expirationDate;
+                    this.dispatchEvent(new CustomEvent('packageupdate', { detail: { isPackageValid: false } })); // Keep false to indicate the package is valid
+                } else if (result && result.message == 'Success' && !result.isLicenseValid) {
+                    this.isOneTimeCheck = true;
+                    this.expireddate = result.expirationDate;
+                    this.dispatchEvent(new CustomEvent('packageupdate', { detail: { isPackageValid: true } })); // Keep true to indicate the package is expired
+                } else if(result && result.message == 'Error') {
+                    this.errorMessage = true;
+                    this.dispatchEvent(new CustomEvent('packageupdate', { detail: { isPackageValid: true } })); // Keep true to indicate the package is expired
+                } else {
+                    this.errorMessage = true;
+                    this.dispatchEvent(new CustomEvent('packageupdate', { detail: { isPackageValid: true } })); // Keep true to indicate the package is expired
+                }
             })
             .catch(error => {
                 console.error('Error checking package validity:', error);
-                this.isPackageExpired = true;
             })
             .finally( async () => {
                 this.isChecking = false;
-                console.log('in final');
-                
-                if(this.isPackageExpired) {
-                    this.isOneTimeCheck = true;
-                    await getExpirationDate()
-                        .then(result => {
-                            console.log('Expiration Date:', result);
-                            
-                            this.expireddate = result;
-                        })
-                        .catch(error => {
-                            console.error('Error fetching expiration date:', error);
-                            return null; // Handle error gracefully
-                        });
-                }
-                if(!(this.isPackageExpired)){
-                    this.dispatchEvent(new CustomEvent('packageupdate', { detail: { isPackageValid: this.isPackageExpired } }));
-                }
             });
     }
 }

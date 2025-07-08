@@ -682,7 +682,6 @@ export default class ObjectConfigComp extends LightningElement {
 
     saveWebhookConfigCall(){
         this.isLoading = true;
-        console.log(this.jsonData);
         
         saveUserConfig({ jsonData : this.jsonData })
             .then(response => {

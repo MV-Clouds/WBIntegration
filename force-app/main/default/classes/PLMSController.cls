@@ -1,21 +1,27 @@
 global without sharing class PLMSController {
     
-    global static void getPLMSValidity(){}
+    global static void getPLMSValidity(Boolean doSchedule) {}
 
-    @AuraEnabled
-    global static void getPLMSValidity(Boolean doSchedule) {
+    global static void getPLMSValidity(){
+        getPLMSValidityFutureCall();
+    }
+    
+    @Future(callout=true)
+    global static void getPLMSValidityFutureCall() {
         List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Is_License_Valid__c, MVWB__Expiration_Date__c, MVWB__Next_Callout_Date__c FROM MVWB__LicenseConfig__c LIMIT 1];
         MVWB__LicenseConfig__c config = new MVWB__LicenseConfig__c();
         if(configList != null && configList.size() > 0){
             config = configList[0];
         } else {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidity', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'No License Config Found', 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidityFutureCall', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'No License Config Found', 'apiResponse' => null});
             return;
         }
         try {
             String currentOrgId = UserInfo.getOrganizationId();
             String productName = 'WBConnect';
             String endpoint = 'https://mvcloudsprivatelimited.my.salesforce-sites.com/services/apexrest/product-subscriber?orgId=' + currentOrgId + '&productName=' + productName;
+            // Sandbox Endpint - https://mvcloudsprivatelimited--plms.sandbox.my.salesforce-sites.com
+            // Production Endpoint - https://mvcloudsprivatelimited.my.salesforce-sites.com
 
             HttpRequest req = new HttpRequest();
             req.setEndpoint(endpoint);
@@ -57,24 +63,22 @@ global without sharing class PLMSController {
                         Date nextCalloutDate = userNextCalloutTime.date();
                         config.MVWB__Next_Callout_Date__c = nextCalloutDate;
                         
-                        if(doSchedule) {
-                            String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
-                            String jobName = 'PLMS_Validity_Check_' + System.currentTimeMillis();
-                            System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
-                        }
+                        String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
+                        String jobName = 'PLMS_Validity_Check';
+                        System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
                     }
                     
                     upsert config;
                 } else {
-                    setNextSchedule();
+                    sendEmail(null, true);
                 }
             } else {
-                ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidity', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => res.getStatusCode(), 'chatId' => null, 'moreDetails' => 'Unable to authorize to Production Org', 'apiResponse' => res.getBody()});
-                setNextSchedule();
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidityFutureCall', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => res.getStatusCode(), 'chatId' => null, 'moreDetails' => 'Unable to authorize to Production Org', 'apiResponse' => res.getBody()});
+                sendEmail(null, true);
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidity', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-            setNextSchedule();
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidityFutureCall', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            sendEmail(null, true);
         }
     }
     
@@ -92,45 +96,6 @@ global without sharing class PLMSController {
             return false;
         }
     }
-
-    @AuraEnabled
-    public static string getExpirationDate(){
-        try {
-            List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Expiration_Date__c FROM MVWB__LicenseConfig__c LIMIT 1];
-            if(configList != null && configList.size() > 0 && configList[0].MVWB__Expiration_Date__c != null){
-                return String.valueOf(configList[0].MVWB__Expiration_Date__c);
-            } else {
-                return 'No Expiration Date Found';
-            }
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getExpirationDate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-            throw new AuraHandledException(e.getMessage());
-        }
-    }
-
-    
-    public static void setNextSchedule(){
-        try {
-            List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Is_License_Valid__c, MVWB__Expiration_Date__c, MVWB__Next_Callout_Date__c FROM MVWB__LicenseConfig__c LIMIT 1];
-            MVWB__LicenseConfig__c config = new MVWB__LicenseConfig__c();
-            if(configList != null && configList.size() > 0){
-                config = configList[0];
-                config.MVWB__Is_License_Valid__c = true;
-                config.MVWB__Expiration_Date__c = Date.today().addDays(1);
-                config.MVWB__Next_Callout_Date__c = Date.today().addDays(1);
-                upsert config;
-                
-                DateTime userNextCalloutTime = Date.today().addDays(1);
-                String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
-                String jobName = 'PLMS_Validity_Check_' + System.currentTimeMillis();
-                System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
-                
-                sendEmail(null, true);
-            }
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'setNextSchedule', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-        }
-    }
     
     public static void sendEmail(DateTime expirationDate, Boolean isException){
         try {
@@ -144,6 +109,94 @@ global without sharing class PLMSController {
             Messaging.sendEmail(new Messaging.SingleEmailMessage[] { email });
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'sendEmail', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+        }
+    }
+
+    @AuraEnabled
+    public static Map<String, Object> getPLMSValidityCustom(){
+        List<MVWB__LicenseConfig__c> configList = [SELECT Id, MVWB__Is_License_Valid__c, MVWB__Expiration_Date__c, MVWB__Next_Callout_Date__c FROM MVWB__LicenseConfig__c LIMIT 1];
+        MVWB__LicenseConfig__c config = new MVWB__LicenseConfig__c();
+        if(configList != null && configList.size() > 0){
+            config = configList[0];
+        } else {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidityCustom', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'No License Config Found', 'apiResponse' => null});
+            
+            return new Map<String, Object>{'expirationDate' => null,'isLicenseValid' => false,'message' => 'Error'};
+        }
+        try {
+            String currentOrgId = UserInfo.getOrganizationId();
+            System.debug('Current Org Id: ' + currentOrgId);
+            String productName = 'WBConnect';
+            String endpoint = 'https://mvcloudsprivatelimited.my.salesforce-sites.com/services/apexrest/product-subscriber?orgId=' + currentOrgId + '&productName=' + productName;
+
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(endpoint);
+            req.setMethod('GET');
+            req.setHeader('Content-Type', 'application/json');
+             
+            Http http = new Http();
+            HttpResponse res = http.send(req);
+            System.debug('Response  ' + res.getBody());
+
+            if (res.getBody() == 'No records found for the given OrgId'){
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidityCustom', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'No License Config Found', 'apiResponse' => null});
+            
+                return new Map<String, Object>{'expirationDate' => null,'isLicenseValid' => false,'message' => 'Unexpected Error Occurred, Please contact package support.'};
+            }
+            
+            Map<String, Object> authResponse = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            System.debug(authResponse);
+            
+            if (res.getStatusCode() == 200 && authResponse !=  null) {
+                String expirationStr = (String) authResponse.get('Expiration_DateTime__c');
+                
+                if(expirationStr != null && expirationStr != ''){
+                    // Remove timezone offset (e.g., +0000)
+                    if (expirationStr.contains('+')) {
+                        expirationStr = expirationStr.substringBefore('+');
+                    }
+                    
+                    // Remove milliseconds and replace 'T' with space
+                    expirationStr = expirationStr.replace('T', ' ');
+                    if (expirationStr.contains('.')) {
+                        expirationStr = expirationStr.substringBefore('.');
+                    }
+                    
+                    DateTime userExpirationDateTime = DateTime.valueOf(expirationStr);
+                    Date expirationDate = userExpirationDateTime.date();
+                    config.MVWB__Expiration_Date__c = expirationDate;
+                    
+                    if(expirationDate < Date.today()){
+                        config.MVWB__Is_License_Valid__c = false;
+                    } else if(expirationDate == Date.today()){
+                        config.MVWB__Is_License_Valid__c = true;
+                    } else {
+                        config.MVWB__Is_License_Valid__c = true;
+                        DateTime userNextCalloutTime = (userExpirationDateTime.date() <= Date.today().addMonths(1)) ? userExpirationDateTime.date() : Date.today().addMonths(1);
+                        Date nextCalloutDate = userNextCalloutTime.date();
+                        config.MVWB__Next_Callout_Date__c = nextCalloutDate;
+                        String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
+                        String jobName = 'PLMS_Validity_Check';
+                        System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
+                    }
+                    
+                    upsert config;
+                } else {
+                    sendEmail(null, true);
+                }
+
+                return new Map<String, Object>{'expirationDate' => expirationStr,'isLicenseValid' => config.MVWB__Is_License_Valid__c,'message' => 'Success'};
+            } else {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidityCustom', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => res.getStatusCode(), 'chatId' => null, 'moreDetails' => 'Unable to authorize to Production Org', 'apiResponse' => res.getBody()});
+                sendEmail(null, true);
+
+                return new Map<String, Object>{'expirationDate' => null,'isLicenseValid' => false,'message' => 'Error'};
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidityCustom', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            sendEmail(null, true);
+
+            return new Map<String, Object>{'expirationDate' => null,'isLicenseValid' => false,'message' => 'Error'};
         }
     }
 }

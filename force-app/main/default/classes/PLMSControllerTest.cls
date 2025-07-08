@@ -29,7 +29,24 @@ public class PLMSControllerTest {
 
         // Step 3: Call the method inside a test context
         Test.startTest();
-        PLMSController.getPLMSValidity(true);
+        PLMSController.getPLMSValidity();
+        Test.stopTest();
+    }
+
+    @isTest
+    static void test_getPLMSValidityCustom() {
+        // Step 1: Insert dummy License Configuration
+        MVWB__LicenseConfig__c config = new MVWB__LicenseConfig__c(
+            MVWB__Is_License_Valid__c = false
+        );
+        insert config;
+
+        // Step 2: Set mock callout
+        Test.setMock(HttpCalloutMock.class, new MockPLMSResponse());
+
+        // Step 3: Call the method inside a test context
+        Test.startTest();
+        PLMSController.getPLMSValidityCustom();
         Test.stopTest();
     }
 
@@ -70,30 +87,11 @@ public class PLMSControllerTest {
         
         Test.stopTest();
     }
-
-    @IsTest
-    static void testGetExpirationDate() {
-        MVWB__LicenseConfig__c config = new MVWB__LicenseConfig__c();
-        config.Is_License_Valid__c = false;
-        config.Expiration_Date__c = Date.today().addDays(10);
-        insert config;
-
-        Test.startTest();
-        PLMSController.getExpirationDate();
-        Test.stopTest();
-    }
-
-    @IsTest
-    static void testGetExpirationDateNull() {
-        Test.startTest();
-        PLMSController.getExpirationDate();
-        Test.stopTest();
-    }
     
     @IsTest
     static void test_getPLMSValidity() {
         Test.startTest();
-        PLMSController.getPLMSValidity();
+        PLMSController.getPLMSValidity(false);
         Test.stopTest();
     }
 }

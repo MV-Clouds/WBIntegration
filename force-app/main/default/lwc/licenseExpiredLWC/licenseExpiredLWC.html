@@ -19,6 +19,12 @@
                     package is expired on {expireddate}. Please contact support for renew it.
                 </div>
             </template>
+
+            <template if:true={errorMessage}>
+                <div class="error-message">
+                    Unexpected error occurred. Please contact WBConnect supprt.
+                </div>
+            </template>
         </div>
     </div>
 </template>

@@ -428,7 +428,8 @@ export default class WbAllTemplatePage extends LightningElement {
                             ...record,
                             serialNumber: index + 1
                         }));   
-                        this.filteredRecords = [...this.allRecords];                    
+                        this.filteredRecords = [...this.allRecords];  
+                        this.fetchAllTemplate(true);                  
                         this.isLoading=false;
                     }else{
                         this.showToastError('Error in deleting template');

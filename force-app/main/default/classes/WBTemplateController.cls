@@ -732,7 +732,7 @@ public with sharing class WBTemplateController {
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'editWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
             }
         } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'editWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             // response.put('status', 'error');
             // response.put('message', e.getMessage());
             if (e instanceof CalloutException && e.getMessage().containsIgnoreCase('Read timed out')) {
