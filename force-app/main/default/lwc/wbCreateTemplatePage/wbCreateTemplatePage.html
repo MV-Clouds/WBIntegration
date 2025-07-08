@@ -371,23 +371,20 @@
                                         <div class="body-label">
                                             <p>Body</p>
                                         </div>
-
-                                        <!-- <div class="true-div">
-                                            <p class="var">Select Object for merge fields :</p>
-                                          
-                                            <select class="object-dropdown dropdown" data-name="objectPicklist"
-                                                onchange={handleObjectChange} value={selectedObject} style="border:0;">
-                                                <template for:each={availableObjectsWithSelection} for:item="obj">
-                                                    <option key={obj.value} value={obj.value} selected={obj.isSelected} class="body-field-option">
-                                                        {obj.label}
-                                                    </option>
-                                                </template>
-                                            </select>
-                                        </div> -->
-
                                         <template for:each={computedVariables} for:item="varItem" for:index="index">
                                             <div key={varItem.id} class="true-div">
                                                 <p class="var">{varItem.index}</p>
+                                                
+                                                <select class="object-dropdown dropdown" style="border:0;"
+                                                    data-id={varItem.id} data-index={varItem.index}
+                                                    onchange={handleObjectChange}>
+                                                    <template for:each={varItem.objectOptions} for:item="objectOptions">
+                                                        <option key={objectOptions.value} class="body-field-option"
+                                                            value={objectOptions.value} selected={objectOptions.isSelected}>
+                                                            {objectOptions.label}
+                                                        </option>
+                                                    </template>
+                                                </select>
 
                                                 <select class="object-dropdown dropdown" style="border:0;" data-id={varItem.id} data-index={varItem.index} onchange={handleObjectChange}>
                                                     <template for:each={varItem.objectOptions} for:item="objectOptions">

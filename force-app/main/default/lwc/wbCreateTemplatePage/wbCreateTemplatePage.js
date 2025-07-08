@@ -391,6 +391,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         });
     }
 
+
     get computedHeaderVariables() {
         // Add selection state to fields for each variable
         return this.header_variables.map(varItem => {
@@ -413,6 +414,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
         });
     }
+
 
     get availableObjectsWithSelection() {
         // Highlight the selected object
@@ -1054,7 +1056,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             .catch(error => {
                                 console.error('Error while loading field data for editing:', error);
                             });
-                        
                         if (this.addHeaderVar) {
                             this.buttonDisabled = true;
                         }
@@ -2203,9 +2204,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const maxId = this.variables.reduce((max, variable) => {
                 return Math.max(max, parseInt(variable.id));
             }, 0);
-
+            console.log('Add Variables');
+            
             this.nextIndex = maxId + 1;
-
             // const defaultField = this.fields[0].value;
             const objectName = Object.keys(this.objectFieldMap)[0] || '';
             const fields = this.objectFieldMap[objectName] || [];
@@ -2217,7 +2218,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 field: defaultField,
                 alternateText: '',
                 index: `{{${this.nextIndex}}}`,
+                options: fields // assign dropdown options
             };
+
             this.variables = [...this.variables, newVariable];
 
             this.tempBody = `${this.tempBody} {{${this.nextIndex}}} `;
@@ -2316,6 +2319,50 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             console.error('Something went wrong while updating body variable object.', error);
         }
     }
+
+    handleObjectChange(event) {
+        try {
+            const selectedObject = event.target.value;
+            const variableIndex = String(event.target.dataset.index);
+
+            const updateVarFields = (fields) => {
+                this.objectFieldMap[selectedObject] = fields;
+
+                const updatedVariables = this.variables.map(varItem => {
+                    if (String(varItem.index) === variableIndex) {
+                        return {
+                            ...varItem,
+                            object: selectedObject,
+                            field: fields[0].value, // default to first field
+                            options: fields
+                        };
+                    }
+                    return varItem;
+                });
+
+                this.variables = updatedVariables;
+                this.formatedTempBody = this.formatText(this.tempBody);
+                this.updateTextarea();
+                this.updatePreviewContent(this.formatedTempBody, 'body');
+            };
+
+            if (this.objectFieldMap[selectedObject]) {
+                updateVarFields(this.objectFieldMap[selectedObject]);
+            } else {
+                getObjectFields({ objectName: selectedObject })
+                    .then((result) => {
+                        const fields = result.map((field) => ({ label: field, value: field }));
+                        updateVarFields(fields);
+                    })
+                    .catch((error) => {
+                        console.error('Error fetching fields: ', error);
+                    });
+            }
+        } catch (error) {
+            console.error('Something went wrong while updating variable object.', error);
+        }
+    }
+
 
     handleAlternateVarChange(event) {
         const variableIndex = String(event.target.dataset.index);
