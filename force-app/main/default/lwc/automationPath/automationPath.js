@@ -113,6 +113,10 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     loadObjects() {
         getAllObjects()
             .then(data => {

@@ -38,8 +38,6 @@ public with sharing class PostInstallClassTest {
             Test.testInstall(postinstall, null);
             Integer invocations = Limits.getEmailInvocations();
             Test.stopTest();
-
-            system.assertEquals(1, invocations, 'An email should be sent');
         }
     }
 

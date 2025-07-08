@@ -78,14 +78,29 @@ public with sharing class ChatWindowController {
             //templates = [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' WITH SECURITY_ENFORCED ORDER BY LastModifiedDate desc];
             // Step 1: Get template IDs with matching child variables
             Set<Id> matchingTemplateIds = new Set<Id>();
-            for (Template_Variable__c tv : [SELECT Template__c FROM Template_Variable__c WHERE Object_Name__c = :objectApiName]) {
-                matchingTemplateIds.add(tv.Template__c);
+            Map<Id, Set<String>> templateIdToObjectNames = new Map<Id, Set<String>>();
+            for (Template_Variable__c tv : [
+                SELECT Template__c, Object_Name__c
+                FROM Template_Variable__c
+                WHERE Template__r.Status__c = 'Active-Quality Pending'
+            ]) {
+                if (!templateIdToObjectNames.containsKey(tv.Template__c)) {
+                    templateIdToObjectNames.put(tv.Template__c, new Set<String>());
+                }
+                templateIdToObjectNames.get(tv.Template__c).add(tv.Object_Name__c);
+            }
+
+            for (Id templateId : templateIdToObjectNames.keySet()) {
+                Set<String> objectNames = templateIdToObjectNames.get(templateId);
+                if (objectNames.size() == 1 && objectNames.contains(objectApiName)) {
+                    matchingTemplateIds.add(templateId);
+                }
             }
 
             // Step 2: Fetch templates with matching child variables
             if (!matchingTemplateIds.isEmpty()) {
                 templates.addAll(
-                    [SELECT Id, Template_Name__c FROM Template__c WHERE Status__c = 'Active-Quality Pending' AND Id IN :matchingTemplateIds WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC
+                    [SELECT Id, Template_Name__c FROM Template__c WHERE Id IN :matchingTemplateIds WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC
                 ]);
             }
 

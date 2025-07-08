@@ -1,13 +1,6 @@
 <template>
     <template if:true={showLicenseError}>
-        <div class="license-error">
-            <div class="popup-container">
-                <div class="popup-content">
-                    <h2>⚠️ License Expired</h2>
-                    <p>WBConnect license has expired. Please renew to continue using.</p>
-                </div>
-            </div>
-        </div>
+        <c-license-expired-l-w-c onpackageupdate={handlePackageUpdate}></c-license-expired-l-w-c>
     </template>
     
     <template if:false={showLicenseError}>

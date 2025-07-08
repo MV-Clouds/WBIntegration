@@ -59,6 +59,10 @@ export default class ObjectConfigComp extends LightningElement {
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     // Load previously saved configuration
     loadSavedValues() {
         try {
@@ -678,7 +682,6 @@ export default class ObjectConfigComp extends LightningElement {
 
     saveWebhookConfigCall(){
         this.isLoading = true;
-        console.log(this.jsonData);
         
         saveUserConfig({ jsonData : this.jsonData })
             .then(response => {

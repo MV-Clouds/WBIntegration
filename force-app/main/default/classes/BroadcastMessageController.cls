@@ -176,7 +176,18 @@ public with sharing class BroadcastMessageController {
     
                 // If the template has associated object names, use the first one; otherwise, categorize it as 'Generic'
                 if (!template.WB_Template_Variables__r.isEmpty()) {
-                    objectName = template.WB_Template_Variables__r[0].Object_Name__c;
+                    // Collect all object names in a Set
+                    Set<String> objectNames = new Set<String>();
+                    for (Template_Variable__c var : template.WB_Template_Variables__r) {
+                        objectNames.add(var.Object_Name__c);
+                    }
+
+                    // If all variables have same object name, use it
+                    if (objectNames.size() == 1) {
+                        objectName = objectNames.iterator().next();
+                    } else {
+                        continue; // Skip templates with mixed object names
+                    }
                 } else {
                     objectName = 'Generic'; // Templates without variables are categorized as 'Generic'
                 }

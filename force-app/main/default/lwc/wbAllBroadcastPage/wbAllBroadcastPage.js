@@ -167,6 +167,10 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     disconnectedCallback(){
         this.unsubscribeFromPlatformEvent();
     }

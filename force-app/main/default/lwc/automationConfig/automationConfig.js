@@ -130,6 +130,10 @@ export default class AutomationConfig extends NavigationMixin(LightningElement) 
         }
     }
 
+    handlePackageUpdate(event){
+        this.showLicenseError = event.detail.isPackageValid;
+    }
+
     updateShownData() {
         try {
             const startIndex = (this.currentPage - 1) * this.pageSize;
