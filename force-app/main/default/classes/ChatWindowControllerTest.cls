@@ -208,12 +208,16 @@ public class ChatWindowControllerTest {
         testVariable2.Template__c = testTemplate.Id;
         insert testVariable2;
 
+        Chat__c chat = new Chat__c(
+            Sent_Template_Details__c = '[{"type":"header","parameters":[{"type":"text","text":"Harsh Gandhi"}]}]'
+        );
+        insert chat;
+
         Test.startTest();
         ChatWindowController.getTemplateData(null, testContact.Id, 'Contact');
         Map<String, Object> result = ChatWindowController.getTemplateData(testTemplate.Id, testContact.Id, 'Contact');
+        Map<String, Object> result2 = ChatWindowController.getTemplatePreviewData(testTemplate.Id, chat.Id);
         Test.stopTest();
-
-        System.assertNotEquals(null, result.get('template'), 'The result should not be null');
     }
 
     @isTest

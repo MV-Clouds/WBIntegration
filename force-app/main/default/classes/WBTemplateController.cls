@@ -526,13 +526,15 @@ public with sharing class WBTemplateController {
                         fetchAllTemplatesEvent.MVWB__Fetch_All_Templates__c = true;
                         EventBus.publish(fetchAllTemplatesEvent);
                     } else {
-                        
+                        ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'checkTemplateExistance','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Template Id not found in checkTemplateExistance for template ' + templateName,'apiResponse' => null});
                     }
                 }
             } else {
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'checkTemplateExistance','exceptionObj' => null,'isApiException' => true,'statusCode' => null,'chatId' => null,'moreDetails' => res.getBody(),'apiResponse' => res.getStatusCode()});
                 System.debug('API Call failed: ' + res.getStatusCode() + ' - ' + res.getBody());
             }
         } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'checkTemplateExistance','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             System.debug('Exception occurred while checking template existence: ' + e.getMessage());
         }
     }

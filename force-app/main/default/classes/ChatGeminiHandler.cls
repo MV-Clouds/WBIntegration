@@ -192,6 +192,21 @@ public with sharing class ChatGeminiHandler{
                 ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'ChatGeminiHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chat.Id, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
 
+            // Step 1: Deserialize full JSON
+            Map<String, Object> jsonMap = (Map<String, Object>) JSON.deserializeUntyped(jsonData);
+            // Step 2: Check and get 'template' node
+            if (jsonMap.containsKey('template')) {
+                Map<String, Object> templateMap = (Map<String, Object>) jsonMap.get('template');
+                // Step 3: Check and get 'components' node
+                if (templateMap != null && templateMap.containsKey('components')) {
+                    List<Object> componentsList = (List<Object>) templateMap.get('components');
+                    // Step 4: Serialize components back to string
+                    String componentsJsonString = JSON.serialize(componentsList);
+                    // Step 5: Store in Text Area field (example)
+                    chat.Sent_Template_Details__c = componentsJsonString;
+                }
+            }
+
             update chat;
 
         } else{

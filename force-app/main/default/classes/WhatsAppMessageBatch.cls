@@ -401,6 +401,7 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             httpReq.setHeader('Content-Type', 'application/json');
             httpReq.setHeader('Authorization', 'Bearer ' + accessToken);
             httpReq.setBody(jsonBody);
+            System.debug('WhatsApp API Request Body: ' + jsonBody);
             Http http = new Http();
             HttpResponse response = http.send(httpReq);
             Integer statusCode = response.getStatusCode();
@@ -415,6 +416,21 @@ global with sharing class WhatsAppMessageBatch implements Database.Batchable<SOb
             }else{
                 chat[0].Message_Status__c = 'Failed';
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppMessageBatch', 'methodName' => 'sendWhatsAppMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
+            }
+
+            // Step 1: Deserialize full JSON
+            Map<String, Object> jsonMap = (Map<String, Object>) JSON.deserializeUntyped(jsonBody);
+            // Step 2: Check and get 'template' node
+            if (jsonMap.containsKey('template')) {
+                Map<String, Object> templateMap = (Map<String, Object>) jsonMap.get('template');
+                // Step 3: Check and get 'components' node
+                if (templateMap != null && templateMap.containsKey('components')) {
+                    List<Object> componentsList = (List<Object>) templateMap.get('components');
+                    // Step 4: Serialize components back to string
+                    String componentsJsonString = JSON.serialize(componentsList);
+                    // Step 5: Store in Text Area field (example)
+                    chat[0].Sent_Template_Details__c = componentsJsonString;
+                }
             }
             return chat;
         } catch (Exception e) {

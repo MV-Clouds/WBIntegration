@@ -227,6 +227,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     @api activeTab;
     @api selectedTab;
     @api selectedOption;
+    @track addVar = false;
 
     // ============================
     // OPTIONS PROVIDERS (Dropdown values)
@@ -2204,7 +2205,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const maxId = this.variables.reduce((max, variable) => {
                 return Math.max(max, parseInt(variable.id));
             }, 0);
-            console.log('Add Variables');
             
             this.nextIndex = maxId + 1;
             // const defaultField = this.fields[0].value;
@@ -2260,11 +2260,13 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             getObjectFields({ objectName: selectedObject })
                 .then((result) => {
                     this.fields = result.map((field) => ({ label: field, value: field }));
+                    this.objectFieldMap[selectedObject] = this.fields;
 
                     this.header_variables = this.header_variables.map(varItem => ({
                         ...varItem,
                         object: selectedObject,
-                        field: this.fields[0].value
+                        field: this.fields[0].value,
+                        options: this.fields
                     }));
 
                     this.updatePreviewContent(this.header, 'header');

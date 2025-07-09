@@ -296,6 +296,21 @@ public with sharing class ChatWindowController {
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
 
+            // Step 1: Deserialize full JSON
+            Map<String, Object> jsonMap = (Map<String, Object>) JSON.deserializeUntyped(jsonData);
+            // Step 2: Check and get 'template' node
+            if (jsonMap.containsKey('template')) {
+                Map<String, Object> templateMap = (Map<String, Object>) jsonMap.get('template');
+                // Step 3: Check and get 'components' node
+                if (templateMap != null && templateMap.containsKey('components')) {
+                    List<Object> componentsList = (List<Object>) templateMap.get('components');
+                    // Step 4: Serialize components back to string
+                    String componentsJsonString = JSON.serialize(componentsList);
+                    // Step 5: Store in Text Area field (example)
+                    chat.Sent_Template_Details__c = componentsJsonString;
+                }
+            }
+
             update as user chat;
             chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id WITH SECURITY_ENFORCED];
             resultMap.put('chat', chat);
@@ -521,6 +536,44 @@ public with sharing class ChatWindowController {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'createChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
             return null;
         }
+    }
+
+    @AuraEnabled
+    public static Map<String, object> getTemplatePreviewData(String templateId, String chatId){
+        try {
+            Map<String, Object> templateData = new Map<String, Object>();
+
+            List<Chat__c> chatRecs = [SELECT Sent_Template_Details__c FROM Chat__c WHERE Id = :chatId WITH SECURITY_ENFORCED];
+            if(chatRecs.size() > 0){
+                String templateMergeDetails = chatRecs[0].Sent_Template_Details__c;
+                if(String.isNotBlank(templateMergeDetails)){
+                    templateData.put('templateMergeDetails', chatRecs[0]);
+                }
+            }
+
+            List<Template__c> templates = [SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED];
+
+            if(templates.size() > 0){
+                Template__c template = templates[0];
+                if (template.Header_Type__c == 'Image') {
+                    templateData.put('isImageUrl', true);
+                }
+                else if (template.Header_Type__c == 'Video') {
+                    templateData.put('isImageUrl', true);
+                }
+                else if (template.Header_Type__c == 'Document') {
+                    templateData.put('isImageUrl', true);
+                }
+
+                templateData.put('template', templates[0]);
+                return templateData;
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getTemplateData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' =>  e.getMessage(), 'apiResponse' => null});
+        }
+        return null;
     }
 
 }

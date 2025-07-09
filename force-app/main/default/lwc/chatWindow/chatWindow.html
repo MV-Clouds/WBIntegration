@@ -138,7 +138,7 @@
                                     <div class="other-message-sub-text">You can not view this media due to limitation of your plan.</div>
                                 </div>
                                 <div class="template-message-div" if:true={chat.isTemplate}>
-                                    <c-template-preview template-id={chat.MVWB__Whatsapp_Template__c} record-id={recordId} object-api-name={objectApiName}></c-template-preview>
+                                    <c-template-preview template-id={chat.MVWB__Whatsapp_Template__c} chat-id={chat.Id}></c-template-preview>
                                 </div>
                                 <div class="timestamp">
                                     <lightning-formatted-date-time value={chat.CreatedDate} hour="2-digit" minute="2-digit"></lightning-formatted-date-time>
@@ -255,7 +255,7 @@
             </template>
             <template lwc:elseif={showTemplatePreview}>
                 <div class="show-template-preview">
-                    <c-template-preview template-id={selectedTemplate} record-id={recordId} mobile-number={recordMobileNumber} object-api-name={objectApiName} show-buttons="true" onback={handleBackToList} onmessage={handleTemplateSent}></c-template-preview>
+                    <c-template-send template-id={selectedTemplate} record-id={recordId} mobile-number={recordMobileNumber} object-api-name={objectApiName} show-buttons="true" onback={handleBackToList} onmessage={handleTemplateSent}></c-template-send>
                 </div>
             </template>
         </div>
