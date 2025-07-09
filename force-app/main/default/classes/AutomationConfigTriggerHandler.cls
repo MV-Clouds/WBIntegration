@@ -714,17 +714,12 @@ public without sharing class AutomationConfigTriggerHandler {
     
     @future(callout=true)
     public static void sendWhatsappMessage(String jsonData, String chatId) {
-        Map<String, Object> resultMap = new Map<String, Object>{};
         Chat__c chat = new Chat__c(Id = chatId);
         try {
             HttpRequest httpReq = new HttpRequest();
-            resultMap.put('errorMessage', null);
             // List<WBConnect_Configuration__mdt> wbConfig = WBConnect_Configuration__mdt.getAll().values();
             if(wbConfig==null || wbConfig.isEmpty()){
-                update chat;
-                resultMap.put('errorMessage', 'METADATA_ERROR');
-                resultMap.put('chat', chat);
-                // return resultMap;
+                return;
             }
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
             String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Phone_Number_Id__c + '/messages';
@@ -754,19 +749,30 @@ public without sharing class AutomationConfigTriggerHandler {
                 // newChatEvent.ContactId__c = whatsappChat.Contact__c;
                 EventBus.publish(newChatEvent);
             } else {
+                chat.Message_Status__c = 'Failed';
                 System.debug('Error sending WhatsApp Message: '+response.getBody());
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
+
+            // Step 1: Deserialize full JSON
+            Map<String, Object> jsonMap = (Map<String, Object>) JSON.deserializeUntyped(jsonData);
+            // Step 2: Check and get 'template' node
+            if (jsonMap.containsKey('template')) {
+                Map<String, Object> templateMap = (Map<String, Object>) jsonMap.get('template');
+                // Step 3: Check and get 'components' node
+                if (templateMap != null && templateMap.containsKey('components')) {
+                    List<Object> componentsList = (List<Object>) templateMap.get('components');
+                    // Step 4: Serialize components back to string
+                    String componentsJsonString = JSON.serialize(componentsList);
+                    // Step 5: Store in Text Area field (example)
+                    chat.Sent_Template_Details__c = componentsJsonString;
+                }
+            }
             
             update chat;
-            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id];
-            resultMap.put('chat', chat);
-            // return resultMap;
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => chatId, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
-        resultMap.put('chat', chat);
-        // return resultMap;
     }
     
     public static Chat__c createChat(Map<String, String> chatData ){
