@@ -523,7 +523,7 @@ public with sharing class WBTemplateController {
 
                     if(templateId != null) {
                         MVWB__Template_Update__e fetchAllTemplatesEvent = new MVWB__Template_Update__e();
-                        fetchAllTemplatesEvent.Fetch_All_Templates__c = true;
+                        fetchAllTemplatesEvent.MVWB__Fetch_All_Templates__c = true;
                         EventBus.publish(fetchAllTemplatesEvent);
                     } else {
                         ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'checkTemplateExistance','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Template Id not found in checkTemplateExistance for template ' + templateName,'apiResponse' => null});
@@ -817,7 +817,7 @@ public with sharing class WBTemplateController {
                         contentVersionId = (String) miscData.get('contentVersionId');
                         System.debug('ContentVersionId: ' + contentVersionId);
                     } catch (Exception e) {
-                        ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'uploadFileToMetaAndGetHeaderHandle','exceptionObj' => null,'isApiException' => true,'statusCode' => s3Res.getStatusCode(),'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => s3Res.getBody()});
+                        ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'uploadFileToMetaAndGetHeaderHandle','exceptionObj' => null,'isApiException' => true,'statusCode' => '','chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => ''});
                         System.debug('Failed to parse templateMiscellaneousData: ' + e.getMessage());
                     }
                 }
