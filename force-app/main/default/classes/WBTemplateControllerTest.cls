@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 04-08-2025
+ * @last modified on  : 04-04-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 @isTest
@@ -295,7 +295,6 @@ public class WBTemplateControllerTest {
         Test.stopTest();
     }
 
-
      @isTest
     static void testStartUploadSession_Success() {
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
@@ -357,6 +356,18 @@ public class WBTemplateControllerTest {
         System.assertEquals(result, '', 'The result should be empty in case of failure');
     }
     
+    //   @isTest
+    // static void testCreateContentVersionAndDocument() {
+    //     Blob fileBlob = Blob.valueOf('test content');
+
+    //     String fileName = 'testFile.txt';
+
+    //     Test.startTest();
+    //     Map<String,String> result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
+    //     WBTemplateController.createContentVersionAndDocument(null, fileBlob);
+    //     Test.stopTest();
+
+    // }
     @isTest
     static void testDeleteTemplate_Success() {
 		 Template__c template = new Template__c(Template_Name__c = 'Test Template',Template_Category__c = 'Marketing', Template_Id__c = 'testId');
@@ -384,16 +395,25 @@ public class WBTemplateControllerTest {
         }
 
         public HTTPResponse respond(HTTPRequest req) {
-
-            HttpResponse res = new HttpResponse();
-            res.setHeader('Content-Type', 'application/json');
-            res.setStatusCode(statusCode);
-            res.setBody('{\"success\": false}');
-            return res;
+            if(statusCode == 400) {
+                HttpResponse res = new HttpResponse();
+                res.setHeader('Content-Type', 'application/json');
+                res.setStatusCode(statusCode);
+                res.setBody('{\"success\": true}');
+                return res;
+            }
+            else{
+                HttpResponse res = new HttpResponse();
+                res.setHeader('Content-Type', 'application/json');
+                res.setStatusCode(statusCode);
+                res.setBody('{\"success\": false}');
+                return res;
+            }
         }
     }
 
-     @isTest
+
+    @isTest
     public static void testEditWhatsappTemplate_Success() {
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200));
 
