@@ -413,7 +413,7 @@ public with sharing class WBTemplateController {
     @AuraEnabled
     public static Map<String, Object> createWhatsappTemplate(String serializedWrapper,String payloadWrapper, String templateName) {
         Map<String, Object> response = new Map<String, Object>();
-
+        HttpResponse res = new HttpResponse();
         try {
             if (String.isBlank(SETTINGS[0].MVWB__Business_Account_Id__c)) {
                 response.put('success', false);
@@ -435,7 +435,7 @@ public with sharing class WBTemplateController {
             req.setBody(JSON.serialize(payload));
     
             Http http = new Http();
-            HttpResponse res = http.send(req);
+            res = http.send(req);
 
             if (res.getStatusCode() == 200) {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
@@ -477,6 +477,26 @@ public with sharing class WBTemplateController {
                 response.put('message', 'Template is being created, you will be notified once it is ready.');
                 checkTemplateExistance(templateName, serializedWrapper, payloadWrapper);
             }
+            else if (res.getStatusCode() != 200 && String.isNotEmpty(res.getBody())) {
+                try {
+                    Map<String, Object> resMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                    if (resMap.containsKey('error')) {
+                        Map<String, Object> errorMap = (Map<String, Object>) resMap.get('error');
+                        String errorMessage = (String) errorMap.get('message');
+                        Integer errorCode = (Integer) errorMap.get('code');
+
+                        if (errorCode == 100 && errorMessage != null &&
+                            errorMessage.toLowerCase().contains('file handle that has expired')) {
+                            // ✅ Handle expired file handle here
+                            uploadFileToMetaAndGetHeaderHandle(templateName, serializedWrapper, payloadWrapper,true,null);
+                            System.debug('File handle has expired. You may need to re-upload the media.');
+                        }
+                    }
+                } catch (Exception er) {
+                    System.debug('Error parsing error response: ' + er.getMessage());
+                }
+            }
+            
             else{
                 response.put('success', false);
                 response.put('status', 'error');
@@ -486,6 +506,126 @@ public with sharing class WBTemplateController {
 
         return response;
     }
+
+    @future(callout=true)
+    public static void uploadFileToMetaAndGetHeaderHandle(String templateName, String serializedWrapper, String payloadWrapper, Boolean isCreateTempalte,String tempalteId) {
+        String headerHandleResult = '';
+        String fileUrlOrContentVersionId = '';
+        String contentVersionId = '';
+        CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+        
+        fileUrlOrContentVersionId = TemplateWrapper.tempImgUrl;
+
+        try {
+            Blob fileBlob;
+            String mimeType;
+            String fileName;
+            Integer fileLength;
+            
+            if (fileUrlOrContentVersionId.contains('amazonaws.com')) {
+                // ---- S3 FILE ----
+                Http http = new Http();
+                HttpRequest s3Req = new HttpRequest();
+                s3Req.setEndpoint(fileUrlOrContentVersionId);
+                s3Req.setMethod('GET');
+
+                HttpResponse s3Res = http.send(s3Req);
+                if (s3Res.getStatusCode() != 200) {
+                    System.debug('❌ Failed to fetch file from S3. Status: ' + s3Res.getStatusCode());
+                    return;
+                }
+                
+                fileBlob = s3Res.getBodyAsBlob();
+                mimeType = s3Res.getHeader('Content-Type');
+                fileName = fileUrlOrContentVersionId.substring(fileUrlOrContentVersionId.lastIndexOf('/') + 1);
+                fileLength = fileBlob.size();
+            } else {
+                // ---- CONTENT VERSION FILE ----
+                String jsonStr = TemplateWrapper.templateMiscellaneousData;
+                
+                if (!String.isBlank(jsonStr)) {
+                    try {
+                        Map<String, Object> miscData = (Map<String, Object>) JSON.deserializeUntyped(jsonStr);
+                        contentVersionId = (String) miscData.get('contentVersionId');
+                        System.debug('ContentVersionId: ' + contentVersionId);
+                    } catch (Exception e) {
+                        System.debug('Failed to parse templateMiscellaneousData: ' + e.getMessage());
+                    }
+                }
+                ContentVersion cv = [SELECT Title, VersionData, FileExtension, ContentSize FROM ContentVersion WHERE Id = :contentVersionId LIMIT 1];
+                fileBlob = cv.VersionData;
+                fileName = cv.Title + '.' + cv.FileExtension;
+                mimeType = getMimeTypeFromExtension(cv.FileExtension);
+                fileLength = cv.ContentSize;
+            }
+            
+            // ---- START META UPLOAD SESSION ----
+            String uploadSessionId = startUploadSession(fileName, fileLength, mimeType);
+            if (String.isBlank(uploadSessionId)) {
+                System.debug('❌ Failed to start Meta upload session.');
+                return;
+            }
+            
+            // ---- PREPARE FILE WRAPPER ----
+            FileChunkWrapper wrapper = new FileChunkWrapper();
+            wrapper.uploadSessionId = uploadSessionId;
+            wrapper.fileName = fileName;
+            wrapper.fileContent = EncodingUtil.base64Encode(fileBlob);
+            wrapper.chunkStart = 0;
+            wrapper.chunkSize = fileLength;
+            
+            String serializedFileWrapper = JSON.serialize(wrapper);
+            
+            // ---- UPLOAD TO META ----
+            String resultJson = uploadFileChunk(serializedFileWrapper, false);
+            Map<String, Object> resultMap = (Map<String, Object>) JSON.deserializeUntyped(resultJson);
+            if (resultMap.containsKey('headerHandle')) {
+                headerHandleResult = (String) resultMap.get('headerHandle');
+                System.debug('✅ Upload Successful. Header Handle: ' + headerHandleResult);
+                
+                // Update the header_handle using regex
+                payloadWrapper = payloadWrapper.replaceFirst('"header_handle":"[^"]+"', '"header_handle":"' + headerHandleResult + '"');
+                
+                if(isCreateTempalte){
+                    createWhatsappTemplate(serializedWrapper,payloadWrapper, templateName);
+                }
+                else {
+                    editWhatsappTemplate(serializedWrapper, payloadWrapper, tempalteId ,templateName);   
+                }
+
+            } else {
+                System.debug('⚠ Upload completed but no headerHandle returned.');
+            }
+            
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'WBTemplateController',
+                'methodName' => 'uploadFileToMetaAndGetHeaderHandle',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'statusCode' => null,
+                'chatId' => null,
+                'moreDetails' => e.getMessage(),
+                'apiResponse' => null
+            });
+        }
+    }
+
+    private static String getMimeTypeFromExtension(String ext) {
+        ext = ext != null ? ext.toLowerCase() : '';
+        if (ext == 'png') return 'image/png';
+        if (ext == 'jpg' || ext == 'jpeg') return 'image/jpeg';
+        if (ext == 'pdf') return 'application/pdf';
+        if (ext == 'mp4') return 'video/mp4';
+        if (ext == 'doc') return 'application/msword';
+        if (ext == 'docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        if (ext == 'xls') return 'application/vnd.ms-excel';
+        if (ext == 'xlsx') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        return 'application/octet-stream'; // default fallback
+    }
+
+
+
 
     @future(callout=true)
     public static void checkTemplateExistance(String templateName, String serializedWrapper, String payloadWrapper) {
@@ -523,7 +663,7 @@ public with sharing class WBTemplateController {
 
                     if(templateId != null) {
                         MVWB__Template_Update__e fetchAllTemplatesEvent = new MVWB__Template_Update__e();
-                        fetchAllTemplatesEvent.MVWB__Fetch_All_Templates__c = true;
+                        fetchAllTemplatesEvent.Fetch_All_Templates__c = true;
                         EventBus.publish(fetchAllTemplatesEvent);
                     } else {
                         ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'checkTemplateExistance','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Template Id not found in checkTemplateExistance for template ' + templateName,'apiResponse' => null});
@@ -689,7 +829,7 @@ public with sharing class WBTemplateController {
     @AuraEnabled
     public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String payloadWrapper,String templateId, String templateName) {
         Map<String, Object> response = new Map<String, Object>();
-
+        HttpResponse res = new HttpResponse();
         try {
             CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
             String editEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+templateId;
@@ -703,7 +843,7 @@ public with sharing class WBTemplateController {
             req.setBody(JSON.serialize(payload));
     
             Http http = new Http();
-            HttpResponse res = http.send(req);
+            res = http.send(req);
 
             if (res.getStatusCode() == 200) {
                     Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
@@ -742,6 +882,25 @@ public with sharing class WBTemplateController {
                 response.put('status', 'warning');
                 response.put('message', 'Template is being updated, you will be notified once it is ready.');
                 checkTemplateExistance(templateName, serializedWrapper, payloadWrapper);
+            }
+            else if (res.getStatusCode() != 200 && String.isNotEmpty(res.getBody())) {
+                try {
+                    Map<String, Object> resMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                    if (resMap.containsKey('error')) {
+                        Map<String, Object> errorMap = (Map<String, Object>) resMap.get('error');
+                        String errorMessage = (String) errorMap.get('message');
+                        Integer errorCode = (Integer) errorMap.get('code');
+
+                        if (errorCode == 100 && errorMessage != null &&
+                            errorMessage.toLowerCase().contains('file handle that has expired')) {
+                            // ✅ Handle expired file handle here
+                            uploadFileToMetaAndGetHeaderHandle(templateName, serializedWrapper, payloadWrapper,true,templateId);
+                            System.debug('File handle has expired. You may need to re-upload the media.');
+                        }
+                    }
+                } catch (Exception er) {
+                    System.debug('Error parsing error response: ' + er.getMessage());
+                }
             }
             else{
                 response.put('success', false);
