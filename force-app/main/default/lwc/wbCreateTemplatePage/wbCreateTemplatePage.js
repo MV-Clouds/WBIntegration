@@ -26,6 +26,7 @@ import startUploadSession from '@salesforce/apex/WBTemplateController.startUploa
 import uploadFileChunk from '@salesforce/apex/WBTemplateController.uploadFileChunk';
 import getObjectFields from '@salesforce/apex/WBTemplateController.getObjectFields';
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
+import checkTemplateExistance from '@salesforce/apex/WBTemplateController.checkTemplateExistance';
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import tempLocationIcon from '@salesforce/resourceUrl/tempLocationIcon';
 import tempVideoIcon from '@salesforce/resourceUrl/tempVideoIcon';
@@ -404,7 +405,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 }))
                 : [];
 
-            return{
+            return {
                 ...varItem,
                 options: fieldOptions.map(field => ({
                     ...field,
@@ -558,9 +559,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             this.isNewTemplate = false;
             this.isEditTemplate = true;
 
-            // this.isAllTemplate = false;
             this.fetchTemplateData(); // Load template data when ID is set
-            // this.fetchFlowPreviewId();
         }
     }
 
@@ -909,7 +908,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
                     this.handleTabClick(this.selectedTab);
                     this.handleRadioChange(this.selectedOption);
-                    
+
                     setTimeout(() => {
 
                         this.templateName = template.MVWB__Template_Name__c || '';
@@ -994,14 +993,14 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         this.btntext = template.MVWB__Button_Label__c || '';
 
                         const tvs = templateVariables.map(tv => ({
-                                object: tv.objName,
-                                field: tv.fieldName,
-                                alternateText: tv.alternateText ? tv.alternateText : '',
-                                id: tv.variable.slice(2, 3),
-                                index: tv.variable,
-                                type: tv.type
+                            object: tv.objName,
+                            field: tv.fieldName,
+                            alternateText: tv.alternateText ? tv.alternateText : '',
+                            id: tv.variable.slice(2, 3),
+                            index: tv.variable,
+                            type: tv.type
                         }));
-                        
+
                         // Identify all unique objects
                         const uniqueObjects = [...new Set(tvs.map(tv => tv.object))];
 
@@ -1019,8 +1018,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                                 const tempfieldsHead = tvs.filter(tv => tv.type === 'Header').map(tv => tv.field);
                                 // const tempHeadObj = tvs.filter(tv => tv.type === 'Header');
                                 // console.log('tempHeadObj', tempHeadObj);
-                                
-                                
+
+
                                 // this.handleHeaderObjectChange({ target: { value: tempHeadObj[0].object } });
                                 // Body variables with individual field options
                                 this.variables = tvs
@@ -1159,13 +1158,13 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
-    fetchFlowPreviewId(){
+    fetchFlowPreviewId() {
         try {
-            if(this.isFlowSelected && this.selectedFlow && this.selectedFlow.id){
+            if (this.isFlowSelected && this.selectedFlow && this.selectedFlow.id) {
                 let selectedId = this.selectedFlow.id;
                 getPreviewURLofWhatsAppFlow({ flowId: selectedId })
                     .then((data) => {
-                        
+
                         if (data !== 'failed') {
                             this.iframeSrc = data;
                         } else {
@@ -1175,7 +1174,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     .catch(error => {
                         console.error('Error fetching preview URL:', error);
                     });
-            } 
+            }
         } catch (error) {
             console.error('Error in fetchFlowPreviewId :', error);
         }
@@ -1214,19 +1213,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 let maxSize = 4;
                 let fileSizeMB = Math.floor(file.size / (1024 * 1024));
                 isValid = fileSizeMB <= maxSize;
-                // if (this.fileType.startsWith('image/')) {
-                //     maxSize = 5;
-                //     isValid = fileSizeMB <= maxSize;
-                // } else if (this.fileType.startsWith('video/')) {
-                //     maxSize = 16;
-                //     isValid = fileSizeMB <= maxSize;
-                // } else if (this.fileType.includes('application/') || this.fileType.includes('text/')) {
-                //     maxSize = 100;
-                //     isValid = fileSizeMB <= maxSize;
-                // }
-                // else {
-                //     // console.log('Else OUT');
-                // }
 
                 if (isValid) {
                     this.selectedFilesToUpload.push(file);
@@ -1247,17 +1233,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     // this.isLoading = false;
                     this.showToastError(`${file.name} exceeds the ${maxSize}MB limit`);
                 }
-                // }
-                // else {
-                // const reader = new FileReader();
-                // reader.onload = () => {
-                //     this.fileData = reader.result.split(',')[1];
-                //     // this.generatePreview(file);
-                //     this.handleUpload(); // Auto-upload
-                // };
-                // reader.readAsDataURL(file);
-                // }
-
             }
         } catch (error) {
             console.error('Error in file upload:', error);
@@ -1287,20 +1262,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
-    // renameFileName(filename) {
-    //     try {
-    //         let originalFileName = filename;
-    //         let extensionIndex = originalFileName.lastIndexOf('.');
-    //         let baseFileName = originalFileName.substring(0, extensionIndex);
-    //         let extension = originalFileName.substring(extensionIndex + 1);
-
-    //         let objKey = `${baseFileName}.${extension}`
-    //             .replace(/\s+/g, "_");
-    //         return objKey;
-    //     } catch (error) {
-    //         console.error('error in renameFileName -> ', error.stack);
-    //     }
-    // }
     renameFileName(filename) {
         try {
             let extensionIndex = filename.lastIndexOf('.');
@@ -1896,7 +1857,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     handleMenuSelect(event) {
         try {
-            // const selectedValue = event.detail.value;
             const selectedValue = event.currentTarget.dataset.value;
             this.menuButtonSelected = selectedValue;
             let buttonData = event.currentTarget.dataset.buttonData;
@@ -1971,9 +1931,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         newButton.isOfferCode = true;
                         newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
                         this.btntext = buttonData?.btntext || 'Copy Offer Code';
-
-                        // newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
-                        // this.btntext = buttonData?.btntext || 'Copy Offer Code';
                         this.copyOfferCode++;
                         this.isAddCopyOfferCode = true;
                     }
@@ -1986,9 +1943,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         newButton.isFlow = true;
                         newButton.btntext = buttonData?.btntext || 'View flow';
                         this.btntext = buttonData?.btntext || 'View flow';
-
-                        // newButton.btntext = buttonData?.btntext || 'Copy Offer Code';
-                        // this.btntext = buttonData?.btntext || 'Copy Offer Code';
                         this.flowCount++;
                         this.isAddFlow = true;
                     }
@@ -2205,7 +2159,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const maxId = this.variables.reduce((max, variable) => {
                 return Math.max(max, parseInt(variable.id));
             }, 0);
-            
+
             this.nextIndex = maxId + 1;
             // const defaultField = this.fields[0].value;
             const objectName = Object.keys(this.objectFieldMap)[0] || '';
@@ -2218,7 +2172,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 field: defaultField,
                 alternateText: '',
                 index: `{{${this.nextIndex}}}`,
-                options: fields // assign dropdown options
+                options: fields
             };
 
             this.variables = [...this.variables, newVariable];
@@ -2252,7 +2206,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         }
     }
 
-    handleHeaderObjectChange(event){
+    handleHeaderObjectChange(event) {
         try {
             const selectedObject = event.target.value;
             this.selectedObject = selectedObject;
@@ -2283,7 +2237,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         try {
             const selectedObject = event?.target?.value;
             const variableIndex = String(event.target?.dataset?.index);
-            
+
             const updateVarFields = (fields) => {
                 this.objectFieldMap[selectedObject] = fields;
 
@@ -2312,10 +2266,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     .then((result) => {
                         const fields = result.map((field) => ({ label: field, value: field }));
                         updateVarFields(fields);
-                })
-                .catch((error) => {
-                    console.error('Error fetching fields: ', error);
-                });
+                    })
+                    .catch((error) => {
+                        console.error('Error fetching fields: ', error);
+                    });
             }
         } catch (error) {
             console.error('Something went wrong while updating body variable object.', error);
@@ -2907,8 +2861,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 fileUrl = this.filePreview; // Use ContentVersion if available
             }
 
-
-            // Change
             if (this.activeTab == 'Authentication') {
                 this.tempBody = ' is your verification code';
             }
@@ -2978,22 +2930,21 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
             const serializedWrapper = JSON.stringify(template);
             const payload = JSON.stringify(buildPayload(template));
-            
+
             if (this.metaTemplateId) {
                 editWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateId: this.metaTemplateId })
                     .then(result => {
                         if (result && result.success) {
                             this.showToastSuccess('Template successfully edited.');
-                            // this.isAllTemplate=true;
-                            // this.iseditTemplatevisible=false;
-                            // this.isLoading=false;
-                            // const templateId = result.templateId;  
-                            // this.templateId = templateId;
-                            // this.fetchUpdatedTemplates();
+
                             this.navigateToAllTemplatePage();
-                        } else if(result && result.success == false && result.status == 'warning'){
+                        } else if (result && result.success == false && result.status == 'warning') {
                             this.showToastWarning('Template updation taking too much time, please wait for few minutes and refresh the page to see the updated template.');
                             this.isLoading = false;
+                            setTimeout(() => {
+                                checkTemplateExistance({ templateName: this.templateName, serializedWrapper: serializedWrapper, payloadWrapper: payload });
+                            }, 60000);
+
                             this.navigateToAllTemplatePage();
                         } else {
                             const errorResponse = JSON.parse(result.errorMessage);
@@ -3022,6 +2973,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     });
 
             } else {
+                console.log('Payload :::', payload);
+
                 createWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateName: this.templateName })
                     .then(result => {
 
@@ -3031,8 +2984,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.navigateToAllTemplatePage();
                         } else if (result && result.success == false && result.status == 'warning') {
                             this.showToastWarning('Template creation taking too much time, please wait for few minutes and refresh the page to see the template.');
-                            this.navigateToAllTemplatePage();
                             this.isLoading = false;
+
+                            this.clearEditTemplateData();
+                            this.navigateToAllTemplatePage();
                         } else {
                             const errorResponse = JSON.parse(result.errorMessage);
                             const errorMsg = errorResponse.error.error_user_msg || errorResponse.error.message || 'Due to unknown error';

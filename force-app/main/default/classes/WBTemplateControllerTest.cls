@@ -38,13 +38,6 @@ public class WBTemplateControllerTest{
                     Field_Name__c = 'Name', 
                     Type__c = 'Body'
                 ));
-                // variables.add(new Template_Variable__c(
-                //     Template__c = template.Id,
-                //     Name = '{{2}}',
-                //     Object_Name__c = 'Account',
-                //     Field_Name__c = 'Name',
-                //     Type__c = 'Body'
-                // ));
             }
 
             insert variables;
@@ -77,8 +70,8 @@ public class WBTemplateControllerTest{
             insert testFlows;
 
             ContentVersion cv = new ContentVersion(
-                Title = 'testfile',
-                PathOnClient = 'testfile.png', // This .png gives Salesforce the extension
+                Title = 'testfile', 
+                PathOnClient = 'testfile.png',  // This .png gives Salesforce the extension
                 VersionData = Blob.valueOf('test content')
             );
             insert cv;
@@ -94,7 +87,7 @@ public class WBTemplateControllerTest{
         Test.stopTest();
 
         System.assertNotEquals(0, flows.size(), 'Flows should be retrieved');
-        for (Flow__c flow : flows){
+        for (Flow__cflow : flows){
             System.assertEquals('Published', flow.Status__c, 'Only Published flows should be returned');
         }
 
@@ -269,18 +262,12 @@ public class WBTemplateControllerTest{
         String serializedWrapper = JSON.serialize(mockTemplateWrapper);
 
         String responseBody = '{\"success\": false}';
-        // String responseBody1 = '{"data": [{"name": "flow_template_k3","parameter_format": "POSITIONAL","components": [{"type": "BODY","text": "Hello User,\nPlease fill the following details!"},{"type": "BUTTONS","buttons": [{"type": "FLOW","text": "View flow","flow_id": 677597981452474,"flow_action": "NAVIGATE","navigate_screen": "RECOMMEND"}]}],"language": "en_US","status": "APPROVED","category": "MARKETING","id": "1840945910092431"}],"paging": {"cursors": {"before": "MAZDZD","after": "MjQZD"}}}';
-
         Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200, responseBody));
 
         Test.startTest();
 
         Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper, payload, 'simple_template');
 
-
-
-        // Test.setMock(HttpCalloutMock.class, new TestHttpResponse(200, responseBody1));
-        // WBTemplateController.checkTemplateExistance('simple_template', serializedWrapper, payload);
         Test.stopTest();
     }
 
@@ -293,7 +280,7 @@ public class WBTemplateControllerTest{
         mockTemplateWrapper.templateName = 'Test Template';
         mockTemplateWrapper.tempLanguage = 'en';
         String serializedWrapper = JSON.serialize(mockTemplateWrapper);
-        
+
         String responseBody1 = '{"data": [{"name": "flow_template_k3","parameter_format": "POSITIONAL","components": [{"type": "BODY","text": "Hello User,Please fill the following details!"},{"type": "BUTTONS","buttons": [{"type": "FLOW","text": "View flow","flow_id": 677597981452474,"flow_action": "NAVIGATE","navigate_screen": "RECOMMEND"}]}],"language": "en_US","status": "APPROVED","category": "MARKETING","id": "1840945910092431"}],"paging": {"cursors": {"before": "MAZDZD","after": "MjQZD"}}}';
 
 
@@ -302,8 +289,6 @@ public class WBTemplateControllerTest{
         WBTemplateController.checkTemplateExistance('simple_template', serializedWrapper, payload);
         Test.stopTest();
     }
-
-    
 
     @isTest
     static void testCreateWhatsappTemplate_Exception(){
@@ -322,10 +307,6 @@ public class WBTemplateControllerTest{
         Test.startTest();
         Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper, payload, 'simple_template');
         Test.stopTest();
-
-        // Assert that the error is caught and logged correctly
-        // System.assertEquals('error', response.get('status'));
-        // System.assertNotEquals(null, response.get('message'));
     }
 
     @isTest
@@ -413,15 +394,6 @@ public class WBTemplateControllerTest{
         System.assertEquals(result, '', 'The result should be empty in case of failure');
     }
 
-    //   @isTest
-    // static void testCreateContentVersionAndDocument() {
-    //     Blob fileBlob = Blob.valueOf('test content');
-    //     String fileName = 'testFile.txt';
-    //     Test.startTest();
-    //     Map<String,String> result = WBTemplateController.createContentVersionAndDocument(fileName, fileBlob);
-    //     WBTemplateController.createContentVersionAndDocument(null, fileBlob);
-    //     Test.stopTest();
-    // }
     @isTest
     static void testDeleteTemplate_Success(){
         Template__c template = new Template__c(
@@ -513,8 +485,6 @@ public class WBTemplateControllerTest{
         Test.startTest();
         Map<String, Object> response = WBTemplateController.editWhatsappTemplate(serializedWrapper, payload, templateId, 'simple_template');
         Test.stopTest();
-        // System.assertEquals(false, response.get('success'));
-        // System.assertNotEquals(null, response.get('errorMessage'));
     }
 
     @isTest
@@ -544,103 +514,108 @@ public class WBTemplateControllerTest{
     }
 
     @isTest
-    static void testUploadFileToMetaAndGetHeaderHandle_Success_S3() {
+    static void testUploadFileToMetaAndGetHeaderHandle_Success_S3(){
         Test.startTest();
-        
+
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(200, 'image/png', Blob.valueOf('filecontent')));
         Test.setMock(HttpCalloutMock.class, new MockMetaUploadSessionResponse(true));
-        
+
         CreateTemplateWrapper.TemplateWrapper wrapper = new CreateTemplateWrapper.TemplateWrapper();
         wrapper.tempImgUrl = 'https://s3.amazonaws.com/bucket/test.png';
         wrapper.templateMiscellaneousData = '';
-        
+
         String serializedWrapper = JSON.serialize(wrapper);
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
-        
+
         Test.stopTest();
     }
-    
+
     @isTest
-    static void testUploadFileToMetaAndGetHeaderHandle_Failure_S3HttpCallout() {
+    static void testUploadFileToMetaAndGetHeaderHandle_Failure_S3HttpCallout(){
         Test.startTest();
-        
+
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(404, 'image/png', null));
-        
+
         CreateTemplateWrapper.TemplateWrapper wrapper = new CreateTemplateWrapper.TemplateWrapper();
         wrapper.tempImgUrl = 'https://s3.amazonaws.com/bucket/missingfile.png';
         wrapper.templateMiscellaneousData = '';
-        
+
         String serializedWrapper = JSON.serialize(wrapper);
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
-        
+
         Test.stopTest();
     }
-    
+
     @isTest
-    static void testUploadFileToMetaAndGetHeaderHandle_Success_ContentVersion() {
+    static void testUploadFileToMetaAndGetHeaderHandle_Success_ContentVersion(){
         Test.startTest();
-        ContentVersion cv = [SELECT Id, VersionData, Title, FileExtension, ContentSize FROM ContentVersion LIMIT 1];
-        String miscData = JSON.serialize(new Map<String, Object>{'contentVersionId' => cv.Id});
-        
+        ContentVersion cv = [SELECT Id, VersionData, Title, FileExtension, ContentSize
+                             FROM ContentVersion
+                             LIMIT 1];
+        String miscData = JSON.serialize(new Map<String, Object>{ 'contentVersionId' => cv.Id });
+
         CreateTemplateWrapper.TemplateWrapper wrapper = new CreateTemplateWrapper.TemplateWrapper();
         wrapper.tempImgUrl = 'somecontentversionid';
         wrapper.templateMiscellaneousData = miscData;
-        
+
         Test.setMock(HttpCalloutMock.class, new MockMetaUploadSessionResponse(true));
-        
+
         String serializedWrapper = JSON.serialize(wrapper);
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
-        
+
         Test.stopTest();
     }
-    
+
     @isTest
-    static void testUploadFileToMetaAndGetHeaderHandle_Exception_DuringMiscDataParsing() {
+    static void testUploadFileToMetaAndGetHeaderHandle_Exception_DuringMiscDataParsing(){
         Test.startTest();
         CreateTemplateWrapper.TemplateWrapper wrapper = new CreateTemplateWrapper.TemplateWrapper();
         wrapper.tempImgUrl = 'somecontentversionid';
         wrapper.templateMiscellaneousData = 'INVALID_JSON';
-        
+
         String serializedWrapper = JSON.serialize(wrapper);
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
-        
+
         Test.stopTest();
     }
-    
-    private class MockHttpResponseGenerator implements HttpCalloutMock {
+
+    private class MockHttpResponseGenerator implements HttpCalloutMock{
         Integer statusCode;
         String contentType;
         Blob bodyBlob;
-        MockHttpResponseGenerator(Integer statusCode, String contentType, Blob bodyBlob) {
+        MockHttpResponseGenerator(Integer statusCode, String contentType, Blob bodyBlob){
             this.statusCode = statusCode;
             this.contentType = contentType;
             this.bodyBlob = bodyBlob;
         }
-        public HTTPResponse respond(HTTPRequest req) {
+
+        public HTTPResponse respond(HTTPRequest req){
             HttpResponse res = new HttpResponse();
             res.setStatusCode(statusCode);
-            if (bodyBlob != null) {
+            if (bodyBlob != null){
                 res.setBodyAsBlob(bodyBlob);
             }
             res.setHeader('Content-Type', contentType);
             return res;
         }
+
     }
-    
-    private class MockMetaUploadSessionResponse implements HttpCalloutMock {
+
+    private class MockMetaUploadSessionResponse implements HttpCalloutMock{
         Boolean returnHeaderHandle;
-        MockMetaUploadSessionResponse(Boolean returnHeaderHandle) {
+        MockMetaUploadSessionResponse(Boolean returnHeaderHandle){
             this.returnHeaderHandle = returnHeaderHandle;
         }
-        public HTTPResponse respond(HTTPRequest req) {
+
+        public HTTPResponse respond(HTTPRequest req){
             HttpResponse res = new HttpResponse();
             res.setStatusCode(200);
-            if (req.getEndpoint().contains('startUploadSession')) {
+            if (req.getEndpoint().contains('startUploadSession')){
                 res.setBody('{"uploadSessionId":"fakeSession123"}');
-            } else {
-                if (returnHeaderHandle) {
+            } else{
+                if (returnHeaderHandle){
                     res.setBody('{"headerHandle":"h_fake_header_handle"}');
-                } else {
+                } else{
                     res.setBody('{}');
                 }
             }
