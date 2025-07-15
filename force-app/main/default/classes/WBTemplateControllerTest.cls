@@ -210,19 +210,19 @@ public class WBTemplateControllerTest{
         Map<String, Object> result2 = WBTemplateController.getTemplateDataWithReplacement(template.Id, null);
     }
 
-    @isTest
-    static void testGetPicklistValues(){
-        try{
-            Test.startTest();
-            Map<String, List<String>> picklistValues = WBTemplateController.getCategoryAndStatusPicklistValues();
-            Test.stopTest();
+    // @isTest
+    // static void testGetPicklistValues(){
+    //     try{
+    //         Test.startTest();
+    //         Map<String, List<String>> picklistValues = WBTemplateController.getCategoryAndStatusPicklistValues();
+    //         Test.stopTest();
 
-            System.assertNotEquals(picklistValues, null, 'Picklist values should not be null');
-            System.assert(picklistValues.containsKey('categories'), 'Picklist should contain "categories" key');
-        } catch (Exception e){
-            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testGetPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
-        }
-    }
+    //         System.assertNotEquals(picklistValues, null, 'Picklist values should not be null');
+    //         System.assert(picklistValues.containsKey('categories'), 'Picklist should contain "categories" key');
+    //     } catch (Exception e){
+    //         ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateControllerTest', 'methodName' => 'testGetPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+    //     }
+    // }
 
     @isTest
     static void testSendPreviewTemplate_Success(){

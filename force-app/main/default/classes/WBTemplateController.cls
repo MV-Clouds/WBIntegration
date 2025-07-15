@@ -356,35 +356,35 @@ public with sharing class WBTemplateController{
      @return          : picklistValues {Map<String, List<String>>} - return picklist value for catagory and status from template object.
      ********************************************************
      */
-    @AuraEnabled(cacheable = true)
-    public static Map<String, List<String>> getCategoryAndStatusPicklistValues(){
-        Map<String, List<String>> picklistValues = new Map<String, List<String>>();
+    // @AuraEnabled(cacheable = true)
+    // public static Map<String, List<String>> getCategoryAndStatusPicklistValues(){
+    //     Map<String, List<String>> picklistValues = new Map<String, List<String>>();
 
-        List<String> categoryValues = new List<String>();
-        List<String> statusValues = new List<String>();
+    //     List<String> categoryValues = new List<String>();
+    //     List<String> statusValues = new List<String>();
 
-        try{
-            // Fetch Category__c picklist values
-            Schema.DescribeFieldResult categoryFieldResult = Template__c.Template_Category__c.getDescribe();
-            for (Schema.PicklistEntry entry : categoryFieldResult.getPicklistValues()){
-                categoryValues.add(entry.getLabel());
-            }
+    //     try{
+    //         // Fetch Category__c picklist values
+    //         Schema.DescribeFieldResult categoryFieldResult = Template__c.Template_Category__c.getDescribe();
+    //         for (Schema.PicklistEntry entry : categoryFieldResult.getPicklistValues()){
+    //             categoryValues.add(entry.getLabel());
+    //         }
 
-            // Fetch Status__c picklist values
-            Schema.DescribeFieldResult statusFieldResult = Template__c.Status__c.getDescribe();
-            for (Schema.PicklistEntry entry : statusFieldResult.getPicklistValues()){
-                statusValues.add(entry.getLabel());
-            }
+    //         // Fetch Status__c picklist values
+    //         Schema.DescribeFieldResult statusFieldResult = Template__c.Status__c.getDescribe();
+    //         for (Schema.PicklistEntry entry : statusFieldResult.getPicklistValues()){
+    //             statusValues.add(entry.getLabel());
+    //         }
 
-            picklistValues.put('categories', categoryValues);
-            picklistValues.put('statuses', statusValues);
+    //         picklistValues.put('categories', categoryValues);
+    //         picklistValues.put('statuses', statusValues);
 
-            return picklistValues;
-        } catch (Exception e){
-            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'getCategoryAndStatusPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
-            return null;
-        }
-    }
+    //         return picklistValues;
+    //     } catch (Exception e){
+    //         ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'getCategoryAndStatusPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
+    //         return null;
+    //     }
+    // }
 
     /*
      *********************************************************
