@@ -13,11 +13,17 @@ MODIFICATION LOG*
 
 import { LightningElement, track, wire,api } from 'lwc';
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
-import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
+// import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+import TEMPLATE_OBJECT from '@salesforce/schema/Template__c';
+import CATEGORY_FIELD from '@salesforce/schema/Template__c.Template_Category__c';
+import STATUS_FIELD from '@salesforce/schema/Template__c.Status__c';
+import { getObjectInfo } from 'lightning/uiObjectInfoApi';
+import { getPicklistValues } from 'lightning/uiObjectInfoApi';
+
 
 export default class WbAllTemplatePage extends LightningElement {
     @track isTemplateVisible = false;
@@ -43,6 +49,7 @@ export default class WbAllTemplatePage extends LightningElement {
     @track visiblePages = 5;
     @track data = [];
     @track paginatedData = [];
+    objectApiName = TEMPLATE_OBJECT;
 
     get actionButtonClass(){
         return 'custom-button cus-btns' ;
@@ -139,6 +146,27 @@ export default class WbAllTemplatePage extends LightningElement {
         return this.isFilterVisible ? 'combobox-container visible' : 'combobox-container hidden';
     }
 
+    @wire(getObjectInfo, { objectApiName: TEMPLATE_OBJECT })
+    objectInfo;
+
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: CATEGORY_FIELD })
+    categoryPicklist({ data, error }) {
+        if (data) {
+            this.categoryOptions = [{ label: 'All', value: '' }, ...data.values.map(item => ({ label: item.label, value: item.value }))];
+        } else if (error) {
+            console.error('Error loading category picklist values', error);
+        }
+    }
+
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: STATUS_FIELD })
+    statusPicklist({ data, error }) {
+        if (data) {
+            this.statusOptions = [{ label: 'All', value: '' }, ...data.values.map(item => ({ label: item.label, value: item.value }))];
+        } else if (error) {
+            console.error('Error loading status picklist values', error);
+        }
+    }
+
     async connectedCallback(){
         try {
             this.isLoading = true;
@@ -147,7 +175,7 @@ export default class WbAllTemplatePage extends LightningElement {
                 return; // Stops execution if license is expired
             }
             this.isTemplateVisible = true;
-            this.fetchCategoryAndStatusOptions();
+            // this.fetchCategoryAndStatusOptions();
             this.fetchAllTemplate(true);
             this.registerPlatformEventListener();
         } catch (e) {
@@ -222,18 +250,18 @@ export default class WbAllTemplatePage extends LightningElement {
         }
     }
 
-    fetchCategoryAndStatusOptions() {
-        getCategoryAndStatusPicklistValues()
-            .then(data => {
-                if (data) {
-                    this.categoryOptions = [{ label: 'All', value: '' }, ...data.categories.map(categoryData => ({ label: categoryData, value: categoryData }))];
-                    this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(statudData => ({ label: statudData, value: statudData }))];
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching category and status picklist values: ', error);
-            });
-    }
+    // fetchCategoryAndStatusOptions() {
+    //     getCategoryAndStatusPicklistValues()
+    //         .then(data => {
+    //             if (data) {
+    //                 this.categoryOptions = [{ label: 'All', value: '' }, ...data.categories.map(categoryData => ({ label: categoryData, value: categoryData }))];
+    //                 this.statusOptions = [{ label: 'All', value: '' }, ...data.statuses.map(statudData => ({ label: statudData, value: statudData }))];
+    //             }
+    //         })
+    //         .catch(error => {
+    //             console.error('Error fetching category and status picklist values: ', error);
+    //         });
+    // }
 
     fetchAllTemplate(showSpinner){
         if(showSpinner){
