@@ -1,37 +1,36 @@
 /**
- * Class Name: WBTemplateController
- * Test Class:
- * @description: Used in LWC components, it used to get the template record,
- picklist value from static resource and callout for creation of template.
- * Date: 25/11/2024
- * Created By: Kajal Tiwari
- */
+* Class Name: WBTemplateController
+* Test Class:
+* @description: Used in LWC components, it used to get the template record,
+picklist value from static resource and callout for creation of template.
+* Date: 25/11/2024
+* Created By: Kajal Tiwari
+*/
 /***********************************************************************
- MODIFICATION LOG*
-* Last Update Date : 15/07/2025
- * Updated By : Divij Modi
- * Name of methods changed (Comma separated if more then one) : restrictTemplates,sendPreviewTemplate
- * Change Description :
- ***********************************************************************/
+MODIFICATION LOG*
+* Last Update Date : 16/07/2025
+* Updated By : Divij Modi
+* Change Description : Added logic to create edit history record and code clean
+***********************************************************************/
+
 public with sharing class WBTemplateController{
-    // public static final MVWB__WBConnect_Configuration__mdt SETTINGS[0];
+    
     public static List<MVWB__WBConnect_Configuration__mdt> SETTINGS = MVWB__WBConnect_Configuration__mdt.getAll().values();
     public static String accessToken = !SETTINGS.isEmpty() ? SETTINGS[0].MVWB__Access_Token__c : null;
     public static String uploadEndpoint;
+    
     /*
-     *********************************************************
-     @description     : Used in WbAllTemplatePage to get all template record.
-     @param           :
-     @return          : listName - Whatsapp Template record.
-     ********************************************************
-     */
-    @AuraEnabled(cacheable = false)
-    public static List<Template__c> getWhatsAppTemplates(){
-        try{
-            List<Template__c> listName = [SELECT Id, Name, Template_Name__c, Template_Category__c, toLabel(Language__c)LanguageLabel, File_Name__c, WBImage_Header_Handle__c, Status__c, LastModifiedById, LastModifiedDate, CreatedDate
-                                          FROM Template__c
-                                          WITH SECURITY_ENFORCED
-                                          ORDER BY LastModifiedDate DESC];
+    *********************************************************
+    @description     : Used in WbAllTemplatePage to get all template record.
+    @param           :
+    @return          : listName - Whatsapp Template record.
+    ********************************************************
+    */
+    @AuraEnabled
+    public static List<Template__c> getWhatsAppTemplates() {
+        try {
+            List<Template__c> listName = [SELECT Id, Name,Template_Name__c, Template_Category__c, toLabel(Language__c) LanguageLabel,File_Name__c,WBImage_Header_Handle__c, Status__c, LastModifiedById,LastModifiedDate, CreatedDate,
+                                            (SELECT Id, Edited_Time__c FROM WB_Template_Histories__r ORDER BY Edited_Time__c DESC) FROM Template__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
 
             return listName;
         } catch (Exception e){
@@ -41,47 +40,25 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : trigger handle to handle limit of 5 records.
-     @param           :
-     @return          : void
-     ********************************************************
-     */
-    public static void restrictTemplates(List<Template__c> templates){
-        try{
-            Integer totalTemplates = [SELECT COUNT()
-                                      FROM Template__c 
-                                      WITH SECURITY_ENFORCED];
-
-            if (totalTemplates + templates.size() > 5){
-                if (!Test.isRunningTest()){
-                    for (Template__c template : templates){
-                        template.addError('You cannot create more than 5 Template records.');
-                    }
-                }
-            }
-        } catch (Exception e){
-            ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'restrictTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
-        }
-    }
-
-    /*
-     *********************************************************
-     @description     : Send preview message.
-     @param           :
-     @return          : errorMessage
-     ********************************************************
-     */
+    *********************************************************
+    @description     : Send preview message.
+    @param           :
+    @return          : errorMessage
+    ********************************************************
+    */
     @AuraEnabled
     public static String sendPreviewTemplate(String jsonData){
         String errorMessage = null;
-        try{
+        
+        try {
             HttpRequest httpReq = new HttpRequest();
             List<MVWB__WBConnect_Configuration__mdt> config = MVWB__WBConnect_Configuration__mdt.getAll().values();
+            
             if (config == null && config.isEmpty()){
                 errorMessage = 'Metadata records are missing.';
                 return errorMessage;
             }
+            
             String accessToken = config[0].MVWB__Access_Token__c;
             String endpoint = config[0].MVWB__API_Endpoint__c + '/' + config[0].MVWB__API_Version__c + '/' + config[0].MVWB__Phone_Number_Id__c + '/messages';
             httpReq.setEndpoint(endpoint);
@@ -92,11 +69,11 @@ public with sharing class WBTemplateController{
             Http http = new Http();
             HttpResponse response = http.send(httpReq);
             Integer statusCode = response.getStatusCode();
+            
             if (statusCode != 200){
                 errorMessage = 'Failed to send Template';
                 ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => null, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }
-
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'sendPreviewTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
@@ -104,15 +81,14 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : Used to fetch all the field related to object name
-     @param           :
-     @return          : fieldNames - Return fields that query for the objectname that pass.
-     ********************************************************
-     */
-    @AuraEnabled(cacheable = true)
+    *********************************************************
+    @description     : Used to fetch all the field related to object name
+    @param           :
+    @return          : fieldNames - Return fields that query for the objectname that pass.
+    ********************************************************
+    */
+    @AuraEnabled
     public static List<String> getObjectFields(String objectName){
-        // String objectName = 'Contact';
         List<String> fieldNames = new List<String>();
         try{
             Schema.DescribeSObjectResult objDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe();
@@ -128,13 +104,13 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : Fetch records based on the object name
-     @param           :
-     @return          : records - Return record that query for the objectname that pass.
-     ********************************************************
-     */
-    @AuraEnabled(cacheable = true)
+    *********************************************************
+    @description     : Fetch records based on the object name
+    @param           :
+    @return          : records - Return record that query for the objectname that pass.
+    ********************************************************
+    */
+    @AuraEnabled
     public static List<sObject> getRecordsBySObject(String objectName){
         String sObjectName = objectName;
         List<sObject> records = new List<sObject>();
@@ -149,13 +125,13 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : This method use to fetch template data and variable mapping done in js.
-     @param           :
-     @return          : wrapper - Return wrapper that contain object name and field name from the Template Variable.
-     ********************************************************
-     */
-    @AuraEnabled(cacheable = true)
+    *********************************************************
+    @description     : This method use to fetch template data and variable mapping done in js.
+    @param           :
+    @return          : wrapper - Return wrapper that contain object name and field name from the Template Variable.
+    ********************************************************
+    */
+    @AuraEnabled
     public static TemplateDataWrapper getDynamicObjectData(Id templateId){
         TemplateDataWrapper wrapper = new TemplateDataWrapper();
         Set<String> objectNames = new Set<String>();
@@ -163,12 +139,7 @@ public with sharing class WBTemplateController{
         wrapper.templateVariables = new List<Map<String, String>>();
 
         try{
-            List<Template__c> templates = [SELECT Id, Name, Template_Name__c, WBButton_Body__c, Status__c, WBImage_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_Type__c, Template_Miscellaneous_Data__c
-                                           FROM Template__c
-                                           WHERE Id = :templateId
-                                           WITH SECURITY_ENFORCED
-                                           ORDER BY LastModifiedDate DESC
-                                           LIMIT 1];
+            List<Template__c> templates = [SELECT Id, Name, Template_Name__c, WBButton_Body__c, Status__c, WBImage_Header_Handle__c, Template_Id__c, Button_Label__c, Button_Type__c, File_Name__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_Type__c, Template_Miscellaneous_Data__c FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC LIMIT 1];
 
             if (templates.isEmpty()){
                 return wrapper;
@@ -185,11 +156,7 @@ public with sharing class WBTemplateController{
                 wrapper.isImgUrl = true;
             }
 
-
-            List<Template_Variable__c> templateVariables = [SELECT Name, Object_Name__c, Field_Name__c, Type__c, Alternate_Text__c
-                                                            FROM Template_Variable__c
-                                                            WHERE Template__c = :template.Id
-                                                            WITH SECURITY_ENFORCED];
+            List<Template_Variable__c> templateVariables = [SELECT Name, Object_Name__c, Field_Name__c, Type__c, Alternate_Text__c FROM Template_Variable__c WHERE Template__c = :template.Id WITH SECURITY_ENFORCED];
 
             if (!templateVariables.isEmpty()){
                 for (Template_Variable__c variable : templateVariables){
@@ -208,22 +175,20 @@ public with sharing class WBTemplateController{
                 wrapper.objectNames = new List<String>(objectNames);
                 wrapper.fieldNames = new List<String>(fieldNames);
             }
-
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'getDynamicObjectData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
-
         return wrapper;
     }
 
     /*
-     *********************************************************
-     @description     : Fetch records based on the dynamic object name, fieldname and recordid
-     @param           : objectName, fieldNames, recordId
-     @return          : resultMap {Map<String, Object>} - Return queried data.
-     ********************************************************
-     */
-    @AuraEnabled(cacheable = true)
+    *********************************************************
+    @description     : Fetch records based on the dynamic object name, fieldname and recordid
+    @param           : objectName, fieldNames, recordId
+    @return          : resultMap {Map<String, Object>} - Return queried data.
+    ********************************************************
+    */
+    @AuraEnabled
     public static Map<String, Object> fetchDynamicRecordData(String objectName, List<String> fieldNames, String recordId){
         Map<String, Object> resultMap = new Map<String, Object>();
 
@@ -246,32 +211,28 @@ public with sharing class WBTemplateController{
             } else{
                 resultMap.put('queriedData', null);
             }
-
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'fetchDynamicRecordData', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             resultMap.put('error', e.getMessage());
         }
-
         return resultMap;
     }
 
     /*
-     *********************************************************
-     @description     : It used to replace variable from backend to handle the sending of template variable.
-     @param           : recordId
-     @return          : result {Map<String, Object>} - Return the replace template content based on the template variable fields by fetching from contact object.
-     ********************************************************
-     */
+    *********************************************************
+    @description     : It used to replace variable from backend to handle the sending of template variable.
+    @param           : recordId
+    @return          : result {Map<String, Object>} - Return the replace template content based on the template variable fields by fetching from contact object.
+    ********************************************************
+    */
     @AuraEnabled
     public static Map<String, Object> getTemplateDataWithReplacement(String templateId, String contactId){
         try{
             Map<String, Object> templateData = new Map<String, Object>();
-            List<Template__c> templates = [SELECT Id, Name, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBImage_Header_Handle__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, File_Name__c, WBTemplate_Body__c, Template_Category__c, Template_Type__c, Template_Variable__c, Template_Miscellaneous_Data__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c
-                                                                                                                                                                                                                                                                                                                                                             FROM WB_Template_Variables__r
-                                                                                                                                                                                                                                                                                                                                                             ORDER BY Name ASC)
-                                           FROM Template__c 
-                                           WHERE Id = :templateId
-                                           WITH SECURITY_ENFORCED];
+            List<Template__c> templates = [SELECT Id, Name, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBImage_Header_Handle__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, File_Name__c, WBTemplate_Body__c, Template_Category__c, Template_Type__c, Template_Variable__c, Template_Miscellaneous_Data__c, 
+                                            (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r ORDER BY Name ASC)
+                                           FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED];
+            
             if (templates.size() > 0){
                 Template__c template = templates[0];
 
@@ -293,10 +254,13 @@ public with sharing class WBTemplateController{
                         if (fieldSelectionCause.size() > 0){
                             String query = 'SELECT Id, ' + String.join(fieldSelectionCause, ', ') + ' FROM Contact WHERE Id =:contactId';
                             List<Contact> contacts = Database.query(query);
+                            
                             if (contacts.size() > 0){
                                 Contact contactRecord = contacts[0];
+                                
                                 for (Template_Variable__c tv : template.WB_Template_Variables__r){
                                     Object valueToReplace = '';
+                                    
                                     if (tv.Object_Name__c == 'Contact'){
                                         valueToReplace = contactRecord.get(tv.Field_Name__c);
                                     } else{
@@ -305,16 +269,13 @@ public with sharing class WBTemplateController{
 
                                     if (tv.Type__c == 'Header'){
                                         String replacement = (valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c != null ? tv.Alternate_Text__c : ''));
-
                                         headerVariables.add(replacement);
                                         template.WBHeader_Body__c = template.WBHeader_Body__c.replace(tv.Name, replacement);
                                     } else if (tv.Type__c == 'Body'){
                                         String replacement = (valueToReplace != null ? valueToReplace.toString() : (tv.Alternate_Text__c != null ? tv.Alternate_Text__c : ''));
-
                                         bodyVariables.add(replacement);
                                         template.WBTemplate_Body__c = template.WBTemplate_Body__c.replace(tv.Name, replacement);
                                     }
-
                                 }
                             }
                         }
@@ -340,7 +301,6 @@ public with sharing class WBTemplateController{
                 } else{
                     templateData.put('template', template);
                 }
-
                 return templateData;
             }
         } catch (Exception e){
@@ -350,49 +310,12 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : Get picklist value for catagory and status used in WbAllTemplatePage to filter.
-     @param           :
-     @return          : picklistValues {Map<String, List<String>>} - return picklist value for catagory and status from template object.
-     ********************************************************
-     */
-    // @AuraEnabled(cacheable = true)
-    // public static Map<String, List<String>> getCategoryAndStatusPicklistValues(){
-    //     Map<String, List<String>> picklistValues = new Map<String, List<String>>();
-
-    //     List<String> categoryValues = new List<String>();
-    //     List<String> statusValues = new List<String>();
-
-    //     try{
-    //         // Fetch Category__c picklist values
-    //         Schema.DescribeFieldResult categoryFieldResult = Template__c.Template_Category__c.getDescribe();
-    //         for (Schema.PicklistEntry entry : categoryFieldResult.getPicklistValues()){
-    //             categoryValues.add(entry.getLabel());
-    //         }
-
-    //         // Fetch Status__c picklist values
-    //         Schema.DescribeFieldResult statusFieldResult = Template__c.Status__c.getDescribe();
-    //         for (Schema.PicklistEntry entry : statusFieldResult.getPicklistValues()){
-    //             statusValues.add(entry.getLabel());
-    //         }
-
-    //         picklistValues.put('categories', categoryValues);
-    //         picklistValues.put('statuses', statusValues);
-
-    //         return picklistValues;
-    //     } catch (Exception e){
-    //         ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'getCategoryAndStatusPicklistValues', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
-    //         return null;
-    //     }
-    // }
-
-    /*
-     *********************************************************
-     @description     : Callout to create template in the Meta and the Body creation and response handle in CreateTemplateWrapper Class.
-     @param           : serializedWrapper - get serialize wrapper from the js to create template.
-     @return          : response Map<String, Object> - return response with the template id.
-     ********************************************************
-     */
+    *********************************************************
+    @description     : Callout to create template in the Meta and the Body creation and response handle in CreateTemplateWrapper Class.
+    @param           : serializedWrapper - get serialize wrapper from the js to create template.
+    @return          : response Map<String, Object> - return response with the template id.
+    ********************************************************
+    */
     @AuraEnabled
     public static Map<String, Object> createWhatsappTemplate(String serializedWrapper, String payloadWrapper, String templateName){
         Map<String, Object> response = new Map<String, Object>();
@@ -428,25 +351,13 @@ public with sharing class WBTemplateController{
             } else{
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
-                // if (String.isNotBlank(templateWrapper.tempImgId)) {
-                //     ContentDocument contentDoc = [SELECT Id FROM ContentDocument WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
-                //     if (Schema.sObjectType.ContentDocument.isDeletable()) {
-                //         delete contentDoc;
-                //     }
-                // }
-
                 if (String.isNotBlank(templateWrapper.tempImgId)){
-                    ContentVersionversion = [SELECT ContentDocument.Id
-                                             FROM ContentVersion
-                                             WHERE Id = :templateWrapper.tempImgId
-                                             WITH SECURITY_ENFORCED
-                                             LIMIT 1];
+                    ContentVersion version = [SELECT ContentDocument.Id FROM ContentVersion WHERE Id = :templateWrapper.tempImgId WITH SECURITY_ENFORCED LIMIT 1];
 
                     if (version != null && Schema.sObjectType.ContentDocument.isDeletable()){
                         delete version.ContentDocument;
                     }
                 }
-
 
                 ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'createWhatsappTemplate', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => res.getStatusCode(), 'chatId' => null, 'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(), 'apiResponse' => res.getBody() });
             }
@@ -456,20 +367,19 @@ public with sharing class WBTemplateController{
                 response.put('success', false);
                 response.put('status', 'warning');
                 response.put('message', 'Template is being created, you will be notified once it is ready.');
-                checkTemplateExistance(templateName, serializedWrapper, payloadWrapper);
+                checkTemplateExistance(templateName, serializedWrapper, payloadWrapper, null, true);
             } else{
                 response.put('success', false);
                 response.put('status', 'error');
                 response.put('message', e.getMessage());
             }
         }
-
         return response;
     }
 
     @future(callout = true)
     @AuraEnabled
-    public static void checkTemplateExistance(String templateName, String serializedWrapper, String payloadWrapper){
+    public static void checkTemplateExistance(String templateName, String serializedWrapper, String payloadWrapper, String metaTempId, Boolean isCreate){
         try{
             String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c + '/message_templates?name=' + EncodingUtil.urlEncode(templateName, 'UTF-8');
 
@@ -487,6 +397,16 @@ public with sharing class WBTemplateController{
                 List<Object> dataList = (List<Object>)responseMap.get('data');
 
                 if (!dataList.isEmpty()){
+                    if(isCreate == false){
+                        Template__c wbTempRec = [SELECT Id, Template_Id__c, Status__c FROM Template__c WHERE Template_Id__c =: metaTempId WITH SECURITY_ENFORCED LIMIT 1];
+                        WB_Template_Edit_History__c editHistory = new WB_Template_Edit_History__c();
+                        editHistory.WB_Template__c = wbTempRec.Id;
+                        editHistory.Edited_Time__c = Datetime.now();
+                        editHistory.Payload_JSON__c = payloadWrapper;
+                        editHistory.Serialized_Wrapper__c = serializedWrapper;
+                        insert as User editHistory;
+                        System.debug('editHistory Id: '+editHistory.Id);
+                    }
                     // Get the first element from the list and cast it as a Map
                     Map<String, Object> templateData = (Map<String, Object>)dataList[0];
 
@@ -521,18 +441,19 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : Method to get session Id for uploading file to meta.
-     @param           : fileName,fileLength,fileType - get the all parameter from the js as user select the file.
-     @return          : sessionId - return sessionId to start upload file in meta.
-     ********************************************************
-     */
+    *********************************************************
+    @description     : Method to get session Id for uploading file to meta.
+    @param           : fileName,fileLength,fileType - get the all parameter from the js as user select the file.
+    @return          : sessionId - return sessionId to start upload file in meta.
+    ********************************************************
+    */
     @AuraEnabled
     public static String startUploadSession(String fileName, Integer fileLength, String fileType){
         try{
             if (String.isBlank(SETTINGS[0].MVWB__Application_Id__c)){
                 return 'Application ID is not configured in the system.';
             }
+            
             Map<String, Object> payload = new Map<String, Object>();
             payload.put('file_name', fileName);
             payload.put('file_length', fileLength);
@@ -557,7 +478,6 @@ public with sharing class WBTemplateController{
 
                 return sessionId;
             } else{
-
                 ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'startUploadSession', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => res.getStatusCode(), 'chatId' => null, 'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(), 'apiResponse' => res.getBody() });
             }
         } catch (Exception e){
@@ -567,16 +487,15 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : Method to upload file to meta and get file handle which use to create body for image header.
-     @param           : serializedWrapper - get serialize wrapper from the js with the detail of files.
-     @return          : headerHandle - return headerHandle so that can used to build body for media template.
-     ********************************************************
-     */
+    *********************************************************
+    @description     : Method to upload file to meta and get file handle which use to create body for image header.
+    @param           : serializedWrapper - get serialize wrapper from the js with the detail of files.
+    @return          : headerHandle - return headerHandle so that can used to build body for media template.
+    ********************************************************
+    */
     @AuraEnabled
     public static String uploadFileChunk(String serializedWrapper, Boolean isAWSEnabled){
         try{
-
             FileChunkWrapper fileWrapper = (FileChunkWrapper)JSON.deserialize(serializedWrapper, FileChunkWrapper.class);
 
             Blob fileBlob = EncodingUtil.base64Decode(fileWrapper.fileContent);
@@ -599,7 +518,6 @@ public with sharing class WBTemplateController{
                 Map<String, Object> responseMap = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());
                 String headerHandle = (String) responseMap.get('h');
                 return JSON.serialize(new Map<String, String>{ 'headerHandle' => headerHandle });
-                // return headerHandle;
             } else{
                 ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'uploadFileChunk', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => res.getStatusCode(), 'chatId' => null, 'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(), 'apiResponse' => res.getBody() });
             }
@@ -610,12 +528,12 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : Method used to delete template from meta as well as from record page.
-     @param           : templateId - using that can delete template.
-     @return          : Return the success or error message.
-     ********************************************************
-     */
+    *********************************************************
+    @description     : Method used to delete template from meta as well as from record page.
+    @param           : templateId - using that can delete template.
+    @return          : Return the success or error message.
+    ********************************************************
+    */
     @AuraEnabled
     public static string deleteTemplete(String templateId){
         try{
@@ -623,11 +541,7 @@ public with sharing class WBTemplateController{
                 return 'Business Account ID is not configured in the system.';
             }
 
-            Template__c wbTempRec = [SELECT Id, Name, Template_Name__c
-                                     FROM Template__c
-                                     WHERE Id = :templateId
-                                     WITH SECURITY_ENFORCED
-                                     LIMIT 1];
+            Template__c wbTempRec = [SELECT Id, Name, Template_Name__c FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED LIMIT 1];
 
             String endpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + SETTINGS[0].MVWB__Business_Account_Id__c + '/message_templates?name=' + wbTempRec.Template_Name__c;
 
@@ -642,6 +556,7 @@ public with sharing class WBTemplateController{
             if (res.getBody() != null && res.getBody() != ''){
                 Map<String, Object> jsonResponse = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());
                 Boolean success = (Boolean) jsonResponse.get('success');
+                
                 if (success){
                     if (Template__c.sObjectType.getDescribe().isDeletable()){
                         DELETE wbTempRec;
@@ -652,7 +567,6 @@ public with sharing class WBTemplateController{
                     return 'Template is not deleted';
                 }
             } else{
-
                 return 'Template is not deleted';
             }
         } catch (Exception e){
@@ -662,22 +576,23 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : Callout to edit template in the Meta and the Body creation and response handle in CreateTemplateWrapper Class.
-     @param           : serializedWrapper - get serialize wrapper from the js to create template.
-     @return          : response Map<String, Object> - return response with the template id.
-     ********************************************************
-     */
+    *********************************************************
+    @description     : Callout to edit template in the Meta and the Body creation and response handle in CreateTemplateWrapper Class.
+    @param           : serializedWrapper - get serialize wrapper from the js to create template.
+    @return          : response Map<String, Object> - return response with the template id.
+    ********************************************************
+    */
     @AuraEnabled
-    public static Map<String, Object> editWhatsappTemplate(String serializedWrapper, String payloadWrapper, String templateId, String templateName){
+    public static Map<String, Object> editWhatsappTemplate(String serializedWrapper,String payloadWrapper,String templateId, String templateName) {
         Map<String, Object> response = new Map<String, Object>();
+        Template__c wbTempRec = [SELECT Id, Template_Id__c, Status__c FROM Template__c WHERE Template_Id__c =: templateId WITH SECURITY_ENFORCED LIMIT 1];
+        
         HttpResponse res = new HttpResponse();
-
-        try{
-            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper)JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
-            String editEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/' + templateId;
-            Map<String, Object> payload = (Map<String, Object>)JSON.deserializeUntyped(payloadWrapper);
-
+        try {
+            CreateTemplateWrapper.TemplateWrapper templateWrapper = (CreateTemplateWrapper.TemplateWrapper) JSON.deserialize(serializedWrapper, CreateTemplateWrapper.TemplateWrapper.class);
+            String editEndpoint = SETTINGS[0].MVWB__API_Endpoint__c + '/' + SETTINGS[0].MVWB__API_Version__c + '/'+templateId;
+            Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(payloadWrapper);
+            
             HttpRequest req = new HttpRequest();
             req.setEndpoint(editEndpoint);
             req.setMethod('POST');
@@ -687,13 +602,23 @@ public with sharing class WBTemplateController{
 
             Http http = new Http();
             res = http.send(req);
-
+            System.debug(res.getBody());
             if (res.getStatusCode() == 200){
+                WB_Template_Edit_History__c editHistory = new WB_Template_Edit_History__c();
+                editHistory.WB_Template__c = wbTempRec.Id;
+                editHistory.Edited_Time__c = Datetime.now();
+                editHistory.Payload_JSON__c = payloadWrapper;
+                editHistory.Serialized_Wrapper__c = serializedWrapper;
+                insert as User editHistory;
+                System.debug('editHistory Id: '+editHistory.Id);
+
                 Map<String, Object> responseMap = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());
                 CreateTemplateWrapper.handleSuccessResponse((String) responseMap.get('id'), (String) responseMap.get('status'), payload, templateWrapper);
                 response.put('success', true);
             } else if (res.getStatusCode() != 200 && String.isNotEmpty(res.getBody())){
-
+                wbTempRec.Status__c = 'In-Review';
+                update as User wbTempRec;
+                
                 Map<String, Object> resMap = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());
                 if (resMap.containsKey('error')){
                     Map<String, Object> errorMap = (Map<String, Object>)resMap.get('error');
@@ -713,8 +638,7 @@ public with sharing class WBTemplateController{
             } else{
                 response.put('success', false);
                 response.put('errorMessage', res.getBody());
-                
-                ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'editWhatsappTemplate', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => res.getStatusCode(), 'chatId' => null, 'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(), 'apiResponse' => res.getBody() });
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController','methodName' => 'editWhatsappTemplate','exceptionObj' => null,'isApiException' => true,'statusCode' => res.getStatusCode(),'chatId' => null,'moreDetails' => 'HTTP callout failed with status: ' + res.getStatusCode(),'apiResponse' => res.getBody()});
             }
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'editWhatsappTemplate', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
@@ -723,6 +647,8 @@ public with sharing class WBTemplateController{
                 response.put('success', false);
                 response.put('status', 'warning');
                 response.put('message', 'Template is being updated, you will be notified once it is ready.');
+                wbTempRec.Status__c = 'In-Review';
+                update as User wbTempRec;
                 // checkTemplateExistance(templateName, serializedWrapper, payloadWrapper);
             } else{
                 response.put('success', false);
@@ -781,10 +707,7 @@ public with sharing class WBTemplateController{
                         System.debug('Failed to parse templateMiscellaneousData: ' + e.getMessage());
                     }
                 }
-                ContentVersion cv = [SELECT Title, VersionData, FileExtension, ContentSize
-                                     FROM ContentVersion
-                                     WHERE Id = :contentVersionId
-                                     LIMIT 1];
+                ContentVersion cv = [SELECT Title, VersionData, FileExtension, ContentSize FROM ContentVersion WHERE Id = :contentVersionId LIMIT 1];
                 fileBlob = cv.VersionData;
                 fileName = cv.Title + '.' + cv.FileExtension;
                 mimeType = getMimeTypeFromExtension(cv.FileExtension);
@@ -817,21 +740,31 @@ public with sharing class WBTemplateController{
 
                 // Update the header_handle using regex
                 payloadWrapper = payloadWrapper.replaceFirst('"header_handle":"[^"]+"', '"header_handle":"' + headerHandleResult + '"');
+                payloadWrapper = payloadWrapper
+                                    .replace('\n', '') // Remove newlines
+                                    .replace('\r', '')
+                                    .replace('\t', '')
+                                    .replaceAll('\\s{2,}', ' ') // Optional: replace multiple spaces with one
+                                    .replaceAll('\\{\\{', '{{') // Leave double-braces alone if needed for templates
+                                    .replaceAll('\\}\\}', '}}');
+                System.debug('Updated payload: ' + payloadWrapper);
+
                 templateWrapper.tempHeaderHandle = headerHandleResult;
                 serializedWrapper = JSON.serialize(templateWrapper);
+                serializedWrapper = serializedWrapper.replace('\n', '\\n');
                 System.debug('Updated serializedWrapper with new header handle: ' + serializedWrapper);
+
                 editWhatsappTemplate(serializedWrapper, payloadWrapper, tempalteId, templateName);
 
             } else{
                 System.debug('⚠ Upload completed but no headerHandle returned.');
             }
-
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'uploadFileToMetaAndGetHeaderHandle', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
     }
 
-    private static String getMimeTypeFromExtension(String ext){
+    public static String getMimeTypeFromExtension(String ext){
         ext = ext != null ? ext.toLowerCase() : '';
         if (ext == 'png')
             return 'image/png';
@@ -852,13 +785,10 @@ public with sharing class WBTemplateController{
         return 'application/octet-stream'; // default fallback
     }
 
-    @AuraEnabled(cacheable = true)
+    @AuraEnabled
     public static List<Flow__c> getAllFlows(){
         try{
-            return [SELECT Id, Flow_Id__c, Flow_Name__c, Flow_JSON__c, LastModifiedDate, Status__c
-                    FROM Flow__c
-                    where Status__c = :'Published'
-                    ORDER BY CreatedDate DESC];
+            return [SELECT Id, Flow_Id__c, Flow_Name__c, Flow_JSON__c, LastModifiedDate, Status__c FROM Flow__c WHERE Status__c = :'Published' ORDER BY CreatedDate DESC];
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
             return new List<Flow__c>();
@@ -895,22 +825,18 @@ public with sharing class WBTemplateController{
     }
 
     /*
-     *********************************************************
-     @description     : Method to get objects with phone field.
-     @return          : List<Map<String, String>> - return list of objects with phone field.
-     ********************************************************
-     */
-    @AuraEnabled(cacheable = true)
+    *********************************************************
+    @description     : Method to get objects with phone field.
+    @return          : List<Map<String, String>> - return list of objects with phone field.
+    ********************************************************
+    */
+    @AuraEnabled
     public static List<Map<String, String>> getObjectsWithPhoneField(){
         List<Map<String, String>> objectList = new List<Map<String, String>>();
 
         try{
             // Query FieldDefinition to fetch all objects having at least one Phone field
-            List<FieldDefinition> phoneFields = [SELECT EntityDefinition.QualifiedApiName, EntityDefinition.Label
-                                                 FROM FieldDefinition
-                                                 WHERE DataType = 'Phone' AND EntityDefinition.IsCustomizable = true AND EntityDefinition.IsApexTriggerable = true AND EntityDefinition.IsQueryable = true
-                                                 WITH SECURITY_ENFORCED];
-
+            List<FieldDefinition> phoneFields = [SELECT EntityDefinition.QualifiedApiName, EntityDefinition.Label FROM FieldDefinition WHERE DataType = 'Phone' AND EntityDefinition.IsCustomizable = true AND EntityDefinition.IsApexTriggerable = true AND EntityDefinition.IsQueryable = true WITH SECURITY_ENFORCED];
             Set<String> processedObjects = new Set<String>();
 
             for (FieldDefinition field : phoneFields){
@@ -923,45 +849,28 @@ public with sharing class WBTemplateController{
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{ 'className' => 'WBTemplateController', 'methodName' => 'getObjectsWithPhoneField', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null });
         }
-
         return objectList;
     }
 
-    @AuraEnabled(cacheable = true)
+    @AuraEnabled
     public static String getCompanyName(){
-        return [SELECT Name
-                FROM Organization
-                LIMIT 1].Name;
+        return [SELECT Name FROM Organization LIMIT 1].Name;
     }
 
     public class FileChunkWrapper{
-        @AuraEnabled
-        public String uploadSessionId;
-        @AuraEnabled
-        public String fileContent;
-        @AuraEnabled
-        public Integer chunkStart;
-        @AuraEnabled
-        public Integer chunkSize;
-        @AuraEnabled
-        public String fileName;
-        @AuraEnabled
-        public Boolean isLastChunk;
+        @AuraEnabled public String uploadSessionId;
+        @AuraEnabled public String fileContent;
+        @AuraEnabled public Integer chunkStart;
+        @AuraEnabled public Integer chunkSize;
+        @AuraEnabled public String fileName;
+        @AuraEnabled public Boolean isLastChunk;
     }
 
     public class TemplateDataWrapper{
-        @AuraEnabled
-        public Template__c template;
-        // @AuraEnabled public Object queriedData;
-        @AuraEnabled
-        public List<String> objectNames;
-        @AuraEnabled
-        public List<String> fieldNames;
-        @AuraEnabled
-        public List<Map<String, String>> templateVariables;
-        @AuraEnabled
-        public Boolean isImgUrl;
-
+        @AuraEnabled public Template__c template;
+        @AuraEnabled public List<String> objectNames;
+        @AuraEnabled public List<String> fieldNames;
+        @AuraEnabled public List<Map<String, String>> templateVariables;
+        @AuraEnabled public Boolean isImgUrl;
     }
-
 }

@@ -87,6 +87,9 @@
                                     <div class="slds-truncate">Status</div>
                                 </th>
                                 <th class="tableHead" scope="col">
+                                    <div class="slds-truncate">Last Edited</div>
+                                </th>
+                                <th class="tableHead" scope="col">
                                     <div class="slds-truncate">Actions</div>
                                 </th>
                             </tr>
@@ -109,11 +112,14 @@
                                     <td class="tableData status" data-label="Status">
                                         <div class="slds-truncate"><p class={record.MVWB__Status__c}>{record.MVWB__Status__c}</p></div>
                                     </td>
+                                    <td class="tableData status" data-label="Status">
+                                        <div class="slds-truncate"><p class={record.LastModifiedDate}>{record.LastModifiedDate}</p></div>
+                                    </td>
                                     <td class="tableData tablebtns" data-label="Actions">
                                         <button class="action-buttons">
                                             <img src="/resource/MVWB__previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
                                         </button>
-                                        <button disabled={record.isButtonDisabled} class="action-buttons">
+                                        <button disabled={record.isButtonDisabled} title="Template can be only edited once in 24hours and 10 times in 1 month" class="action-buttons">
                                             <img src="/resource/MVWB__editIcon" class={record.cssClass} alt="edit" data-id={record.id} onclick={editTemplate} >
                                         </button>
                                         <button class="action-buttons">
