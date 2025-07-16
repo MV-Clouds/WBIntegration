@@ -1018,8 +1018,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                                 const tempfieldsHead = tvs.filter(tv => tv.type === 'Header').map(tv => tv.field);
                                 // const tempHeadObj = tvs.filter(tv => tv.type === 'Header');
                                 // console.log('tempHeadObj', tempHeadObj);
-
-
                                 // this.handleHeaderObjectChange({ target: { value: tempHeadObj[0].object } });
                                 // Body variables with individual field options
                                 this.variables = tvs
@@ -1213,6 +1211,19 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 let maxSize = 4;
                 let fileSizeMB = Math.floor(file.size / (1024 * 1024));
                 isValid = fileSizeMB <= maxSize;
+                // if (this.fileType.startsWith('image/')) {
+                //     maxSize = 5;
+                //     isValid = fileSizeMB <= maxSize;
+                // } else if (this.fileType.startsWith('video/')) {
+                //     maxSize = 16;
+                //     isValid = fileSizeMB <= maxSize;
+                // } else if (this.fileType.includes('application/') || this.fileType.includes('text/')) {
+                //     maxSize = 100;
+                //     isValid = fileSizeMB <= maxSize;
+                // }
+                // else {
+                //     // console.log('Else OUT');
+                // }
 
                 if (isValid) {
                     this.selectedFilesToUpload.push(file);
@@ -1857,6 +1868,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     handleMenuSelect(event) {
         try {
+            // const selectedValue = event.detail.value;
             const selectedValue = event.currentTarget.dataset.value;
             this.menuButtonSelected = selectedValue;
             let buttonData = event.currentTarget.dataset.buttonData;
@@ -1877,8 +1889,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 hasError: false,
                 errorMessage: ''
             };
-
-
 
             this.isAddCallPhoneNumber = false;
             this.isAddVisitWebsiteCount = false;
@@ -2936,15 +2946,17 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     .then(result => {
                         if (result && result.success) {
                             this.showToastSuccess('Template successfully edited.');
-
+                            this.isLoading = false;
+                            this.clearEditTemplateData();
                             this.navigateToAllTemplatePage();
                         } else if (result && result.success == false && result.status == 'warning') {
                             this.showToastWarning('Template updation taking too much time, please wait for few minutes and refresh the page to see the updated template.');
                             this.isLoading = false;
                             setTimeout(() => {
-                                checkTemplateExistance({ templateName: this.templateName, serializedWrapper: serializedWrapper, payloadWrapper: payload });
+                                checkTemplateExistance({ templateName: this.templateName, serializedWrapper: serializedWrapper, payloadWrapper: payload, metaTempId: this.metaTemplateId, isCreate: false });
                             }, 60000);
-
+                            this.isLoading = false;
+                            this.clearEditTemplateData();
                             this.navigateToAllTemplatePage();
                         } else {
                             const errorResponse = JSON.parse(result.errorMessage);
@@ -2955,8 +2967,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         }
                     })
                     .catch(error => {
-                        console.error('Error creating template', error);
-                        const errorTitle = 'Template creation failed: ';
+                        console.error('Error editing template', error);
+                        const errorTitle = 'Template edition failed: ';
                         let errorMsg;
                         if (error.body && error.body.message) {
                             if (error.body.message.includes('Read timed out')) {
@@ -2973,19 +2985,17 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     });
 
             } else {
-                console.log('Payload :::', payload);
-
                 createWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateName: this.templateName })
                     .then(result => {
 
                         if (result && result.success) {
                             this.showToastSuccess('Template successfully created');
-
+                            this.isLoading = false;
+                            this.clearEditTemplateData();
                             this.navigateToAllTemplatePage();
                         } else if (result && result.success == false && result.status == 'warning') {
                             this.showToastWarning('Template creation taking too much time, please wait for few minutes and refresh the page to see the template.');
                             this.isLoading = false;
-
                             this.clearEditTemplateData();
                             this.navigateToAllTemplatePage();
                         } else {

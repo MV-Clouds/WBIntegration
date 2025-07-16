@@ -59,7 +59,7 @@ export default class TemplateSend extends LightningElement {
             // console.error(this.templateId, this.objectApiName, this.recordId);
             getTemplateData({templateId: this.templateId, contactId:this.recordId, objectApiName : this.objectApiName})
             .then((templateData) => {
-                console.log('Template Data:', templateData);
+                // console.log('Template Data:', templateData);
                 
                 if(!templateData){
                     this.isTemplateDeleted = true;
@@ -102,7 +102,7 @@ export default class TemplateSend extends LightningElement {
                 else{
                     this.headerBody = this.headerBody ||'';
                 }
-                console.log('Header Body:', this.headerBody);
+                // console.log('Header Body:', this.headerBody);
                 
 
                 const buttonBody = this.templateData.MVWB__WBButton_Body__c
@@ -118,7 +118,7 @@ export default class TemplateSend extends LightningElement {
                         iconName: this.getIconName(type)
                     }
                 })
-                console.log('Button List:', this.buttonList);
+                // console.log('Button List:', this.buttonList);
                 
 
                 this.showSpinner = false;
