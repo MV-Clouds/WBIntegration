@@ -868,20 +868,18 @@ global without sharing class WhatsAppWebhook{
             System.debug('messageContent==> ' + messageContent);
             // Prepare the custom notification object
             Set<String> addressee = new Set<String>();
-            addressee.add((Id) record.get('CreatedById'));
-            if( addresseeId != null && addresseeId != ''){
-                List<User> us = [SELECT Id, IsActive FROM User WHERE Id = : addresseeId LIMIT 1];
-                if(us.size() > 0 && us[0].IsActive == true){
-                    addressee.add((Id) addresseeId);
-                    Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
-                    customNotificationObj.setBody(messageContent);
-                    customNotificationObj.setTitle('New Whatsapp Message Received');
-                    customNotificationObj.setNotificationTypeId(cnType[0].Id);
-                    customNotificationObj.setTargetId((Id) record.get('Id'));
-                    customNotificationObj.send(addressee);
+            List<User> userList = [SELECT Id, IsActive FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true LIMIT 1];
+            if(!userList.isEmpty()){
+                for (User us : userList) {
+                    addressee.add(us.Id);
                 }
+                Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
+                customNotificationObj.setBody(messageContent);
+                customNotificationObj.setTitle('New Whatsapp Message Received');
+                customNotificationObj.setNotificationTypeId(cnType[0].Id);
+                customNotificationObj.setTargetId((Id) record.get('Id'));
+                customNotificationObj.send(addressee);
             }
-
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'sendNotificationForContact', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in sendNotificationForContact: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());
