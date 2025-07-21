@@ -868,7 +868,7 @@ global without sharing class WhatsAppWebhook{
             System.debug('messageContent==> ' + messageContent);
             // Prepare the custom notification object
             Set<String> addressee = new Set<String>();
-            List<User> userList = [SELECT Id, IsActive FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true LIMIT 1];
+            List<User> userList = [SELECT Id, IsActive FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true LIMIT 200];
             if(!userList.isEmpty()){
                 for (User us : userList) {
                     addressee.add(us.Id);
