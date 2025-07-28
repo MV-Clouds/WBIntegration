@@ -222,6 +222,111 @@
                             </table>
                         </div>
                     </div>
+
+                    <div class="slds-m-around_medium slds-text-align--center">
+                        <lightning-button label="Add New Field" variant="brand" class="slds-m-left_small" onclick={handleAddNewField}></lightning-button>
+                    </div>
+                    <div class="slds-p-around--medium datatable">
+                        <div class="table-container">
+                            <table class="slds-table">
+                                <thead>
+                                    <tr class="tablerow">
+                                        <th class="tableHead" scope="col">
+                                            <div class="slds-truncate">
+                                                Field API Name
+                                            </div>
+                                        </th>
+                                        <th class="tableHead" scope="col">
+                                            <div class="slds-truncate">
+                                                Field Type
+                                            </div>
+                                        </th>
+                                        <th class="tableHead" scope="col">
+                                            <div class="slds-truncate">
+                                                Default Value
+                                            </div>
+                                        </th>
+                                        <th class="tableHead" scope="col">
+                                            <div class="slds-truncate">
+                                                Action
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template if:true={selectedNotRequiredFields.length}>
+                                        <template for:each={selectedNotRequiredFields} for:item="field" for:index="index">
+                                            <tr class="slds-table_bordered tablerow" key={field.apiName}>
+                                                <td class="tableData">
+                                                    <div>
+                                                        <lightning-combobox variant="label-hidden" name="field" data-index={index} value={field.apiName} placeholder="Select Field" options={field.availableFieldForSelection} onchange={handleFieldChange} disabled={field.required}></lightning-combobox>
+                                                    </div>
+                                                </td>
+                                                <td class="tableData">
+                                                    <div class="slds-truncate">
+                                                        {field.type}
+                                                    </div>
+                                                </td>
+                                                <td class="tableData">
+                                                    <template if:true={field.isString}>
+                                                        <lightning-input variant="label-hidden" data-index={index} type="text" data-field={field.apiName} value={field.value} onchange={handleFieldValueChange}></lightning-input>
+                                                    </template>
+                    
+                                                    <template if:true={field.isNumber}>
+                                                        <lightning-input variant="label-hidden" data-index={index} type="number" data-field={field.apiName} value={field.value} onchange={handleFieldValueChange}></lightning-input>
+                                                    </template>
+
+                                                    <template if:true={field.isEmail}>
+                                                        <lightning-input variant="label-hidden" data-index={index} type="email" data-field={field.apiName} value={field.value} onchange={handleFieldValueChange}></lightning-input>
+                                                    </template>
+
+                                                    <template if:true={field.isPhone}>
+                                                        <lightning-input variant="label-hidden" data-index={index} type="tel" data-field={field.apiName} value={field.value} onchange={handleFieldValueChange}></lightning-input>
+                                                    </template>
+        
+                                                    <template if:true={field.isDate}>
+                                                        <lightning-input variant="label-hidden" data-index={index} type="date" data-field={field.apiName} value={field.value} onchange={handleFieldValueChange}></lightning-input>
+                                                    </template>
+        
+                                                    <template if:true={field.isDateTime}>
+                                                        <lightning-input variant="label-hidden" data-index={index} type="datetime" data-field={field.apiName} value={field.value} onchange={handleFieldValueChange}></lightning-input>
+                                                    </template>
+                    
+                                                    <template if:true={field.isReference}>
+                                                        <lightning-record-picker label="Search records" variant="label-hidden" placeholder="Search records here..." object-api-name={field.relatedObject} 
+                                                                        value={field.value} data-field={field.apiName} onchange={handleLookupFieldSelection}></lightning-record-picker>
+                                                    </template>
+                    
+                                                    <template if:true={field.isTextArea}>
+                                                        <lightning-textarea variant="label-hidden" data-index={index} data-field={field.apiName} value={field.value} onchange={handleFieldValueChange}></lightning-textarea>
+                                                    </template>
+                    
+                                                    <template if:true={field.isPicklist}>
+                                                        <lightning-combobox variant="label-hidden" data-index={index} data-field={field.apiName} value={field.value} options={field.picklistValues} onchange={handleFieldValueChange}></lightning-combobox>
+                                                    </template>
+                    
+                                                    <template if:true={field.isBoolean}>
+                                                        <lightning-input variant="label-hidden" data-index={index} type="checkbox" checked={field.value} data-field={field.apiName} onchange={handleFieldValueChange}></lightning-input>
+                                                    </template>
+                                                </td>
+                                                <!-- Actions (Edit, Remove) -->
+                                                <td class="tableData alignCenter">
+                                                    <lightning-button-icon icon-name="utility:delete" alternative-text="Remove" onclick={handleRemoveField} data-row-id={field.id} disabled={field.required}></lightning-button-icon>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    <template if:false={requiredFields.length}>
+                                        <tr>
+                                            <td class="slds-text-align_center" colspan="3">
+                                                No additional fields available for the selected object
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
         
                     <div class="slds-p-around--medium datatable">
                         <table class="slds-table table-container">
@@ -242,20 +347,10 @@
                                         <span>Select Phone Field &nbsp;</span>
                                         <lightning-helptext content="Select Phone Field to Use for WBConnect for Receiving Incoming Messages"></lightning-helptext>
                                     </td>
-                                    <td>
+                                    <td class="phoneSelect">
                                         <template if:true={phoneFields}>
-                                            <div class="slds-form-element">
-                                                <div class="slds-form-element__control radio-stack">
-                                                    <template for:each={phoneFields} for:item="field">
-                                                        <div key={field.value} class="slds-radio">
-                                                            <input type="radio" id={field.value} name="phoneField" value={field.value} checked={field.isSelected} onchange={handleSelectionChange}/>
-                                                            <label class="slds-radio__label" for={field.value}>
-                                                                <span class="slds-radio_faux"></span>
-                                                                <span class="slds-form-element__label"> &nbsp; {field.label} ({field.value})</span>
-                                                            </label>
-                                                        </div>
-                                                    </template>
-                                                </div>
+                                            <div class="slds-m-horizontal--medium objectSelect">
+                                                <lightning-combobox label="Select Object" variant="label-hidden" value={selectedPhoneFieldVal} options={phoneFields} onchange={handleSelectionChange}></lightning-combobox>
                                             </div>
                                         </template>
                                         <template if:false={phoneFields}>
