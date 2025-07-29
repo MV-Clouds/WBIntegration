@@ -11,6 +11,8 @@ import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicense
 export default class ObjectConfigComp extends LightningElement {
     @track selectedObject = 'Contact';
     @track requiredFields = [];
+    @track allFields = [];
+    @track selectedWebhookFields = [];
     @track phoneFields = [];
     @track phoneFieldsForChatConfig = []
     @track textFields = [];
@@ -32,6 +34,7 @@ export default class ObjectConfigComp extends LightningElement {
     @track showPopup = false;
     @track showPopupWBConfig = false;
     @track showPopupChatConfig = false;
+    @track isCalled = false;
 
     // Fetch saved metadata on load
     async connectedCallback(){
@@ -41,8 +44,7 @@ export default class ObjectConfigComp extends LightningElement {
             if (this.showLicenseError) {
                 return; // Stops execution if license is expired
             }
-            
-        this.loadSavedValues();
+            this.loadSavedValues();
         } catch (e) {
             console.error('Error in connectedCallback:::', e.message);
         }
@@ -81,7 +83,7 @@ export default class ObjectConfigComp extends LightningElement {
                             return acc;
                         }, {});
         
-                        this.loadRequiredFields(savedFieldValues);
+                        this.loadRequiredFields(savedFieldValues, true);
                     } else {
                         this.isWebhookConfigEdit = true;
                     }
@@ -138,8 +140,8 @@ export default class ObjectConfigComp extends LightningElement {
                         value: obj.value   // API name
                     }));
                     this.availableObjectOptions = [...this.objectOptions];
-                    if(this.requiredFields.length <= 0){
-                        this.loadRequiredFields();
+                    if(this.selectedWebhookFields.length <= 0){
+                        this.loadRequiredFields({}, false);
                     }
                     this.updateRowObjectOptions();
                 })
@@ -152,86 +154,137 @@ export default class ObjectConfigComp extends LightningElement {
     }
 
     // Load required fields based on the selected object and prefill saved values
-    loadRequiredFields(savedFieldValues = {}) {
+    loadRequiredFields(savedFieldValues = {}, isCall) {
         try {
-            this.isLoading = true;
-            getRequiredFields({ objectName: this.selectedObject })
-                .then(data => {
-                    this.textFields = data[0]?.textFields;
-                    
-                    const apexPhoneField = this.selectedWebhookPhoneField;
-
-                    this.phoneFields = data[0]?.phoneFields.map(field => {
-                        return {
-                            ...field,
-                            isSelected: false
-                        };
-                    });
-                    // Determine which phone field to select
-                    let selectedField = null;
-                    
-                    if (apexPhoneField && this.phoneFields.some(field => field.value === apexPhoneField)) {
-                        selectedField = this.phoneFields.find(field => field.value === apexPhoneField);
-                    } else if (this.phoneFields.some(field => field.value === 'Phone')) {
-                        selectedField = this.phoneFields.find(field => field.value === 'Phone');
-                    } else {
-                        selectedField = this.phoneFields[0] || null;
-                    }
-                    
-                    // this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
-                    // const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
-                    if (selectedField) {
-                        this.selectedPhoneFieldVal = selectedField.value;
-                        this.selectedPhoneFieldLabel = selectedField.label;
-                        // Update isSelected based on selectedPhoneFieldVal
-                        this.phoneFields = this.phoneFields.map(field => {
+            if(isCall){
+                this.isLoading = true;
+                getRequiredFields({ objectName: this.selectedObject })
+                    .then(data => {
+                        this.textFields = data[0]?.textFields;
+                        
+                        const apexPhoneField = this.selectedWebhookPhoneField;
+    
+                        this.phoneFields = data[0]?.phoneFields.map(field => {
                             return {
                                 ...field,
-                                isSelected: field.value === this.selectedPhoneFieldVal
+                                isSelected: false
                             };
                         });
-                    } else {
-                        this.selectedPhoneFieldVal = '';
-                        this.selectedPhoneFieldLabel = '';
-                    }
-                    this.phoneFieldsForChatConfig = [...this.phoneFields];
-
-                    this.requiredFields = data[0]?.requiredFields.map(field => ({
-                        apiName: field.name,
-                        label: field.label,
-                        type: this.capitalizeFirstLetter(field.type),
-                        value: field.type === 'BOOLEAN' 
-                                ? (savedFieldValues[field.name] !== undefined ? savedFieldValues[field.name] : false)
-                                : field.type === 'DATE' 
-                                    ? (savedFieldValues[field.name] || field.value || new Date().toISOString().split('T')[0])
-                                    : field.type === 'DATETIME' 
-                                        ? (savedFieldValues[field.name] || field.value || new Date().toISOString())
-                                        : field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY'
-                                            ? (savedFieldValues[field.name] || field.value || 0) 
-                                            : (savedFieldValues[field.name] || field.value || ''),
-                        picklistValues: field?.picklistValues,
-                        relatedObject: field?.relatedObject,
-                        relatedRecordName: field?.relatedRecordName,
-                        isString: field.type === 'STRING',
-                        isNumber: field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY',
-                        isDate: field.type === 'DATE',
-                        isDateTime: field.type === 'DATETIME',
-                        isBoolean: field.type === 'BOOLEAN',
-                        isPicklist: field.type === 'PICKLIST',
-                        isReference: field.type === 'REFERENCE',
-                        isTextArea: field.type === 'TEXTAREA'
-                    }));
-                    this.populateReferenceNames();
-                })
-                .catch(error => {
-                    console.error('Error fetching required fields:', error);
-                })
-                .finally(() => {
-                    this.isLoading = false;
-                });
+                        // Determine which phone field to select
+                        let selectedField = null;
+                        
+                        if (apexPhoneField && this.phoneFields.some(field => field.value === apexPhoneField)) {
+                            selectedField = this.phoneFields.find(field => field.value === apexPhoneField);
+                        } else if (this.phoneFields.some(field => field.value === 'Phone')) {
+                            selectedField = this.phoneFields.find(field => field.value === 'Phone');
+                        } else {
+                            selectedField = this.phoneFields[0] || null;
+                        }
+                        
+                        // this.selectedPhoneFieldVal = this.phoneFields.find(field => field.value === 'Phone')?.value || this.phoneFields[0]?.value || '';
+                        // const selectedField = this.phoneFields.find(field => field.value === 'Phone') || this.phoneFields[0] || null;
+                        if (selectedField) {
+                            this.selectedPhoneFieldVal = selectedField.value;
+                            this.selectedPhoneFieldLabel = selectedField.label;
+                            // Update isSelected based on selectedPhoneFieldVal
+                            this.phoneFields = this.phoneFields.map(field => {
+                                return {
+                                    ...field,
+                                    isSelected: field.value === this.selectedPhoneFieldVal
+                                };
+                            });
+                        } else {
+                            this.selectedPhoneFieldVal = '';
+                            this.selectedPhoneFieldLabel = '';
+                        }
+                        this.phoneFieldsForChatConfig = [...this.phoneFields];
+    
+                        const allFields = data[0]?.requiredFields.map(field => ({
+                            apiName: field.name,
+                            label: field.label,
+                            required: field.required,
+                            type: this.capitalizeFirstLetter(field.type),
+                            value: field.type === 'BOOLEAN' 
+                                    ? (savedFieldValues[field.name] !== undefined ? savedFieldValues[field.name] : false)
+                                    : field.type === 'DATE' 
+                                        ? (savedFieldValues[field.name] || field.value || new Date().toISOString().split('T')[0])
+                                        : field.type === 'DATETIME' 
+                                            ? (savedFieldValues[field.name] || field.value || new Date().toISOString())
+                                            : field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY'
+                                                ? (savedFieldValues[field.name] || field.value || 0) 
+                                                : (savedFieldValues[field.name] || field.value || ''),
+                            picklistValues: field?.picklistValues,
+                            relatedObject: field?.relatedObject,
+                            relatedRecordName: field?.relatedRecordName,
+                            isString: field.type === 'STRING',
+                            isNumber: field.type === 'INTEGER' || field.type === 'DOUBLE' || field.type === 'CURRENCY',
+                            isDate: field.type === 'DATE',
+                            isDateTime: field.type === 'DATETIME',
+                            isBoolean: field.type === 'BOOLEAN',
+                            isPicklist: field.type === 'PICKLIST',
+                            isReference: field.type === 'REFERENCE',
+                            isTextArea: field.type === 'TEXTAREA',
+                            isPhone: field.type === 'PHONE',
+                            isEmail: field.type === 'EMAIL',
+                            isPercent: field.type === 'PERCENT',
+                            isTime: field.type === 'TIME',
+                            isURL: field.type === 'URL'
+                        }));
+    
+                        this.allFields = allFields;
+                        this.savedFieldValues = savedFieldValues;
+                        const selectedWebhookFields = [];
+    
+                        allFields.forEach((f, index) => {
+                            const isInSaved = savedFieldValues.hasOwnProperty(f.apiName);
+                            if (f.required || isInSaved) {
+                                selectedWebhookFields.push({
+                                    ...f,
+                                    id: Date.now() + index,
+                                    availableFieldForSelection: [],
+                                    disabled: f.required
+                                });
+                            }
+                        });
+                        this.selectedWebhookFields = selectedWebhookFields.sort((a, b) => {
+                            // Required fields come first
+                            if (a.required && !b.required) return -1;
+                            if (!a.required && b.required) return 1;
+                            return 0;
+                        });
+                        
+                        this.selectedWebhookFields = this.selectedWebhookFields.map((row, idx) => ({
+                            ...row,
+                            availableFieldForSelection: this.getFilteredFields(row.apiName, idx)
+                        }));
+                        
+                        console.log('this.selectedWebhookFields :: ', this. selectedWebhookFields);
+    
+                        this.populateReferenceNames();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching required fields:', error);
+                    })
+                    .finally(() => {
+                        this.isLoading = false;
+                    });
+            }
         } catch (error) {
             console.error('Exception in loading required fields : ' , error);
         }
+    }
+
+    getFilteredFields(currentApiName, currentIndex) {
+        const selectedApiNames = this.selectedWebhookFields
+            .map((f, i) => i !== currentIndex ? f.apiName : null)
+            .filter(Boolean);
+
+        return this.allFields
+            .filter(f => !selectedApiNames.includes(f.apiName) || f.apiName === currentApiName)
+            .map(f => ({
+                label: f.label,
+                value: f.apiName
+            }));
     }
 
     capitalizeFirstLetter(str) {
@@ -243,7 +296,7 @@ export default class ObjectConfigComp extends LightningElement {
     handleObjectChange(event) {
         try {
             this.selectedObject = event.target.value;
-            this.loadRequiredFields(); // Load fields for the new object
+            this.loadRequiredFields({}, true); // Load fields for the new object
         } catch (error) {
             console.error('Error in object change : ' , error);
         }
@@ -251,7 +304,7 @@ export default class ObjectConfigComp extends LightningElement {
 
     populateReferenceNames() {
         try {
-            const referenceFields = this.requiredFields.filter(field => 
+            const referenceFields = this.selectedWebhookFields.filter(field => 
                 field.isReference && field.value && field.relatedObject
             );
     
@@ -266,7 +319,7 @@ export default class ObjectConfigComp extends LightningElement {
     
             Promise.all(namePromises)
                 .then(results => {
-                    this.requiredFields = this.requiredFields.map(field => {
+                    this.selectedWebhookFields = this.selectedWebhookFields.map(field => {
                         const result = results.find(r => r.apiName === field.apiName);
                         return result && field.isReference && !field.relatedRecordName
                             ? { ...field, relatedRecordName: result.name }
@@ -281,13 +334,41 @@ export default class ObjectConfigComp extends LightningElement {
         }
     }
 
+    handleFieldChange(event) {
+        try {
+            const index = parseInt(event.target.dataset.index, 10);
+            const selectedApiName = event.detail.value;
+
+            const fieldDef = this.allFields.find(f => f.apiName === selectedApiName);
+            if (!fieldDef) return;
+
+            // Update selected row
+            const updatedRow = {
+                ...fieldDef,
+                id: this.selectedWebhookFields[index].id,
+                availableFieldForSelection: []
+            };
+
+            // Replace row
+            this.selectedWebhookFields[index] = updatedRow;
+
+            // Rebuild dropdown options for all rows
+            this.selectedWebhookFields = this.selectedWebhookFields.map((row, idx) => ({
+                ...row,
+                availableFieldForSelection: this.getFilteredFields(row.apiName, idx)
+            }));
+        } catch (error) {
+            console.error('Error in handleFieldChange :: ', error);
+        }
+    }
+
     // Handle input changes and update `requiredFields`
     handleInputChange(event) {
         try {
-            const fieldName = event.target.dataset.field;
-            const fieldIndex = this.requiredFields.findIndex(f => f.apiName === fieldName);
+            const fieldName = event.target.dataset.id;
+            const fieldIndex = this.selectedWebhookFields.findIndex(f => f.apiName === fieldName);
             if (fieldIndex !== -1) {
-                this.requiredFields[fieldIndex].value = event.target.value;
+                this.selectedWebhookFields[fieldIndex].value = event.target.value;
             }
         } catch (error) {
             console.error('Error in input : ' , error);
@@ -296,11 +377,11 @@ export default class ObjectConfigComp extends LightningElement {
 
     handleCheckboxChange(event) {
         try {
-            const fieldName = event.target.dataset.field;
-            const fieldIndex = this.requiredFields.findIndex(f => f.apiName === fieldName);
+            const fieldName = event.target.dataset.id;
+            const fieldIndex = this.selectedWebhookFields.findIndex(f => f.apiName === fieldName);
     
             if (fieldIndex !== -1) {
-                this.requiredFields[fieldIndex].value = event.target.checked;
+                this.selectedWebhookFields[fieldIndex].value = event.target.checked;
             }
         } catch (error) {
             console.error('Error in checkbox value change : ', error);
@@ -309,17 +390,17 @@ export default class ObjectConfigComp extends LightningElement {
 
     handleRecordSelection(event){
         try {
-            const fieldName = event.target.dataset.field;
+            const fieldName = event.target.dataset.id;
             const selectedRecord = event.detail;
 
             if (selectedRecord?.recordId != null) {
-                this.requiredFields = this.requiredFields.map(field =>
+                this.selectedWebhookFields = this.selectedWebhookFields.map(field =>
                     field.apiName === fieldName
                         ? { ...field, value: selectedRecord?.recordId }
                         : field
                 );
             } else {
-                this.requiredFields = this.requiredFields.map(field =>
+                this.selectedWebhookFields = this.selectedWebhookFields.map(field =>
                     field.apiName === fieldName
                         ? { ...field, value: '', relatedRecordName: '' }
                         : field
@@ -327,6 +408,56 @@ export default class ObjectConfigComp extends LightningElement {
             }
         } catch (error) {
             console.error('Error in record selection : ' ,  error);
+        }
+    }
+
+    async handleAddNewField(event){
+        try {
+            const usedApiNames = this.selectedWebhookFields.map(row => row.apiName);
+            const availableFields = this.allFields.filter(
+                f => !f.required && !usedApiNames.includes(f.apiName)
+            );
+
+            if (availableFields.length === 0) return;
+
+            const firstField = availableFields[0];
+
+            const newRow = {
+                ...firstField,
+                id: Date.now(),
+                value: '',
+                availableFieldForSelection: []
+            };
+
+            this.selectedWebhookFields = [...this.selectedWebhookFields, newRow];
+
+            // Refresh all rows to calculate their dropdown options
+            this.selectedWebhookFields = this.selectedWebhookFields.map((row, index) => {
+                return {
+                    ...row,
+                    availableFieldForSelection: this.getFilteredFields(row.apiName, index)
+                };
+            });
+            console.log(this.selectedWebhookFields);
+            
+        } catch (error) {
+            console.error('Error in adding new row', error);
+        }
+    }
+
+    handleRemoveField(event) {
+        try {
+            const rowId = parseInt(event.target.dataset.id, 10);
+            this.selectedWebhookFields = this.selectedWebhookFields.filter(row => row.id !== rowId);
+            // Refresh all rows to calculate their dropdown options
+            this.selectedWebhookFields = this.selectedWebhookFields.map((row, index) => {
+                return {
+                    ...row,
+                    availableFieldForSelection: this.getFilteredFields(row.apiName, index)
+                };
+            });
+        } catch (error) {
+            console.error('Error in handleRemoveField :: ', error);
         }
     }
 
@@ -374,7 +505,7 @@ export default class ObjectConfigComp extends LightningElement {
 
     handleSave() {
         try {
-            const invalidFields = this.requiredFields.filter(field => 
+            const invalidFields = this.selectedWebhookFields.filter(field => 
                 !field.isBoolean &&
                 (field.isString || field.isNumber || field.isDate || field.isDateTime || field.isPicklist || field.isReference || field.isTextArea) &&
                 (field.value === '' || field.value === null || field.value === undefined)
@@ -389,7 +520,7 @@ export default class ObjectConfigComp extends LightningElement {
             this.jsonData = JSON.stringify({
                 objectApiName: this.selectedObject,
                 phoneField: this.selectedPhoneFieldVal,
-                requiredFields: this.requiredFields.map(field => ({
+                requiredFields: this.selectedWebhookFields.map(field => ({
                     name: field.apiName,
                     value: field.value.toString(),
                     type: field.type
@@ -618,7 +749,7 @@ export default class ObjectConfigComp extends LightningElement {
             this.jsonData = JSON.stringify({
                 objectApiName: this.selectedObject,
                 phoneField: this.selectedPhoneFieldVal,
-                requiredFields: this.requiredFields.map(field => ({
+                requiredFields: this.selectedWebhookFields.map(field => ({
                     name: field.apiName,
                     value: field.value.toString(),
                     type: field.type
