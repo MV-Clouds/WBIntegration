@@ -130,11 +130,6 @@ tr:nth-child(even) {
     text-align: center;
 }
 
-.phoneSelect {
-    display: flex;
-    justify-content: center;
-}
-
 .pop-up{
     height: auto;
     max-height: 74vh;
