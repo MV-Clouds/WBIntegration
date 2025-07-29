@@ -242,20 +242,10 @@
                                         <span>Select Phone Field &nbsp;</span>
                                         <lightning-helptext content="Select Phone Field to Use for WBConnect for Receiving Incoming Messages"></lightning-helptext>
                                     </td>
-                                    <td>
+                                    <td class="phoneSelect">
                                         <template if:true={phoneFields}>
-                                            <div class="slds-form-element">
-                                                <div class="slds-form-element__control radio-stack">
-                                                    <template for:each={phoneFields} for:item="field">
-                                                        <div key={field.value} class="slds-radio">
-                                                            <input type="radio" id={field.value} name="phoneField" value={field.value} checked={field.isSelected} onchange={handleSelectionChange}/>
-                                                            <label class="slds-radio__label" for={field.value}>
-                                                                <span class="slds-radio_faux"></span>
-                                                                <span class="slds-form-element__label"> &nbsp; {field.label} ({field.value})</span>
-                                                            </label>
-                                                        </div>
-                                                    </template>
-                                                </div>
+                                            <div class="slds-m-horizontal--medium objectSelect">
+                                                <lightning-combobox label="Select Object" variant="label-hidden" value={selectedPhoneFieldVal} options={phoneFields} onchange={handleSelectionChange}></lightning-combobox>
                                             </div>
                                         </template>
                                         <template if:false={phoneFields}>

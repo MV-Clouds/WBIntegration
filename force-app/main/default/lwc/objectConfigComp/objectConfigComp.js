@@ -41,8 +41,7 @@ export default class ObjectConfigComp extends LightningElement {
             if (this.showLicenseError) {
                 return; // Stops execution if license is expired
             }
-            
-        this.loadSavedValues();
+            this.loadSavedValues();
         } catch (e) {
             console.error('Error in connectedCallback:::', e.message);
         }
