@@ -861,18 +861,43 @@ global without sharing class WhatsAppWebhook{
             sObject record = records[0];
 
             List<CustomNotificationType> cnType = [SELECT Id FROM CustomNotificationType WHERE DeveloperName = 'WBConnectNotification' LIMIT 1];
-            System.debug('custom notification===> ' + cnType[0]);
+            if (cnType.isEmpty()) {
+                System.debug('No Custom Notification Type found.');
+                return;
+            }
 
-            // Id userId = Userinfo.getUserId();
-            String messageContent = (String) record.get('Name') + ' has sent a new message. Tap to view.';
-            System.debug('messageContent==> ' + messageContent);
-            // Prepare the custom notification object
+            // Check if object has OwnerId field
+            Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectApiName).getDescribe().fields.getMap();
+            Boolean hasOwner = fieldMap.containsKey('OwnerId');
+
             Set<String> addressee = new Set<String>();
-            List<User> userList = [SELECT Id, IsActive FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true LIMIT 200];
-            if(!userList.isEmpty()){
+
+            if (hasOwner) {
+                // Fetch OwnerId
+                String ownerQuery = 'SELECT Id, Name, OwnerId FROM ' + objectApiName + ' WHERE Id = :recordId LIMIT 1';
+                SObject ownerRecord = Database.query(ownerQuery);
+                Id ownerId = (Id) ownerRecord.get('OwnerId');
+
+                // Check if Owner is active user
+                if (ownerId != null && ownerId.getSObjectType() == User.SObjectType) {
+                    List<User> ownerUser = [SELECT Id, IsActive FROM User WHERE Id = :ownerId AND IsActive = true LIMIT 1];
+                    for (User us : ownerUser) {
+                        addressee.add(us.Id);
+                    }
+                }
+            }
+
+            // If no Owner or invalid owner, fallback to all System Admins
+            if (addressee.isEmpty()) {
+                List<User> userList = [SELECT Id FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true LIMIT 200];
                 for (User us : userList) {
                     addressee.add(us.Id);
                 }
+            }
+
+            if (!addressee.isEmpty()) {
+                String messageContent = (String) record.get('Name') + ' has sent a new message. Tap to view.';
+
                 Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
                 customNotificationObj.setBody(messageContent);
                 customNotificationObj.setTitle('New Whatsapp Message Received');
