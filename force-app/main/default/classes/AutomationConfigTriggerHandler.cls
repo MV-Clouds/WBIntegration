@@ -749,6 +749,7 @@ public without sharing class AutomationConfigTriggerHandler {
                 // newChatEvent.ContactId__c = whatsappChat.Contact__c;
                 EventBus.publish(newChatEvent);
             } else {
+                chat.Message_Status__c = 'Failed';
                 System.debug('Error sending WhatsApp Message: '+response.getBody());
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'AutomationConfigTriggerHandler', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
             }

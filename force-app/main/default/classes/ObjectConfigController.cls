@@ -71,6 +71,7 @@ public with sharing class ObjectConfigController {
     @AuraEnabled
     public static List<Map<String, Object>> getRequiredFields(String objectName) {
         try {
+            List<Map<String, Object>> allFields = new List<Map<String, Object>>();
             List<Map<String, Object>> requiredFields = new List<Map<String, Object>>();
             List<Map<String, String>> phoneFields = new List<Map<String, String>>();
             List<Map<String, String>> textFields = new List<Map<String, String>>();
@@ -166,6 +167,7 @@ public with sharing class ObjectConfigController {
             responseMap.put('phoneFields', phoneFields);
             responseMap.put('requiredFields', requiredFields);
             responseMap.put('textFields', textFields);
+            responseMap.put('allFields', allFields);
             
             // Wrap the response map in a list to match the desired format
             List<Map<String, Object>> finalResponse = new List<Map<String, Object>>();
