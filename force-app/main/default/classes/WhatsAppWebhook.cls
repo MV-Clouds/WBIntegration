@@ -230,7 +230,6 @@ global without sharing class WhatsAppWebhook{
                         } else if (fieldType == 'Datetime') {
                             // Convert string to Datetime (assuming value is in ISO 8601 format, e.g., YYYY-MM-DDTHH:mm:ssZ)
                             if (value != null && value != '') {
-                                
                                 // Remove milliseconds and Z
                                 String cleanValue = value.substring(0, 19).replace('T', ' ');
 
@@ -241,10 +240,30 @@ global without sharing class WhatsAppWebhook{
                                 newRecord.put(fieldName, myDate);
                                 // newRecord.put(fieldName, Datetime.valueOf(value));
                             }
+                        } else if(fieldType == 'Time'){
+                            if (value != null && value != '') {
+                                // Split the time components
+                                List<String> parts = value.split(':');
+                                Integer hour = Integer.valueOf(parts[0]);
+                                Integer minute = Integer.valueOf(parts[1]);
+                                
+                                List<String> secMillis = parts[2].split('\\.');
+                                Integer second = Integer.valueOf(secMillis[0]);
+                                Integer millisecond = Integer.valueOf(secMillis[1]);
+                                
+                                // Now create Time instance
+                                Time myTime = Time.newInstance(hour, minute, second, millisecond);
+                                newRecord.put(fieldName, myTime);
+                            }
                         } else if (fieldType == 'Boolean') {
                             // Convert string to Boolean
                             if (value != null && value != '') {
                                 newRecord.put(fieldName, Boolean.valueOf(value));
+                            }
+                        } else if (fieldType == 'Double' || fieldType == 'Percent') {
+                            // Convert string to Decimal
+                            if (value != null && value != '') {
+                                newRecord.put(fieldName, Decimal.valueOf(value));
                             }
                         } else {
                             // Handle String, Reference, Picklist, etc. as direct string assignment
