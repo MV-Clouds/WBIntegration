@@ -26,7 +26,7 @@ public with sharing class ObjectConfigController {
         List<Map<String, String>> objectList = new List<Map<String, String>>();
         try {
             // Query FieldDefinition to fetch all objects having at least one Phone field
-            List<FieldDefinition> phoneFields = [SELECT EntityDefinition.QualifiedApiName, EntityDefinition.Label, QualifiedApiName FROM FieldDefinition WHERE DataType = 'Phone' AND EntityDefinition.IsCustomizable = true AND EntityDefinition.IsApexTriggerable = true AND EntityDefinition.IsQueryable = true WITH SECURITY_ENFORCED];
+            List<FieldDefinition> phoneFields = [SELECT EntityDefinition.QualifiedApiName, EntityDefinition.Label, QualifiedApiName FROM FieldDefinition WHERE EntityDefinition.IsCustomizable = true AND EntityDefinition.IsApexTriggerable = true AND EntityDefinition.IsQueryable = true WITH SECURITY_ENFORCED];
 
             Set<String> processedObjects = new Set<String>();
 
@@ -71,6 +71,7 @@ public with sharing class ObjectConfigController {
     @AuraEnabled
     public static List<Map<String, Object>> getRequiredFields(String objectName) {
         try {
+            List<Map<String, Object>> allFields = new List<Map<String, Object>>();
             List<Map<String, Object>> requiredFields = new List<Map<String, Object>>();
             List<Map<String, String>> phoneFields = new List<Map<String, String>>();
             List<Map<String, String>> textFields = new List<Map<String, String>>();
@@ -81,7 +82,14 @@ public with sharing class ObjectConfigController {
             for (Schema.SObjectField field : fieldMap.values()) {
                 Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
 
-                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isCreateable()) {
+                // Skip fields that shouldn't be included
+                if (fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || !fieldDescribe.isCreateable() || fieldDescribe.isExternalId()) {
+                    continue;
+                } else if(fieldDescribe.getName() == 'CreatedDate' || fieldDescribe.getName() == 'LastModifiedDate' || fieldDescribe.getName() == 'SystemModstamp' || fieldDescribe.getName() == 'Id' || fieldDescribe.getName() == 'CreatedById' || fieldDescribe.getName() == 'LastModifiedById'){
+                    continue;
+                }
+
+                if ((fieldDescribe.getType() == Schema.DisplayType.PHONE) || (fieldDescribe.getType() == Schema.DisplayType.STRING)) {
                     Map<String, String> phoneFieldInfo = new Map<String, String>();
                     phoneFieldInfo.put('label', fieldDescribe.getLabel());
                     phoneFieldInfo.put('value', fieldDescribe.getName());
@@ -89,67 +97,111 @@ public with sharing class ObjectConfigController {
                 }
 
                 // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
-                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isCreateable()) {
+                if (fieldDescribe.getType() == Schema.DisplayType.STRING) {
                     Map<String, String> textFieldInfo = new Map<String, String>();
                     textFieldInfo.put('label', fieldDescribe.getLabel());
                     textFieldInfo.put('value', fieldDescribe.getName());
                     textFields.add(textFieldInfo);
                 }
-                
-                // Skip fields that shouldn't be included
-                if (fieldDescribe.isNillable() || fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || 
-                    !fieldDescribe.isCreateable() || fieldDescribe.isCalculated() || fieldDescribe.isExternalId()) {
-                    continue;
-                } else if(fieldDescribe.getType() == Schema.DisplayType.BOOLEAN){
-                    continue;
-                } else if(fieldDescribe.getName() == 'CreatedDate' || fieldDescribe.getName() == 'LastModifiedDate' || fieldDescribe.getName() == 'SystemModstamp' || fieldDescribe.getName() == 'Id' || fieldDescribe.getName() == 'CreatedById' || fieldDescribe.getName() == 'LastModifiedById'){
-                    continue;
-                }
-    
-                Map<String, Object> fieldInfo = new Map<String, Object>();
-                fieldInfo.put('name', fieldDescribe.getName());
-                fieldInfo.put('label', fieldDescribe.getLabel());
-                fieldInfo.put('type', fieldDescribe.getType().name());
-    
-                // Handle picklist values
-                if (fieldDescribe.getType() == Schema.DisplayType.Picklist) {
-                    List<Schema.PicklistEntry> picklistEntries = fieldDescribe.getPicklistValues();
-                    List<String> picklistValues = new List<String>();
-                    List<Map<String, String>> picklistValuesSet = new List<Map<String, String>>();
-    
-                    for (Schema.PicklistEntry entry : picklistEntries) {
-                        picklistValues.add(entry.getValue());
-                        Map<String, String> picklistSet = new Map<String, String>();
-                        picklistSet.put('label', entry.getLabel());
-                        picklistSet.put('value', entry.getValue());
-                        picklistValuesSet.add(picklistSet);
+
+                // Get All fields except Formula
+                if(!fieldDescribe.isCalculated()){
+                    Map<String, Object> fieldInfo = new Map<String, Object>();
+                    fieldInfo.put('name', fieldDescribe.getName());
+                    fieldInfo.put('label', fieldDescribe.getLabel());
+                    fieldInfo.put('type', fieldDescribe.getType().name());
+                    if(!fieldDescribe.isNillable()){
+                        fieldInfo.put('required', true);
                     }
-    
-                    fieldInfo.put('picklistValues', picklistValuesSet);
-    
-                    // Set default picklist value (either default set value or first value)
-                    String defaultValue = fieldDescribe.getDefaultValue() != null ? 
-                        String.valueOf(fieldDescribe.getDefaultValue()) : 
-                        (picklistValues.isEmpty() ? '' : picklistValues[0]);
-    
-                    fieldInfo.put('value', defaultValue);
-                } 
-                
-                // Handle lookup fields (assign first record ID)
-                else if (fieldDescribe.getType() == Schema.DisplayType.Reference) {
-                    System.debug(fieldDescribe.getReferenceTo());
-                    String relatedObject = '';
-                    if(fieldDescribe.getName() == 'OwnerId') {
-                        relatedObject = 'User';
-                    } else {
-                        relatedObject = fieldDescribe.getReferenceTo()[0].getDescribe().getName();
+
+                    // Handle picklist values
+                    if (fieldDescribe.getType() == Schema.DisplayType.Picklist) {
+                        List<Schema.PicklistEntry> picklistEntries = fieldDescribe.getPicklistValues();
+                        List<String> picklistValues = new List<String>();
+                        List<Map<String, String>> picklistValuesSet = new List<Map<String, String>>();
+        
+                        for (Schema.PicklistEntry entry : picklistEntries) {
+                            picklistValues.add(entry.getValue());
+                            Map<String, String> picklistSet = new Map<String, String>();
+                            picklistSet.put('label', entry.getLabel());
+                            picklistSet.put('value', entry.getValue());
+                            picklistValuesSet.add(picklistSet);
+                        }
+        
+                        fieldInfo.put('picklistValues', picklistValuesSet);
+        
+                        // Set default picklist value (either default set value or first value)
+                        String defaultValue = fieldDescribe.getDefaultValue() != null ? 
+                            String.valueOf(fieldDescribe.getDefaultValue()) : 
+                            (picklistValues.isEmpty() ? '' : picklistValues[0]);
+        
+                        fieldInfo.put('value', defaultValue);
+                    } 
+                    
+                    // Handle lookup fields (assign first record ID)
+                    else if (fieldDescribe.getType() == Schema.DisplayType.Reference) {
+                        System.debug(fieldDescribe.getReferenceTo());
+                        String relatedObject = '';
+                        if(fieldDescribe.getName() == 'OwnerId') {
+                            relatedObject = 'User';
+                        } else {
+                            relatedObject = fieldDescribe.getReferenceTo()[0].getDescribe().getName();
+                        }
+                        fieldInfo.put('value', '');
+                        fieldInfo.put('relatedObject', relatedObject);
+                        fieldInfo.put('relatedRecordName', '');
                     }
-                    fieldInfo.put('value', '');
-                    fieldInfo.put('relatedObject', relatedObject);
-                    fieldInfo.put('relatedRecordName', '');
+
+                    requiredFields.add(fieldInfo);
                 }
-    
-                requiredFields.add(fieldInfo);
+
+                // Get only Required fields except Formula and Boolean
+                // if(!fieldDescribe.isCalculated() && !fieldDescribe.isNillable() && (fieldDescribe.getType() != Schema.DisplayType.BOOLEAN)){
+                //     Map<String, Object> fieldInfo = new Map<String, Object>();
+                //     fieldInfo.put('name', fieldDescribe.getName());
+                //     fieldInfo.put('label', fieldDescribe.getLabel());
+                //     fieldInfo.put('type', fieldDescribe.getType().name());
+        
+                //     // Handle picklist values
+                //     if (fieldDescribe.getType() == Schema.DisplayType.Picklist) {
+                //         List<Schema.PicklistEntry> picklistEntries = fieldDescribe.getPicklistValues();
+                //         List<String> picklistValues = new List<String>();
+                //         List<Map<String, String>> picklistValuesSet = new List<Map<String, String>>();
+        
+                //         for (Schema.PicklistEntry entry : picklistEntries) {
+                //             picklistValues.add(entry.getValue());
+                //             Map<String, String> picklistSet = new Map<String, String>();
+                //             picklistSet.put('label', entry.getLabel());
+                //             picklistSet.put('value', entry.getValue());
+                //             picklistValuesSet.add(picklistSet);
+                //         }
+        
+                //         fieldInfo.put('picklistValues', picklistValuesSet);
+        
+                //         // Set default picklist value (either default set value or first value)
+                //         String defaultValue = fieldDescribe.getDefaultValue() != null ? 
+                //             String.valueOf(fieldDescribe.getDefaultValue()) : 
+                //             (picklistValues.isEmpty() ? '' : picklistValues[0]);
+        
+                //         fieldInfo.put('value', defaultValue);
+                //     } 
+                    
+                //     // Handle lookup fields (assign first record ID)
+                //     else if (fieldDescribe.getType() == Schema.DisplayType.Reference) {
+                //         System.debug(fieldDescribe.getReferenceTo());
+                //         String relatedObject = '';
+                //         if(fieldDescribe.getName() == 'OwnerId') {
+                //             relatedObject = 'User';
+                //         } else {
+                //             relatedObject = fieldDescribe.getReferenceTo()[0].getDescribe().getName();
+                //         }
+                //         fieldInfo.put('value', '');
+                //         fieldInfo.put('relatedObject', relatedObject);
+                //         fieldInfo.put('relatedRecordName', '');
+                //     }
+        
+                //     requiredFields.add(fieldInfo);
+                // }
             }
 
             // Create the final response structure
@@ -157,6 +209,7 @@ public with sharing class ObjectConfigController {
             responseMap.put('phoneFields', phoneFields);
             responseMap.put('requiredFields', requiredFields);
             responseMap.put('textFields', textFields);
+            responseMap.put('allFields', allFields);
             
             // Wrap the response map in a list to match the desired format
             List<Map<String, Object>> finalResponse = new List<Map<String, Object>>();
@@ -187,7 +240,12 @@ public with sharing class ObjectConfigController {
             for (Schema.SObjectField field : fieldMap.values()) {
                 Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
 
-                if (fieldDescribe.getType() == Schema.DisplayType.PHONE && fieldDescribe.isAccessible() && fieldDescribe.isCreateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
+                // Skip fields that shouldn't be included
+                if (fieldDescribe.isAutoNumber() || !fieldDescribe.isAccessible() || !fieldDescribe.isCreateable() || fieldDescribe.isExternalId()) {
+                    continue;
+                }
+
+                if ((fieldDescribe.getType() == Schema.DisplayType.PHONE) || (fieldDescribe.getType() == Schema.DisplayType.STRING)) {
                     Map<String, String> phoneFieldInfo = new Map<String, String>();
                     phoneFieldInfo.put('label', fieldDescribe.getLabel());
                     phoneFieldInfo.put('value', fieldDescribe.getName());
@@ -195,7 +253,7 @@ public with sharing class ObjectConfigController {
                 }
 
                 // Handle Text fields (only STRING type, excluding TEXTAREA, LONGTEXTAREA, RICHTEXT)
-                if (fieldDescribe.getType() == Schema.DisplayType.STRING && fieldDescribe.isAccessible() && fieldDescribe.isCreateable() && !fieldDescribe.isAutoNumber() && !fieldDescribe.isCalculated()) {
+                if (fieldDescribe.getType() == Schema.DisplayType.STRING) {
                     Map<String, String> textFieldInfo = new Map<String, String>();
                     textFieldInfo.put('label', fieldDescribe.getLabel());
                     textFieldInfo.put('value', fieldDescribe.getName());
