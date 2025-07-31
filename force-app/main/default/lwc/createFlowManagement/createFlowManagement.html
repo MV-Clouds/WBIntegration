@@ -22,7 +22,7 @@
         <template if:true={isFlowVisible}>
             <div class="slds-theme_default main">
                 <!-- <template if:true={iscreateflowvisible}>    -->
-                <template if:false={isEdit}>   
+                <template if:false={isEditOrClone}>   
                     <div class="heading">
                         <p class="txt">Create Flow</p>
                     </div>  
@@ -96,7 +96,7 @@
                     </div>
                 </template>
                 <!-- <template if:true={isJsonVisible}> -->
-                <template if:true={isEdit}>
+                <template if:true={isEditOrClone}>
                     <div class="divcontainer2">
                         <div class="createFlowDiv">
                             <div class="name-header">
