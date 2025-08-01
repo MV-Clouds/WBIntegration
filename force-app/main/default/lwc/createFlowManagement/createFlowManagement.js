@@ -15,11 +15,14 @@ import getWhatsAppFlowById from '@salesforce/apex/WhatsAppFlowController.getWhat
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
 
 export default class CreateFlowManagement extends LightningElement {
+    
+    @api isEditMode;
+    @api isCloneFlow;
+    @api selectedFlowId;
+    @api cloneFlowName;
+    
     @track selectedCategories = [];
     @track showLicenseError = false;
-
-    @api isEditMode;
-    @api selectedFlowId;
 
     @track status = 'Initialize';
     @track isUnsavedChanges = false;
@@ -58,8 +61,12 @@ export default class CreateFlowManagement extends LightningElement {
         ];
     }
 
-    get isEdit(){
-        return (this.isEditMode || this.isJsonVisible);
+    get isEditOrClone(){
+        return (this.isEditMode || this.isCloneFlow || this.isJsonVisible);
+    }
+
+    get isClone(){
+        return (this.isCloneFlow || this.isJsonVisible);
     }
 
     get isSaveEnabled(){
@@ -89,7 +96,7 @@ export default class CreateFlowManagement extends LightningElement {
             if (this.showLicenseError) {
                 return;
             }
-            if (this.isEdit && this.selectedFlowId) {
+            if ((this.isEditMode || this.isClone) && this.selectedFlowId) {
                 this.flowId = this.selectedFlowId;
                 this.getJSONDataFromApexForEdit();
             }
@@ -191,9 +198,12 @@ export default class CreateFlowManagement extends LightningElement {
             .then((data) => {
                 if (data) {
                     this.jsonString = data[0].MVWB__Flow_JSON__c;
-                    this.status = data[0].MVWB__Status__c;
-                    this.flowName = data[0].MVWB__Flow_Name__c;
-                    this.LastUpdatedDate = data[0].LastModifiedDate;
+                    this.status = this.isCloneFlow ? 'Initialize' : data[0].MVWB__Status__c;
+                    this.flowName = this.isCloneFlow ? this.cloneFlowName : data[0].MVWB__Flow_Name__c;
+                    this.LastUpdatedDate = this.isCloneFlow ? '' : data[0].LastModifiedDate;
+                    if (this.isCloneFlow) {
+                        this.selectedCategories = ["OTHER"];
+                    }
                     this.formatJSONDataonUI();
                 } else {
                     console.error('Error loading JSON data for edit:', error);
@@ -448,7 +458,8 @@ export default class CreateFlowManagement extends LightningElement {
                 flowName: this.flowName,
                 categories: this.selectedCategories,
                 flowJson: this.jsonString,
-                templateType: this.templateType
+                templateType: this.templateType,
+                createRecord: true
             })
             .then(result => {
                 this.flowId = result; 

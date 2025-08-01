@@ -167,25 +167,10 @@ tr:nth-child(even) {
     /* opacity: 0.8; */
 }
 
-.tablebtns{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    max-width: 100%;
-}
-
 .btns{
-    background-color: white;
+    background-color: transparent;
     color: #4194f9;
     --sds-c-icon-color-foreground-default: rgb(70 164 245);
-}
-
-.action-buttons{
-    padding: 0;
-    border: none;
-    background: transparent;
-    cursor: pointer;
 }
 
 .action{
@@ -330,20 +315,66 @@ tr:nth-child(even) {
     scale: 0.95;
 }
 
+.sync-button {
+    padding: 7px 8px;
+    font-size: 0;
+    margin-right: 15px;
+    background-color: white;
+    border: none;
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.18);
+    border-radius: 4px;
+}
+
+/* Backdrop covers the entire component */
+.license-error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Dark overlay */
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Centered popup */
+.popup-container {
+    background: #b71c1c; /* Dark red for warning */
+    color: white;
+    padding: 24px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Styling for title */
+.popup-content h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+/* Styling for message */
+.popup-content p {
+    font-size: 16px;
+    margin: 0;
+}
+
 .action-buttons {
+    padding: 0;
     background: transparent;
     border: none;
     cursor: pointer;
 }
-.tablebtns {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    max-width: 100%;
-}
+
 .btns{
-    background-color: white;
+    background-color: transparent;
     color: #4194f9;
     --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }
@@ -500,3 +531,232 @@ span {
     align-items: center;
     justify-content: center;
 }
+
+/* Delete Popup */
+.edit-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+}
+
+.edit-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    width: 400px;
+    border-radius: 8px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    padding: 15px;
+}
+
+.edit-popup-content {
+    position: relative;
+}
+
+.edit-popup-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.edit-popup-text {
+    font-size: 14px;
+    color: #5c5c5c;
+    margin-bottom: 20px;
+}
+
+.edit-button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.edit-cancel-button {
+    background: #e0e0e0;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.edit-delete-button {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+/* Delete Popup */
+
+/* Styling for the Confirm Flow Sync modal */
+.modal-container {
+    max-width: 500px;
+    width: 90%;
+    margin: 0 auto;
+    z-index: 2;
+}
+
+.modal-header {
+    font-size: 20px;
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: center;
+    font-weight: 500;
+    color: white;
+    padding: 0.4rem;
+    background: #0077B6;
+    border-radius: 5px 5px 0 0;
+}
+
+.modal-content {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.slds-box {
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    background-color: white;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.1);
+}
+
+.flow-list-container {
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    scrollbar-width: none;
+}
+
+.flow-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid #f3f2f2;
+    transition: background-color 0.2s;
+}
+
+.flow-item:hover {
+    background-color: #f3f2f2;
+}
+
+.flow-item:last-child {
+    border-bottom: none;
+}
+
+.action-radio-group {
+    margin-top: 1rem;
+}
+
+.confirm-checkbox {
+    margin-top: 1rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #dddbda;
+    background-color: white;
+}
+
+.slds-text-heading_small {
+    font-weight: 600;
+    color: #0077B6;
+}
+
+.radio-dynamic-text {
+    padding-left: 0.5rem;
+    font-size: 11px;
+}
+
+.confirm-sync {
+    padding-left: 2px;
+}
+
+/* .left-icon {
+    margin-right: 0.5rem;
+} */
+
+.slds-backdrop {
+    --lwc-zIndexModal: 1;
+}
+
+/* Actions Dropdown */
+.tablebtns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    margin: auto;
+    overflow: visible;
+}
+
+.action-container {
+    position: relative;
+    display: inline-block;
+}
+
+.action-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    margin: -0.5rem;
+}
+
+.action-button:hover {
+    background-color: #f3f3f3;
+    border-radius: 4px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.16);
+    z-index: 1;
+    min-width: 120px;
+    font-size: 13px;
+}
+
+.dropdown-item {
+    padding: 0.25rem 1rem;
+    margin: 0 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+    border-radius: 3px;
+}
+
+.dropdown-item:first-child {
+    margin-top: 0.5rem;
+}
+
+.dropdown-item:last-child {
+    margin-bottom: 0.5rem;
+}
+
+.dropdown-item:hover {
+    background-color: #f3f3f3;
+}
+
+.hidden {
+    display: none;
+}
+/* Actions Dropdown */
