@@ -48,6 +48,14 @@
                             </div>
 
                             <div class="btns">
+                                <button class="sync-button" onclick={syncFlows} title="Sync with Meta">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 13.56 17.44 14.96 16.5 16L17.91 17.41C19.37 15.7 20 13.91 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/>
+                                        <path d="M12 20V23L16 19L12 15V18C8.69 18 6 15.31 6 12C6 10.44 6.56 9.04 7.5 8L6.09 6.59C4.63 8.3 4 10.09 4 12C4 16.42 7.58 20 12 20Z" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="btns">
                                 <button class="custom-button cus-btns" onclick={showCreateFlow}>
                                     <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                                         class="left-icon"></lightning-icon>
@@ -261,6 +269,88 @@
                     </div>
                 </section>
                 <div class="slds-backdrop slds-backdrop_open"></div>
+
+            </template>
+
+            <!-- Flow Sync Modal -->
+            <template if:true={showModal}>
+                <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container modal-container">
+                        <header>
+                            <h2 class="modal-header">Flow Synchronization</h2>
+                        </header>
+                        <div class="slds-modal__content modal-content">
+                            <!-- Section 1: Missing Flows -->
+                            <template if:true={hasMissingFlows}>
+                                <div class="slds-box slds-theme_default slds-m-bottom_medium">
+                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">Flows Not Found In Org</h3>
+                                    <p class="slds-m-bottom_small">The following flows will be created in your org:</p>
+                                    <div class="flow-list-container">
+                                        <template for:each={missingFlowsList} for:item="flow">
+                                            <div key={flow} class="flow-item slds-p-around_xx-small">
+                                                <span>{flow}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <!-- Section 2: Orphaned Flows -->
+                            <template if:true={hasOrgOnlyFlows}>
+                                <div class="slds-box slds-theme_default">
+                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">Flows Not Found In Meta</h3>
+                                    <p class="slds-m-bottom_small">The following flows exist in your org but not in Meta:</p>
+                                    <div class="flow-list-container slds-m-bottom_small">
+                                        <template for:each={orgOnlyFlowArray} for:item="flow">
+                                            <div key={flow.id} class="flow-item slds-p-around_xx-small">
+                                                <span>{flow.name}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    
+                                    <lightning-radio-group
+                                        class="action-radio-group"
+                                        name="orphanFlowAction"
+                                        label="Select Action"
+                                        options={orphanFlowOptions}
+                                        value={selectedOrphanFlowAction}
+                                        type="radio"
+                                        variant="label-stacked"
+                                        onchange={handleOrphanFlowOptionChange}>
+                                    </lightning-radio-group>
+                                    
+                                    <template if:true={isDeleteSelected}>
+                                        <p class="slds-text-color_error radio-dynamic-text">This action cannot be undone.</p>
+                                    </template>
+                                    <template if:true={isCreateSelected}>
+                                        <p class="slds-text-color_error radio-dynamic-text">
+                                            If a flow with the same name already exists in Meta, it will not be created.
+                                        </p>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template if:true={hasNoExtraFlows}>
+                                <h3 style="font-size: 16px;">Are you sure you want to sync with Meta?</h3>
+                            </template>
+                            
+                            <div class="slds-m-top_medium confirm-sync">
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Confirm Sync" 
+                                    class="confirm-checkbox"
+                                    onchange={handleConfirmationChange}>
+                                </lightning-input>
+                            </div>
+                        </div>
+
+                        <footer class="slds-modal__footer slds-theme_default modal-footer">
+                            <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
+                            <button class="slds-button slds-button_brand" onclick={handleProceed} disabled={disableProceed}>Proceed</button>
+                        </footer>
+                    </div>
+                    <div class="slds-backdrop slds-backdrop_open"></div>
+                </section>
             </template>
         </template>
         <template if:true={isNameClicked}>

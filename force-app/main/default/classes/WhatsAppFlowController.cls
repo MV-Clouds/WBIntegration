@@ -51,7 +51,7 @@ public with sharing class WhatsAppFlowController {
     }
 
     @AuraEnabled
-    public static String createWhatsAppFlow(String flowName, List<String> categories, String flowJson, String templateType) {
+    public static String createWhatsAppFlow(String flowName, List<String> categories, String flowJson, String templateType, Boolean createRecord) {
         try {
             String accessToken = wbConfig[0].MVWB__Access_Token__c;
             String endpoint = wbConfig[0].MVWB__API_Endpoint__c + '/' + wbConfig[0].MVWB__API_Version__c + '/' + wbConfig[0].MVWB__Business_Account_Id__c + '/flows';
@@ -74,16 +74,19 @@ public with sharing class WhatsAppFlowController {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
                 String flowId = (String) responseMap.get('id');
 
-                // Create a new Flow record
-                Flow__c flow = new Flow__c();
-                flow.Flow_Name__c = flowName;
-                flow.Status__c = 'Draft';
-                flow.Flow_Id__c = flowId;
-                flow.Flow_JSON__c = flowJson;
-                flow.Category__c = String.join(categories, ';');
-                flow.Template_Type__c = templateType;
+                if (createRecord) {
 
-                insert flow;
+                    // Create a new Flow record
+                    Flow__c flow = new Flow__c();
+                    flow.Flow_Name__c = flowName;
+                    flow.Status__c = 'Draft';
+                    flow.Flow_Id__c = flowId;
+                    flow.Flow_JSON__c = flowJson;
+                    flow.Category__c = String.join(categories, ';');
+                    flow.Template_Type__c = templateType;
+    
+                    insert flow;
+                }
                 return flowId;
             } else {
                 Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());

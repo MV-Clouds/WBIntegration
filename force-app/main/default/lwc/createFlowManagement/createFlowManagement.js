@@ -458,7 +458,8 @@ export default class CreateFlowManagement extends LightningElement {
                 flowName: this.flowName,
                 categories: this.selectedCategories,
                 flowJson: this.jsonString,
-                templateType: this.templateType
+                templateType: this.templateType,
+                createRecord: true
             })
             .then(result => {
                 this.flowId = result; 

@@ -170,7 +170,7 @@ tr:nth-child(even) {
 }
 
 .btns{
-    background-color: white;
+    background-color: transparent;
     color: #4194f9;
     --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }
@@ -317,7 +317,60 @@ tr:nth-child(even) {
     scale: 0.95;
 }
 
+.sync-button {
+    padding: 7px 8px;
+    font-size: 0;
+    margin-right: 15px;
+    background-color: white;
 
+/* Backdrop covers the entire component */
+.license-error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Dark overlay */
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Centered popup */
+.popup-container {
+    background: #b71c1c; /* Dark red for warning */
+    color: white;
+    padding: 24px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Styling for title */
+.popup-content h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+/* Styling for message */
+.popup-content p {
+    font-size: 16px;
+    margin: 0;
+}
+
+.action-buttons {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.18);
+    border-radius: 4px;
+}
 
 /* Backdrop covers the entire component */
 .license-error {
@@ -366,9 +419,9 @@ tr:nth-child(even) {
     border: none;
     cursor: pointer;
 }
-
+  
 .btns{
-    background-color: white;
+    background-color: transparent;
     color: #4194f9;
     --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }

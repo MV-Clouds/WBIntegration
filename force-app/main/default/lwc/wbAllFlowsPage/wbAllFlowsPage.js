@@ -9,6 +9,8 @@ import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
 import FLOW_OBJECT from "@salesforce/schema/Flow__c";
 import STATUS_FIELD from "@salesforce/schema/Flow__c.Status__c";
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+import getSyncFlowData from '@salesforce/apex/SyncFlowController.syncFlowData';
+import confirmFlowSync from '@salesforce/apex/SyncFlowController.confirmFlowSync';
 
 export default class WbAllFlowsPage extends LightningElement {
     @track allRecords = [];
@@ -38,6 +40,14 @@ export default class WbAllFlowsPage extends LightningElement {
     @track cloneFlowName = '';
     @track selectedFlowDatasetId;
     @track selectedFlowDatasetStatus;
+    @track showModal = false;
+    @track missingFlowsList = [];
+    @track orgOnlyFlowMap = {};
+    @track isFlowCreationConfirmed = false;
+    @track isMissingFlowCreationDisabled = true;
+    @track selectedOrphanFlowAction = '';
+    @track confirmSyncChecked = false;
+    @track showDropdown = false;
 
     get showNoRecordsMessage() {
         return this.filteredRecords.length === 0;
@@ -116,6 +126,47 @@ export default class WbAllFlowsPage extends LightningElement {
 
     get isDisabledCloneNext() {
         return this.cloneFlowName.trim() === '';
+    }
+
+    get isDeleteSelected() {
+        return this.selectedOrphanFlowAction === 'DeleteFromOrg';
+    }
+
+    get isCreateSelected() {
+        return this.selectedOrphanFlowAction === 'CreateInMeta';
+    }
+
+    get hasMissingFlows() {
+        return this.missingFlowsList.length > 0;
+    }
+
+    get hasOrgOnlyFlows() {
+        console.log('hasOrgOnlyFlows =', this.orgOnlyFlowMap && Object.keys(this.orgOnlyFlowMap).length > 0);
+        return this.orgOnlyFlowMap && Object.keys(this.orgOnlyFlowMap).length > 0;
+    }
+
+    get hasNoExtraFlows() {
+        return (this.missingFlowsList.length === 0) && (Object.keys(this.orgOnlyFlowMap).length === 0)
+    }
+
+    get orgOnlyFlowArray() {
+        return Object.entries(this.orgOnlyFlowMap || {}).map(([id, name]) => ({
+            id,
+            name
+        }));
+    }
+
+    get orphanFlowOptions() {
+        return [
+            { label: 'Delete them from Org', value: 'DeleteFromOrg' },
+            { label: 'Create them in Meta', value: 'CreateInMeta' }
+        ];
+    }
+
+    get disableProceed() {
+        const confirmChecked = this.confirmSyncChecked;
+        const orphanActionSelected = this.selectedOrphanFlowAction !== undefined && this.selectedOrphanFlowAction !== null && this.selectedOrphanFlowAction !== '';
+        return !(confirmChecked && (this.hasOrgOnlyFlows ? orphanActionSelected : true));
     }
 
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
@@ -486,6 +537,59 @@ export default class WbAllFlowsPage extends LightningElement {
             this.showToast('Error', 'Failed to publish flow', 'error');
             console.error('Error in publishFlow : ' , error);
         }
+    }
+
+    syncFlows() {
+        console.log('syncFlows start');
+        this.isLoading = true;
+        this.showModal = false;
+        this.syncFlowData();
+    }
+
+    syncFlowData() {
+        getSyncFlowData({ selectedOrphanFlowAction: '', isFlowSyncConfirm: false })
+            .then(data => {
+                console.log('data from syncFlowData:', data);
+                this.missingFlowsList = data.pendingFlowListNames;
+                console.log('this.missingFlowsList:', this.missingFlowsList);
+                this.orgOnlyFlowMap = data.orgOnlyFlowMap || {};
+                console.log('this.orgOnlyFlowMap:', this.orgOnlyFlowMap);
+                this.isLoading = false;
+                this.showModal = true;
+            })
+            .catch(error => {
+                console.error('Error fetching pending flow list: ', error);
+                this.isLoading = false;
+            });
+    }
+
+    handleProceed() {
+        this.showModal = false;
+        this.showToast('Flow Sync Started', 'Syncing in progress. You will be notified once it is completed.', 'success');
+        confirmFlowSync({
+            selectedOrphanFlowAction: this.selectedOrphanFlowAction,
+            isSyncConfirmed: true
+        })
+        .catch(error => {
+            console.error('Error during flow sync:', error);
+        });
+    }
+
+    closeModal() {
+        this.showModal = false;
+    }
+
+    handleConfirmationChange(event) {
+        this.isFlowCreationConfirmed = event.target.checked;
+        this.isMissingFlowCreationDisabled = !this.isFlowCreationConfirmed;
+    }
+
+    handleConfirmationChange(event) {
+        this.confirmSyncChecked = event.target.checked;
+    }
+
+    handleOrphanFlowOptionChange(event) {
+        this.selectedOrphanFlowAction = event.detail.value;
     }
 
     showToast(title, message, varient) {
