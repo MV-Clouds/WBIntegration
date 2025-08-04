@@ -118,18 +118,28 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     loadObjects() {
+        this.isLoading = true;
         getAllObjects()
             .then(data => {
+                // console.log('data =', data);
                 // this.allObjects = data.map(obj => ({ label: obj, value: obj }));
-                this.objects = data.sort((a, b) => a.label.localeCompare(b.label));
+                data = data.sort((a, b) => a.label.localeCompare(b.label));
+                // console.log('data after sort =', data);
                 this.allObjects = data.map(obj => ({
                     label: obj.label,
                     value: obj.value
                 }));
+                // console.log('this.allObjects =', this.allObjects);
+                if (this.allObjects.length > 0) {
+                    this.selectedObject = this.allObjects[0].value;
+                    // console.log('this.selectedObject =', this.selectedObject);
+                    this.handleObjectChange({ target: { value: this.selectedObject } });
+                }
             })
-            .catch(error => console.error('Error fetching objects:', error));
-
-        // console.log('this.allObjects =', JSON.stringify(this.allObjects));
+            .catch(error => console.error('Error fetching objects:', error))
+            .finally(() => {
+                this.isLoading = false;
+            })
     }
 
     loadRequiredFields(savedFieldValues = {}) {
@@ -138,6 +148,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             this.isLoading = true;
             if (!this.selectedObject) {
                 // console.log('No object selected');
+                this.isLoading = false;
                 return;
             }
             getRequiredFields({ objectName: this.selectedObject })
