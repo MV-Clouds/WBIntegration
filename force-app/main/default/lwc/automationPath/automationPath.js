@@ -130,11 +130,6 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     value: obj.value
                 }));
                 // console.log('this.allObjects =', this.allObjects);
-                if (this.allObjects.length > 0) {
-                    this.selectedObject = this.allObjects[0].value;
-                    // console.log('this.selectedObject =', this.selectedObject);
-                    this.handleObjectChange({ target: { value: this.selectedObject } });
-                }
             })
             .catch(error => console.error('Error fetching objects:', error))
             .finally(() => {
