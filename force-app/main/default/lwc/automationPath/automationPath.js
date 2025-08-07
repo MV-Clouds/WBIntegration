@@ -118,18 +118,23 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     }
 
     loadObjects() {
+        this.isLoading = true;
         getAllObjects()
             .then(data => {
+                // console.log('data =', data);
                 // this.allObjects = data.map(obj => ({ label: obj, value: obj }));
-                this.objects = data.sort((a, b) => a.label.localeCompare(b.label));
+                data = data.sort((a, b) => a.label.localeCompare(b.label));
+                // console.log('data after sort =', data);
                 this.allObjects = data.map(obj => ({
                     label: obj.label,
                     value: obj.value
                 }));
+                // console.log('this.allObjects =', this.allObjects);
             })
-            .catch(error => console.error('Error fetching objects:', error));
-
-        // console.log('this.allObjects =', JSON.stringify(this.allObjects));
+            .catch(error => console.error('Error fetching objects:', error))
+            .finally(() => {
+                this.isLoading = false;
+            })
     }
 
     loadRequiredFields(savedFieldValues = {}) {
@@ -138,6 +143,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
             this.isLoading = true;
             if (!this.selectedObject) {
                 // console.log('No object selected');
+                this.isLoading = false;
                 return;
             }
             getRequiredFields({ objectName: this.selectedObject })
@@ -500,12 +506,12 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                             });
                         // console.log('this.objectFields fetchFieldsForObject:- ', JSON.stringify(this.objectFields));
 
-                        this.FlowId = existingFlowPath.MVWB__WB_Flow__c || '';
+                        // this.FlowId = existingFlowPath.MVWB__WB_Flow__c || '';
 
                     } else {
                         // No existing flow automation path found
                         this.selectedObject = '';
-                        this.FlowId = '';
+                        // this.FlowId = '';
                         this.chatWindowRows = [];
                         this.FlowRecordId = '';
                     }
@@ -753,7 +759,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     };
                 });
     
-            // console.log('Saving Automation Paths:', JSON.stringify(automationPathRecords));
+                // console.log('Saving Automation Paths:', JSON.stringify(automationPathRecords));
     
                 saveAutomationPaths({ automationPaths: automationPathRecords })
                     .then((result) => {
@@ -807,10 +813,10 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     return;
                 }
     
-            fields.MVWB__Automation__c = this.recordId;
-            fields.MVWB__Action_Type__c = 'Create a Record';
+                fields.MVWB__Automation__c = this.recordId;
+                fields.MVWB__Action_Type__c = 'Create a Record';
                 // 1. Object Name
-            fields.MVWB__Object_Name__c = this.selectedObject;
+                fields.MVWB__Object_Name__c = this.selectedObject;
     
                 // 2. Field Mapping
                 const mapping = {};
@@ -828,15 +834,16 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
                     }
                 });
     
-            fields.MVWB__Field_Mapping__c = JSON.stringify(mapping);
-            fields.MVWB__WB_Flow__c = this.FlowId;
+                fields.MVWB__Field_Mapping__c = JSON.stringify(mapping);
+                console.log('Flow Id in handleSave:', this.FlowId);
+                fields.MVWB__WB_Flow__c = this.FlowId;
     
                 if (this.FlowRecordId) {
     
                 // console.log('Updating existing record with ID:', this.FlowRecordId);
     
                     fields.Id = this.FlowRecordId;
-                    // console.log('Fields to save:', JSON.stringify(fields));
+                    console.log('Fields to save:', fields);
     
                     const updateInput = { fields };
                     updateRecord(updateInput)
@@ -860,7 +867,7 @@ export default class AutomationPath extends NavigationMixin(LightningElement) {
     
                     // console.log('Creating new record');
                     // console.log('Fields to save:', JSON.stringify(fields));
-                const recordInput = { apiName: 'MVWB__Automation_Path__c', fields };
+                    const recordInput = { apiName: 'MVWB__Automation_Path__c', fields };
     
                     createRecord(recordInput)
                         .then(result => {
