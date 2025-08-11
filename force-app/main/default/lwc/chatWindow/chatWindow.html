@@ -371,4 +371,31 @@
     <template if:true={showLicenseError}>
         <c-license-expired-l-w-c onpackageupdate={handlePackageUpdate}></c-license-expired-l-w-c>
     </template>
+    <template if:true={isErrorModalVisible}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header slds-theme_error slds-theme_alert-texture">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Message Failed to Send</h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-text-color_error slds-text-heading_small slds-m-bottom_small">
+                        Problem:
+                    </div>
+                    <p class="slds-m-bottom_medium modal-body-text">{errorDetails.message}</p>
+                    
+                    <div class="slds-text-color_success slds-text-heading_small slds-m-bottom_small">
+                        Suggested Solution:
+                    </div>
+                    <p class="modal-body-text">{errorDetails.solution}</p>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <p class="modal-body-text">For additional assitance reach out to us over <a href="mailto:wbconnect-support@mvclouds.com" target="_top">Email</a></p>
+                    <button class="slds-button slds-button_neutral" onclick={handleDismissError}>Dismiss</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
 </template>

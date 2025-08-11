@@ -64,6 +64,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     @track subscription = {};
     @track channelName = '/event/MVWB__Chat_Message__e';
 
+    //Meta error handling changes
+    @track isErrorModalVisible = false;
+    @track errorDetails = {};
+
     @wire(CurrentPageReference) pageRef;
 
     //Get Variables
@@ -757,9 +761,12 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 messageType = 'Video';
             }
 
+            console.log('before chat created');
             createChat({chatData: {message: event.detail.files[0].contentVersionId, templateId: this.selectedTemplate, messageType: messageType, recordId: this.recordId, replyToChatId: this.replyToMessage?.Id || null, phoneNumber: this.phoneNumber}})
             .then(chat => {
                 if(chat){
+                    console.log('chat created');
+                    
                     this.chats.push(chat);
                     this.processChats(true);
                     
@@ -769,6 +776,14 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                     });
                     sendWhatsappMessage({jsonData: imagePayload, chatId: chat.Id, isReaction: false, reaction: null})
                     .then(result => {
+                        console.log('result:- ', result);
+                        console.log('handleUploadFinish');
+                        if(result.hasOwnProperty('error')){
+                            console.log('in if hasownproperty');
+                            this.isErrorModalVisible = true;
+                            this.errorDetails = result.error;
+                        }
+                        
                         if(result.errorMessage == 'METADATA_ERROR'){
                             this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
                         }
@@ -867,11 +882,18 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     handleTemplateSent(event){
         try {
             this.showTemplateSelection = false;
+            if(event.detail.hasOwnProperty('error')){
+                console.log('in if hasownproperty');
+                this.isErrorModalVisible = true;
+                this.errorDetails = event.detail.error;
+            }
             if(event.detail.errorMessage == 'METADATA_ERROR') this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
             let chat = event.detail.chat;
             this.chats.push(chat);
             this.handleBackDropClick();
             this.showSpinner = false;
+            console.log('handleTemplateSent');
+            
             this.processChats(true);
         } catch (e) {
             console.error('Error in function handleTemplateSent:::', e.message);
@@ -927,6 +949,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
                 
                 sendWhatsappMessage({jsonData: reactPayload, chatId: chat.Id, isReaction: true, reaction: chat.MVWB__Reaction__c})
                 .then(result => {
+                    console.log('result:- ', result);
                     if(result.errorMessage == 'METADATA_ERROR'){
                         this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
                     }
@@ -988,6 +1011,14 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
                     sendWhatsappMessage({jsonData: textPayload, chatId: chat.Id, isReaction: false, reaction: null})
                     .then(result => {
+                        console.log('result:- ', result);
+                        console.log('handleSendMessage');
+                        
+                        if(result.hasOwnProperty('error')){
+                            console.log('in if hasownproperty');
+                            this.isErrorModalVisible = true;
+                            this.errorDetails = result.error;
+                        }
                         if(result.errorMessage == 'METADATA_ERROR'){
                             this.showToast('Something went wrong!', 'Please add/update the configurations for the whatsapp.', 'error');
                         }
@@ -1241,5 +1272,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         } catch (e) {
             console.error('Error in function showToast:::', e.message);
         }
+    }
+
+    handleDismissError(){
+        this.isErrorModalVisible = false;
+        this.errorDetails = {};
     }
 }

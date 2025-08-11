@@ -293,7 +293,9 @@ public with sharing class ChatWindowController {
                 if(!isReaction){
                     chat.Message_Status__c = 'Failed';
                 }
-                ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => JSON.serialize(response.getBody()) });
+                MetaApiErrorHandler errorHandler = new MetaApiErrorHandler();
+                resultmap.put('error',errorHandler.handleApiError(response));
+                ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'sendWhatsappMessage', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => statusCode, 'chatId' => chatId, 'moreDetails' => 'API Exception while sending a message', 'apiResponse' => response.getBody() });
             }
 
             // Step 1: Deserialize full JSON

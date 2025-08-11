@@ -961,6 +961,19 @@ global without sharing class WhatsAppWebhook{
                                             waChat.Message_Status__c = 'Delivered';
                                         } else if (status == 'read'){
                                             waChat.Message_Status__c = 'Seen';
+                                        } else if (status == 'failed') {
+                                            waChat.Message_Status__c = 'Failed';
+                                            // Extract error details and log the exception
+                                            List<Object> errors = (List<Object>) statusMap.get('errors');
+                                            if (errors != null && !errors.isEmpty()) {
+                                                Map<String, Object> errorDetails = (Map<String, Object>) errors[0];
+                                                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook','methodName' => 'parseMessages','exceptionObj' => null,'isApiException' => true,'statusCode' => (Integer)errorDetails.get('code'),'chatId' => waChat.Id,'moreDetails' => 'WhatsApp API Error: ' + (String)errorDetails.get('title') + '. ' + (String)errorDetails.get('message'),'apiResponse' => JSON.serialize(errorDetails)
+                                                });
+                                            } else {
+                                                // Fallback if 'errors' object is missing
+                                                ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook','methodName' => 'parseMessages','exceptionObj' => null,'isApiException' => true,'statusCode' => null,'chatId' => waChat.Id,'moreDetails' => 'Message status reported as "failed" by webhook, but no error details were provided.','apiResponse' => JSON.serialize(statusMap)
+                                                });
+                                            }
                                         }
                                         update waChat;
                                         Chat_Message__e statusChangeEvent = new Chat_Message__e();
