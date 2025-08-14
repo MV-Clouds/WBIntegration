@@ -23,6 +23,9 @@ import CATEGORY_FIELD from '@salesforce/schema/MVWB__Template__c.MVWB__Template_
 import STATUS_FIELD from '@salesforce/schema/MVWB__Template__c.MVWB__Status__c';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
+import getSyncTemplateData from '@salesforce/apex/SyncTemplateController.syncTemplate'
+import confirmTemplateSync from '@salesforce/apex/SyncTemplateController.confirmTemplateSync'
+
 
 
 export default class WbAllTemplatePage extends LightningElement {
@@ -51,6 +54,14 @@ export default class WbAllTemplatePage extends LightningElement {
     @track data = [];
     @track paginatedData = [];
     objectApiName = TEMPLATE_OBJECT;
+    @track showModal = false;
+    @track missingTemplatesList = [];
+    @track orgOnlyTemplateMap = {};
+    @track storedTemplateSyncData = {};
+    @track isTemplateCreationConfirmed = false;
+    @track isMissingTemplateCreationDisabled = true;
+    @track selectedOrphanTemplateAction = 'CreateInMeta';
+    @track confirmSyncChecked = false;
 
     get actionButtonClass(){
         return 'custom-button cus-btns' ;
@@ -141,10 +152,50 @@ export default class WbAllTemplatePage extends LightningElement {
         return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
     }
 
-
-
     get filterClass() {
         return this.isFilterVisible ? 'combobox-container visible' : 'combobox-container hidden';
+    }
+
+     
+    get isDeleteSelected() {
+        return this.selectedOrphanTemplateAction === 'DeleteFromOrg';
+    }
+
+    get isCreateSelected() {
+        return this.selectedOrphanTemplateAction === 'CreateInMeta';
+    }
+
+    get hasMissingTemplates() {
+        return this.missingTemplatesList.length > 0;
+    }
+
+    get hasOrgOnlyTemplates() {
+        console.log('hasOrgOnlyTemplates =', this.orgOnlyTemplateMap && Object.keys(this.orgOnlyTemplateMap).length > 0);
+        return this.orgOnlyTemplateMap && Object.keys(this.orgOnlyTemplateMap).length > 0;
+    }
+
+    get hasNoExtraTemplates() {
+        return (this.missingTemplatesList.length === 0) && (Object.keys(this.orgOnlyTemplateMap).length === 0)
+    }
+
+    get orgOnlyTemplateArray() {
+        return Object.entries(this.orgOnlyTemplateMap || {}).map(([id, name]) => ({
+            id,
+            name
+        }));
+    }
+
+    get orphanTemplateOptions() {
+        return [
+            { label: 'Delete them from Org', value: 'DeleteFromOrg' },
+            { label: 'Create them in Meta', value: 'CreateInMeta' }
+        ];
+    }
+
+    get disableProceed() {
+        const confirmChecked = this.confirmSyncChecked;
+        const orphanActionSelected = this.selectedOrphanTemplateAction !== undefined && this.selectedOrphanTemplateAction !== null && this.selectedOrphanTemplateAction !== '';
+        return !(confirmChecked && (this.hasOrgOnlyTemplates ? orphanActionSelected : true));
     }
 
     @wire(getObjectInfo, { objectApiName: TEMPLATE_OBJECT })
@@ -237,6 +288,75 @@ export default class WbAllTemplatePage extends LightningElement {
             unsubscribe(this.subscription, (response) => {
             });
         }
+    }
+
+    
+    syncTemplates() {
+        console.log('syncTemplates start');
+        this.isLoading = true;
+        this.showModal = false;
+        this.syncTemplateData();
+    }
+
+    syncTemplateData(){
+        getSyncTemplateData()
+        .then(data => {
+            console.log('data from syncTemplatesData:', data);
+            this.missingTemplatesList = data.metaToOrg;
+            console.log('this.missingTemplatesList:', this.missingTemplatesList);
+            this.orgOnlyTemplateMap = data.orgToMeta || {};
+            console.log('this.orgOnlyTemplateMap:', this.orgOnlyTemplateMap);
+
+            // Store full response in JS for reuse
+            this.storedTemplateSyncData = data;
+            console.log('this.storedTemplateSyncData =', this.storedTemplateSyncData);
+            this.isLoading = false;
+            this.showModal = true;
+        })
+        .catch(error => {
+            console.error('Error fetching pending flow list: ', error);
+            this.isLoading = false;
+        });
+    }
+
+    handleProceed() {
+        this.showToastSuccess('Template Sync Started', 'Syncing in progress. You will be notified once it is completed.');
+        const cleanedData = JSON.stringify(JSON.parse(JSON.stringify(this.storedTemplateSyncData)));
+        console.log('cleanedData =', cleanedData);
+        console.log('Selected Orphan Action:', this.selectedOrphanTemplateAction);
+        
+        confirmTemplateSync({
+            selectedOrphanTemplateAction: this.selectedOrphanTemplateAction,
+            isSyncConfirmed: true,
+            wrapperFromClientJSON: cleanedData
+        })
+        .then(()=>{
+
+            this.showModal = false;
+        }
+        )
+        .catch(error => {
+            console.error('Error during template sync:', error);
+        });
+    }
+
+    closeModal() {
+        this.confirmSyncChecked = false;
+        this.isMissingTemplateCreationDisabled = true;
+        this.selectedOrphanTemplateAction = 'CreateInMeta';
+        this.showModal = false;
+    }
+
+    handleConfirmationChange(event) {
+        this.isTemplateCreationConfirmed = event.target.checked;
+        this.isMissingTemplateCreationDisabled = !this.isTemplateCreationConfirmed;
+        this.confirmSyncChecked = event.target.checked;
+    }
+
+    handleOrphanTemplateOptionChange(event) {
+        this.selectedOrphanTemplateAction = event.detail.value;
+        console.log('selectedOrphanTemplateAction:', this.selectedOrphanTemplateAction);
+        
     }
 
     updateRecord(templateId, newStatus) {
