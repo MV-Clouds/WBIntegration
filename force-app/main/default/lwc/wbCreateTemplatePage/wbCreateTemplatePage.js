@@ -225,6 +225,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     @track selectedFilesToUpload = [];
     @track awsFileName;
     @track objectFieldMap = {};
+    
+    @api isTemplateClone = false;
     @api activeTab;
     @api selectedTab;
     @api selectedOption;
@@ -440,6 +442,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     // FORM SUBMIT ENABLE / DISABLE
     // ============================
 
+    get templateNameDisabled() {
+        return this.isEditTemplate && (this.isTemplateClone == false);
+    }
+
     get isSubmitDisabled() {
         // Logic to determine if form submission should be disabled based on fields' validity
         const currentTemplate = this.activeTab;
@@ -559,7 +565,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             this.isNewTemplate = false;
             this.isEditTemplate = true;
 
-            this.fetchTemplateData(); // Load template data when ID is set
         }
     }
 
@@ -769,6 +774,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     connectedCallback() {
         try {
+            if (this.isEditTemplate) {
+                this.fetchTemplateData();
+            }
             this.iseditTemplatevisible = true;
             if (this.selectedTab != undefined && this.selectedOption != undefined) {
                 this.handleTabClick(this.selectedTab);
@@ -892,6 +900,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     fetchTemplateData() {
         try {
             this.isLoading = true;
+            console.log('Fetch Template Data :: ' + this.isTemplateClone);
             getDynamicObjectData({ templateId: this.edittemplateid })
                 .then((data) => {
                     const { template, templateVariables } = data;
@@ -912,6 +921,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     setTimeout(() => {
 
                         this.templateName = template.MVWB__Template_Name__c || '';
+                        this.templateName += this.isTemplateClone ? '_clone' : '';
                         this.metaTemplateId = template.MVWB__Template_Id__c || '';
                         const headerBody = template.MVWB__WBHeader_Body__c || '';
 
@@ -983,6 +993,23 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.fileType = template.MVWB__Header_Type__c;
 
                             this.filePreview = template.MVWB__WBHeader_Body__c;
+                            this.headerHandle = template.WBImage_Header_Handle__c || '';
+                            if (this.headerHandle == '' || this.headerHandle == null) {
+                                uploadFileToMetaAndGetHeaderHandle({ tempImgUrl: this.previewHeader })
+                                    .then((result) => {
+                                        console.log('Result ::: ', result);
+                                        console.log(typeof(result));
+                                        
+                                        if (!result || !result.trim()) {
+                                            this.showToastWarning('Header handle missing, please reupload file.');
+                                        }
+
+
+                                        this.headerHandle = result
+                                    }).catch((error) => {
+                                        console.error('Error fetching header handler: ', error);
+                                    });
+                            }
 
                         } else {
                             this.previewHeader = this.formatText(headerBody) || '';
@@ -2931,7 +2958,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             const serializedWrapper = JSON.stringify(template);
             const payload = JSON.stringify(buildPayload(template));
 
-            if (this.metaTemplateId) {
+            if (this.metaTemplateId && this.isTemplateClone == false) {
                 editWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateId: this.metaTemplateId })
                     .then(result => {
                         if (result && result.success) {

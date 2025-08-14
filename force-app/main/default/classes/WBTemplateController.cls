@@ -733,6 +733,15 @@ public with sharing class WBTemplateController{
         return response;
     }
 
+    @AuraEnabled
+    public static string getMetaHeaderHandler(Blob fileBlob,String mimeType,String fileName,Integer fileLength){
+        try {
+            
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+
     @future(callout = true)
     public static void uploadFileToMetaAndGetHeaderHandle(String templateName, String serializedWrapper, String payloadWrapper, String tempalteId){
         String headerHandleResult = '';

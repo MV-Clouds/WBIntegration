@@ -34,7 +34,12 @@
                         <p class="templatetxt2">New Template</p>
                     </div>
                 </template>
-                <template if:true={isEditTemplate}>
+                <template lwc:if={isTemplateClone}>
+                    <div class="texttemp">
+                        <p class="templatetxt2">Clone Template</p>
+                    </div>
+                </template>
+                <template lwc:elseif={isEditTemplate}>
                     <div class="texttemp">
                         <p class="templatetxt2">Edit Template</p>
                     </div>

@@ -28,6 +28,7 @@ import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 export default class WbAllTemplatePage extends LightningElement {
     @track isTemplateVisible = false;
     @track isCreateTemplate = false;
+    @track isCloneTemplate = false;
     @track categoryValue='';
     @track timePeriodValue='';
     @track statusValues='';
@@ -208,12 +209,12 @@ export default class WbAllTemplatePage extends LightningElement {
             // this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
 
             // Call updateRecord only if Template_Id__c and Template_Status__c are present
-            if (payload.MVWB__Template_Id__c && payload.MVWB__Template_Status__c) {
-                this.updateRecord(payload.MVWB__Template_Id__c, payload.MVWB__Template_Status__c);
+            if (payload.Template_Id__c && payload.Template_Status__c) {
+                this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
             }
 
             // Call a different method if Fetch_All_Templates__c is present
-            if (payload.MVWB__Fetch_All_Templates__c) {
+            if (payload.Fetch_All_Templates__c) {
                 this.fetchAllTemplate(false); // Replace with your actual method name
             }
         };
@@ -241,7 +242,7 @@ export default class WbAllTemplatePage extends LightningElement {
     updateRecord(templateId, newStatus) {
         const recordIndex = this.allRecords.findIndex((record) => record.Id === templateId);
         if (recordIndex !== -1) {
-            const updatedRecord = { ...this.allRecords[recordIndex], MVWB__Status__c: newStatus };
+            const updatedRecord = { ...this.allRecords[recordIndex], Status__c: newStatus };
             updatedRecord.isButtonDisabled = newStatus === 'In-Review';
             updatedRecord.cssClass = updatedRecord.isButtonDisabled ? 'action edit disabled' : 'action edit';
 
@@ -273,7 +274,7 @@ export default class WbAllTemplatePage extends LightningElement {
             try {
                 if (data) {
                     this.data = data.map((record, index) => {
-                        const isButtonDisabled = record.MVWB__Status__c === 'In-Review';
+                        const isButtonDisabled = record.Status__c === 'In-Review';
                         
                         return {
                             ...record,
@@ -409,7 +410,7 @@ export default class WbAllTemplatePage extends LightningElement {
             let filtered = [...this.data];
 
             if (this.categoryValue) {
-                filtered = filtered.filter(record => record.MVWB__Template_Category__c === this.categoryValue);
+                filtered = filtered.filter(record => record.Template_Category__c === this.categoryValue);
             }
     
             if (this.timePeriodValue) {
@@ -425,11 +426,11 @@ export default class WbAllTemplatePage extends LightningElement {
                 filtered = filtered.filter(record => new Date(record.CreatedDate) >= fromDate);
             }
             if (this.statusValues.length > 0) {
-                filtered = filtered.filter(record => this.statusValues.includes(record.MVWB__Status__c));
+                filtered = filtered.filter(record => this.statusValues.includes(record.Status__c));
             }
     
             if (this.searchInput) {
-                filtered = filtered.filter(record => record.MVWB__Template_Name__c.toLowerCase().includes(this.searchInput));
+                filtered = filtered.filter(record => record.Template_Name__c.toLowerCase().includes(this.searchInput));
             }
     
             this.filteredRecords = filtered;
@@ -497,6 +498,22 @@ export default class WbAllTemplatePage extends LightningElement {
         }
     
         this.editTemplateId = recordId;
+        this.isCreateTemplate = true; 
+        this.isTemplateVisible = false; 
+        this.isLoading=false; 
+    }
+
+    cloneTemplate(event) {
+        this.isLoading=true;
+        const recordId = event.currentTarget.dataset.id;        
+        const record = this.filteredRecords.find(record => record.id === recordId);
+    
+        if (record && record.isButtonDisabled) {
+            return;  
+        }
+    
+        this.editTemplateId = recordId;
+        this.isCloneTemplate = true;
         this.isCreateTemplate = true; 
         this.isTemplateVisible = false; 
         this.isLoading=false; 
