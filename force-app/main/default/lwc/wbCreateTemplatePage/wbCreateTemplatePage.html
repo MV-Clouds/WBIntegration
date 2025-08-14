@@ -56,7 +56,7 @@
                                     <label for="templateName">Name your template</label>
                                     <input class="nameInput" type="text" id="templateName" name="templateName"
                                         value={templateName} maxlength="512" placeholder="Enter template name"
-                                        disabled={isEditTemplate} oninput={handleInputChange} />
+                                        disabled={templateNameDisabled} oninput={handleInputChange} />
                                     <p class="char-count tempname-count">{templateName.length}/{LIMITS.maxTempNamelength}
                                     </p>
                                 </div>
@@ -1113,5 +1113,4 @@
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
 
-    </template>
 </template>

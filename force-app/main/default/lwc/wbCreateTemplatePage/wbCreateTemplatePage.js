@@ -37,6 +37,7 @@ import uploadFile from '@salesforce/apex/FileUploaderController.uploadFile';
 import deleteFile from '@salesforce/apex/FileUploaderController.deleteFile';
 import getObjectsWithPhoneField from '@salesforce/apex/WBTemplateController.getObjectsWithPhoneField';
 import getCompanyName from '@salesforce/apex/WBTemplateController.getCompanyName';
+import getMetaHeaderHandler from '@salesforce/apex/WBTemplateController.getMetaHeaderHandler';
 import getS3ConfigSettings from '@salesforce/apex/AWSFilesController.getS3ConfigSettings';
 import deleteImagesFromS3 from '@salesforce/apex/AWSFilesController.deleteImagesFromS3';
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WBTemplateController.getPreviewURLofWhatsAppFlow';
@@ -995,7 +996,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.filePreview = template.MVWB__WBHeader_Body__c;
                             this.headerHandle = template.WBImage_Header_Handle__c || '';
                             if (this.headerHandle == '' || this.headerHandle == null) {
-                                uploadFileToMetaAndGetHeaderHandle({ tempImgUrl: this.previewHeader })
+                                getMetaHeaderHandler({ fileUrlOrContentVersionId: this.previewHeader , contentVersionId : this.contentVersionId})
                                     .then((result) => {
                                         console.log('Result ::: ', result);
                                         console.log(typeof(result));
@@ -2669,55 +2670,66 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
 
     validateTemplate() {
         try {
-            if (!this.templateName || this.templateName.trim() === '') {
+            // Template name validation
+            if (!this.templateName || String(this.templateName).trim() === '') {
                 this.showToastError('Template Name is required');
                 return false;
             }
 
+            // Language validation
             if (!this.selectedLanguage) {
                 this.showToastError('Please select a language');
                 return false;
             }
 
-            if (!this.tempBody || this.tempBody.trim() === '') {
+            // Body validation
+            if (!this.tempBody || String(this.tempBody).trim() === '') {
                 this.showToastError('Template Body is required');
                 return false;
             }
 
-            const buttonData = [...this.buttonList, ...this.customButtonList];
+            // Button validations
+            const buttonData = [...(this.buttonList || []), ...(this.customButtonList || [])];
             for (let button of buttonData) {
+                
                 if (button.isVisitSite) {
-                    if (!button.selectedUrlType || !button.webURL || !this.validateUrl(button.webURL)) {
+                    if (!button.selectedUrlType || !button.webURL || !this.validateUrl(String(button.webURL))) {
                         this.showToastError('Please provide a valid URL that should be properly formatted (e.g., https://example.com)');
                         return false;
                     }
-                } else if (button.isCallPhone) {
-                    if (!button.selectedCountryType || !button.phonenum || !this.validatePhoneNumber(button.phonenum)) {
+                } 
+                else if (button.isCallPhone) {
+                    if (!button.selectedCountryType || !button.phonenum || !this.validatePhoneNumber(String(button.phonenum))) {
                         this.showToastError('Please provide a valid country and phone number for the "Call Phone Number" button');
                         return false;
                     }
-                } else if (button.isOfferCode) {
+                } 
+                else if (button.isOfferCode) {
+                    const offerCode = (button.offercode != null) ? String(button.offercode).trim() : '';
                     const alphanumericPattern = /^[a-zA-Z0-9]+$/;
-                    if (!alphanumericPattern.test(button.offercode.trim())) {
+                    if (!alphanumericPattern.test(offerCode)) {
                         this.showToastError('Offer code must only contain alphanumeric characters (letters and numbers)');
                         return false;
                     }
                 }
 
                 if (button.isCustom) {
-                    if (!button.Cbtntext || button.Cbtntext.trim() === '') {
+                    const customText = (button.Cbtntext != null) ? String(button.Cbtntext).trim() : '';
+                    if (customText === '') {
                         this.showToastError('Button text is required for the custom button');
                         return false;
                     }
                 }
             }
+
             return true;
         } catch (error) {
             console.error('Something went wrong while validating template.', error);
+            this.showToastError('Unexpected error occurred while validating template');
             return false;
         }
-
     }
+
 
     validateUrl(value) {
         const urlPattern = new RegExp(
@@ -2921,8 +2933,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 awsFileName: this.awsFileName
             }
 
-
-
             const template = {
                 templateName: this.templateName ? this.templateName : null,
                 templateCategory: this.activeTab ? this.activeTab : null,
@@ -2983,21 +2993,28 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     })
                     .catch(error => {
                         console.error('Error creating template', error);
+                        
                         const errorTitle = 'Template creation failed: ';
-                        let errorMsg;
-                        if (error.body && error.body.message) {
-                            if (error.body.message.includes('Read timed out')) {
-                                errorMsg = 'The request timed out. Please try again.';
-                            } else {
-                                errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+                        let errorMsg = 'An unknown error occurred';
+
+                        if (error?.body) {
+                            if (typeof error.body.message === 'string') {
+                                if (error.body.message.includes('Read timed out')) {
+                                    errorMsg = 'The request timed out. Please try again.';
+                                } else {
+                                    errorMsg = error.body.message;
+                                }
+                            } else if (error.body.error_user_title) {
+                                errorMsg = error.body.error_user_title;
+                            } else if (error.body.message) {
+                                errorMsg = JSON.stringify(error.body.message);
                             }
-                        } else {
-                            errorMsg = 'An unknown error occurred';
                         }
 
                         this.showToastError(errorTitle, errorMsg);
                         this.isLoading = false;
                     });
+
 
             } else {
                 console.log('Payload :::', payload);
@@ -3025,21 +3042,34 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     })
                     .catch(error => {
                         console.error('Error creating template', error);
-                        const errorTitle = 'Template creation failed: ';
-                        let errorMsg;
-                        if (error.body && error.body.message) {
-                            if (error.body.message.includes('Read timed out')) {
-                                errorMsg = 'The request timed out. Please try again.';
-                            } else {
-                                errorMsg = error.body.message.error_user_title || 'An unknown error occurred';
+
+                        const errorTitle = 'Template creation failed';
+                        let errorMsg = 'An unknown error occurred';
+
+                        try {
+                            // Ensure body exists
+                            if (error && error.body) {
+                                const bodyMsg = error.body.message || '';
+                                const userTitle = error.body.error_user_title;
+                                const userMsg = error.body.error_user_msg;
+
+                                if (typeof bodyMsg === 'string' && bodyMsg.includes('Read timed out')) {
+                                    errorMsg = 'The request timed out. Please try again.';
+                                } else if (userTitle || userMsg) {
+                                    // Prefer user-specific messages from API
+                                    errorMsg = `${userTitle ? userTitle + ': ' : ''}${userMsg || ''}`.trim();
+                                } else if (typeof bodyMsg === 'string' && bodyMsg.trim() !== '') {
+                                    errorMsg = bodyMsg;
+                                }
                             }
-                        } else {
-                            errorMsg = 'An unknown error occurred';
+                        } catch (e) {
+                            console.error('Error parsing error object', e);
                         }
 
                         this.showToastError(errorTitle, errorMsg);
                         this.isLoading = false;
                     });
+
 
             }
 
