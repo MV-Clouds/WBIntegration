@@ -30,7 +30,7 @@
                                 <input type="search" class="slds-input" name="searchInput" placeholder="Search Name" onkeyup={handleChange} />
                             </div>
                         <div class="icon" onclick={toggleFilterVisibility}>
-                            <img src="/resource/filterIcon" class="filteraction" alt="filter">
+                            <img src="/resource/MVWB__filterIcon" class="filteraction" alt="filter">
                         </div>
                         <div class={filterClass}>
                             <div class="custom-select">
@@ -111,16 +111,16 @@
                                     </td>
                                     <td class="tableData tablebtns" data-label="Actions">
                                         <button class="action-buttons">
-                                            <img src="/resource/previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
+                                            <img src="/resource/MVWB__previewIcon" class="action" alt="preview" data-id={record.id} onclick={previewTemplate}>
                                         </button>
                                         <button disabled={record.isButtonDisabled} class="action-buttons">
-                                            <img src="/resource/editIcon" class={record.cssClass} alt="edit" data-id={record.id} onclick={editTemplate} >
+                                            <img src="/resource/MVWB__editIcon" class={record.cssClass} alt="edit" data-id={record.id} onclick={editTemplate} >
                                         </button>
                                         <button class="action-buttons">
-                                            <img src="/resource/trashIcon" class="action trash" alt="delete" data-id={record.id} onclick={deleteTemplate}>
+                                            <img src="/resource/MVWB__trashIcon" class="action trash" alt="delete" data-id={record.id} onclick={deleteTemplate}>
                                         </button>
                                         <button class="action-buttons">
-                                            <img src="/resource/cloneIcon" class="action trash" alt="clone" data-id={record.id} onclick={cloneTemplate}>
+                                            <img src="/resource/MVWB__cloneIcon" class="action trash" alt="clone" data-id={record.id} onclick={cloneTemplate}>
                                         </button>
                                     </td>
                                 </tr>
@@ -141,7 +141,7 @@
                         <div class="empty-state">
                             <div class="empty-state__content">
                                 <div class="empty-state__icon">
-                                    <img src="/resource/emptyState" alt="" draggable="false">
+                                    <img src="/resource/MVWB__emptyState" alt="" draggable="false">
                                 </div>
                                 <div class="empty-state__message">No data available to show</div>
                             </div>
