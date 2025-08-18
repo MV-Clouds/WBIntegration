@@ -9,6 +9,8 @@ import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
 import FLOW_OBJECT from "@salesforce/schema/Flow__c";
 import STATUS_FIELD from "@salesforce/schema/Flow__c.Status__c";
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
+import getSyncFlowData from '@salesforce/apex/SyncFlowController.syncFlowData';
+import confirmFlowSync from '@salesforce/apex/SyncFlowController.confirmFlowSync';
 
 export default class WbAllFlowsPage extends LightningElement {
     @track allRecords = [];
@@ -24,13 +26,28 @@ export default class WbAllFlowsPage extends LightningElement {
     @track isFlowDraft = false;
     @track showLicenseError = false;
     @track isEditMode = false;
+    @track isCloneFlow = false;
     @track isNameClicked = false;
+    @track showDeletePopup = false;
+    @track showDeprecatePopup = false;
     @track selectedFlowId = '';
     @track selectedFlowName = '';
     @track currentPage = 1;
     @track pageSize = 15;
     @track visiblePages = 5;
     @track paginatedData = [];
+    @track showCloneModal = false;
+    @track cloneFlowName = '';
+    @track selectedFlowDatasetId;
+    @track selectedFlowDatasetStatus;
+    @track showModal = false;
+    @track missingFlowsList = [];
+    @track orgOnlyFlowMap = {};
+    @track isFlowCreationConfirmed = false;
+    @track isMissingFlowCreationDisabled = true;
+    @track selectedOrphanFlowAction = '';
+    @track confirmSyncChecked = false;
+    @track showDropdown = false;
 
     get showNoRecordsMessage() {
         return this.filteredRecords.length === 0;
@@ -94,7 +111,6 @@ export default class WbAllFlowsPage extends LightningElement {
             }
             return pages;
         } catch (error) {
-            console.error('Error generating pagination buttons:', error);
             this.showToast('Error', 'Error in pageNumbers->' + error, 'error');
             return null;
         }
@@ -106,6 +122,51 @@ export default class WbAllFlowsPage extends LightningElement {
     
     get isLastPage() {
         return this.currentPage === Math.ceil(this.totalItems / this.pageSize);
+    }
+
+    get isDisabledCloneNext() {
+        return this.cloneFlowName.trim() === '';
+    }
+
+    get isDeleteSelected() {
+        return this.selectedOrphanFlowAction === 'DeleteFromOrg';
+    }
+
+    get isCreateSelected() {
+        return this.selectedOrphanFlowAction === 'CreateInMeta';
+    }
+
+    get hasMissingFlows() {
+        return this.missingFlowsList.length > 0;
+    }
+
+    get hasOrgOnlyFlows() {
+        console.log('hasOrgOnlyFlows =', this.orgOnlyFlowMap && Object.keys(this.orgOnlyFlowMap).length > 0);
+        return this.orgOnlyFlowMap && Object.keys(this.orgOnlyFlowMap).length > 0;
+    }
+
+    get hasNoExtraFlows() {
+        return (this.missingFlowsList.length === 0) && (Object.keys(this.orgOnlyFlowMap).length === 0)
+    }
+
+    get orgOnlyFlowArray() {
+        return Object.entries(this.orgOnlyFlowMap || {}).map(([id, name]) => ({
+            id,
+            name
+        }));
+    }
+
+    get orphanFlowOptions() {
+        return [
+            { label: 'Delete them from Org', value: 'DeleteFromOrg' },
+            { label: 'Create them in Meta', value: 'CreateInMeta' }
+        ];
+    }
+
+    get disableProceed() {
+        const confirmChecked = this.confirmSyncChecked;
+        const orphanActionSelected = this.selectedOrphanFlowAction !== undefined && this.selectedOrphanFlowAction !== null && this.selectedOrphanFlowAction !== '';
+        return !(confirmChecked && (this.hasOrgOnlyFlows ? orphanActionSelected : true));
     }
 
     @wire(getObjectInfo, { objectApiName: FLOW_OBJECT })
@@ -131,10 +192,15 @@ export default class WbAllFlowsPage extends LightningElement {
             
             this.isFlowVisible = true;
             this.fetchWhatsAppFlows();
+            document.addEventListener('click', this.handleOutsideClick);
             
         } catch (e) {
             console.error('Error in connectedCallback:::', e.message);
         }
+    }
+
+    disconnectedCallback() {
+        document.removeEventListener('click', this.handleOutsideClick);
     }
 
     async checkLicenseStatus() {
@@ -172,7 +238,7 @@ export default class WbAllFlowsPage extends LightningElement {
                 .catch((error) => {
                     console.error('Error in fetchWhatsAppFlows:::', error);
                 })
-                .finnally(() => {
+                .finally(() => {
                     this.isLoading = false;
                 });
         } catch (error) {
@@ -229,7 +295,6 @@ export default class WbAllFlowsPage extends LightningElement {
             const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
             this.paginatedData = this.filteredRecords.slice(startIndex, endIndex);
         } catch (error) {
-            console.error('Error in updating shown data:', error);
             this.showToast('Error', 'Error updating shown data', 'error');
         }
     }
@@ -241,7 +306,6 @@ export default class WbAllFlowsPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.error('Error in handling previous button click:', error);
             this.showToast('Error', 'Error navigating to previous page', 'error');
         }
     }
@@ -253,7 +317,6 @@ export default class WbAllFlowsPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.error('Error in handling next button click:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
     }
@@ -266,10 +329,59 @@ export default class WbAllFlowsPage extends LightningElement {
                 this.updateShownData();
             }
         }catch(error){
-            console.error('Error in handling page change:', error);
             this.showToast('Error', 'Error navigating pages', 'error');
         }
-    } 
+    }
+
+    handleOutsideClick = (event) => {
+        // Check if the click is outside the component
+        if (!this.template.contains(event.target)) {
+            this.template.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+    };
+
+    toggleDropdown(event) {
+        event.stopPropagation();
+
+        const allMenus = this.template.querySelectorAll('.dropdown-menu');
+        allMenus.forEach(menu => {
+            menu.classList.add('hidden');
+        });
+
+        const container = event.currentTarget.closest('.action-container');
+        const dropdown = container.querySelector('.dropdown-menu');
+
+        if (dropdown) {
+            dropdown.classList.toggle('hidden');
+        }
+    }
+
+    cloneFlow(event) {
+        console.log('cloneFlow clicked')
+        this.selectedFlowId = event.currentTarget.dataset.id;
+        console.log('this.selectedFlowId =', this.selectedFlowId);
+        this.isCloneFlow = true;
+        this.showCloneModal = true;
+    }
+
+    handleFlowNameChange(event) {
+        this.cloneFlowName = event.target.value;
+    }
+
+    closeCloneModal() {
+        this.showCloneModal = false;
+        this.cloneFlowName = '';
+        this.isCloneFlow = false;
+        this.selectedFlowId = '';
+    }
+
+    handleCloneNext() {
+        this.showCloneModal = false;
+        this.isFlowVisible = false;
+        this.iscreateflowvisible = true;
+    }
 
     formatDate(dateString) {
         if(dateString){
@@ -289,10 +401,16 @@ export default class WbAllFlowsPage extends LightningElement {
         this.iscreateflowvisible = true;
     }
     
-    deleteFlow(event){
+    confirmDeleteFlow(event) {
+        this.selectedFlowDatasetId = event.currentTarget.dataset.id;
+        this.selectedFlowDatasetStatus = event.currentTarget.dataset.status;
+        this.showDeletePopup = true;
+    }
+
+    deleteFlow(){
         try {
-            var flowId = event.currentTarget.dataset.id;
-            var status = event.currentTarget.dataset.status;
+            var flowId = this.selectedFlowDatasetId;
+            var status = this.selectedFlowDatasetStatus;
             if(status === 'Draft' || status === 'Published') {
                 this.isLoading = true;
                 deleteWhatsAppFlow({flowId : flowId})
@@ -312,15 +430,28 @@ export default class WbAllFlowsPage extends LightningElement {
             } else {
                 this.showToast('Error', 'Only flows in Draft or Published status can be deleted.', 'error');
             }
+            this.showDeletePopup = false;
+            this.updateShownData();
         } catch (error) {
             console.error('Error in deleteFlow : ' , error);
         }
     }
 
-    deprecateFlow(event){
+    closeDeprecatePopup() {
+        this.showDeprecatePopup = false;
+        this.showDeletePopup = false;
+    }
+
+    confirmDeprecateFlow(event) {
+        this.selectedFlowDatasetId = event.currentTarget.dataset.id;
+        this.selectedFlowDatasetStatus = event.currentTarget.dataset.status;
+        this.showDeprecatePopup = true;
+    }
+
+    deprecateFlow(){
         try {
-            var flowId = event.currentTarget.dataset.id;
-            var status = event.currentTarget.dataset.status;
+            var flowId = this.selectedFlowDatasetId;
+            var status = this.selectedFlowDatasetStatus;
             if(status === 'Draft' || status === 'Published'){
                 this.isLoading = true;
                 deprecateWhatsAppFlow({flowId : flowId})
@@ -340,6 +471,8 @@ export default class WbAllFlowsPage extends LightningElement {
             } else {
                 this.showToast('Error', 'Only flows in Draft or Published status can be deleted.', 'error');
             }
+            this.showDeprecatePopup = false;
+            this.updateShownData();
         } catch (error) {
             this.showToast('Error', 'Failed to deprecate flow', 'error');
             console.error('Error in deprecateflow : ' , error);
@@ -404,6 +537,59 @@ export default class WbAllFlowsPage extends LightningElement {
             this.showToast('Error', 'Failed to publish flow', 'error');
             console.error('Error in publishFlow : ' , error);
         }
+    }
+
+    syncFlows() {
+        console.log('syncFlows start');
+        this.isLoading = true;
+        this.showModal = false;
+        this.syncFlowData();
+    }
+
+    syncFlowData() {
+        getSyncFlowData({ selectedOrphanFlowAction: '', isFlowSyncConfirm: false })
+            .then(data => {
+                console.log('data from syncFlowData:', data);
+                this.missingFlowsList = data.pendingFlowListNames;
+                console.log('this.missingFlowsList:', this.missingFlowsList);
+                this.orgOnlyFlowMap = data.orgOnlyFlowMap || {};
+                console.log('this.orgOnlyFlowMap:', this.orgOnlyFlowMap);
+                this.isLoading = false;
+                this.showModal = true;
+            })
+            .catch(error => {
+                console.error('Error fetching pending flow list: ', error);
+                this.isLoading = false;
+            });
+    }
+
+    handleProceed() {
+        this.showModal = false;
+        this.showToast('Flow Sync Started', 'Syncing in progress. You will be notified once it is completed.', 'success');
+        confirmFlowSync({
+            selectedOrphanFlowAction: this.selectedOrphanFlowAction,
+            isSyncConfirmed: true
+        })
+        .catch(error => {
+            console.error('Error during flow sync:', error);
+        });
+    }
+
+    closeModal() {
+        this.showModal = false;
+    }
+
+    handleConfirmationChange(event) {
+        this.isFlowCreationConfirmed = event.target.checked;
+        this.isMissingFlowCreationDisabled = !this.isFlowCreationConfirmed;
+    }
+
+    handleConfirmationChange(event) {
+        this.confirmSyncChecked = event.target.checked;
+    }
+
+    handleOrphanFlowOptionChange(event) {
+        this.selectedOrphanFlowAction = event.detail.value;
     }
 
     showToast(title, message, varient) {

@@ -48,6 +48,14 @@
                             </div>
 
                             <div class="btns">
+                                <button class="sync-button" onclick={syncFlows} title="Sync with Meta">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 13.56 17.44 14.96 16.5 16L17.91 17.41C19.37 15.7 20 13.91 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/>
+                                        <path d="M12 20V23L16 19L12 15V18C8.69 18 6 15.31 6 12C6 10.44 6.56 9.04 7.5 8L6.09 6.59C4.63 8.3 4 10.09 4 12C4 16.42 7.58 20 12 20Z" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="btns">
                                 <button class="custom-button cus-btns" onclick={showCreateFlow}>
                                     <lightning-icon icon-name="utility:add" alternative-text="Add" size="x-small"
                                         class="left-icon"></lightning-icon>
@@ -58,7 +66,7 @@
                     </div>
                     <div class="slds-m-around_medium table-container">
                         <template if:true={paginatedData.length}>
-                            <table>
+                            <table class="slds-table">
                                 <thead>
                                     <tr class="tablerow">
                                         <th class="tableHead" scope="col">
@@ -102,35 +110,28 @@
                                                 <div class="slds-truncate">{record.LastModifiedDate}</div>
                                             </td>
                                             <td class="tableData tablebtns" data-label="Actions">
-                                                <template if:false={record.isDeprecated}>
-                                                    <button class="action-buttons">
-                                                        <img src="/resource/MVWB__previewIcon" class="action" title="preview"
-                                                            alt="preview" data-id={record.MVWB__Flow_Id__c}
-                                                            onclick={previewTemplate}>
+                                                <div class="action-container" data-id="record.MVWB__Flow_Id__c">
+                                                    <button class="action-button" onclick={toggleDropdown}>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="4" height="17" viewBox="0 0 4 17" fill="none">
+                                                            <path d="M1.99992 13.801C2.38335 13.801 2.75107 13.9533 3.0222 14.2245C3.29332 14.4956 3.44564 14.8633 3.44564 15.2467C3.44564 15.6302 3.29332 15.9979 3.0222 16.269C2.75107 16.5401 2.38335 16.6925 1.99992 16.6925C1.61649 16.6925 1.24877 16.5401 0.977641 16.269C0.706515 15.9979 0.554199 15.6302 0.554199 15.2467C0.554199 14.8633 0.706515 14.4956 0.977641 14.2245C1.24877 13.9533 1.61649 13.801 1.99992 13.801ZM1.99992 7.05431C2.38335 7.05431 2.75107 7.20663 3.0222 7.47775C3.29332 7.74888 3.44564 8.11661 3.44564 8.50003C3.44564 8.88346 3.29332 9.25119 3.0222 9.52231C2.75107 9.79344 2.38335 9.94575 1.99992 9.94575C1.61649 9.94575 1.24877 9.79344 0.977641 9.52231C0.706515 9.25119 0.554199 8.88346 0.554199 8.50003C0.554199 8.11661 0.706515 7.74888 0.977641 7.47775C1.24877 7.20663 1.61649 7.05431 1.99992 7.05431ZM1.99992 0.307617C2.38335 0.307617 2.75107 0.459934 3.0222 0.731059C3.29332 1.00218 3.44564 1.36991 3.44564 1.75334C3.44564 2.13677 3.29332 2.50449 3.0222 2.77562C2.75107 3.04674 2.38335 3.19906 1.99992 3.19906C1.61649 3.19906 1.24877 3.04674 0.977641 2.77562C0.706515 2.50449 0.554199 2.13677 0.554199 1.75334C0.554199 1.36991 0.706515 1.00218 0.977641 0.731059C1.24877 0.459934 1.61649 0.307617 1.99992 0.307617Z" fill="black"/>
+                                                        </svg>
                                                     </button>
-                                                    <!-- <button disabled={record.isButtonDisabled} class="action-buttons slds-m-horizontal--x-small">
-                                                        <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={record.id} onclick={editFlow} >
-                                                    </button> -->
-                                                    <button class="action-buttons">
-                                                        <template if:true={record.isEditable}>
-                                                            <img src="/resource/MVWB__editIcon" class="action"
-                                                                title="Edit" alt="Edit" data-id={record.MVWB__Flow_Id__c}
-                                                                data-status={record.MVWB__Status__c} onclick={editFlow}>
+                                                    <div class="dropdown-menu hidden" data-id={record.MVWB__Flow_Id__c}>
+                                                        <template if:false={record.isDeprecated}>
+                                                            <div class="dropdown-item" onclick={previewTemplate} data-id={record.MVWB__Flow_Id__c}>Preview</div>
                                                         </template>
-                                                    </button>
-                                                    <button class="action-buttons">
+                                                        <template if:true={record.isEditable}>
+                                                            <div class="dropdown-item" onclick={editFlow} data-id={record.MVWB__Flow_Id__c} data-status={record.MVWB__Status__c}>Edit</div>
+                                                        </template>
+                                                        <div class="dropdown-item" onclick={cloneFlow} data-id={record.MVWB__Flow_Id__c}>Clone</div>
                                                         <template if:true={record.isPublished}>
-                                                            <img src="/resource/MVWB__trashIcon" class="action trash"
-                                                                title="Deprecate" alt="Deprecate" data-id={record.MVWB__Flow_Id__c}
-                                                                data-status={record.MVWB__Status__c} onclick={deprecateFlow}>
+                                                            <div class="dropdown-item" onclick={confirmDeprecateFlow} data-id={record.MVWB__Flow_Id__c} data-status={record.MVWB__Status__c}>Deprecate</div>
                                                         </template>
                                                         <template if:true={record.isDraft}>
-                                                            <img src="/resource/MVWB__trashIcon" class="action trash" title="Delete"
-                                                                alt="Delete" data-id={record.MVWB__Flow_Id__c}
-                                                                data-status={record.MVWB__Status__c} onclick={deleteFlow}>
+                                                            <div class="dropdown-item" onclick={confirmDeleteFlow} data-id={record.MVWB__Flow_Id__c} data-status={record.MVWB__Status__c}>Delete</div>
                                                         </template>
-                                                    </button>
-                                                </template>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     </template>
@@ -145,9 +146,8 @@
                                         <div class="empty-state__icon">
                                             <img src="/resource/MVWB__emptyState" alt="" draggable="false">
                                         </div>
-                                        <div class="empty-state__message">No data available to show.</div>
+                                        <div class="empty-state__message">No Data Available to Show.</div>
                                     </div>
-
                                 </div>
                             </div>
                         </template>
@@ -211,7 +211,146 @@
                 </div>
             </template>
             <template if:true={iscreateflowvisible}>
-                <c-create-flow-management is-edit-mode={isEditMode} selected-flow-id={selectedFlowId}></c-create-flow-management>
+                <c-create-flow-management is-edit-mode={isEditMode} is-clone-flow={isCloneFlow} selected-flow-id={selectedFlowId} clone-flow-name={cloneFlowName}></c-create-flow-management>
+            </template>
+
+            <!-- Delete Flow Modal -->
+            <template if:true={showDeletePopup}>
+                <div class="edit-backdrop" onclick={closeDeprecatePopup}></div>
+                <div class="edit-popup">
+                    <div class="edit-popup-content">
+                        <h2 class="edit-popup-title">Are you sure you want to delete this flow?</h2>
+                        <p class="edit-popup-text">
+                            Once deleted, you won't be able to access this flow again. This cannot be undone.
+                        </p>
+                        <div class="edit-button-group">
+                            <button class="edit-cancel-button" onclick={closeDeprecatePopup}>Cancel</button>
+                            <button class="edit-delete-button" onclick={deleteFlow}>Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Deprecate Flow Modal -->
+            <template if:true={showDeprecatePopup}>
+                <div class="edit-backdrop" onclick={closeDeprecatePopup}></div>
+                <div class="edit-popup">
+                    <div class="edit-popup-content">
+                        <h2 class="edit-popup-title">Are you sure you want to deprecate this flow?</h2>
+                        <p class="edit-popup-text">
+                            Once deprecated, you won't be able to revert. This cannot be undone.
+                        </p>
+                        <div class="edit-button-group">
+                            <button class="edit-cancel-button" onclick={closeDeprecatePopup}>Cancel</button>
+                            <button class="edit-delete-button" onclick={deprecateFlow}>Deprecate</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Clone Modal -->
+            <template if:true={showCloneModal}>
+                <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container modal-container">
+                        <header>
+                            <h2 class="modal-header">Clone Flow</h2>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium modal-content">
+                            <lightning-input 
+                                label="Enter New Flow name"
+                                value={cloneFlowName}
+                                onchange={handleFlowNameChange}>
+                            </lightning-input>
+                        </div>
+                        <footer class="slds-modal__footer modal-footer">
+                            <lightning-button variant="brand-outline" onclick={closeCloneModal} label="Cancel" class="slds-m-left_x-small"></lightning-button>
+                            <lightning-button variant="brand" label="Next" onclick={handleCloneNext} disabled={isDisabledCloneNext} class="slds-m-left_x-small"></lightning-button>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+
+            </template>
+
+            <!-- Flow Sync Modal -->
+            <template if:true={showModal}>
+                <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container modal-container">
+                        <header>
+                            <h2 class="modal-header">Flow Synchronization</h2>
+                        </header>
+                        <div class="slds-modal__content modal-content">
+                            <!-- Section 1: Missing Flows -->
+                            <template if:true={hasMissingFlows}>
+                                <div class="slds-box slds-theme_default slds-m-bottom_medium">
+                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">Flows Not Found In Org</h3>
+                                    <p class="slds-m-bottom_small">The following flows will be created in your org:</p>
+                                    <div class="flow-list-container">
+                                        <template for:each={missingFlowsList} for:item="flow">
+                                            <div key={flow} class="flow-item slds-p-around_xx-small">
+                                                <span>{flow}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <!-- Section 2: Orphaned Flows -->
+                            <template if:true={hasOrgOnlyFlows}>
+                                <div class="slds-box slds-theme_default">
+                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">Flows Not Found In Meta</h3>
+                                    <p class="slds-m-bottom_small">The following flows exist in your org but not in Meta:</p>
+                                    <div class="flow-list-container slds-m-bottom_small">
+                                        <template for:each={orgOnlyFlowArray} for:item="flow">
+                                            <div key={flow.id} class="flow-item slds-p-around_xx-small">
+                                                <span>{flow.name}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    
+                                    <lightning-radio-group
+                                        class="action-radio-group"
+                                        name="orphanFlowAction"
+                                        label="Select Action"
+                                        options={orphanFlowOptions}
+                                        value={selectedOrphanFlowAction}
+                                        type="radio"
+                                        variant="label-stacked"
+                                        onchange={handleOrphanFlowOptionChange}>
+                                    </lightning-radio-group>
+                                    
+                                    <template if:true={isDeleteSelected}>
+                                        <p class="slds-text-color_error radio-dynamic-text">This action cannot be undone.</p>
+                                    </template>
+                                    <template if:true={isCreateSelected}>
+                                        <p class="slds-text-color_error radio-dynamic-text">
+                                            If a flow with the same name already exists in Meta, it will not be created.
+                                        </p>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template if:true={hasNoExtraFlows}>
+                                <h3 style="font-size: 16px;">Are you sure you want to sync with Meta?</h3>
+                            </template>
+                            
+                            <div class="slds-m-top_medium confirm-sync">
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Confirm Sync" 
+                                    class="confirm-checkbox"
+                                    onchange={handleConfirmationChange}>
+                                </lightning-input>
+                            </div>
+                        </div>
+
+                        <footer class="slds-modal__footer slds-theme_default modal-footer">
+                            <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
+                            <button class="slds-button slds-button_brand" onclick={handleProceed} disabled={disableProceed}>Proceed</button>
+                        </footer>
+                    </div>
+                    <div class="slds-backdrop slds-backdrop_open"></div>
+                </section>
             </template>
         </template>
         <template if:true={isNameClicked}>

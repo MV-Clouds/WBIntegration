@@ -230,7 +230,6 @@ global without sharing class WhatsAppWebhook{
                         } else if (fieldType == 'Datetime') {
                             // Convert string to Datetime (assuming value is in ISO 8601 format, e.g., YYYY-MM-DDTHH:mm:ssZ)
                             if (value != null && value != '') {
-                                
                                 // Remove milliseconds and Z
                                 String cleanValue = value.substring(0, 19).replace('T', ' ');
 
@@ -241,10 +240,30 @@ global without sharing class WhatsAppWebhook{
                                 newRecord.put(fieldName, myDate);
                                 // newRecord.put(fieldName, Datetime.valueOf(value));
                             }
+                        } else if(fieldType == 'Time'){
+                            if (value != null && value != '') {
+                                // Split the time components
+                                List<String> parts = value.split(':');
+                                Integer hour = Integer.valueOf(parts[0]);
+                                Integer minute = Integer.valueOf(parts[1]);
+                                
+                                List<String> secMillis = parts[2].split('\\.');
+                                Integer second = Integer.valueOf(secMillis[0]);
+                                Integer millisecond = Integer.valueOf(secMillis[1]);
+                                
+                                // Now create Time instance
+                                Time myTime = Time.newInstance(hour, minute, second, millisecond);
+                                newRecord.put(fieldName, myTime);
+                            }
                         } else if (fieldType == 'Boolean') {
                             // Convert string to Boolean
                             if (value != null && value != '') {
                                 newRecord.put(fieldName, Boolean.valueOf(value));
+                            }
+                        } else if (fieldType == 'Double' || fieldType == 'Percent') {
+                            // Convert string to Decimal
+                            if (value != null && value != '') {
+                                newRecord.put(fieldName, Decimal.valueOf(value));
                             }
                         } else {
                             // Handle String, Reference, Picklist, etc. as direct string assignment
@@ -861,24 +880,50 @@ global without sharing class WhatsAppWebhook{
             sObject record = records[0];
 
             List<CustomNotificationType> cnType = [SELECT Id FROM CustomNotificationType WHERE DeveloperName = 'WBConnectNotification' LIMIT 1];
-            System.debug('custom notification===> ' + cnType[0]);
-
-            // Id userId = Userinfo.getUserId();
-            String messageContent = (String) record.get('Name') + ' has sent a new message. Tap to view.';
-            System.debug('messageContent==> ' + messageContent);
-            // Prepare the custom notification object
-            Set<String> addressee = new Set<String>();
-            addressee.add((Id) record.get('CreatedById'));
-            if( addresseeId != null && addresseeId != ''){
-                addressee.add((Id) addresseeId);
+            if (cnType.isEmpty()) {
+                System.debug('No Custom Notification Type found.');
+                return;
             }
-            Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
-            customNotificationObj.setBody(messageContent);
-            customNotificationObj.setTitle('New Whatsapp Message Received');
-            customNotificationObj.setNotificationTypeId(cnType[0].Id);
-            customNotificationObj.setTargetId((Id) record.get('Id'));
-            customNotificationObj.send(addressee);
 
+            // Check if object has OwnerId field
+            Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectApiName).getDescribe().fields.getMap();
+            Boolean hasOwner = fieldMap.containsKey('OwnerId');
+
+            Set<String> addressee = new Set<String>();
+
+            if (hasOwner) {
+                // Fetch OwnerId
+                String ownerQuery = 'SELECT Id, Name, OwnerId FROM ' + objectApiName + ' WHERE Id = :recordId LIMIT 1';
+                SObject ownerRecord = Database.query(ownerQuery);
+                Id ownerId = (Id) ownerRecord.get('OwnerId');
+
+                // Check if Owner is active user
+                if (ownerId != null && ownerId.getSObjectType() == User.SObjectType) {
+                    List<User> ownerUser = [SELECT Id, IsActive FROM User WHERE Id = :ownerId AND IsActive = true LIMIT 1];
+                    for (User us : ownerUser) {
+                        addressee.add(us.Id);
+                    }
+                }
+            }
+
+            // If no Owner or invalid owner, fallback to all System Admins
+            if (addressee.isEmpty()) {
+                List<User> userList = [SELECT Id FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true LIMIT 200];
+                for (User us : userList) {
+                    addressee.add(us.Id);
+                }
+            }
+
+            if (!addressee.isEmpty()) {
+                String messageContent = (String) record.get('Name') + ' has sent a new message. Tap to view.';
+
+                Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
+                customNotificationObj.setBody(messageContent);
+                customNotificationObj.setTitle('New Whatsapp Message Received');
+                customNotificationObj.setNotificationTypeId(cnType[0].Id);
+                customNotificationObj.setTargetId((Id) record.get('Id'));
+                customNotificationObj.send(addressee);
+            }
         } catch (Exception e){
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WhatsAppWebhook', 'methodName' => 'sendNotificationForContact', 'exceptionObj' => e, 'isApiException' => False, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             System.debug('Error in sendNotificationForContact: ' + e.getMessage() + '\n' + e + '\n Exception line no: ' + e.getLineNumber());

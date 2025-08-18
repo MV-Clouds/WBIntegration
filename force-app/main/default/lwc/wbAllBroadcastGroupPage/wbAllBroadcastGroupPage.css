@@ -154,7 +154,7 @@
     padding: 10px;
     font-size: 15px;
     max-width: 200px;
-    overflow: visible;
+    overflow: auto;
     text-overflow: ellipsis;
     white-space: nowrap;
     border: none;

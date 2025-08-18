@@ -794,7 +794,14 @@ public without sharing class AutomationConfigTriggerHandler {
             
             insert chat;
             System.debug('chat:- '+chat.Id);
-            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c FROM Chat__c WHERE Id =:chat.Id];
+            chat = [SELECT Id, Type_of_Message__c, WhatsAppMessageId__c, Message__c, Message_Status__c, Message_Type__c, Reply_To__c, Reaction__c, Whatsapp_Template__c, Whatsapp_Template__r.Template_Name__c, CreatedDate, Last_Interaction_Date__c, Phone__c, File_Data__c FROM Chat__c WHERE Id =:chat.Id];
+
+            Chat_Message__e newChatEvent = new Chat_Message__e();
+            newChatEvent.Chat_Data__c = JSON.serialize(chat);
+            newChatEvent.Type__c = 'new';
+            newChatEvent.ContactId__c = chat.Phone__c;
+            EventBus.publish(newChatEvent);
+
             System.debug('chat:- '+chat);
             return chat;
         } catch (Exception e) {

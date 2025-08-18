@@ -7,7 +7,6 @@
 *--------------------------------------------------------------------------------
 **/
 
-
 public with sharing class BroadcastMessageController {
 
     /*
@@ -21,10 +20,7 @@ public with sharing class BroadcastMessageController {
     public static Map<String, Object> getObjectConfigs() {
         try {
             Map<String, Object> result = new Map<String, Object>();
-            List<MVWB__Object_Config__mdt> objectConfigList = [
-                SELECT MVWB__ChatWindowConfigInfo__c 
-                FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1
-            ];
+            List<MVWB__Object_Config__mdt> objectConfigList = [SELECT MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt WITH SECURITY_ENFORCED LIMIT 1];
     
             if (objectConfigList.isEmpty() && !Test.isRunningTest()) {
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getObjectConfigs','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Object Config not found!','apiResponse' => null});
@@ -53,7 +49,6 @@ public with sharing class BroadcastMessageController {
             result.put('configMap', configMap);
     
             return result;
-    
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getObjectConfigs', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error fetching object configs: ' + e.getMessage());
@@ -84,7 +79,6 @@ public with sharing class BroadcastMessageController {
     @return          : List of Broadcast_Group__c records
     ********************************************************
     */
-
     @AuraEnabled
     public static List<Broadcast_Group__c> getBroadcastGroups(){
         List<Broadcast_Group__c> broadcastGroups = new List<Broadcast_Group__c>();
@@ -113,12 +107,7 @@ public with sharing class BroadcastMessageController {
             }
             
             // Query the record with security enforced
-            Broadcast_Group__c groupToDelete = [
-                SELECT Id FROM Broadcast_Group__c 
-                WHERE Id = :groupId 
-                WITH SECURITY_ENFORCED 
-                LIMIT 1
-            ];
+            Broadcast_Group__c groupToDelete = [SELECT Id FROM Broadcast_Group__c WHERE Id = :groupId WITH SECURITY_ENFORCED LIMIT 1];
             
             if (groupToDelete == null) {
                 ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'deleteBroadcastGroup','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Record not found for deletion.','apiResponse' => null});
@@ -163,12 +152,7 @@ public with sharing class BroadcastMessageController {
     
         try {
             // Fetch all templates with their related object names from Template_Variable__c
-            List<Template__c> templates = [SELECT Id, Template_Name__c, 
-                                                  (SELECT Object_Name__c FROM WB_Template_Variables__r) 
-                                           FROM Template__c 
-                                           WHERE Status__c = 'Active-Quality Pending'
-                                           WITH SECURITY_ENFORCED 
-                                           ORDER BY LastModifiedDate DESC];
+            List<Template__c> templates = [SELECT Id, Template_Name__c, (SELECT Object_Name__c FROM WB_Template_Variables__r) FROM Template__c WHERE Status__c = 'Active-Quality Pending'WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
     
             // Categorize templates by object name
             for (Template__c template : templates) {
@@ -250,13 +234,7 @@ public with sharing class BroadcastMessageController {
     
             if (isUpdate && String.isNotBlank(broadcastGroupId)) {
                 // Fetch existing Broadcast Group
-                broadcastGroup = [
-                    SELECT Id, Name, Description__c, Object_Name__c, List_View__c, Phone_Field__c
-                    FROM Broadcast_Group__c
-                    WHERE Id = :broadcastGroupId
-                    WITH SECURITY_ENFORCED
-                    LIMIT 1
-                ];
+                broadcastGroup = [SELECT Id, Name, Description__c, Object_Name__c, List_View__c, Phone_Field__c FROM Broadcast_Group__c WHERE Id = :broadcastGroupId WITH SECURITY_ENFORCED LIMIT 1];
     
                 broadcastGroup.Name = name;
                 broadcastGroup.Description__c = description;
@@ -287,12 +265,7 @@ public with sharing class BroadcastMessageController {
             // Handle group members
             Map<String, Broadcast_Group_Member__c> existingMembersMap = new Map<String, Broadcast_Group_Member__c>();
             if (isUpdate) {
-                for (Broadcast_Group_Member__c member : [
-                    SELECT Id, Phone_Number__c 
-                    FROM Broadcast_Group_Member__c 
-                    WHERE Broadcast_Group_ID__c = :broadcastGroup.Id
-                    WITH SECURITY_ENFORCED
-                ]) {
+                for (Broadcast_Group_Member__c member : [SELECT Id, Phone_Number__c FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c = :broadcastGroup.Id WITH SECURITY_ENFORCED]) {
                     existingMembersMap.put(member.Phone_Number__c, member);
                 }
             }
@@ -336,7 +309,6 @@ public with sharing class BroadcastMessageController {
                     }
                 }
             }
-    
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'processBroadcastMessageWithObject','exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error processing broadcast message: ' + e.getMessage());
@@ -362,21 +334,10 @@ public with sharing class BroadcastMessageController {
             }
 
             // Fetch Broadcast Group
-            Broadcast_Group__c groupRecord = [
-                SELECT Id, Name, Description__c, Object_Name__c, List_View__c, Phone_Field__c
-                FROM Broadcast_Group__c
-                WHERE Id = :groupId
-                WITH SECURITY_ENFORCED 
-                LIMIT 1
-            ];
+            Broadcast_Group__c groupRecord = [ SELECT Id, Name, Description__c, Object_Name__c, List_View__c, Phone_Field__c FROM Broadcast_Group__c WHERE Id = :groupId WITH SECURITY_ENFORCED  LIMIT 1];
 
             // Fetch Group Members
-            List<Broadcast_Group_Member__c> groupMembers = [
-                SELECT Id, Phone_Number__c, Name
-                FROM Broadcast_Group_Member__c
-                WHERE Broadcast_Group_ID__c = :groupId
-                WITH SECURITY_ENFORCED 
-            ];
+            List<Broadcast_Group_Member__c> groupMembers = [ SELECT Id, Phone_Number__c, Name FROM Broadcast_Group_Member__c WHERE Broadcast_Group_ID__c = :groupId WITH SECURITY_ENFORCED ];
 
             // Construct response
             Map<String, Object> response = new Map<String, Object>();
@@ -500,7 +461,6 @@ public with sharing class BroadcastMessageController {
     @return          : List of Broadcast_Group__c records associated with the broadcast
     ********************************************************
     */
-
     @AuraEnabled
     public static List<Broadcast_Group__c> getBroadcastGroupsByBroadcastId(String broadcastId) {
         try {
@@ -510,13 +470,7 @@ public with sharing class BroadcastMessageController {
             }
 
             // Fetch the Broadcast record
-            Broadcast__c broadcast = [
-                SELECT Broadcast_Group_IDs__c 
-                FROM Broadcast__c 
-                WHERE Id = :broadcastId 
-                WITH SECURITY_ENFORCED 
-                LIMIT 1
-            ];
+            Broadcast__c broadcast = [SELECT Broadcast_Group_IDs__c FROM Broadcast__c WHERE Id = :broadcastId WITH SECURITY_ENFORCED LIMIT 1];
 
             if (broadcast.Broadcast_Group_IDs__c == null) {
                 return new List<Broadcast_Group__c>();
@@ -524,71 +478,11 @@ public with sharing class BroadcastMessageController {
 
             // Split the comma-separated group IDs and fetch related groups
             List<String> groupIds = broadcast.Broadcast_Group_IDs__c.split(',');
-            return [
-                SELECT Id, Name, Count_of_Members__c, Description__c, Object_Name__c, Phone_Field__c
-                FROM Broadcast_Group__c 
-                WHERE Id IN :groupIds 
-                WITH SECURITY_ENFORCED
-            ];
+            return [ SELECT Id, Name, Count_of_Members__c, Description__c, Object_Name__c, Phone_Field__c FROM Broadcast_Group__c  WHERE Id IN :groupIds  WITH SECURITY_ENFORCED];
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastGroupsByBroadcastId', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
             throw new AuraHandledException('Error fetching broadcast groups: ' + e.getMessage());
         }
-    }
-    @AuraEnabled(cacheable=true)
-    public static List<Map<String, String>> getDateFieldsForPicklist(String objectApiName) {
-        try {
-            List<Map<String, String>> options = new List<Map<String, String>>();
-
-            // Get the describe information for the specified object
-            Map<String, Schema.SObjectType> globalDescribe = Schema.getGlobalDescribe();
-            if (!globalDescribe.containsKey(objectApiName)) {
-                ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getDateFieldsForPicklist','exceptionObj' => null,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => 'Invalid object API name: ' + objectApiName,'apiResponse' => null});
-                throw new AuraHandledException('Invalid object API name: ' + objectApiName);
-            }
-
-            Map<String, Schema.SObjectField> objectFields = globalDescribe.get(objectApiName).getDescribe().fields.getMap();
-
-            // Exclude audit fields
-            Set<String> auditFieldsToExclude = new Set<String>{
-                'LastModifiedDate', 'SystemModstamp', 'LastActivityDate', 'LastReferencedDate', 'LastViewedDate'
-            };
-
-            // Iterate through the fields and filter for Date fields
-            for (String fieldName : objectFields.keySet()) {
-                Schema.DescribeFieldResult fieldDescribe = objectFields.get(fieldName).getDescribe();
-                // if (fieldDescribe.getType() == Schema.DisplayType.Date && !auditFieldsToExclude.contains(fieldName)) {
-                if ((fieldDescribe.getType() == Schema.DisplayType.Date )
-                    && !auditFieldsToExclude.contains(fieldName)){
-
-                    System.debug('Field Name: ' + fieldName);
-                    System.debug('Field Label: ' + fieldDescribe.getLabel());
-                    options.add(new Map<String, String>{
-                        'label' => fieldDescribe.getLabel(),
-                        'value' => fieldName
-                    });
-                }
-            }
-
-            return options;
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getDateFieldsForPicklist', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
-            // throw new AuraHandledException('Error fetching broadcast groups: ' + e.getMessage());
-            return null;
-        }
-    }
-
-        /*
-    *********************************************************
-    @description     : Get broadcast group members by broadcast group ID
-    @param           : groupId - ID of the broadcast group
-    @return          : List of Broadcast_Group_Member__c records associated with the broadcast group
-    ********************************************************
-    */
-
-    public class BroadcastMemberWrapper {
-        @AuraEnabled public SObject record;
-        @AuraEnabled public String status;
     }
 
     @AuraEnabled
@@ -680,5 +574,17 @@ public with sharing class BroadcastMessageController {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getSessionId', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
         return sessionId;
+    }
+
+    /*
+    *********************************************************
+    @description     : Get broadcast group members by broadcast group ID
+    @param           : groupId - ID of the broadcast group
+    @return          : List of Broadcast_Group_Member__c records associated with the broadcast group
+    ********************************************************
+    */
+    public class BroadcastMemberWrapper {
+        @AuraEnabled public SObject record;
+        @AuraEnabled public String status;
     }
 }

@@ -49,7 +49,7 @@
                                             <td class="sr-no">{row.index}</td>
                                             <td>{row.Name}</td>
                                             <td>{row.MVWB__Count_of_Members__c}</td>
-                                            <td>{row.MVWB__Description__c}</td>
+                                            <td title={row.MVWB__Description__c}>{row.MVWB__Description__c}</td>
                                             <td class="tableData tablebtns" data-label="Actions">
                                                 <button class="action-buttons">
                                                     <img src="/resource/MVWB__editIcon" class="action edit" alt="edit" data-id={row.Id} onclick={handleEditGroup} >

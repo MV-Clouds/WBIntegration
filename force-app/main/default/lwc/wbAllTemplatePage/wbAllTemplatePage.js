@@ -13,7 +13,6 @@ MODIFICATION LOG*
 
 import { LightningElement, track, wire,api } from 'lwc';
 import getWhatsAppTemplates from '@salesforce/apex/WBTemplateController.getWhatsAppTemplates';
-// import getCategoryAndStatusPicklistValues from '@salesforce/apex/WBTemplateController.getCategoryAndStatusPicklistValues';
 import deleteTemplete from '@salesforce/apex/WBTemplateController.deleteTemplete';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
@@ -25,7 +24,6 @@ import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import getSyncTemplateData from '@salesforce/apex/SyncTemplateController.syncTemplate'
 import confirmTemplateSync from '@salesforce/apex/SyncTemplateController.confirmTemplateSync'
-
 
 
 export default class WbAllTemplatePage extends LightningElement {
@@ -227,7 +225,6 @@ export default class WbAllTemplatePage extends LightningElement {
                 return; // Stops execution if license is expired
             }
             this.isTemplateVisible = true;
-            // this.fetchCategoryAndStatusOptions();
             this.fetchAllTemplate(true);
             this.registerPlatformEventListener();
         } catch (e) {
@@ -257,16 +254,14 @@ export default class WbAllTemplatePage extends LightningElement {
     registerPlatformEventListener() {
         const messageCallback = (event) => {
             const payload = event.data.payload;
-            // this.updateRecord(payload.Template_Id__c, payload.Template_Status__c);
-
-            // Call updateRecord only if Template_Id__c and Template_Status__c are present
+            
             if (payload.MVWB__Template_Id__c && payload.MVWB__Template_Status__c) {
-                this.updateRecord(payload.MVWB__Template_Id__c, payload.MVWB__Template_Status__c);
+                this.fetchAllTemplate(false);
             }
 
-            // Call a different method if Fetch_All_Templates__c is present
+            // Call if Fetch_All_Templates__c is present
             if (payload.MVWB__Fetch_All_Templates__c) {
-                this.fetchAllTemplate(false); // Replace with your actual method name
+                this.fetchAllTemplate(false);
             }
         };
 
@@ -290,6 +285,7 @@ export default class WbAllTemplatePage extends LightningElement {
         }
     }
 
+<<<<<<< HEAD
     
     syncTemplates() {
         console.log('syncTemplates start');
@@ -384,6 +380,8 @@ export default class WbAllTemplatePage extends LightningElement {
     //         });
     // }
 
+=======
+>>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
     fetchAllTemplate(showSpinner){
         if(showSpinner){
             this.isLoading=true;
@@ -391,25 +389,59 @@ export default class WbAllTemplatePage extends LightningElement {
         // this.isLoading=true;
         getWhatsAppTemplates()
         .then(data => {
+            
             try {
                 if (data) {
                     this.data = data.map((record, index) => {
-                        const isButtonDisabled = record.MVWB__Status__c === 'In-Review';
+                        const editHistories = record?.MVWB__WB_Template_Histories__r || [];
+                        
+                        let editedIn24Hrs = false;
+                        let maxMonthEditReached = false;
+                        let editedDateDisplay = '';
+
+                        if (editHistories.length > 0) {
+                            const now = new Date();
+                            const mostRecentEdit = new Date(editHistories[0].MVWB__Edited_Time__c);
+                            
+                            const diffInHours = (now - mostRecentEdit) / (1000 * 60 * 60);
+                            
+                            if (diffInHours < 24) {
+                                editedIn24Hrs = true;
+                            }
+
+                            editedDateDisplay = mostRecentEdit;
+                            
+                            // Check 10th record for month limit
+                            if (editHistories.length >= 10) {
+                                const tenthEdit = new Date(editHistories[9].MVWB__Edited_Time__c);
+                                const oneMonthAgo = new Date();
+                                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                                if (tenthEdit > oneMonthAgo) {
+                                    maxMonthEditReached = true;
+                                }
+                            }
+                        } else {
+                            // No edit history → fallback to LastModifiedDate
+                            editedDateDisplay = new Date(record.LastModifiedDate);
+                        }
+
+                        const isButtonDisabled = record.MVWB__Status__c === ('In-Review' || 'Rejected') || editedIn24Hrs || maxMonthEditReached;
                         
                         return {
                             ...record,
                             id: record.Id,
                             serialNumber: index + 1, 
-                            LastModifiedDate: this.formatDate(record.LastModifiedDate),
+                            LastModifiedDate: this.formatDate(editedDateDisplay),
                             isButtonDisabled,
                             cssClass: isButtonDisabled ? 'action edit disabled' : 'action edit'
                         };
-                    });                    
+                    });             
+                           
                     this.filteredRecords = [...this.data];
                     this.updateShownData();
                     this.isLoading=false;
-                } else if (error) {
-                    console.error('Error fetching WhatsApp templates: ', error);
+                } else {
+                    console.error('Error fetching WhatsApp templates: ', data);
                     this.isLoading=false;
                 }
             } catch (err) {

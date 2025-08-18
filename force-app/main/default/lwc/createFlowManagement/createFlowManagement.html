@@ -22,7 +22,7 @@
         <template if:true={isFlowVisible}>
             <div class="slds-theme_default main">
                 <!-- <template if:true={iscreateflowvisible}>    -->
-                <template if:false={isEdit}>   
+                <template if:false={isEditOrClone}>   
                     <div class="heading">
                         <p class="txt">Create Flow</p>
                     </div>  
@@ -39,7 +39,7 @@
                             </div>
     
                             <div class="slds-box slds-theme_default templateContent4">
-                                <label for="flowName">Categories</label>                       
+                                <label for="flowName">Catagories</label>                       
                                 <div class="contentType">
                                     <c-custom-multiselect-picklist options={TypeOptions} onselectionchange={handleCatagories} ></c-custom-multiselect-picklist>
                                 </div>
@@ -96,7 +96,7 @@
                     </div>
                 </template>
                 <!-- <template if:true={isJsonVisible}> -->
-                <template if:true={isEdit}>
+                <template if:true={isEditOrClone}>
                     <div class="divcontainer2">
                         <div class="createFlowDiv">
                             <div class="name-header">
