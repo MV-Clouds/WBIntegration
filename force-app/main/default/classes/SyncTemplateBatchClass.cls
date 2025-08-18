@@ -405,11 +405,13 @@ global with sharing class SyncTemplateBatchClass implements Database.Batchable<S
                 if (buttonMap.containsKey('flow_action'))     btn.put('flow_action', 'navigate');
 
                 // Fill default navigate_screen if missing/blank
-                if (
-                    (!buttonMap.containsKey('navigate_screen')) || 
-                    buttonMap.get('navigate_screen') == null || 
-                    String.valueOf(buttonMap.get('navigate_screen')).trim() == ''
-                ) {
+                if (buttonMap.containsKey('flow_id') && buttonMap.get('flow_id') != null &&
+					    (
+					        !buttonMap.containsKey('navigate_screen') ||
+					        buttonMap.get('navigate_screen') == null ||
+					        String.valueOf(buttonMap.get('navigate_screen')).trim() == ''
+					    )
+					) {
                     String flowId = (buttonMap.containsKey('flow_id') ? String.valueOf(buttonMap.get('flow_id')) : null);
                     if (flowId != null && flowMap.containsKey(flowId)) {
                         Flow__c flowRec = flowMap.get(flowId);
