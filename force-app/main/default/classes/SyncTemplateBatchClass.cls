@@ -316,45 +316,135 @@ global with sharing class SyncTemplateBatchClass implements Database.Batchable<S
         return new Map<String, Object>();
     }
 
-    private static List<Map<String, Object>> buildButtonComponent(Template__c templateRec) {
-    List<Map<String, Object>> buttonComponents = new List<Map<String, Object>>();
-    try {
-        if (String.isBlank(templateRec.WBButton_Body__c)) {
-            return buttonComponents;
-        }
+    // private static List<Map<String, Object>> buildButtonComponent(Template__c templateRec) {
+    //     List<Map<String, Object>> buttonComponents = new List<Map<String, Object>>();
+    //     try {
+    //         if (String.isBlank(templateRec.WBButton_Body__c)) {
+    //             return buttonComponents;
+    //         }
 
-        // Parse JSON into a generic list
+    //         // Parse JSON into a generic list
+    //         List<Object> rawButtonList = (List<Object>) JSON.deserializeUntyped(templateRec.WBButton_Body__c);
+
+    //         for (Object obj : rawButtonList) {
+    //             Map<String, Object> buttonMap = (Map<String, Object>) obj;
+    //             Map<String, Object> btn = new Map<String, Object>();
+
+    //             // Maintain order for clarity
+    //             if (buttonMap.containsKey('type'))            btn.put('type', buttonMap.get('type'));
+    //             if (buttonMap.containsKey('text'))            btn.put('text', buttonMap.get('text'));
+    //             if (buttonMap.containsKey('url'))             btn.put('url', buttonMap.get('url'));
+    //             if (buttonMap.containsKey('phone_number'))    btn.put('phone_number', buttonMap.get('phone_number'));
+    //             if (buttonMap.containsKey('example'))         btn.put('example', buttonMap.get('example'));
+    //             if (buttonMap.containsKey('otp_type'))        btn.put('otp_type', buttonMap.get('otp_type'));
+    //             if (buttonMap.containsKey('flow_id'))         btn.put('flow_id', buttonMap.get('flow_id'));
+    //             if (buttonMap.containsKey('navigate_screen')) btn.put('navigate_screen', buttonMap.get('navigate_screen'));
+    //             if (buttonMap.containsKey('flow_action'))     btn.put('flow_action', buttonMap.get('flow_action'));
+
+    //             buttonComponents.add(btn);
+    //         }
+
+    //     } catch (Exception e) {
+    //         ExceptionHandler.logException(new Map<String, Object>{
+    //             'className' => 'CreateTemplateWrapper',
+    //             'methodName' => 'buildButtonComponent',
+    //             'exceptionObj' => e,
+    //             'isApiException' => false,
+    //             'moreDetails' => e.getMessage()
+    //         });
+    //     }
+    //     return buttonComponents;
+    // }
+
+    
+    private static List<Map<String, Object>> buildButtonComponent(Template__c templateRec) {
+        List<Map<String, Object>> buttonComponents = new List<Map<String, Object>>();
+        try {
+        if (String.isBlank(templateRec.WBButton_Body__c)) {
+                return buttonComponents;
+            }
+
+            // Parse JSON into a generic list
         List<Object> rawButtonList = (List<Object>) JSON.deserializeUntyped(templateRec.WBButton_Body__c);
 
-        for (Object obj : rawButtonList) {
-            Map<String, Object> buttonMap = (Map<String, Object>) obj;
-            Map<String, Object> btn = new Map<String, Object>();
+            // Collect flow_ids up front
+            Set<String> flowIds = new Set<String>();
+            for (Object obj : rawButtonList) {
+                Map<String, Object> buttonMap = (Map<String, Object>) obj;
+                if (buttonMap.containsKey('flow_id') && buttonMap.get('flow_id') != null) {
+                    flowIds.add(String.valueOf(buttonMap.get('flow_id')));
+                }
+            }
 
-            // Maintain order for clarity
-            if (buttonMap.containsKey('type'))            btn.put('type', buttonMap.get('type'));
-            if (buttonMap.containsKey('text'))            btn.put('text', buttonMap.get('text'));
-            if (buttonMap.containsKey('url'))             btn.put('url', buttonMap.get('url'));
-            if (buttonMap.containsKey('phone_number'))    btn.put('phone_number', buttonMap.get('phone_number'));
-            if (buttonMap.containsKey('example'))         btn.put('example', buttonMap.get('example'));
-            if (buttonMap.containsKey('otp_type'))        btn.put('otp_type', buttonMap.get('otp_type'));
-            if (buttonMap.containsKey('flow_id'))         btn.put('flow_id', buttonMap.get('flow_id'));
-            if (buttonMap.containsKey('navigate_screen')) btn.put('navigate_screen', buttonMap.get('navigate_screen'));
-            if (buttonMap.containsKey('flow_action'))     btn.put('flow_action', buttonMap.get('flow_action'));
+            // Query all flows at once
+            Map<String, Flow__c> flowMap = new Map<String, Flow__c>();
+            if (!flowIds.isEmpty()) {
+                for (Flow__c flowRec : [
+                    SELECT Flow_Id__c, Flow_Json__c 
+                    FROM Flow__c 
+                    WHERE Flow_Id__c IN :flowIds
+                ]) {
+                    flowMap.put(flowRec.Flow_Id__c, flowRec);
+                }
+            }
 
-            buttonComponents.add(btn);
+            // Now build buttons
+            for (Object obj : rawButtonList) {
+                Map<String, Object> buttonMap = (Map<String, Object>) obj;
+                Map<String, Object> btn = new Map<String, Object>();
+
+                // Maintain order for clarity
+                if (buttonMap.containsKey('type'))            btn.put('type', buttonMap.get('type'));
+                if (buttonMap.containsKey('text'))            btn.put('text', buttonMap.get('text'));
+                if (buttonMap.containsKey('url'))             btn.put('url', buttonMap.get('url'));
+                if (buttonMap.containsKey('phone_number'))    btn.put('phone_number', buttonMap.get('phone_number'));
+                if (buttonMap.containsKey('example'))         btn.put('example', buttonMap.get('example'));
+                if (buttonMap.containsKey('otp_type'))        btn.put('otp_type', buttonMap.get('otp_type'));
+                if (buttonMap.containsKey('flow_id'))         btn.put('flow_id', buttonMap.get('flow_id'));
+                if (buttonMap.containsKey('navigate_screen')) btn.put('navigate_screen', buttonMap.get('navigate_screen'));
+                if (buttonMap.containsKey('flow_action'))     btn.put('flow_action', 'navigate');
+
+                // Fill default navigate_screen if missing/blank
+                if (
+                    (!buttonMap.containsKey('navigate_screen')) || 
+                    buttonMap.get('navigate_screen') == null || 
+                    String.valueOf(buttonMap.get('navigate_screen')).trim() == ''
+                ) {
+                    String flowId = (buttonMap.containsKey('flow_id') ? String.valueOf(buttonMap.get('flow_id')) : null);
+                    if (flowId != null && flowMap.containsKey(flowId)) {
+                        Flow__c flowRec = flowMap.get(flowId);
+
+                        if (String.isNotBlank(flowRec.Flow_Json__c)) {
+                            Map<String, Object> flowJson = (Map<String, Object>) JSON.deserializeUntyped(flowRec.Flow_Json__c);
+
+                            if (flowJson.containsKey('screens')) {
+                                List<Object> screens = (List<Object>) flowJson.get('screens');
+                                if (!screens.isEmpty()) {
+                                    Map<String, Object> firstScreen = (Map<String, Object>) screens[0];
+                                    if (firstScreen.containsKey('id')) {
+                                        btn.put('navigate_screen', (String) firstScreen.get('id'));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                buttonComponents.add(btn);
+            }
+
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{
+                'className' => 'CreateTemplateWrapper',
+                'methodName' => 'buildButtonComponent',
+                'exceptionObj' => e,
+                'isApiException' => false,
+                'moreDetails' => e.getMessage()
+            });
         }
-
-    } catch (Exception e) {
-        ExceptionHandler.logException(new Map<String, Object>{
-            'className' => 'CreateTemplateWrapper',
-            'methodName' => 'buildButtonComponent',
-            'exceptionObj' => e,
-            'isApiException' => false,
-            'moreDetails' => e.getMessage()
-        });
+        return buttonComponents;
     }
-    return buttonComponents;
-}
+
 
 
     public static String uploadFileToMetaAndGetHeaderHandle(String tempImgUrl,String templateMiscellaneousData){
