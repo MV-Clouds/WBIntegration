@@ -138,6 +138,114 @@ public with sharing class BroadcastMessageController {
 
         return broadcastRecs;
     }
+    
+    /*
+    *********************************************************
+    @description     : get broadcast records by Id
+    @param           : Id - Id of the Broadcast__c record
+    @return          : List of Broadcast__c record
+    ********************************************************
+    */
+    @AuraEnabled
+    public static Broadcast__c getBroadcastRecById(String broadcastId){
+        try {
+            List<Broadcast__c> broadcastRecs = new List<Broadcast__c>();
+            broadcastRecs = [SELECT Id, Name, Template__c, Template__r.Template_Name__c, Broadcast_Group_IDs__c, Status__c, Schedule_DateTime__c FROM Broadcast__c WHERE Id = :broadcastId WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
+            return broadcastRecs[0];
+            
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastRecById', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+            return null;
+        }
+    }
+
+    @AuraEnabled
+    public static String rescheduleBroadcast(String broadcastId, String action, String newScheduleTime) {
+        try {
+            String jobName = 'BroadcastSchedule_' + broadcastId;
+            // Query for the scheduled job using the current user's session ID
+            List<CronTrigger> jobs = [SELECT Id, CronExpression, NextFireTime FROM CronTrigger WHERE State = 'WAITING' AND CronJobDetail.Name=:jobName WITH SECURITY_ENFORCED LIMIT 1];
+
+            if (jobs.isEmpty()) {
+                return 'No scheduled job found for this broadcast.';
+            }
+            System.abortJob(jobs[0].Id); // Abort the job if found
+
+            System.debug('Aborted scheduled job for broadcast: ' + broadcastId);
+
+            List<Chat__c> chatRecs = [SELECT Id, Phone__c FROM Chat__c WHERE WB_Broadcast__c = :broadcastId WITH SECURITY_ENFORCED];
+            List<Broadcast__c> broadcastRecs = new List<Broadcast__c>();
+            broadcastRecs =  [SELECT Id, Name, Template__c, Template__r.Template_Name__c, Broadcast_Group_IDs__c, Status__c FROM Broadcast__c WHERE Id = :broadcastId WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
+
+            if (action == 'Reschedule') {
+                // Validate the new schedule time
+                if (String.isBlank(newScheduleTime)) {
+                    System.debug('New schedule time is required for rescheduling.');
+                    return null;
+                }
+
+                String templateId = broadcastRecs[0].Template__c;
+                String objectApiName = '';
+                String phoneField = '';
+                List<String> groupIds = new List<String>();
+                if (broadcastRecs[0].Broadcast_Group_IDs__c != null) {
+                    groupIds = broadcastRecs[0].Broadcast_Group_IDs__c.split(',');
+                    List<Broadcast_Group__c> brGroupRecs = [SELECT Id, Name, Object_Name__c, Phone_Field__c FROM Broadcast_Group__c WHERE Id IN :groupIds];
+                    if (brGroupRecs.size() > 0) {
+                        objectApiName = brGroupRecs[0].Object_Name__c;
+                        phoneField = brGroupRecs[0].Phone_Field__c;
+                    }
+                    System.debug('brGroupRecs: ' + brGroupRecs);
+                }
+
+                newScheduleTime = newScheduleTime.replace('T', ' ').replace('Z', '');
+
+                DateTime utcDateTime = DateTime.valueOf(newScheduleTime);
+
+                // Convert UTC to user's timezone
+                TimeZone userTimeZone = UserInfo.getTimeZone();
+                DateTime userDateTime = utcDateTime.addSeconds(userTimeZone.getOffset(utcDateTime) / 1000);
+
+                // Validate that the scheduled time is in the future
+                if (userDateTime < DateTime.now()) {
+                    System.debug('Scheduled time must be in the future.');
+                    return null;
+                }
+
+                System.debug('userDateTime: ' + userDateTime);
+
+                String formattedTime = userDateTime.format('hh:mm a');
+
+                String cronExpression = getCronExpression(userDateTime);
+
+                WhatsAppMessageBatchSchedulable batchSchedular = new WhatsAppMessageBatchSchedulable(templateId, chatRecs, broadcastId, objectApiName, phoneField);
+
+                System.debug('batchSchedular: ' + batchSchedular);
+
+                Broadcast__c br = new Broadcast__c(Id = broadcastId);
+                br.Schedule_DateTime__c = userDateTime;
+                Database.SaveResult updateResult = Database.update(br, false, AccessLevel.USER_MODE);
+
+                System.debug('updateResult: ' + updateResult);
+
+                System.schedule(jobName, cronExpression, batchSchedular);
+
+                return 'Broadcast rescheduled successfully.';
+            } else if (action == 'Delete Broadcast') {
+
+                // Delete the Broadcast record and related Chat records
+                delete chatRecs;
+                delete broadcastRecs;
+
+                return 'Broadcast deleted successfully.';
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'rescheduleBroadcast', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
+            return null;
+        }
+    }
 
     /*
     *********************************************************
@@ -432,7 +540,7 @@ public with sharing class BroadcastMessageController {
                 br.Schedule_DateTime__c = userDateTime;
                 Database.SaveResult updateResult = Database.update(br, false, AccessLevel.USER_MODE);
 
-                String jobName = 'BroadcastSchedule_' + System.currentTimeMillis();
+                String jobName = 'BroadcastSchedule_' + broadcast.Id;
                 System.schedule(jobName, cronExpression, batchSchedular);
             }
             return 'Success';
