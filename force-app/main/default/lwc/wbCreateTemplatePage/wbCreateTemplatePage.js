@@ -42,6 +42,7 @@ import deleteImagesFromS3 from '@salesforce/apex/AWSFilesController.deleteImages
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WBTemplateController.getPreviewURLofWhatsAppFlow';
 import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
 import buildPayload from './wbCreateTemplateWrapper'
+import getAllFlowScreenIds from '@salesforce/apex/WBTemplateController.getAllFlowScreenIds';
 
 export default class WbCreateTemplatePage extends NavigationMixin(LightningElement) {
     LIMITS = {
@@ -225,6 +226,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     @track selectedFilesToUpload = [];
     @track awsFileName;
     @track objectFieldMap = {};
+    @track flowScreenIds;
+
     @api activeTab;
     @api selectedTab;
     @api selectedOption;
@@ -585,7 +588,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         this.selectedFlowId = selectedFlow; // Get selected Flow ID
         this.iframeSrc = iframeSrc;
         this.selectedFlow = flows; // Store the entire list of flows
-
+        setTimeout(()=>{
+            this.getAllFlowScreens();
+        },400);
 
         this.isFlowSelected = true; // Hide "Choose Flow" button after selection
         this.NoFileSelected = false; // Hide text after selection
@@ -2904,8 +2909,6 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 awsFileName: this.awsFileName
             }
 
-
-
             const template = {
                 templateName: this.templateName ? this.templateName : null,
                 templateCategory: this.activeTab ? this.activeTab : null,
@@ -2933,13 +2936,15 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 selectedFlow: this.selectedFlow ? JSON.stringify(this.selectedFlow) : null,
                 templateMiscellaneousData: templateMiscellaneousData ? JSON.stringify(templateMiscellaneousData) : null,
                 isSecurityRecommedation: this.prevContent ? this.prevContent : null,
-                isCodeExpiration: this.isExpiration == null ? false : true
-
+                isCodeExpiration: this.isExpiration == null ? false : true,
+                selectedNavigationScreen : this.flowScreenIds ? this.flowScreenIds : null
             };
 
 
             const serializedWrapper = JSON.stringify(template);
             const payload = JSON.stringify(buildPayload(template));
+            console.log('Payload',payload);
+            
 
             if (this.metaTemplateId) {
                 editWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateId: this.metaTemplateId })
@@ -3107,6 +3112,21 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             attributes: {
                 url: "/one/one.app#" + encodedDef
             }
+        });
+    }
+
+    getAllFlowScreens(){
+        console.log('getAllFlowScreens called');
+        
+        getAllFlowScreenIds({
+            flowId: this.selectedFlowId
+        }).then(result => {
+            console.log('flow screen ids fetched');
+            console.log(result);
+            
+            this.flowScreenIds = result;
+        }).catch(error => {
+            console.error('Error fetching flow screen ids: ', error);
         });
     }
 }
