@@ -318,19 +318,12 @@ tr:nth-child(even) {
 }
 
 .sync-button {
-<<<<<<< HEAD
-    padding: 7px 8px;
-    font-size: 0;
-    margin-right: 15px;
-    background-color: white;
-=======
     padding: 9px 10px;
     font-size: 0;
     margin-right: 10px;
     background-color: white;
     height: 100%;
 }
->>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
 
 /* Backdrop covers the entire component */
 .license-error {
@@ -428,11 +421,7 @@ tr:nth-child(even) {
     border: none;
     cursor: pointer;
 }
-<<<<<<< HEAD
   
-=======
-
->>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
 .btns{
     background-color: transparent;
     color: #4194f9;

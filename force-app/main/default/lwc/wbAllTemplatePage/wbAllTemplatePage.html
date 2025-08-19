@@ -2,7 +2,7 @@
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 04-06-2025
+  @last modified on  : 08-19-2025
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
@@ -216,7 +216,8 @@
                         <!-- Section 1: Missing Templates -->
                         <template if:true={hasMissingTemplates}>
                             <div class="slds-box slds-theme_default slds-m-bottom_medium">
-                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">Templates Not Found In Org</h3>
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">Templates Not Found In Org
+                                </h3>
                                 <p class="slds-m-bottom_small">The following templates will be created in your org:</p>
                                 <div class="template-list-container">
                                     <template for:each={missingTemplatesList} for:item="tempate">
@@ -227,12 +228,14 @@
                                 </div>
                             </div>
                         </template>
-    
+
                         <!-- Section 2: Orphaned Templates -->
                         <template if:true={hasOrgOnlyTemplates}>
                             <div class="slds-box slds-theme_default">
-                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">Templates Not Found In Meta</h3>
-                                <p class="slds-m-bottom_small">The following templates exist in your org but not in Meta:
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">Templates Not Found In Meta
+                                </h3>
+                                <p class="slds-m-bottom_small">The following templates exist in your org but not in
+                                    Meta:
                                 </p>
                                 <div class="template-list-container slds-m-bottom_small">
                                     <template for:each={orgOnlyTemplateArray} for:item="template">
@@ -241,15 +244,16 @@
                                         </div>
                                     </template>
                                 </div>
-    
+
                                 <lightning-radio-group class="action-radio-group" name="orphanTemplateAction"
                                     label="Select Action" options={orphanTemplateOptions}
                                     value={selectedOrphanTemplateAction} type="radio" variant="label-stacked"
                                     onchange={handleOrphanTemplateOptionChange}>
                                 </lightning-radio-group>
-    
+
                                 <template if:true={isDeleteSelected}>
-                                    <p class="slds-text-color_error radio-dynamic-text">This action cannot be undone.</p>
+                                    <p class="slds-text-color_error radio-dynamic-text">This action cannot be undone.
+                                    </p>
                                 </template>
                                 <template if:true={isCreateSelected}>
                                     <p class="slds-text-color_error radio-dynamic-text">
@@ -258,18 +262,18 @@
                                 </template>
                             </div>
                         </template>
-    
+
                         <template if:true={hasNoExtraTemplates}>
                             <h3 style="font-size: 16px;">Are you sure you want to sync with Meta?</h3>
                         </template>
-    
+
                         <div class="slds-m-top_medium confirm-sync">
                             <lightning-input type="checkbox" label="Confirm Sync" class="confirm-checkbox"
                                 onchange={handleConfirmationChange}>
                             </lightning-input>
                         </div>
                     </div>
-    
+
                     <footer class="slds-modal__footer slds-theme_default">
                         <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
                         <button class="slds-button slds-button_brand" onclick={handleProceed}

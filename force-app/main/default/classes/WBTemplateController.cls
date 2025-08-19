@@ -8,10 +8,9 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 24/12/2024
- * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : restrictTemplates,sendPreviewTemplate
- * Change Description : 
+* Last Update Date : 16/07/2025
+* Updated By : Divij Modi
+* Change Description : Added logic to create edit history record and code clean
  ***********************************************************************/
 
 public with sharing class WBTemplateController {
@@ -38,29 +37,6 @@ public with sharing class WBTemplateController {
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'getWhatsAppTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
             return null;
-        }
-    }
-
-       /*
-    *********************************************************
-    @description     : trigger handle to handle limit of 5 records.
-    @param           : 
-    @return          : void
-    ********************************************************
-    */
-    public static void restrictTemplates(List<Template__c> templates) {
-        try {
-            Integer totalTemplates = [SELECT COUNT() FROM Template__c WITH SECURITY_ENFORCED];
-            
-            if (totalTemplates + templates.size() > 5) {
-                if (!Test.isRunningTest()) {
-                    for (Template__c template : templates) {
-                        template.addError('You cannot create more than 5 Template records.');
-                    }
-                } 
-            }
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'restrictTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
         }
     }
    
