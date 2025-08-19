@@ -42,6 +42,7 @@ import deleteImagesFromS3 from '@salesforce/apex/AWSFilesController.deleteImages
 import getPreviewURLofWhatsAppFlow from '@salesforce/apex/WBTemplateController.getPreviewURLofWhatsAppFlow';
 import AWS_SDK from "@salesforce/resourceUrl/AWSSDK";
 import buildPayload from './wbCreateTemplateWrapper'
+import getAllFlowScreenIds from '@salesforce/apex/WBTemplateController.getAllFlowScreenIds';
 
 export default class WbCreateTemplatePage extends NavigationMixin(LightningElement) {
     LIMITS = {
@@ -225,6 +226,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
     @track selectedFilesToUpload = [];
     @track awsFileName;
     @track objectFieldMap = {};
+    @track flowScreenIds;
+
     @api activeTab;
     @api selectedTab;
     @api selectedOption;
@@ -585,7 +588,9 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
         this.selectedFlowId = selectedFlow; // Get selected Flow ID
         this.iframeSrc = iframeSrc;
         this.selectedFlow = flows; // Store the entire list of flows
-
+        setTimeout(()=>{
+            this.getAllFlowScreens();
+        },400);
 
         this.isFlowSelected = true; // Hide "Choose Flow" button after selection
         this.NoFileSelected = false; // Hide text after selection
@@ -942,7 +947,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.isVideoFileUploader = templateMiscellaneousData.isVideoFileUploader
                             this.isDocFileUploader = templateMiscellaneousData.isDocFileUploader
                             this.isVideoFile = templateMiscellaneousData.isVideoFile
-                            this.isDocFile = templateMiscellaneousData.isDocFile
+                            this.isDocFile = templateMiscellaneousData.isDocFile    
                             this.prevContent = templateMiscellaneousData.isSecurityRecommedation
                             this.isExpiration = templateMiscellaneousData.isCodeExpiration
                             this.expirationTime = templateMiscellaneousData.expireTime
@@ -956,10 +961,13 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             this.selectedFlow = templateMiscellaneousData.selectedFlow
                             this.isFeatureEnabled = templateMiscellaneousData.isFeatureEnabled
                             this.awsFileName = templateMiscellaneousData.awsFileName
-
-                            if (this.awsFileName && !this.isAWSEnabled) {
-                                this.showToastError('AWS Configration missing')
+                            this.catalogName = templateMiscellaneousData.selectedCatalog
+                            this.flowScreenIds = templateMiscellaneousData.flowNavigationScreen
+                                
+                            if(this.awsFileName && !this.isAWSEnabled){
+                                this.showMessageToast('Warning', 'AWS Configration missing.', 'warning');
                             }
+
                         }
                         catch (error) {
                             console.error('templateMiscellaneousData Error ::: ', error)
@@ -2901,10 +2909,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 isFlowSelected: this.isFlowSelected,
                 selectedFlow: this.selectedFlow,
                 isFeatureEnabled: this.isFeatureEnabled,
-                awsFileName: this.awsFileName
+                awsFileName: this.awsFileName,
+                catalogName: this.catalogName,
+                flowNavigationScreen: this.flowScreenIds
             }
-
-
 
             const template = {
                 templateName: this.templateName ? this.templateName : null,
@@ -2933,8 +2941,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                 selectedFlow: this.selectedFlow ? JSON.stringify(this.selectedFlow) : null,
                 templateMiscellaneousData: templateMiscellaneousData ? JSON.stringify(templateMiscellaneousData) : null,
                 isSecurityRecommedation: this.prevContent ? this.prevContent : null,
-                isCodeExpiration: this.isExpiration == null ? false : true
-
+                isCodeExpiration: this.isExpiration == null ? false : true,
+                selectedNavigationScreen : this.flowScreenIds ? this.flowScreenIds : null
             };
 
 
@@ -3107,6 +3115,21 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
             attributes: {
                 url: "/one/one.app#" + encodedDef
             }
+        });
+    }
+
+    getAllFlowScreens(){
+        console.log('getAllFlowScreens called');
+        
+        getAllFlowScreenIds({
+            flowId: this.selectedFlowId
+        }).then(result => {
+            console.log('flow screen ids fetched');
+            console.log(result);
+            
+            this.flowScreenIds = result;
+        }).catch(error => {
+            console.error('Error fetching flow screen ids: ', error);
         });
     }
 }
