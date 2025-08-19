@@ -139,15 +139,8 @@ global with sharing class SyncFlowBatchClass implements Database.Batchable<Map<S
     public void finish(Database.BatchableContext bc) {
         try {
             if (!flowsToInsert.isEmpty()) insert flowsToInsert;
-            System.debug('finalUpdateList = ' + finalUpdateList);
-            Set<Id> updateIds = new Set<Id>();
-            for (Flow__c f : flowsToUpdate) {
-                if (!updateIds.contains(f.Id)) {
-                    this.finalUpdateList.add(f);
-                    updateIds.add(f.Id);
-                }
-            }
-            if(!finalUpdateList.isEmpty()) Database.update(finalUpdateList);
+            System.debug('flowsToUpdate = ' + flowsToUpdate);
+            if (!flowsToUpdate.isEmpty()) update flowsToUpdate;
             if (!flowsToDelete.isEmpty()) delete flowsToDelete;
 
             if (cnType.isEmpty()) {
@@ -159,7 +152,7 @@ global with sharing class SyncFlowBatchClass implements Database.Batchable<Map<S
             Map<String, Object> pageRef = new Map<String, Object>{
                 'type' => 'standard__navItemPage',
                 'attributes' => new Map<String, Object>{
-                    'apiName' => 'WhatsApp_Flows' // Tab API Name
+                    'apiName' => 'Manage_WhatsApp_Flows' // Tab API Name
                 }
             };
 
