@@ -25,7 +25,6 @@ import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import getSyncTemplateData from '@salesforce/apex/SyncTemplateController.syncTemplate'
 import confirmTemplateSync from '@salesforce/apex/SyncTemplateController.confirmTemplateSync'
 
-
 export default class WbAllTemplatePage extends LightningElement {
     @track isTemplateVisible = false;
     @track isCreateTemplate = false;
@@ -286,6 +285,7 @@ export default class WbAllTemplatePage extends LightningElement {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     
     syncTemplates() {
         console.log('syncTemplates start');
@@ -382,6 +382,8 @@ export default class WbAllTemplatePage extends LightningElement {
 
 =======
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
     fetchAllTemplate(showSpinner){
         if(showSpinner){
             this.isLoading=true;

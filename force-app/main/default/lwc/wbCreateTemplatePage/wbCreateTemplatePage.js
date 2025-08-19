@@ -3005,6 +3005,7 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                     })
                     .catch(error => {
 <<<<<<< HEAD
+<<<<<<< HEAD
                         console.error('Error creating template', error);
                         
                         const errorTitle = 'Template creation failed: ';
@@ -3022,6 +3023,8 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                             } else if (error.body.message) {
                                 errorMsg = JSON.stringify(error.body.message);
 =======
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
                         console.error('Error editing template', error);
                         const errorTitle = 'Template edition failed: ';
                         let errorMsg;
@@ -3038,7 +3041,10 @@ export default class WbCreateTemplatePage extends NavigationMixin(LightningEleme
                         this.isLoading = false;
                     });
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
             } else {
                 createWhatsappTemplate({ serializedWrapper: serializedWrapper, payloadWrapper: payload, templateName: this.templateName })
                     .then(result => {

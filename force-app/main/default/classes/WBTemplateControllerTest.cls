@@ -189,6 +189,7 @@ public class WBTemplateControllerTest{
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     @isTest
     static void testGetPicklistValues(){
         try{
@@ -205,6 +206,8 @@ public class WBTemplateControllerTest{
 
 =======
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
     @isTest
     static void testSendPreviewTemplate_Success(){
         String jsonData = '{"templateName": "test_template", "languageCode": "en", "headerParameters": ["Header"], "bodyParameters": ["Body1", "Body2"], "buttonLabel": "Click Me", "buttonType": "url"}';
@@ -246,6 +249,7 @@ public class WBTemplateControllerTest{
         Test.startTest();
         Map<String, Object> response = WBTemplateController.createWhatsappTemplate(serializedWrapper, payload, 'simple_template');
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 
@@ -253,6 +257,8 @@ public class WBTemplateControllerTest{
         // WBTemplateController.checkTemplateExistance('simple_template', serializedWrapper, payload);
 =======
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         Test.stopTest();
     }
 
@@ -482,12 +488,16 @@ public class WBTemplateControllerTest{
 
     @isTest
 <<<<<<< HEAD
+<<<<<<< HEAD
     static void testUploadFileToMetaAndGetHeaderHandle_Success_S3() {
         Test.startTest();
         
 =======
     static void testUploadFileToMetaAndGetHeaderHandle_Success_S3(){
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+    static void testUploadFileToMetaAndGetHeaderHandle_Success_S3(){
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(200, 'image/png', Blob.valueOf('filecontent')));
         Test.setMock(HttpCalloutMock.class, new MockMetaUploadSessionResponse(true));
         
@@ -495,21 +505,28 @@ public class WBTemplateControllerTest{
         wrapper.tempImgUrl = 'https://s3.amazonaws.com/bucket/test.png';
         wrapper.templateMiscellaneousData = '';
 <<<<<<< HEAD
+<<<<<<< HEAD
         
 =======
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         String serializedWrapper = JSON.serialize(wrapper);
         
         Test.startTest();
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
 <<<<<<< HEAD
+<<<<<<< HEAD
         
 =======
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         Test.stopTest();
     }
     
     @isTest
+<<<<<<< HEAD
 <<<<<<< HEAD
     static void testUploadFileToMetaAndGetHeaderHandle_Failure_S3HttpCallout() {
         Test.startTest();
@@ -517,27 +534,37 @@ public class WBTemplateControllerTest{
 =======
     static void testUploadFileToMetaAndGetHeaderHandle_Failure_S3HttpCallout(){
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+    static void testUploadFileToMetaAndGetHeaderHandle_Failure_S3HttpCallout(){
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(404, 'image/png', null));
         
         CreateTemplateWrapper.TemplateWrapper wrapper = new CreateTemplateWrapper.TemplateWrapper();
         wrapper.tempImgUrl = 'https://s3.amazonaws.com/bucket/missingfile.png';
         wrapper.templateMiscellaneousData = '';
 <<<<<<< HEAD
+<<<<<<< HEAD
         
 =======
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         String serializedWrapper = JSON.serialize(wrapper);
         
         Test.startTest();
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
 <<<<<<< HEAD
+<<<<<<< HEAD
         
 =======
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         Test.stopTest();
     }
     
     @isTest
+<<<<<<< HEAD
 <<<<<<< HEAD
     static void testUploadFileToMetaAndGetHeaderHandle_Success_ContentVersion() {
         Test.startTest();
@@ -554,6 +581,8 @@ public class WBTemplateControllerTest{
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
         
 =======
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
     static void testUploadFileToMetaAndGetHeaderHandle_Success_ContentVersion(){
         ContentVersion cv = [SELECT Id, VersionData, Title, FileExtension, ContentSize FROM ContentVersion LIMIT 1];
         String miscData = JSON.serialize(new Map<String, Object>{ 'contentVersionId' => cv.Id });
@@ -567,11 +596,15 @@ public class WBTemplateControllerTest{
         
         Test.startTest();
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
+<<<<<<< HEAD
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         Test.stopTest();
     }
     
     @isTest
+<<<<<<< HEAD
 <<<<<<< HEAD
     static void testUploadFileToMetaAndGetHeaderHandle_Exception_DuringMiscDataParsing() {
         Test.startTest();
@@ -585,12 +618,21 @@ public class WBTemplateControllerTest{
         wrapper.tempImgUrl = 'somecontentversionid';
         wrapper.templateMiscellaneousData = 'INVALID_JSON';
 >>>>>>> 7d66961c07fe822e53505444f5ebda25146c2bf2
+=======
+    static void testUploadFileToMetaAndGetHeaderHandle_Exception_DuringMiscDataParsing(){
+        CreateTemplateWrapper.TemplateWrapper wrapper = new CreateTemplateWrapper.TemplateWrapper();
+        wrapper.tempImgUrl = 'somecontentversionid';
+        wrapper.templateMiscellaneousData = 'INVALID_JSON';
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         String serializedWrapper = JSON.serialize(wrapper);
         
         Test.startTest();
         WBTemplateController.uploadFileToMetaAndGetHeaderHandle('templateName', serializedWrapper, '{"header_handle":"old"}', null);
 <<<<<<< HEAD
+<<<<<<< HEAD
         
+=======
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         Test.stopTest();
     }
     
@@ -601,6 +643,40 @@ public class WBTemplateControllerTest{
         MockHttpResponseGenerator(Integer statusCode, String contentType, Blob bodyBlob) {
 =======
         Test.stopTest();
+    }
+
+    @isTest
+    static void testgetMimeTypeFromExtension() {
+        System.assertEquals('image/png', WBTemplateController.getMimeTypeFromExtension('png'));
+        System.assertEquals('image/jpeg', WBTemplateController.getMimeTypeFromExtension('jpg'));
+        System.assertEquals('image/jpeg', WBTemplateController.getMimeTypeFromExtension('jpeg'));
+        System.assertEquals('application/pdf', WBTemplateController.getMimeTypeFromExtension('pdf'));
+        System.assertEquals('video/mp4', WBTemplateController.getMimeTypeFromExtension('mp4'));
+        System.assertEquals('application/msword', WBTemplateController.getMimeTypeFromExtension('doc'));
+        System.assertEquals('application/vnd.openxmlformats-officedocument.wordprocessingml.document', WBTemplateController.getMimeTypeFromExtension('docx'));
+        System.assertEquals('application/vnd.ms-excel', WBTemplateController.getMimeTypeFromExtension('xls'));
+        System.assertEquals('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', WBTemplateController.getMimeTypeFromExtension('xlsx'));
+        System.assertEquals('application/octet-stream', WBTemplateController.getMimeTypeFromExtension('unknown'));
+        System.assertEquals('application/octet-stream', WBTemplateController.getMimeTypeFromExtension(null));
+        System.assertEquals('application/octet-stream', WBTemplateController.getMimeTypeFromExtension(''));        
+    }
+
+    public class TestHttpResponse implements HttpCalloutMock{
+        Integer statusCode;
+        String body;
+        
+        TestHttpResponse(Integer statusCode, String body){
+            this.statusCode = statusCode;
+            this.body = body;
+        }
+
+        public HTTPResponse respond(HTTPRequest req){
+            HttpResponse res = new HttpResponse();
+            res.setHeader('Content-Type', 'application/json');
+            res.setStatusCode(statusCode);
+            res.setBody(body);
+            return res;
+        }
     }
 
     @isTest

@@ -43,6 +43,10 @@ export default class WbAllFlowsPage extends LightningElement {
     @track showModal = false;
     @track missingFlowsList = [];
     @track orgOnlyFlowMap = {};
+<<<<<<< HEAD
+=======
+    @track storedFlowSyncData = {};
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
     @track isFlowCreationConfirmed = false;
     @track isMissingFlowCreationDisabled = true;
     @track selectedOrphanFlowAction = '';
@@ -141,7 +145,11 @@ export default class WbAllFlowsPage extends LightningElement {
     }
 
     get hasOrgOnlyFlows() {
+<<<<<<< HEAD
         console.log('hasOrgOnlyFlows =', this.orgOnlyFlowMap && Object.keys(this.orgOnlyFlowMap).length > 0);
+=======
+        // console.log('hasOrgOnlyFlows =', this.orgOnlyFlowMap && Object.keys(this.orgOnlyFlowMap).length > 0);
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         return this.orgOnlyFlowMap && Object.keys(this.orgOnlyFlowMap).length > 0;
     }
 
@@ -192,6 +200,10 @@ export default class WbAllFlowsPage extends LightningElement {
             
             this.isFlowVisible = true;
             this.fetchWhatsAppFlows();
+<<<<<<< HEAD
+=======
+            this.setPageSizeBasedOnScreenHeight();
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
             document.addEventListener('click', this.handleOutsideClick);
             
         } catch (e) {
@@ -216,6 +228,15 @@ export default class WbAllFlowsPage extends LightningElement {
 
     handlePackageUpdate(event){
         this.showLicenseError = event.detail.isPackageValid;
+    }
+
+    setPageSizeBasedOnScreenHeight() {
+        const screenHeight = window.innerHeight;
+        if (screenHeight > 800) {
+            this.pageSize = 15;
+        } else {
+            this.pageSize = 10;
+        }
     }
 
     fetchWhatsAppFlows(){
@@ -258,14 +279,15 @@ export default class WbAllFlowsPage extends LightningElement {
         this.isNameClicked = true;
     }
 
-    handleStatusChange(event) {
-        this.statusValues = event.target.value;
-        this.filterRecords();
-    }
+    // handleStatusChange(event) {
+    //     this.statusValues = event.detail.value;
+    //     this.filterRecords();
+    // }
 
     handleSearchInputChange(event) {
         this.searchInput = event.target.value.trim().toLowerCase();
         this.filterRecords();
+        this.updateShownData();
     }
 
     filterRecords() {
@@ -540,13 +562,18 @@ export default class WbAllFlowsPage extends LightningElement {
     }
 
     syncFlows() {
+<<<<<<< HEAD
         console.log('syncFlows start');
+=======
+        // console.log('syncFlows start');
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         this.isLoading = true;
         this.showModal = false;
         this.syncFlowData();
     }
 
     syncFlowData() {
+<<<<<<< HEAD
         getSyncFlowData({ selectedOrphanFlowAction: '', isFlowSyncConfirm: false })
             .then(data => {
                 console.log('data from syncFlowData:', data);
@@ -554,6 +581,19 @@ export default class WbAllFlowsPage extends LightningElement {
                 console.log('this.missingFlowsList:', this.missingFlowsList);
                 this.orgOnlyFlowMap = data.orgOnlyFlowMap || {};
                 console.log('this.orgOnlyFlowMap:', this.orgOnlyFlowMap);
+=======
+        getSyncFlowData()
+            .then(data => {
+                // console.log('data from syncFlowData:', data);
+                this.missingFlowsList = data.pendingFlowListNames;
+                // console.log('this.missingFlowsList:', this.missingFlowsList);
+                this.orgOnlyFlowMap = data.orgOnlyFlowMap || {};
+                // console.log('this.orgOnlyFlowMap:', this.orgOnlyFlowMap);
+
+                // Store full response in JS for reuse
+                this.storedFlowSyncData = data;
+                // console.log('this.storedFlowSyncData =', this.storedFlowSyncData);
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
                 this.isLoading = false;
                 this.showModal = true;
             })
@@ -566,9 +606,18 @@ export default class WbAllFlowsPage extends LightningElement {
     handleProceed() {
         this.showModal = false;
         this.showToast('Flow Sync Started', 'Syncing in progress. You will be notified once it is completed.', 'success');
+<<<<<<< HEAD
         confirmFlowSync({
             selectedOrphanFlowAction: this.selectedOrphanFlowAction,
             isSyncConfirmed: true
+=======
+        const cleanedData = JSON.stringify(JSON.parse(JSON.stringify(this.storedFlowSyncData)));
+        // console.log('cleanedData =', cleanedData);
+        confirmFlowSync({
+            selectedOrphanFlowAction: this.selectedOrphanFlowAction,
+            isSyncConfirmed: true,
+            wrapperFromClientJSON: cleanedData
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
         })
         .catch(error => {
             console.error('Error during flow sync:', error);
@@ -577,11 +626,16 @@ export default class WbAllFlowsPage extends LightningElement {
 
     closeModal() {
         this.showModal = false;
+<<<<<<< HEAD
     }
 
     handleConfirmationChange(event) {
         this.isFlowCreationConfirmed = event.target.checked;
         this.isMissingFlowCreationDisabled = !this.isFlowCreationConfirmed;
+=======
+        this.confirmSyncChecked = false;
+        this.selectedOrphanFlowAction = '';
+>>>>>>> 20ec72c1ee1cf1af4c1e1b8c7fa1aa95fd28fb07
     }
 
     handleConfirmationChange(event) {
