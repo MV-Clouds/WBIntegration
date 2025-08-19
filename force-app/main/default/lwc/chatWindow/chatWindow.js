@@ -20,8 +20,9 @@ import { subscribe} from 'lightning/empApi';
 
 export default class ChatWindow extends NavigationMixin(LightningElement) {
 
-    @api recordId;
+    _recordId;
     @api height;
+    @api isCalledFromGlobal = false;
     @track chats = [];
     @track recordData;
     @track groupedChats = [];
@@ -57,7 +58,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     @track selectedFilesToUpload = [];
     @track selectedFileName;
     @track showLicenseError = false;
-    @track objectApiName;
+    @api objectApiName;
     @track phoneNumber;
     @track recordName;
     @track replyBorderColors = ['#34B7F1', '#FF9500', '#B38F00', '#ffa5c0', '#ff918b'];
@@ -66,6 +67,19 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     @wire(CurrentPageReference) pageRef;
 
+    @api 
+    get recordId() {
+        return this._recordId;
+    }
+    set recordId(value) {
+        if (value && value !== this._recordId) {
+            this._recordId = value;
+            if(this.isCalledFromGlobal){
+                this.connectedCallback();
+            }
+        }
+    }
+
     //Get Variables
     get sunClass() {
         return `toggle-button sun-icon ${this.isLightMode ? "" : "hide"}`;
@@ -73,6 +87,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     get moonClass() {
         return `toggle-button moon-icon ${this.isLightMode ? "hide" : "show"}`;
+    }
+
+    get mainChatWindowContainerClass(){
+        return this.isCalledFromGlobal ? 'main-chat-window-div-for-global lightTheme' : 'main-chat-window-div lightTheme';
     }
 
     get showPopup(){
@@ -107,7 +125,8 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             if (this.showLicenseError) {
                 return; // Stops execution if license is expired
             }
-            if(this.pageRef){
+            
+            if(this.pageRef && !this.isCalledFromGlobal){
                 this.objectApiName = this.pageRef.attributes.objectApiName;
             }
             this.configureHeight();
@@ -216,7 +235,7 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             getCombinedData({ contactId: this.recordId, objectApiName: this.objectApiName })
             .then(combinedData => {
 
-                if(combinedData.theme){
+                if(combinedData.theme && !this.isCalledFromGlobal){
                     this.isLightMode = combinedData.theme == 'light';
                     if(!this.isLightMode) {
                         this.template.querySelector('.main-chat-window-div').classList.toggle('darkTheme');
@@ -456,9 +475,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
 
     closeAllPopups(){
         try {
-            this.template?.querySelector('.main-chat-window-div')?.style?.setProperty("--max-height-for-attachment-options","0rem");
-            this.template?.querySelector('.main-chat-window-div')?.style?.setProperty("--max-height-for-send-options","0rem");
-            this.template?.querySelector('.main-chat-window-div')?.style?.setProperty("--height-for-emoji","0rem");
+            var className = this.isCalledFromGlobal ? '.main-chat-window-div-for-global' : '.main-chat-window-div';
+            this.template?.querySelector(className)?.style?.setProperty("--max-height-for-attachment-options","0rem");
+            this.template?.querySelector(className)?.style?.setProperty("--max-height-for-send-options","0rem");
+            this.template?.querySelector(className)?.style?.setProperty("--height-for-emoji","0rem");
         } catch (error) {
             console.error('Error in function closeAllPopups:::', error);
         }
@@ -638,7 +658,8 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
         try {
             this.showEmojiPicker = !this.showEmojiPicker;
             this.closeAllPopups();
-            this.template?.querySelector('.main-chat-window-div')?.style.setProperty("--height-for-emoji",this.showEmojiPicker ? "20rem" : "0rem");
+            var className = this.isCalledFromGlobal ? '.main-chat-window-div-for-global' : '.main-chat-window-div';
+            this.template?.querySelector(className)?.style.setProperty("--height-for-emoji",this.showEmojiPicker ? "20rem" : "0rem");
             if(this.showEmojiPicker){
                 this.template.querySelector('.emoji-picker-div').scrollTop = 0;
             }
@@ -676,7 +697,10 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
             textareaMessageElement.style.height = 'auto';
             textareaMessageElement.style.height = `${textareaMessageElement.scrollHeight}px`;
             this.showAttachmentOptions = false;
-            this.template?.querySelector('.main-chat-window-div')?.style.setProperty("--max-height-for-attachment-options","0rem");
+            
+            var className = this.isCalledFromGlobal ? '.main-chat-window-div-for-global' : '.main-chat-window-div';
+            this.template?.querySelector(className)?.style.setProperty("--max-height-for-attachment-options","0rem");
+            this.template?.querySelector(className)?.style?.setProperty("--height-for-emoji","0rem");
         } catch (e) {
             console.error('Error in function handleMessageTextChange:::', e.message);
         }
@@ -685,8 +709,15 @@ export default class ChatWindow extends NavigationMixin(LightningElement) {
     handleAttachmentButtonClick(){
         try {
             this.showAttachmentOptions = !this.showAttachmentOptions;
-            this.closeAllPopups();
-            this.template?.querySelector('.main-chat-window-div')?.style.setProperty("--max-height-for-attachment-options",this.showAttachmentOptions ? "13rem" : "0rem");
+            // this.closeAllPopups();
+            var className = this.isCalledFromGlobal ? '.main-chat-window-div-for-global' : '.main-chat-window-div';
+            console.log(className);
+            console.log(this.isCalledFromGlobal);
+            
+            
+            this.template?.querySelector(className)?.style.setProperty("--max-height-for-attachment-options",this.showAttachmentOptions ? "13rem" : "0rem");
+            console.log(this.template?.querySelector(className)?.style.getPropertyValue("--max-height-for-attachment-options",this.showAttachmentOptions));
+            
         } catch (e) {
             console.error('Error in function handleAttachmentButtonClick:::', e.message);
         }

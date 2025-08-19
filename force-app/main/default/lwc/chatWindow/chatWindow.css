@@ -1,3 +1,7 @@
+* {
+    scrollbar-width: none !important  ;
+}
+
 .lightTheme {
     /* General Purpose Variables */
     --height-of-main-chat-container : 30rem;
@@ -100,11 +104,30 @@
     background-size: auto;
     background-repeat: repeat;
     background-position: center;
-    max-height: 40rem;
     border-radius: 6px;
+    max-height: 40rem;
     display: flex;
     flex-direction: column;
     height: var(--height-of-main-chat-container, 30rem);
+    border: 0.5px solid lightgray;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-chat-window-div-for-global{
+    background-color: var(--main-bg-color, white);
+    width: 100%;
+    min-height: 20rem;
+    background-image: url('/resource/MVWB__WBI_chat_bg');
+    background-size: auto;
+    background-repeat: repeat;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    height: 100% !important;
     border: 0.5px solid lightgray;
     overflow: hidden;
     position: relative;
