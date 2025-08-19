@@ -175,7 +175,9 @@ function buildButtonComponent(templateWrapper) {
                 Object.assign(buttonComponent, {
                     type: 'FLOW',
                     text: item.btntext,
-                    flow_id: selectedFlowMap.id
+                    flow_id: selectedFlowMap.id,
+                    flow_action: 'navigate',
+                    'navigate_screen': templateWrapper.selectedNavigationScreen
                 });
             }
             else if (actionType === 'CATALOG') {

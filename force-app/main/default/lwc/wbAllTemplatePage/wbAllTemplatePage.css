@@ -243,7 +243,8 @@ tr:nth-child(even) {
     max-width: 100%;
 }
 .btns{
-    background-color: white;
+    display: flex;
+    gap: 9px;
     color: #4194f9;
     --sds-c-icon-color-foreground-default: rgb(70 164 245);
 }
@@ -551,4 +552,132 @@ span {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+
+/* Styling for the Confirm Flow Sync modal */
+.slds-modal__container {
+    max-width: 500px;
+    width: 90%;
+    margin: 0 auto;
+    z-index: 2;
+}
+
+.modal-header {
+    font-size: 20px;
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: center;
+    font-weight: 500;
+    color: white;
+    padding: 0.4rem;
+    background: #0098e9;
+    border-radius: 5px 5px 0 0;
+}
+
+.slds-modal__content {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.slds-box {
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    background-color: white;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.1);
+}
+
+.template-list-container {
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    scrollbar-width: none;
+}
+
+.template-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid #f3f2f2;
+    transition: background-color 0.2s;
+}
+
+.template-item:hover {
+    background-color: #f3f2f2;
+}
+
+.template-item:last-child {
+    border-bottom: none;
+}
+
+.action-radio-group {
+    margin-top: 1rem;
+}
+
+.confirm-checkbox {
+    margin-top: 1rem;
+}
+
+.slds-modal__footer {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #dddbda;
+    background-color: white;
+}
+
+.slds-button {
+    min-width: 100px;
+    margin-left: 0.5rem;
+    border: 1px solid #0098e9;
+}
+
+.slds-button_neutral {
+    color: black;
+}
+
+.slds-button_neutral:hover {
+    background-color: #e6fbed;
+}
+
+.slds-button_brand {
+    background-color: #0098e9;
+}
+
+.slds-button_brand:hover {
+    background-color: #32a4e1;
+}
+
+.slds-button_brand:disabled {
+    background-color: #c9c7c5;
+    border: 1px solid #c9c7c5;
+    cursor: not-allowed;
+}
+
+.slds-text-heading_small {
+    font-weight: 600;
+    color: #0098e9;
+}
+
+.radio-dynamic-text {
+    padding-left: 0.5rem;
+    font-size: 11px;
+}
+
+.confirm-sync {
+    padding-left: 2px;
+}
+
+.left-icon {
+    margin-right: 0.5rem;
+}
+
+.slds-backdrop {
+    --lwc-zIndexModal: 1;
 }

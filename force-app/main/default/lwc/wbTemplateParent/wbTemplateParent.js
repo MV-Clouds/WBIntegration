@@ -13,6 +13,7 @@ export default class wbTemplateParent extends LightningElement {
     @track showCreateTemplateTest = false;
 
     @api edittemplateid;
+    @api istemplateclone;
 
     selectedOption = 'custom';
     selectedTab = 'section1';
@@ -20,6 +21,9 @@ export default class wbTemplateParent extends LightningElement {
     showLicenseError = false;
 
     connectedCallback(){
+        console.log('Parent Page :: '+this.istemplateclone);
+        console.log('Editting Template Id :: '+this.edittemplateid);
+        
         if((this.edittemplateid != undefined) && (this.edittemplateid != '') && (this.edittemplateid != null)){
             this.showTemplateCategory = false;
             this.showCreateTemplateTest = true;

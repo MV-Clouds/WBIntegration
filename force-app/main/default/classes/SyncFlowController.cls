@@ -1,3 +1,10 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 08-19-2025
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 public with sharing class SyncFlowController {
     public static List<MVWB__WBConnect_Configuration__mdt> config = [SELECT Id, MVWB__API_Endpoint__c, MVWB__API_Version__c, MVWB__Access_Token__c, MVWB__Business_Account_Id__c FROM MVWB__WBConnect_Configuration__mdt LIMIT 1];
 
