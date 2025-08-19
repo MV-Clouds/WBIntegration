@@ -109,6 +109,17 @@ private class SyncTemplateControllerTest {
             MVWB__S3_Bucket_Name__c = 'test-bucket',
             MVWB__S3_Region_Name__c = 'us-east-1'
         );
+
+        // Required WBConnect Configuration metadata — use Metadata API in test context
+        // MVWB__WBConnect_Configuration__mdt metaConfig = new MVWB__WBConnect_Configuration__mdt(
+        //     DeveloperName = 'TestConfig',
+        //     MasterLabel = 'Test Config',
+        //     MVWB__Access_Token__c = 'TestAccessToken',
+        //     MVWB__API_Endpoint__c = 'https://graph.facebook.com',
+        //     MVWB__API_Version__c = 'v17.0',
+        //     MVWB__Business_Account_Id__c = 'testbusinessid'
+        // );
+        // insert metaConfig;
     }
 
     @isTest

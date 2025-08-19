@@ -34,12 +34,7 @@
                         <p class="templatetxt2">New Template</p>
                     </div>
                 </template>
-                <template lwc:if={isTemplateClone}>
-                    <div class="texttemp">
-                        <p class="templatetxt2">Clone Template</p>
-                    </div>
-                </template>
-                <template lwc:elseif={isEditTemplate}>
+                <template if:true={isEditTemplate}>
                     <div class="texttemp">
                         <p class="templatetxt2">Edit Template</p>
                     </div>
@@ -56,7 +51,7 @@
                                     <label for="templateName">Name your template</label>
                                     <input class="nameInput" type="text" id="templateName" name="templateName"
                                         value={templateName} maxlength="512" placeholder="Enter template name"
-                                        disabled={templateNameDisabled} oninput={handleInputChange} />
+                                        disabled={isEditTemplate} oninput={handleInputChange} />
                                     <p class="char-count tempname-count">{templateName.length}/{LIMITS.maxTempNamelength}
                                     </p>
                                 </div>
@@ -1113,4 +1108,5 @@
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
 
+    </template>
 </template>

@@ -360,12 +360,12 @@ global with sharing class SyncTemplateBatchClass implements Database.Batchable<S
     private static List<Map<String, Object>> buildButtonComponent(Template__c templateRec) {
         List<Map<String, Object>> buttonComponents = new List<Map<String, Object>>();
         try {
-        if (String.isBlank(templateRec.WBButton_Body__c)) {
+            if (String.isBlank(templateRec.Button_Body__c)) {
                 return buttonComponents;
             }
 
             // Parse JSON into a generic list
-        List<Object> rawButtonList = (List<Object>) JSON.deserializeUntyped(templateRec.WBButton_Body__c);
+            List<Object> rawButtonList = (List<Object>) JSON.deserializeUntyped(templateRec.Button_Body__c);
 
             // Collect flow_ids up front
             Set<String> flowIds = new Set<String>();
@@ -405,13 +405,11 @@ global with sharing class SyncTemplateBatchClass implements Database.Batchable<S
                 if (buttonMap.containsKey('flow_action'))     btn.put('flow_action', 'navigate');
 
                 // Fill default navigate_screen if missing/blank
-                if (buttonMap.containsKey('flow_id') && buttonMap.get('flow_id') != null &&
-					    (
-					        !buttonMap.containsKey('navigate_screen') ||
-					        buttonMap.get('navigate_screen') == null ||
-					        String.valueOf(buttonMap.get('navigate_screen')).trim() == ''
-					    )
-					) {
+                if (
+                    (!buttonMap.containsKey('navigate_screen')) || 
+                    buttonMap.get('navigate_screen') == null || 
+                    String.valueOf(buttonMap.get('navigate_screen')).trim() == ''
+                ) {
                     String flowId = (buttonMap.containsKey('flow_id') ? String.valueOf(buttonMap.get('flow_id')) : null);
                     if (flowId != null && flowMap.containsKey(flowId)) {
                         Flow__c flowRec = flowMap.get(flowId);
