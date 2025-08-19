@@ -5,7 +5,6 @@ global with sharing class SyncFlowBatchClass implements Database.Batchable<Map<S
     
     global List<Flow__c> flowsToInsert = new List<Flow__c>();
     global List<Flow__c> flowsToUpdate = new List<Flow__c>();
-    global List<Flow__c> finalUpdateList = new List<Flow__c>();
     global List<Flow__c> flowsToDelete = new List<Flow__c>();
     global Map<String, Flow__c> existingFlows = new Map<String, Flow__c>();
     global List<Map<String, Object>> flowsToProcess;
