@@ -31,7 +31,120 @@ public with sharing class ChatWindowController {
     public static List<MVWB__WBConnect_Configuration__mdt> wbConfig = MVWB__WBConnect_Configuration__mdt.getAll().values(); 
     public static List<MVWB__User_Theme_Preference__c> userPreferences = [SELECT MVWB__Theme__c FROM MVWB__User_Theme_Preference__c WHERE SetupOwnerId =: UserInfo.getUserId() WITH SECURITY_ENFORCED LIMIT 1];
     /* ----------------  End  ---------------- */
+    
+    @AuraEnabled
+    public static List<String> getObjectPicklistOptions() {
+        try {
+            
+            List<String> options = new List<String>();
+            
+            // Query metadata
+            List<MVWB__Object_Config__mdt> objectConfigList = [ SELECT MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt LIMIT 1];
+            
+            if (!objectConfigList.isEmpty()) {
+                // Parse JSON
+                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].MVWB__ChatWindowConfigInfo__c);
+                
+                // Add keys to options list
+                for (String key : chatConfigData.keySet()) {
+                    options.add(key);
+                }
+            }
+            
+            return options;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getObjectPicklistOptions', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            return null;
+        }
+    }
 
+    @AuraEnabled
+    public static Map<String, Map<String, Object>> getChatsForSelectedObject(String objectApiName) {
+        try {
+            // Fetch metadata record from Object_Config__mdt
+            List<MVWB__Object_Config__mdt> objectConfigList = [SELECT Id, MVWB__ObjectConfigInfo__c, MVWB__ChatWindowConfigInfo__c FROM MVWB__Object_Config__mdt LIMIT 1];
+            String phoneField = '';
+            String nameField = '';
+            if(objectConfigList.size() <= 0) {
+                System.debug('Object Config not found!');
+            } else {
+                // Deserialize the JSON string from ChatWindowConfigInfo__c
+                Map<String, Object> chatConfigData = (Map<String, Object>) JSON.deserializeUntyped(objectConfigList[0].MVWB__ChatWindowConfigInfo__c);
+                Map<String, Object> chatConfig = (Map<String, Object>) chatConfigData.get(objectApiName);
+                phoneField = (String) chatConfig.get('phoneField');
+                nameField = (String) chatConfig.get('nameField');
+            }
+
+            List<sObject> recordData;
+            if(nameField != '' && phoneField != '') {
+                String query = 'SELECT Id, ' +  nameField + ', ' +  phoneField + ' FROM ' + objectApiName + ' WHERE '+ phoneField +' != null LIMIT 50000';
+                recordData = Database.query(query);
+            }
+    
+            // Build phone set from contacts
+            Set<String> phoneSet = new Set<String>();
+            for (sObject rec : recordData) {
+                phoneSet.add((String) rec.get(phoneField));
+            }
+    
+            // Get last chat time per phone from Chat__c
+            Map<String, DateTime> phoneToLastChat = new Map<String, DateTime>();
+            List<AggregateResult> chatAgg = [SELECT Phone__c, MAX(CreatedDate) maxDate FROM Chat__c WHERE Phone__c IN :phoneSet GROUP BY Phone__c];
+    
+            for (AggregateResult ar : chatAgg) {
+                phoneToLastChat.put((String)ar.get('MVWB__Phone__c'), (DateTime)ar.get('maxDate'));
+            }
+    
+            // Get count of unread outbound messages per phone
+            Map<String, Integer> phoneToUnreadOutboundCount = new Map<String, Integer>();
+            List<AggregateResult> unreadOutboundAgg = [ SELECT Phone__c, COUNT(Id) countId FROM Chat__c WHERE Phone__c IN :phoneSet AND Message_Status__c != 'Seen' AND Type_of_Message__c = 'Inbound Messages' GROUP BY Phone__c];
+    
+            for (AggregateResult ar : unreadOutboundAgg) {
+                phoneToUnreadOutboundCount.put((String)ar.get('MVWB__Phone__c'), (Integer)ar.get('countId'));
+            }
+    
+            // Sort the contacts by latest chat date descending
+            recordData.sort(new RecordChatComparator(phoneToLastChat, phoneField));
+    
+            Map<String, Map<String, Object>> contactData = new Map<String, Map<String, Object>>();
+            for (sObject rec : recordData) {
+                Map<String, Object> contactDetails = new Map<String, Object>();
+                contactDetails.put('Id', (String) rec.get('Id'));
+                contactDetails.put('Name', (String) rec.get(nameField));
+                contactDetails.put('Phone', (String) rec.get(phoneField));
+                contactDetails.put('unreadOutboundCount', phoneToUnreadOutboundCount.containsKey((String) rec.get(phoneField)) ? phoneToUnreadOutboundCount.get((String) rec.get(phoneField)) : 0);
+                contactData.put((String) rec.get('Id'), contactDetails);
+            }
+    
+            return contactData;
+        } catch (Exception e) {
+            ExceptionHandler.logException(new Map<String, Object>{'className' => 'ChatWindowController', 'methodName' => 'getContactsForChat', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
+            return null;
+        }
+    }
+
+    // Inner comparator class
+    public class RecordChatComparator implements Comparator<sObject> {
+        Map<String, DateTime> phoneToChatMap;
+        String phoneFieldName;
+
+        public RecordChatComparator(Map<String, DateTime> phoneChatMap, String phoneField) {
+            this.phoneToChatMap = phoneChatMap;
+            this.phoneFieldName = phoneField;
+        }
+
+        public Integer compare(sObject a, sObject b) {
+            String aPhone = (String) a.get(phoneFieldName);
+            String bPhone = (String) b.get(phoneFieldName);
+
+            DateTime aDate = phoneToChatMap.containsKey(aPhone) ? phoneToChatMap.get(aPhone) : DateTime.newInstance(1900, 1, 1);
+            DateTime bDate = phoneToChatMap.containsKey(bPhone) ? phoneToChatMap.get(bPhone) : DateTime.newInstance(1900, 1, 1);
+
+            if (aDate > bDate) return -1; // Descending order
+            if (aDate < bDate) return 1;
+            return 0;
+        }
+    }
 
     /*
     *********************************************************
@@ -551,7 +664,7 @@ public with sharing class ChatWindowController {
                 }
             }
 
-            List<Template__c> templates = [SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED];
+            List<Template__c> templates = [SELECT Id, Template_Name__c, WBButton_Body__c, Button_Label__c, Button_Type__c, WBFooter_Body__c, WBHeader_Body__c, Header_Type__c, Language__c, WBTemplate_Body__c, Template_Category__c, Template_SubCatagory__c, Template_Type__c, Template_Variable__c, (SELECT Id, Name, Field_Name__c, Object_Name__c, Type__c, Alternate_Text__c FROM WB_Template_Variables__r) FROM Template__c WHERE Id = :templateId WITH SECURITY_ENFORCED ORDER BY CreatedDate DESC];
 
             if(templates.size() > 0){
                 Template__c template = templates[0];

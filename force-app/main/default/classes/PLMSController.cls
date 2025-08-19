@@ -14,7 +14,8 @@ global without sharing class PLMSController {
             config = configList[0];
         } else {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'PLMSController', 'methodName' => 'getPLMSValidityFutureCall', 'exceptionObj' => null, 'isApiException' => true, 'statusCode' => null, 'chatId' => null, 'moreDetails' => 'No License Config Found', 'apiResponse' => null});
-            return;
+            sendEmail(null, true);
+            // return;
         }
         try {
             String currentOrgId = UserInfo.getOrganizationId();
@@ -64,7 +65,7 @@ global without sharing class PLMSController {
                         config.MVWB__Next_Callout_Date__c = nextCalloutDate;
                         
                         String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
-                        String jobName = 'PLMS_Validity_Check';
+                        String jobName = 'WBConnect_InnerProcess_' + System.currentTimeMillis();
                         System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
                     }
                     
@@ -176,7 +177,7 @@ global without sharing class PLMSController {
                         Date nextCalloutDate = userNextCalloutTime.date();
                         config.MVWB__Next_Callout_Date__c = nextCalloutDate;
                         String cronExpression = '0 ' + userNextCalloutTime.minute() + ' ' + userNextCalloutTime.hour() + ' ' + userNextCalloutTime.day() + ' ' + userNextCalloutTime.month() + ' ? ' + userNextCalloutTime.year();
-                        String jobName = 'PLMS_Validity_Check';
+                        String jobName = 'WBConnect_InnerProcess_' + System.currentTimeMillis();
                         System.schedule(jobName, cronExpression, new PLMSValidityScheduler());
                     }
                     
