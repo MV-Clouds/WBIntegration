@@ -39,7 +39,7 @@ public with sharing class WBTemplateController {
             return null;
         }
     }
-   
+
        /*
     *********************************************************
     @description     : Send preview message.
