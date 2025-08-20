@@ -42,29 +42,6 @@ public with sharing class WBTemplateController {
 
        /*
     *********************************************************
-    @description     : trigger handle to handle limit of 5 records.
-    @param           : 
-    @return          : void
-    ********************************************************
-    */
-    public static void restrictTemplates(List<Template__c> templates) {
-        try {
-            Integer totalTemplates = [SELECT COUNT() FROM Template__c WITH SECURITY_ENFORCED];
-            
-            if (totalTemplates + templates.size() > 5) {
-                if (!Test.isRunningTest()) {
-                    for (Template__c template : templates) {
-                        template.addError('You cannot create more than 5 Template records.');
-                    }
-                } 
-            }
-        } catch (Exception e) {
-            ExceptionHandler.logException(new Map<String, Object>{'className' => 'WBTemplateController', 'methodName' => 'restrictTemplates', 'exceptionObj' => e, 'isApiException' => false, 'statusCode' => null, 'chatId' => null, 'moreDetails' => e.getMessage(), 'apiResponse' => null});
-        }
-    }
-   
-       /*
-    *********************************************************
     @description     : Send preview message.
     @param           : 
     @return          : errorMessage
