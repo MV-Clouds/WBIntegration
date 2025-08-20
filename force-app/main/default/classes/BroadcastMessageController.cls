@@ -131,7 +131,7 @@ public with sharing class BroadcastMessageController {
     public static List<Broadcast__c> getBroadcastRecs(){
         List<Broadcast__c> broadcastRecs = new List<Broadcast__c>();
         try {
-            broadcastRecs =  [SELECT Id, Name, Recipient_Count__c,Template__c, Template__r.Template_Name__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c FROM Broadcast__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];        
+            broadcastRecs =  [SELECT Id, Name, Recipient_Count__c, Template__c, Template__r.Template_Name__c, Status__c, Total_Sent__c, Total_Delivered__c, Total_Read__c, Total_Failed__c, Schedule_DateTime__c FROM Broadcast__c WITH SECURITY_ENFORCED ORDER BY LastModifiedDate DESC];
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'getBroadcastRecs', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
         }
@@ -160,14 +160,14 @@ public with sharing class BroadcastMessageController {
     }
 
     @AuraEnabled
-    public static String rescheduleBroadcast(String broadcastId, String action, String newScheduleTime) {
+    public static List<String> rescheduleBroadcast(String broadcastId, String action, String newScheduleTime) {
         try {
             String jobName = 'BroadcastSchedule_' + broadcastId;
             // Query for the scheduled job using the current user's session ID
             List<CronTrigger> jobs = [SELECT Id, CronExpression, NextFireTime FROM CronTrigger WHERE State = 'WAITING' AND CronJobDetail.Name=:jobName WITH SECURITY_ENFORCED LIMIT 1];
 
             if (jobs.isEmpty()) {
-                return 'No scheduled job found for this broadcast.';
+                return new List<String>{'Error', 'No scheduled job found for this broadcast.'};
             }
             System.abortJob(jobs[0].Id); // Abort the job if found
 
@@ -181,7 +181,7 @@ public with sharing class BroadcastMessageController {
                 // Validate the new schedule time
                 if (String.isBlank(newScheduleTime)) {
                     System.debug('New schedule time is required for rescheduling.');
-                    return null;
+                    return new List<String>{'Error', 'Something went wrong while rescheduling the broadcast. Please try again.'};
                 }
 
                 String templateId = broadcastRecs[0].Template__c;
@@ -209,7 +209,7 @@ public with sharing class BroadcastMessageController {
                 // Validate that the scheduled time is in the future
                 if (userDateTime < DateTime.now()) {
                     System.debug('Scheduled time must be in the future.');
-                    return null;
+                    return new List<String>{'Error', 'Scheduled time must be in the future.'};
                 }
 
                 System.debug('userDateTime: ' + userDateTime);
@@ -230,20 +230,20 @@ public with sharing class BroadcastMessageController {
 
                 System.schedule(jobName, cronExpression, batchSchedular);
 
-                return 'Broadcast rescheduled successfully.';
+                return new List<String>{'Success', 'Broadcast rescheduled successfully.'};
             } else if (action == 'Delete Broadcast') {
 
                 // Delete the Broadcast record and related Chat records
                 delete chatRecs;
                 delete broadcastRecs;
 
-                return 'Broadcast deleted successfully.';
+                return new List<String>{'Success', 'Broadcast deleted successfully.'};
             } else {
-                return null;
+                return new List<String>{'Error', 'Invalid action specified. Please use "Reschedule" or "Delete Broadcast".'};
             }
         } catch (Exception e) {
             ExceptionHandler.logException(new Map<String, Object>{'className' => 'BroadcastMessageController','methodName' => 'rescheduleBroadcast', 'exceptionObj' => e,'isApiException' => false,'statusCode' => null,'chatId' => null,'moreDetails' => e.getMessage(),'apiResponse' => null});
-            return null;
+            return new List<String>{'Error', 'Something went wrong while rescheduling the broadcast. Please try again.'};
         }
     }
 

@@ -252,6 +252,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                     ...item,
                     index : index + 1,
                     isPending: item.MVWB__Status__c === 'Pending',
+                    scheduledDateTime: item.MVWB__Schedule_DateTime__c ? new Date(item.MVWB__Schedule_DateTime__c).toLocaleString() : '',
                 }));
 
                 this.filteredData = [...this.data];
@@ -680,7 +681,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
 
         rescheduleBroadcast({ broadcastId: this.rescheduleRecordId, action: label, newScheduleTime: this.selectedDateTime })
         .then(result => {
-            this.showToast('Success', result, 'success');
+            this.showToast(result[0], result[1], result[0]);
         })
         .catch(error => {
             console.error('Error in handleRechedule()', error);
