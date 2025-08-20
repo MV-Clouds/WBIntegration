@@ -59,6 +59,7 @@
                                             <th>Name</th>
                                             <th>Recipient Count</th>
                                             <th>Status</th>
+                                            <th>Broadcast Time</th>
                                             <th>Total Sent</th>
                                             <th>Total Delivered</th>
                                             <th>Total Read</th>
@@ -75,7 +76,17 @@
                                                     <a href="javascript:void(0);" class="clickable-name" data-record-id={row.Id} onclick={handleNameClick}>{row.Name}</a>
                                                 </td>
                                                 <td>{row.MVWB__Recipient_Count__c}</td>
-                                                <td>{row.MVWB__Status__c}</td>
+                                                <td>
+                                                    <div class="status-container">
+                                                        {row.MVWB__Status__c}
+                                                        <template if:true={row.isPending}>
+                                                            <svg class="reschedule-icon" onclick={handleRechedulePopup} data-record-id={row.Id} xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 24 24" fill="none">
+                                                                <path d="M3 10H21M7 3V5M17 3V5M6.2 21H17.8C18.9201 21 19.4802 21 19.908 20.782C20.2843 20.5903 20.5903 20.2843 20.782 19.908C21 19.4802 21 18.9201 21 17.8V8.2C21 7.07989 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V17.8C3 18.9201 3 19.4802 3.21799 19.908C3.40973 20.2843 3.71569 20.5903 4.09202 20.782C4.51984 21 5.07989 21 6.2 21Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </template>
+                                                    </div>
+                                                </td>
+                                                <td>{row.scheduledDateTime}</td>
                                                 <td>{row.MVWB__Total_Sent__c}</td>
                                                 <td>{row.MVWB__Total_Delivered__c}</td>
                                                 <td>{row.MVWB__Total_Read__c}</td>
@@ -295,6 +306,35 @@
                                             <lightning-button variant="brand" label="Schedule and Send" onclick={handleSchedule} class="slds-m-left_x-small"></lightning-button>
                                         </div>
                                     </template>
+                                </div>
+                            </div>
+                        </section>
+                        <div class="slds-backdrop slds-backdrop_open"></div>
+                    </template>
+                    <template if:true={showReschedulePopup}>
+                        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                            <div class="slds-modal__container" style="width: 100rem !important;">
+
+                                <!-- Close Button -->
+                                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                    title="Close" onclick={handleCloseReschedulePopup}>
+                                    <lightning-icon icon-name="utility:close" alternative-text="Close"
+                                        size="small"></lightning-icon>
+                                </button>
+
+                                <div class="slds-modal__content slds-p-around_medium pop-up" id="modal-content-id-3">
+                                    <div class="pop-heading">
+                                        Reschedule Broadcast
+                                    </div>
+                                    <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center slds-m-around_medium">
+                                        <lightning-input type="datetime-local" name="dateTime" value={selectedDateTime} onchange={handleInputChange} class="slds-align_absolute-center"></lightning-input>
+                                    </div>
+
+                                    <div class="popUpFooter slds-text-align_center slds-p-bottom_large">
+                                        <lightning-button variant="destructive-text" class="slds-m-left_x-small" label="Delete Broadcast" onclick={handleReschedule}></lightning-button>
+                                        <lightning-button variant="brand" class="slds-m-left_x-small" label="Reschedule" onclick={handleReschedule}></lightning-button>
+                                    </div>
                                 </div>
                             </div>
                         </section>

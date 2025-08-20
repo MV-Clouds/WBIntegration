@@ -1,10 +1,12 @@
 import { LightningElement, track } from 'lwc';
 import getBroadcastRecs from '@salesforce/apex/BroadcastMessageController.getBroadcastRecs';
+import getBroadcastRecById from '@salesforce/apex/BroadcastMessageController.getBroadcastRecById';
 import getBroadcastGroups from '@salesforce/apex/BroadcastMessageController.getBroadcastGroups';
 import getDynamicObjectData from '@salesforce/apex/WBTemplateController.getDynamicObjectData';
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getTemplatesByObject from '@salesforce/apex/BroadcastMessageController.getTemplatesByObject';
 import createChatRecods from '@salesforce/apex/BroadcastMessageController.createChatRecods';
+import rescheduleBroadcast from '@salesforce/apex/BroadcastMessageController.rescheduleBroadcast';
 import { subscribe, unsubscribe } from 'lightning/empApi';
 import { NavigationMixin } from 'lightning/navigation';
 import checkLicenseUsablility from '@salesforce/apex/PLMSController.checkLicenseUsablility';
@@ -27,6 +29,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     @track visiblePages = 5;
     @track isLoading = false;
     @track showPopup = false;
+    @track showReschedulePopup = false;
     @track selectedObjectName = '';
     @track popUpFirstPage = true;
     @track popUpSecondpage = false;
@@ -39,6 +42,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
     @track isTemplateVisible = false;
     @track showLicenseError = false;
     @track selectedRecordId='';
+    @track rescheduleRecordId = '';
 
     @track isImgSelected = false;
     @track isVidSelected = false;
@@ -247,7 +251,9 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
                 this.data = result.map((item, index) => ({
                     ...item,
                     index : index + 1,
-                }));                
+                    isPending: item.MVWB__Status__c === 'Pending',
+                    scheduledDateTime: item.MVWB__Schedule_DateTime__c ? new Date(item.MVWB__Schedule_DateTime__c).toLocaleString() : '',
+                }));
 
                 this.filteredData = [...this.data];
                 this.updateShownData();
@@ -584,7 +590,7 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             if(this.selectedDateTime === '' || this.selectedDateTime === null){
                 this.showToast('Error!', 'Please select date and time', 'error');
                 return;
-            }     
+            }
         
             const selectedTime = new Date(this.selectedDateTime);
             const now = new Date();
@@ -592,14 +598,14 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
             if (selectedTime < now) {
                 this.showToast('Error!', 'Selected date and time cannot be in the past', 'error');
                 return;
-            }   
+            }
         
             let grpIdList = this.selectedGroupIds.map(record => record.Id);
         
             createChatRecods({templateId: this.selectedTemplate, groupIds: grpIdList, isScheduled: true, timeOfMessage: this.selectedDateTime})
                 .then(result => {
                     if(result == 'Success'){
-                        this.showToast('Success', 'Broadcast sent successfully', 'success');
+                        this.showToast('Success', 'Broadcast scheduled successfully', 'success');
                         this.handleCloseOnPopup();
                     } else {
                         this.showToast('Error', `Broadcast sent failed - ${result}`, 'error');
@@ -645,6 +651,50 @@ export default class WbAllBroadcastPage extends NavigationMixin(LightningElement
         } catch (error) {
             console.error('Error in handleSendOnPopup()',error);
         }
+    }
+
+    handleRechedulePopup(event) {
+        console.log(event);
+        console.log(event.target);
+        this.showReschedulePopup = true;
+        this.rescheduleRecordId = event.target.dataset.recordId;
+        console.log('this.rescheduleRecordId:', this.rescheduleRecordId);
+
+        this.isLoading = true;
+        getBroadcastRecById({ broadcastId: this.rescheduleRecordId})
+        .then(result => {
+            this.selectedDateTime = result.MVWB__Schedule_DateTime__c ? new Date(result.MVWB__Schedule_DateTime__c).toISOString() : '';
+            console.log('this.selectedDateTime:', this.selectedDateTime);
+        })
+        .catch(error => {
+            console.error('Error in handleRechedulePopup', error);
+        })
+        .finally(() => {
+            this.isLoading = false;
+        })
+    }
+
+    handleReschedule(event) {
+        this.isLoading = true;
+        const label = event.target.label;
+        console.log('this.selectedDateTime:', this.selectedDateTime);
+
+        rescheduleBroadcast({ broadcastId: this.rescheduleRecordId, action: label, newScheduleTime: this.selectedDateTime })
+        .then(result => {
+            this.showToast(result[0], result[1], result[0]);
+        })
+        .catch(error => {
+            console.error('Error in handleRechedule()', error);
+        })
+        .finally(() => {
+            this.handleCloseReschedulePopup();
+            this.isLoading = false;
+        });
+    }
+
+    handleCloseReschedulePopup() {
+        this.showReschedulePopup = false;
+        this.rescheduleRecordId = '';
     }
     
     handleNameClick(event) {
