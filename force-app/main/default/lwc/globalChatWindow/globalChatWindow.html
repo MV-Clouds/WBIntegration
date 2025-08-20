@@ -1,0 +1,76 @@
+<template>
+    <template if:false={showLicenseError}>
+        <div class="parent-container">
+            <div class="contact-container">
+                <div class="header-container">
+                    <div class="slds-grid slds-grid_align-spread slds-p-around_small">
+                        <h1 class="header">Chats</h1>
+                        <lightning-combobox name="objectPicker" class="slds-align-middle" style="width: 185px;" label="Select Object" value={selectedObject} options={objectOptions} onchange={handleObjectChange}></lightning-combobox>
+                    </div>
+        
+                    <div class="search-container">
+                        <input type="text" placeholder="Search" class="search-input" value={chatSearchTerm} oninput={handleContactsSearch}/>
+                        <lightning-icon icon-name="utility:search" alternative-text="search" class="searchIcon"></lightning-icon>
+                    </div>
+                </div>
+        
+                <div class="contact-list">
+                    <template if:true={filteredContacts.length}>
+                        <template for:each={filteredContacts} for:item="con">
+                            <div key={con.Id} class={con.cssClass} onclick={handleContactClick} data-id={con.Id}>
+                                <img src={profileUrl} alt="Profile" class="avatar" />
+                                <div class="contact-content">
+                                    <div class="contact-name-time">
+                                        <span class="contact-name">{con.Name}</span>
+                                        <template if:true={con.unreadOutboundCount}>
+                                            <span class="unread-count">{con.unreadOutboundCount}</span>
+                                        </template>
+                                    </div>
+                                    <div class="messageTime">{con.Phone}</div>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+                    <template if:false={filteredContacts.length}>
+                        <div class="no-record-message">
+                            <span>No Chats Found</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+    
+            <template if:true={showSpinner}>
+                <div class="spinner-overlay">
+                    <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:true={recordName}>
+                <div class="main-container">
+                    <div class="selectedContact">
+                        <div class="contact-details">
+                            <img src={profileUrl} alt="Profile" class="avatar" />
+                            <div class="selected-contact-content">
+                                <div class="contact-name-time">
+                                    <span class="selected-contact-name">{recordName}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-window">
+                        <c-chat-window record-id={recordId} object-api-name={selectedObject} is-called-from-global="true"></c-chat-window>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={recordName}>
+                <div class="main-container no-selected-contact-message">
+                    <span>Please select contact to see related chats</span>
+                </div>
+            </template>
+        </div>
+    </template>
+    <template if:true={showLicenseError}>
+        <c-license-expired-l-w-c onpackageupdate={handlePackageUpdate}></c-license-expired-l-w-c>
+    </template>
+</template>
