@@ -8,10 +8,9 @@
  */
  /***********************************************************************
  MODIFICATION LOG*
- * Last Update Date : 24/12/2024
- * Updated By : Kajal Tiwari
- * Name of methods changed (Comma separated if more then one) : restrictTemplates,sendPreviewTemplate
- * Change Description : 
+* Last Update Date : 16/07/2025
+* Updated By : Divij Modi
+* Change Description : Added logic to create edit history record and code clean
  ***********************************************************************/
 
 public with sharing class WBTemplateController {

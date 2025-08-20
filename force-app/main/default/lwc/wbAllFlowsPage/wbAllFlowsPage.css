@@ -318,10 +318,12 @@ tr:nth-child(even) {
 }
 
 .sync-button {
-    padding: 7px 8px;
+    padding: 9px 10px;
     font-size: 0;
-    margin-right: 15px;
+    margin-right: 10px;
     background-color: white;
+    height: 100%;
+}
 
 /* Backdrop covers the entire component */
 .license-error {

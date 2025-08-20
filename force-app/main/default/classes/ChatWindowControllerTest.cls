@@ -44,6 +44,8 @@ public class ChatWindowControllerTest {
 
             Test.startTest();
             Map<String, Object> combinedData = ChatWindowController.getCombinedData(testContact.Id, 'Contact');
+            List<String> getObjectPicklistOptions = ChatWindowController.getObjectPicklistOptions();
+            Map<String, Map<String, Object>> getChatsForSelectedObject = ChatWindowController.getChatsForSelectedObject('Contact');
             Test.stopTest();
 
             list<Chat__c> chats = (list<Chat__c>) combinedData.get('chats');
