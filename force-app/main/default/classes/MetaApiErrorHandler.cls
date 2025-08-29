@@ -1,10 +1,4 @@
 /**
- * @description A public utility class to handle and interpret API error responses from the Meta (Facebook/WhatsApp) platform.
- * It translates HTTP status codes and specific Meta error codes into a structured map containing a user-friendly message and solution.
- * @author Gemini
- * @date August 5, 2025
- */
-/**
 * Class Name: MetaApiErrorHandler
 * @description: A public utility class to handle and interpret API error responses from the Meta (Facebook/WhatsApp) platform.
 * Created Date: 05 Aug, 2025
